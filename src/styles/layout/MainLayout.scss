@@ -1,0 +1,36 @@
+// Main Layout Styles
+.main-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 360px;
+  min-height: 100vh;
+}
+
+// Page Content Styles
+.page-content {
+  padding: 20px;
+  padding-top: 30px;
+}
+
+.page-content h1 {
+  margin: 0 0 16px 0;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #262626;
+}
+
+.page-content p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.page-content-centered {
+  padding: 20px;
+  text-align: center;
+}

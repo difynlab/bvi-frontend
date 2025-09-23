@@ -1,0 +1,46 @@
+// Forbidden Page Styles
+.forbidden-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+  padding: 20px;
+}
+
+.forbidden-code {
+  font-size: 4rem;
+  margin: 0 0 20px 0;
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.forbidden-title {
+  font-size: 2rem;
+  margin: 0 0 20px 0;
+  color: #374151;
+  font-weight: 600;
+}
+
+.forbidden-message {
+  font-size: 1.2rem;
+  margin: 0 0 30px 0;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.forbidden-link {
+  padding: 12px 24px;
+  background-color: #3b82f6;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #2563eb;
+  }
+}

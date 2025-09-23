@@ -1,8 +1,24 @@
+// Import Bootstrap Icons
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
+// Import Layout Styles
+@import 'layout/MainLayout.scss';
+
+// Import Auth Styles
+@import 'auth/RouteGuard.scss';
+
+// Import Page Styles
+@import 'pages/ResetPassword.scss';
+@import 'pages/Forbidden.scss';
+
 body {
-  background-color: #fff;
+  background-color: #f8f9fa;
+  ;
 }
 
 * {
   font-family: "Public Sans", sans-serif;
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }

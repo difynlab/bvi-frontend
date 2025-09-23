@@ -1,9 +1,12 @@
 import React, { useMemo, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
+import { useAuth } from '../../context/AuthContext'
 import '../../styles/sections/Login.scss'
 
 export const Login = () => {
+  const { login, loginWithGoogle } = useAuth()
+  const navigate = useNavigate()
   const [formValues, setFormValues] = useState({
     username: '',
     password: '',
@@ -51,23 +54,19 @@ export const Login = () => {
     }
   }, [formValues])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const ok = validate()
     if (!ok) return
     
-    // Data ready for backend validation
-    console.log('Login data for backend:', loginData)
-    
-    // TODO: Replace with actual API call
-    // Example: await loginUser(loginData)
-    alert('Login data ready for backend:\n' + JSON.stringify(loginData, null, 2))
+    await login({ username: formValues.username, password: formValues.password })
+    navigate('/events')
   }
 
-  const handleGoogleSuccess = (credentialResponse) => {
+  const handleGoogleSuccess = async (credentialResponse) => {
     console.log('Google login success:', credentialResponse)
-    // TODO: Send credentialResponse.credential to your backend for verification
-    alert('Google login successful! Credential: ' + credentialResponse.credential)
+    await loginWithGoogle(credentialResponse.credential)
+    navigate('/events')
   }
 
   const handleGoogleError = () => {
