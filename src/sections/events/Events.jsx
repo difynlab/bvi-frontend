@@ -72,6 +72,7 @@ export const Events = () => {
   const [isDragOver, setIsDragOver] = useState(false)
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false)
   const [registeringEvent, setRegisteringEvent] = useState(null)
+  const [validationErrors, setValidationErrors] = useState({})
 
   // Seed events data
   const seedEvents = [
@@ -83,7 +84,7 @@ export const Events = () => {
       endTime: '17:00',
       timeZone: 'EST',
       eventType: 'Workshop',
-      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      description: 'Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore.',
       location: 'Conference Room A',
       imageFileName: 'workshop-audience.jpg',
       imagePreviewUrl: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=400&h=200&fit=crop'
@@ -96,7 +97,7 @@ export const Events = () => {
       endTime: '12:00',
       timeZone: 'UTC',
       eventType: 'Webinar',
-      description: 'Learn the latest web development techniques and best practices for building modern applications.',
+      description: 'Learn web development techniques and best practices for modern applications.',
       location: 'Online Event',
       imageFileName: 'webinar-laptop.jpg',
       imagePreviewUrl: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=400&h=200&fit=crop'
@@ -109,7 +110,7 @@ export const Events = () => {
       endTime: '18:00',
       timeZone: 'America/New_York',
       eventType: 'Conference',
-      description: 'Join us for the biggest tech conference of the year featuring industry leaders and innovative technologies.',
+      description: 'Join the biggest tech conference featuring industry leaders and innovative technologies.',
       location: 'Convention Center',
       imageFileName: 'conference-hall.jpg',
       imagePreviewUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=200&fit=crop'
@@ -122,7 +123,7 @@ export const Events = () => {
       endTime: '16:00',
       timeZone: 'Europe/London',
       eventType: 'Workshop',
-      description: 'Hands-on workshop covering data analysis, machine learning, and visualization techniques.',
+      description: 'Hands-on workshop covering data analysis machine learning and visualization techniques.',
       location: 'Training Room B',
       imageFileName: 'workshop-data.jpg',
       imagePreviewUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop'
@@ -135,7 +136,7 @@ export const Events = () => {
       endTime: '17:00',
       timeZone: 'Asia/Tokyo',
       eventType: 'Webinar',
-      description: 'Master digital marketing strategies and learn how to create effective campaigns that drive results.',
+      description: 'Master digital marketing strategies and learn to create effective campaigns that drive results.',
       location: 'Virtual Event',
       imageFileName: 'webinar-marketing.jpg',
       imagePreviewUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=200&fit=crop'
@@ -203,7 +204,33 @@ export const Events = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    let newValue = value
+    
+    // Handle time clamping logic
+    if (name === 'startTime') {
+      // If startTime changes and endTime is set and endTime < startTime, adjust endTime
+      if (formData.endTime && value && formData.endTime < value) {
+        newValue = value
+        setFormData(prev => ({ ...prev, [name]: value, endTime: value }))
+      } else {
+        setFormData(prev => ({ ...prev, [name]: value }))
+      }
+    } else if (name === 'endTime') {
+      // If endTime is set and it's less than startTime, clamp it to startTime
+      if (value && formData.startTime && value < formData.startTime) {
+        newValue = formData.startTime
+        setFormData(prev => ({ ...prev, [name]: formData.startTime }))
+      } else {
+        setFormData(prev => ({ ...prev, [name]: value }))
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }))
+    }
+    
+    // Clear validation error when user starts editing any field
+    if (Object.keys(validationErrors).length > 0) {
+      setValidationErrors({})
+    }
   }
 
   // WYSIWYG Editor Functions
@@ -221,6 +248,11 @@ export const Events = () => {
       if (editorRef.current) {
         const plainText = editorRef.current.textContent || editorRef.current.innerText || ''
         setFormData(prev => ({ ...prev, description: plainText }))
+        
+        // Clear validation error when user starts editing
+        if (Object.keys(validationErrors).length > 0) {
+          setValidationErrors({})
+        }
       }
     } catch (error) {
       console.error('Error in handleEditorChange:', error)
@@ -335,6 +367,11 @@ export const Events = () => {
       setFormData(prev => ({ ...prev, file }))
       setImageFileName(file.name)
       setImagePreviewUrl(URL.createObjectURL(file))
+      
+      // Clear validation error when user selects a file
+      if (Object.keys(validationErrors).length > 0) {
+        setValidationErrors({})
+      }
     }
   }
 
@@ -384,21 +421,45 @@ export const Events = () => {
   }
 
   const validateForm = () => {
+    const errors = []
+    
+    // Check all required fields are not empty
     if (!formData.title.trim()) {
-      alert('Title is required')
-      return false
+      errors.push('Please complete all required fields.')
+    } else if (!formData.date) {
+      errors.push('Please complete all required fields.')
+    } else if (!formData.startTime) {
+      errors.push('Please complete all required fields.')
+    } else if (!formData.endTime) {
+      errors.push('Please complete all required fields.')
+    } else if (!formData.timeZone) {
+      errors.push('Please complete all required fields.')
+    } else if (!formData.eventType) {
+      errors.push('Please complete all required fields.')
+    } else if (!formData.description.trim()) {
+      errors.push('Please complete all required fields.')
+    } else if (!formData.location.trim()) {
+      errors.push('Please complete all required fields.')
     }
-    if (!formData.date) {
-      alert('Date is required')
-      return false
+    
+    // Check image is required
+    if (!formData.file && !imagePreviewUrl) {
+      errors.push('An image is required.')
     }
-    if (formData.startTime && formData.endTime) {
-      if (formData.startTime >= formData.endTime) {
-        alert('Start time must be before end time')
-        return false
-      }
+    
+    // Check start time is before end time (shouldn't happen due to clamping, but keep as safety check)
+    if (formData.startTime && formData.endTime && formData.startTime >= formData.endTime) {
+      errors.push('Start time must be earlier than end time.')
     }
-    return true
+    
+    // Convert array to object for compatibility with existing error display logic
+    const errorObj = {}
+    if (errors.length > 0) {
+      errorObj.general = errors.join(' ')
+    }
+    
+    setValidationErrors(errorObj)
+    return Object.keys(errorObj).length === 0
   }
 
   const handleSubmit = (e) => {
@@ -505,6 +566,7 @@ export const Events = () => {
     })
     setImageFileName('')
     setImagePreviewUrl('')
+    setValidationErrors({})
   }
 
   const handleEdit = (eventId) => {
@@ -613,11 +675,11 @@ export const Events = () => {
                   <p className="event-description">{event.description}</p>
                   <div className="event-details">
                     <div className="event-time">
-                      <span className="icon">🕐</span>
+                      <span className="icon"><i className="bi bi-clock"></i></span>
                       {formatTime(event.startTime)} - {formatTime(event.endTime)} {event.timeZone}
                     </div>
                     <div className="event-location">
-                      <span className="icon">📍</span>
+                      <span className="icon"><i className="bi bi-geo-alt"></i></span>
                       {event.location}
                     </div>
                   </div>
@@ -709,6 +771,7 @@ export const Events = () => {
                     id="endTime"
                     name="endTime"
                     value={formData.endTime}
+                    min={formData.startTime || '00:00'}
                     onChange={handleInputChange}
                   />
                 </div>
@@ -884,6 +947,12 @@ export const Events = () => {
                   )}
                 </div>
               </div>
+
+              {Object.keys(validationErrors).length > 0 && (
+                <div style={{ color: '#ff0a0a', fontSize: '12px', marginBottom: '10px' }}>
+                  {Object.values(validationErrors).join(' ')}
+                </div>
+              )}
 
               <div className="form-actions">
                 <button type="button" onClick={closeModal}>

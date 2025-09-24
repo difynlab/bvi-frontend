@@ -1,19 +1,18 @@
 .side-nav {
-  position: fixed;
-  left: 30px;
+  position: sticky;
+  margin: 30px 0 30px 30px;
   top: 30px;
-  width: 300px;
-  height: fit-content;
+  align-self: flex-start;
+  width: 250px;
   background-color: #262626;
-  border-radius: 20px;
+  border-radius: 15px;
   display: flex;
   flex-direction: column;
   z-index: 1000;
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
 
   /* Header Section */
   .nav-header {
-    padding: 24px 20px;
+    padding: 20px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -75,7 +74,7 @@
       cursor: pointer;
       color: white;
       transition: color 0.2s;
-      font-size: 20px;
+      font-size: 14px;
 
       &:hover {
         color: #f3f4f6;
@@ -83,8 +82,8 @@
 
       .notification-badge {
         position: absolute;
-        top: 4px;
-        right: 4px;
+        top: 6px;
+        right: 6px;
         width: 8px;
         height: 8px;
         background-color: #e93125;
@@ -97,19 +96,17 @@
   /* Navigation Links */
   .nav-links {
     flex: 1;
-    
-
     .nav-item {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 20px 35px;
+      padding: 15px 35px;
       color: white;
       text-decoration: none;
       transition: all 0.3s;
       position: relative;
-      font-size: 18px;
-      font-weight: 500;
+      font-size: 16px;
+      font-weight: 400;
 
       &:hover {
         background-color: rgba(255, 255, 255, 0.05);
@@ -123,9 +120,53 @@
 
       svg, i {
         flex-shrink: 0;
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      span {
+        flex: 1;
+      }
+    }
+  }
+
+  /* Footer Section */
+  .nav-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 10px;
+    padding-top: 10px;
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px 35px;
+      color: white;
+      text-decoration: none;
+      transition: all 0.3s;
+      position: relative;
+      font-size: 16px;
+      font-weight: 400;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: white;
+      }
+
+      &.active {
+        background-color: #e93125;
+        color: white;
+      }
+
+      svg, i {
+        flex-shrink: 0;
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -140,9 +181,11 @@
   /* User Profile Section */
   .user-profile {
     padding: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
+    width: 100%;
+    justify-content: left;
     align-items: center;
+    padding-left: 35px;
     gap: 12px;
 
     .profile-picture {
@@ -160,17 +203,20 @@
     }
 
     .profile-info {
-      flex: 1;
-
+      display: flex;
+      flex-direction: column;
+      width: 70px;
       .user-name {
         font-size: 14px;
         font-weight: 600;
         color: white;
         margin: 0;
         line-height: 1.2;
+        width: fit-content;
       }
 
       .user-role {
+        width: fit-content;
         font-size: 12px;
         color: rgba(255, 255, 255, 0.7);
         margin: 2px 0 0 0;
@@ -197,6 +243,8 @@
     background: rgba(255, 255, 255, 0.5);
   }
 }
+
+
 
 /* Responsive Design */
 @media (max-width: 768px) {

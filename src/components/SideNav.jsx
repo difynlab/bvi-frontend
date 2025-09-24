@@ -8,14 +8,7 @@ const SideNav = () => {
       {/* Header Section */}
       <div className="nav-header">
         <div className="logo-section">
-          <div className="logo">
-            <div className="logo-triangle red"></div>
-            <div className="logo-triangle blue"></div>
-          </div>
-          <div className="brand-info">
-            <h1 className="brand-name">BVI Finance</h1>
-            <p className="brand-slogan">your international business partner</p>
-          </div>
+          <img src='#'></img>
         </div>
         <div className="notification-icon">
           <i className="bi bi-bell"></i>
@@ -64,7 +57,10 @@ const SideNav = () => {
           <i className="bi bi-file-earmark"></i>
           <span>Reports</span>
         </NavLink>
+      </div>
 
+      {/* Footer Section */}
+      <div className="nav-footer">
         <NavLink to="/settings" className="nav-item">
           <i className="bi bi-gear"></i>
           <span>Settings</span>
@@ -74,15 +70,15 @@ const SideNav = () => {
           <i className="bi bi-power"></i>
           <span>Logout</span>
         </NavLink>
-      </div>
 
-      <div className="user-profile">
-        <div className="profile-picture">
-          <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" alt="Profile" />
-        </div>
-        <div className="profile-info">
-          <h3 className="user-name">Johnston</h3>
-          <p className="user-role">Lorem</p>
+        <div className="user-profile">
+          <div className="profile-picture">
+            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" alt="Profile" />
+          </div>
+          <div className="profile-info">
+            <h3 className="user-name">Johnston</h3>
+            <p className="user-role">Lorem</p>
+          </div>
         </div>
       </div>
     </nav>
