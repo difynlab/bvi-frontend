@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 import { Login } from './sections/login-register/Login'
 import { ForgetPassword } from './sections/login-register/ForgetPassword'
 import { Events } from './sections/events/Events'
+import { Notices } from './sections/notices/Notices'
 import RouteGuard from './auth/RouteGuard'
 import Forbidden from './pages/Forbidden'
 import ResetPassword from './pages/ResetPassword'
@@ -26,13 +27,6 @@ const Dashboard = () => (
   <div className="page-content">
     <h1>Dashboard</h1>
     <p>Welcome to the dashboard!</p>
-  </div>
-)
-
-const Notices = () => (
-  <div className="page-content">
-    <h1>Notices</h1>
-    <p>Manage notices and announcements.</p>
   </div>
 )
 

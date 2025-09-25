@@ -13,44 +13,54 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 30px;
+  height: 55px;
 }
 
-.events-header-title {
+.events-header-title, .notices-header-title {
+  height: 55px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
   h1 {
-    font-size: 30px;
-    font-weight: 500;
+    font-size: 26px;
+    font-weight: 400;
     color: #262626;
     margin: 0;
   }
+
   p {
-    font-size: 18px;
+    font-size: 16px;
+    font-weight: 300;
   }
 }
 
 .add-event-btn {
   background-color: #e93125;
   position: relative;
-  width: 160px;
+  width: 135px;
   display: flex;
   justify-content: right;
   color: white;
   border: none;
-  padding: 25px;
-  height: 70px;
+  padding: 17.5px;
+  height: 55px;
   border-radius: 8px;
-  font-size: 18px;
-  font-weight: 400;
+  font-size: 16px;
+  font-weight: 300;
   cursor: pointer;
   transition: background-color 0.3s;
+
   i {
     position: absolute;
     left: 12.5px;
-    top: 35px;
+    top: 50%;
     transform: translateY(-50%);
-    font-size: 40px;
+    font-size: 30px;
     opacity: 0.5;
     transition: opacity 0.3s;
   }
+
   &:hover {
     i {
       opacity: .8;
@@ -71,25 +81,30 @@
 
 .event-card {
   background: white;
+  z-index: 1;
   border-radius: 12px;
+  height: fit-content;
   border: none;
   overflow: hidden;
   transition: transform 0.2s, box-shadow 0.2s;
-  flex: 0 0 calc(33.333% - 20px); /* 3 elementos por línea con gap */
+  flex: 0 0 calc(33.333% - 20px);
+  /* 3 elementos por línea con gap */
   max-width: calc(33.333% - 20px);
 }
 
 /* Responsive design */
 @media (max-width: 1200px) {
   .event-card {
-    flex: 0 0 calc(50% - 15px); /* 2 elementos por línea en pantallas medianas */
+    flex: 0 0 calc(50% - 15px);
+    /* 2 elementos por línea en pantallas medianas */
     max-width: calc(50% - 15px);
   }
 }
 
 @media (max-width: 768px) {
   .event-card {
-    flex: 0 0 100%; /* 1 elemento por línea en móviles */
+    flex: 0 0 100%;
+    /* 1 elemento por línea en móviles */
     max-width: 100%;
   }
 }
@@ -108,6 +123,7 @@
 }
 
 .event-content {
+  height: calc(100% - 150px);
   padding: 15px;
   border-radius: 0 0 12px 12px;
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -155,6 +171,9 @@
   color: #1f2937;
   margin: 0 0 5px 0;
   line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .event-description {
@@ -162,7 +181,15 @@
   line-height: 1.5;
   margin: 0 0 15px 0;
   font-size: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
 }
+
 
 .event-details {
   margin-bottom: 15px;
@@ -183,6 +210,10 @@
   font-size: 14px;
 }
 
+.event-location {
+  margin-bottom: 0;
+}
+
 .event-actions {
   display: flex;
   width: 100%;
@@ -194,10 +225,10 @@
   background-color: rgb(245, 245, 245);
   color: #374151;
   border: none;
-  padding: 8px 16px;
+  padding: 10px 20px;
   border-radius: 6px;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 400;
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -211,9 +242,10 @@
   color: #ef4444;
   border: 1px solid #ef4444;
   padding: 10px 15px;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 0.875rem;
-  font-weight: 500;
+  width: 75px;
+  font-weight: 400;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -224,21 +256,20 @@
 }
 
 .register-btn {
-  background-color: #3b82f6;
-  color: white;
+  background-color: rgb(245, 245, 245);
+  color: #374151;
   border: none;
-  padding: 12px 24px;
+  padding: 10px 20px;
   border-radius: 8px;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 400;
   cursor: pointer;
   transition: all 0.2s;
   width: 100%;
-  margin-top: 8px;
 }
 
 .register-btn:hover {
-  background-color: #2563eb;
+  background-color: rgb(231, 231, 231);
 }
 
 /* Modal Styles */
@@ -441,7 +472,8 @@
   margin: 8px 0;
 }
 
-.wysiwyg-content ul, .wysiwyg-content ol {
+.wysiwyg-content ul,
+.wysiwyg-content ol {
   margin: 8px 0;
   padding-left: 20px;
 }
@@ -465,14 +497,22 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: 30px 20px;
   text-align: center;
   color: #6b7280;
 }
 
-.empty-state svg {
-  color: #9ca3af;
+.empty-state img {
+  width: 350px;
+  height: 350px;
+  opacity: 0.8;
+  object-fit: cover;
   margin-bottom: 24px;
+}
+
+img.empty-state-user {
+  width: 300px;
+  height: 300px;
 }
 
 .empty-state h2 {
@@ -486,7 +526,7 @@
   font-size: 1rem;
   line-height: 1.5;
   margin: 0;
-  max-width: 400px;
+  max-width: 600px;
 }
 
 /* Register Modal Styles */
@@ -494,7 +534,7 @@
   background: white;
   border-radius: 12px;
   width: 100%;
-  max-width: 800px;
+  max-width: calc(100dvw - 350px);
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -574,14 +614,16 @@
 }
 
 .register-modal-actions {
+  display: flex;
+  justify-content: center;
   padding: 24px;
   border-top: 1px solid #e5e7eb;
 }
 
 .register-now-btn {
   width: 100%;
-  background-color: #3b82f6;
-  color: white;
+  background-color: rgb(245, 245, 245);
+  color: #374151;
   border: none;
   padding: 16px 24px;
   border-radius: 8px;
@@ -592,7 +634,7 @@
 }
 
 .register-now-btn:hover {
-  background-color: #2563eb;
+  background-color: rgb(231, 231, 231);
 }
 
 .dropzone {
@@ -684,22 +726,22 @@
   .events-list {
     grid-template-columns: 1fr;
   }
-  
+
   .form-row {
     grid-template-columns: 1fr;
   }
-  
+
   .events-modal {
     margin: 10px;
     max-height: calc(100vh - 20px);
   }
-  
+
   .events-header {
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
   }
-  
+
   .events-header h1 {
     text-align: center;
     font-size: 2rem;
@@ -710,13 +752,16 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+
 .events-modal::-webkit-scrollbar {
   display: none;
 }
+
 .register-modal {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+
 .register-modal::-webkit-scrollbar {
   display: none;
 }

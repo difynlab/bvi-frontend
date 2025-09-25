@@ -11,6 +11,10 @@
 @import 'pages/ResetPassword.scss';
 @import 'pages/Forbidden.scss';
 
+// Import Section Styles
+@import 'sections/Events.scss';
+@import 'sections/Notices.scss';
+
 body {
   background-color: #f8f9fa;
   ;

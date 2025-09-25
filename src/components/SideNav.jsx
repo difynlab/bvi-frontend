@@ -8,7 +8,7 @@ const SideNav = () => {
       {/* Header Section */}
       <div className="nav-header">
         <div className="logo-section">
-          <img src='#'></img>
+          <img src="/logo.png" alt="BVI Finance Logo"></img>
         </div>
         <div className="notification-icon">
           <i className="bi bi-bell"></i>

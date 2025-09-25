@@ -13,6 +13,7 @@
   /* Header Section */
   .nav-header {
     padding: 20px;
+    padding-left: 10px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -21,35 +22,9 @@
       display: flex;
       align-items: center;
       gap: 12px;
-
-      .logo {
-        position: relative;
-        width: 32px;
-        height: 32px;
-
-        .logo-triangle {
-          position: absolute;
-          width: 0;
-          height: 0;
-          
-          &.red {
-            border-left: 16px solid transparent;
-            border-right: 16px solid transparent;
-            border-bottom: 28px solid #e93125;
-            top: 0;
-            left: 0;
-          }
-
-          &.blue {
-            border-left: 16px solid transparent;
-            border-right: 16px solid transparent;
-            border-top: 28px solid #2563eb;
-            bottom: 0;
-            right: 0;
-          }
-        }
+      img {
+        width: 100%;
       }
-
       .brand-info {
         .brand-name {
           font-size: 18px;
