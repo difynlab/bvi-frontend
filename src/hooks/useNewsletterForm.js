@@ -19,51 +19,24 @@ const stripHtml = (html = '') => {
   return el.textContent || ''
 }
 
-export const useNewsletterForm = ({ initial = {}, mode = 'create' }) => {
-  // Memoize the initial form data to prevent infinite loops
-  const initialFormData = useMemo(() => ({
-    fileName: initial.fileName || '',
-    description: initial.description || '',
-    editorHtml: initial.editorHtml || htmlFromPlain(initial.description || ''),
-    imageFileName: initial.imageFileName || '',
-    imagePreviewUrl: initial.imagePreviewUrl || '',
-    imageUrl: initial.imageUrl || '',
+export const useNewsletterForm = () => {
+  // Default empty form state
+  const emptyForm = {
+    fileName: '',
+    description: '',
+    editorHtml: '',
+    imageFileName: '',
+    imagePreviewUrl: '',
+    imageUrl: '',
     file: null,
-    linkUrl: initial.linkUrl || ''
-  }), [initial.fileName, initial.description, initial.editorHtml, initial.imageFileName, initial.imagePreviewUrl, initial.imageUrl, initial.linkUrl])
+    linkUrl: ''
+  }
 
-  const [form, setForm] = useState(initialFormData)
-  const [editorHtml, setEditorHtml] = useState(initial.editorHtml || htmlFromPlain(initial.description || ''))
-  const [editorText, setEditorText] = useState(initial.description || '')
+  const [form, setForm] = useState(emptyForm)
+  const [editorHtml, setEditorHtml] = useState('')
+  const [editorText, setEditorText] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const fileInputRef = useRef(null)
-
-  // Initialize form with initial data
-  useEffect(() => {
-    if (initial && Object.keys(initial).length > 0) {
-      const initialHtml = initial.editorHtml || htmlFromPlain(initial.description || '')
-      const description = initial.description || stripHtml(initial.editorHtml || '')
-      setForm(initialFormData)
-      setEditorHtml(initialHtml)
-      setEditorText(description)
-      setErrorMessage('')
-    } else if (mode === 'create') {
-      // Reset form for create mode
-      setForm({
-        fileName: '',
-        description: '',
-        editorHtml: '',
-        imageFileName: '',
-        imagePreviewUrl: '',
-        imageUrl: '',
-        file: null,
-        linkUrl: ''
-      })
-      setEditorHtml('')
-      setEditorText('')
-      setErrorMessage('')
-    }
-  }, [initialFormData, initial.description, initial.editorHtml, mode])
 
   const onChange = (key, value) => {
     setForm(prev => ({ ...prev, [key]: value }))
@@ -71,6 +44,43 @@ export const useNewsletterForm = ({ initial = {}, mode = 'create' }) => {
     if (errorMessage) {
       setErrorMessage('')
     }
+  }
+
+  // Initialize form for create mode
+  const initializeCreate = () => {
+    setForm(emptyForm)
+    setEditorHtml('')
+    setEditorText('')
+    setErrorMessage('')
+  }
+
+  // Initialize form for edit mode
+  const initializeEdit = (newsletter) => {
+    const initialHtml = newsletter.editorHtml || htmlFromPlain(newsletter.description || '')
+    const description = newsletter.description || stripHtml(newsletter.editorHtml || '')
+    
+    setForm({
+      fileName: newsletter.fileName || '',
+      description: description,
+      editorHtml: initialHtml,
+      imageFileName: newsletter.imageFileName || '',
+      imagePreviewUrl: newsletter.imagePreviewUrl || '',
+      imageUrl: newsletter.imageUrl || '',
+      file: null,
+      linkUrl: newsletter.linkUrl || ''
+    })
+    setEditorHtml(initialHtml)
+    setEditorText(description)
+    setErrorMessage('')
+  }
+
+  // Reset form to empty state
+  const resetForm = () => {
+    setForm(emptyForm)
+    setEditorHtml('')
+    setEditorText('')
+    setErrorMessage('')
+    clearFile()
   }
 
   const setFileFromInput = (e) => {
@@ -124,34 +134,25 @@ export const useNewsletterForm = ({ initial = {}, mode = 'create' }) => {
       imagePreviewUrl: form.imagePreviewUrl,
       imageUrl: form.imageUrl,
       linkUrl: form.linkUrl.trim(),
-      createdAt: existingId ? (initial.createdAt || today) : today
+      createdAt: existingId ? today : today
     }
-  }
-
-  const resetForm = () => {
-    setForm(initialFormData)
-    setEditorHtml('')
-    setEditorText('')
-    setErrorMessage('')
-    clearFile()
   }
 
   return {
     form,
-    setForm,
     onChange,
     editorHtml,
     setEditorHtml,
-    editorText,
     setEditorText,
     errorMessage,
     setErrorMessage,
     fileInputRef,
     setFileFromInput,
     setFileFromDrop,
-    clearFile,
     validate,
     buildNewsletterObject,
-    resetForm
+    resetForm,
+    initializeCreate,
+    initializeEdit
   }
 }

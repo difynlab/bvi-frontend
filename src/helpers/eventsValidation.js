@@ -21,6 +21,8 @@ export const isTimeOrderValid = (start, end) => {
   return startMinutes < endMinutes
 }
 
+const ALLOWED_REPEAT = ['NO_REPEAT', 'DAILY_MF', 'WEEKLY', 'MONTHLY', 'ANNUALLY', 'CUSTOM']
+
 export const validateEvent = (form) => {
   const errors = []
   
@@ -51,6 +53,11 @@ export const validateEvent = (form) => {
   // Check start time is before end time
   if (form.startTime && form.endTime && !isTimeOrderValid(form.startTime, form.endTime)) {
     errors.push('Start time must be earlier than end time.')
+  }
+  
+  // Validate repeat field - coerce to NO_REPEAT if invalid
+  if (form.repeat && !ALLOWED_REPEAT.includes(form.repeat)) {
+    form.repeat = 'NO_REPEAT'
   }
   
   // Convert array to single error message

@@ -70,7 +70,6 @@ const seedEvents = [
 
 export const useEventsState = () => {
   const [events, setEvents] = useState([])
-  const [loading, setLoading] = useState(false)
 
   // Load events from localStorage on mount
   useEffect(() => {
@@ -78,7 +77,12 @@ export const useEventsState = () => {
       const savedEvents = localStorage.getItem('events')
       if (savedEvents) {
         const parsedEvents = JSON.parse(savedEvents)
-        setEvents(parsedEvents)
+        // Ensure all events have a repeat field, defaulting to 'NO_REPEAT' if missing
+        const eventsWithRepeat = parsedEvents.map(event => ({
+          ...event,
+          repeat: event.repeat || 'NO_REPEAT'
+        }))
+        setEvents(eventsWithRepeat)
       } else {
         // If no saved events, seed with sample data
         setEvents(seedEvents)
@@ -185,7 +189,6 @@ export const useEventsState = () => {
     addEvent,
     updateEvent,
     deleteEvent,
-    seedIfEmpty,
-    loading
+    seedIfEmpty
   }
 }

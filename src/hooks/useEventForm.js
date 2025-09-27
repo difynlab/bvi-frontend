@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useRef } from 'react'
 
 // Utility to convert plain text to minimal HTML
 const htmlFromPlain = (txt = '') => {
@@ -26,7 +26,7 @@ const deepClone = (obj) => {
   if (typeof obj === 'object') {
     const clonedObj = {}
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         clonedObj[key] = deepClone(obj[key])
       }
     }
@@ -43,6 +43,7 @@ const fromItem = (item) => ({
   endTime: item.endTime || '',
   timeZone: item.timeZone || 'UTC',
   eventType: item.eventType || 'Conference',
+  repeat: item.repeat || 'NO_REPEAT',
   description: item.description || '',
   location: item.location || '',
   file: null,
@@ -70,7 +71,16 @@ const EVENT_TYPES = [
   'Workshop'
 ]
 
-export const useEventForm = ({ initial = {}, mode = 'create' }) => {
+const REPEAT_OPTIONS = [
+  { label: 'Does not repeat',      value: 'NO_REPEAT' },
+  { label: 'Daily (Monday - Friday)', value: 'DAILY_MF' },
+  { label: 'Weekly',                 value: 'WEEKLY'   },
+  { label: 'Monthly',                value: 'MONTHLY'  },
+  { label: 'Annually',               value: 'ANNUALLY' },
+  { label: 'Custom...',              value: 'CUSTOM'   }
+]
+
+export const useEventForm = () => {
   // Reference to store original item data for rollback
   const originalRef = useRef(null)
   
@@ -82,6 +92,7 @@ export const useEventForm = ({ initial = {}, mode = 'create' }) => {
     endTime: '',
     timeZone: 'UTC',
     eventType: 'Conference',
+    repeat: 'NO_REPEAT',
     description: '',
     location: '',
     file: null,
@@ -131,13 +142,10 @@ export const useEventForm = ({ initial = {}, mode = 'create' }) => {
   }
 
   const onChange = (key, value) => {
-    let newValue = value
-    
     // Handle time clamping logic
     if (key === 'startTime') {
       // If startTime changes and endTime is set and endTime < startTime, adjust endTime
       if (form.endTime && value && form.endTime < value) {
-        newValue = value
         setForm(prev => ({ ...prev, [key]: value, endTime: value }))
       } else {
         setForm(prev => ({ ...prev, [key]: value }))
@@ -145,7 +153,6 @@ export const useEventForm = ({ initial = {}, mode = 'create' }) => {
     } else if (key === 'endTime') {
       // If endTime is set and it's less than startTime, clamp it to startTime
       if (value && form.startTime && value < form.startTime) {
-        newValue = form.startTime
         setForm(prev => ({ ...prev, [key]: form.startTime }))
       } else {
         setForm(prev => ({ ...prev, [key]: value }))
@@ -229,6 +236,7 @@ export const useEventForm = ({ initial = {}, mode = 'create' }) => {
       endTime: form.endTime,
       timeZone: form.timeZone,
       eventType: form.eventType,
+      repeat: form.repeat,
       description: editorText,
       editorHtml: editorHtml,
       location: form.location,
@@ -264,6 +272,7 @@ export const useEventForm = ({ initial = {}, mode = 'create' }) => {
     rollbackEdit,
     initializeCreate,
     TIME_ZONES,
-    EVENT_TYPES
+    EVENT_TYPES,
+    REPEAT_OPTIONS
   }
 }

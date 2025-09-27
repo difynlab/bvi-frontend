@@ -33,7 +33,7 @@ export const ForgetPassword = () => {
       // Simulate API call to send password reset email
       await sendPasswordResetEmail(email)
       setIsEmailSent(true)
-    } catch (err) {
+    } catch {
       setError('Failed to send reset email. Please try again.')
     } finally {
       setIsLoading(false)

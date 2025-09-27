@@ -10,7 +10,6 @@
   flex-direction: column;
   z-index: 1000;
 
-  /* Header Section */
   .nav-header {
     padding: 20px;
     padding-left: 10px;
@@ -68,7 +67,6 @@
     }
   }
 
-  /* Navigation Links */
   .nav-links {
     flex: 1;
     .nav-item {
@@ -109,7 +107,6 @@
     }
   }
 
-  /* Footer Section */
   .nav-footer {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     margin-top: 10px;
@@ -153,7 +150,6 @@
     }
   }
 
-  /* User Profile Section */
   .user-profile {
     padding: 20px;
     display: flex;
@@ -200,7 +196,6 @@
     }
   }
 
-  /* Scrollbar Styling */
   &::-webkit-scrollbar {
     width: 4px;
   }
@@ -219,9 +214,6 @@
   }
 }
 
-
-
-/* Responsive Design */
 @media (max-width: 768px) {
   .side-nav {
     width: 100%;

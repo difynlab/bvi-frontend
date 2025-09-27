@@ -1,4 +1,4 @@
-@import '../variables';
+@use '../vars' as *;
 
 .auth-page {
   width: 100%;
@@ -215,7 +215,6 @@
     margin-top: 20px;
     width: 100%;
     
-    // Override Google button styles to match our design
     div[role="button"] {
       width: 100% !important;
       height: 45px !important;
@@ -227,7 +226,6 @@
       justify-content: center !important;
       max-width: none !important;
       
-      // Center the content inside the button
       > div {
         display: flex !important;
         align-items: center !important;
@@ -237,12 +235,10 @@
         margin: 0 auto !important;
       }
       
-      // Center the SVG logo
       svg {
         margin: 0 !important;
       }
       
-      // Center the text
       span {
         margin: 0 !important;
         text-align: center !important;

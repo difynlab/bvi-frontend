@@ -1,5 +1,4 @@
-// Rich Text Editor Styles
-@import '../variables';
+@use '../vars' as *;
 
 .rte {
   display: flex;
@@ -9,9 +8,9 @@
   background: white;
   min-height: 200px;
 
-  // Vertical alignment container classes
   &.rte-vtop {
     align-items: flex-start;
+    width: 100%;
   }
 
   &.rte-vmiddle {
@@ -27,6 +26,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  width: 100%;
   padding: 12px;
   border-bottom: 1px solid #e5e7eb;
   background: #f9fafb;
@@ -97,7 +97,6 @@
     color: white;
   }
 
-  // Icon styles
   strong, em, u, s {
     font-size: 14px;
     font-weight: bold;
@@ -136,9 +135,8 @@
 
 .rte__btn--clear-text-color {
   width: auto;
-  min-width: 50px;
   height: 28px;
-  padding: 0 8px;
+  padding: 0 5px;
   font-size: 12px;
   font-weight: 500;
 }
@@ -158,12 +156,10 @@
   color: #262626;
   cursor: text;
 
-  // Text justify class
   &.text-justify {
     text-align: justify;
   }
 
-  // Placeholder styling
   &[data-placeholder]:empty::before {
     content: attr(data-placeholder);
     color: #9ca3af;
@@ -172,7 +168,6 @@
     height: 0;
   }
 
-  // TipTap content styling
   p {
     margin: 0 0 8px 0;
 
@@ -208,7 +203,6 @@
     margin: 4px 0;
   }
 
-  // Dash list styling
   ul.dash-list {
     list-style: none;
     padding-left: 1.25rem;
@@ -253,7 +247,6 @@
   a {
     color: $vivid_blue;
     text-decoration: underline;
-
   }
 
   img {
@@ -263,7 +256,6 @@
     margin: 8px 0;
   }
 
-  // Task list styling
   ul[data-type="taskList"] {
     list-style: none;
     padding-left: 0;
@@ -289,7 +281,6 @@
     }
   }
 
-  // Text alignment
   &[style*="text-align: left"] {
     text-align: left;
   }
@@ -302,13 +293,11 @@
     text-align: right;
   }
 
-  // Focus state
   &:focus {
     outline: none;
   }
 }
 
-// Responsive design
 @media (max-width: 768px) {
   .rte__toolbar {
     padding: 8px;

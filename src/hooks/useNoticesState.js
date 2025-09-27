@@ -11,7 +11,6 @@ const defaultNotices = [
 export const useNoticesState = () => {
   const [categories, setCategories] = useState([])
   const [notices, setNotices] = useState([])
-  const [loading, setLoading] = useState(false)
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -435,7 +434,6 @@ export const useNoticesState = () => {
     updateNotice,
     deleteNotice,
     getGroup,
-    seedDemoNotices,
-    loading
+    seedDemoNotices
   }
 }

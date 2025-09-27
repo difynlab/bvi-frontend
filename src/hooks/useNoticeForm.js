@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef } from 'react'
 
 // Utility to convert plain text to minimal HTML
 const htmlFromPlain = (txt = '') => {
@@ -26,7 +26,7 @@ const deepClone = (obj) => {
   if (typeof obj === 'object') {
     const clonedObj = {}
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         clonedObj[key] = deepClone(obj[key])
       }
     }
@@ -46,7 +46,7 @@ const fromItem = (item) => ({
   linkUrl: item.linkUrl || ''
 })
 
-export const useNoticeForm = ({ initial = {}, mode = 'create' }) => {
+export const useNoticeForm = () => {
   // Reference to store original item data for rollback
   const originalRef = useRef(null)
   
@@ -185,7 +185,7 @@ export const useNoticeForm = ({ initial = {}, mode = 'create' }) => {
       imageFileName: form.imageFileName || 'no-image.jpg',
       imagePreviewUrl: form.imagePreviewUrl || '',
       linkUrl: form.linkUrl,
-      createdAt: existingId ? (initial.createdAt || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0]
+      createdAt: existingId ? new Date().toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     }
   }
 

@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
 import '../../styles/sections/Register.scss'
 import { NavLink } from 'react-router-dom'
+import { useRegisterForm } from '../../hooks/useRegisterForm'
 
 export const Register = () => {
   const [showPassword, setShowPassword] = useState(false)
@@ -8,19 +9,28 @@ export const Register = () => {
   const [formValues, setFormValues] = useState({
     firstName: '',
     lastName: '',
-    email: '',
     contactNumber: '',
-    password: '',
     confirmPassword: '',
   })
 
   const [formErrors, setFormErrors] = useState({
     firstName: '',
     lastName: '',
-    email: '',
     contactNumber: '',
-    password: '',
     confirmPassword: '',
+  })
+
+  // Use the password policy hook for email and password
+  const { 
+    email, 
+    setEmail, 
+    password, 
+    setPassword, 
+    error: passwordError, 
+    handleSubmit: handlePasswordSubmit 
+  } = useRegisterForm((data) => {
+    // Handle successful password validation
+    handleFormSubmit(data)
   })
 
   const isValidEmail = (value) => {
@@ -33,30 +43,22 @@ export const Register = () => {
     return digitsOnly.length >= 8 && digitsOnly.length <= 15
   }
 
-  const validate = () => {
+  const validateOtherFields = () => {
     const errors = {
       firstName: '',
       lastName: '',
-      email: '',
       contactNumber: '',
-      password: '',
       confirmPassword: '',
     }
 
     if (!formValues.firstName.trim()) errors.firstName = 'First name is required'
     if (!formValues.lastName.trim()) errors.lastName = 'Last name is required'
 
-    if (!formValues.email.trim()) errors.email = 'Email is required'
-    else if (!isValidEmail(formValues.email)) errors.email = 'Enter a valid email'
-
     if (!formValues.contactNumber.trim()) errors.contactNumber = 'Contact number is required'
     else if (!isValidPhone(formValues.contactNumber)) errors.contactNumber = 'Enter a valid phone number'
 
-    if (!formValues.password) errors.password = 'Password is required'
-    else if (formValues.password.length < 8) errors.password = 'Minimum 8 characters'
-
     if (!formValues.confirmPassword) errors.confirmPassword = 'Please confirm password'
-    else if (formValues.confirmPassword !== formValues.password) errors.confirmPassword = 'Passwords do not match'
+    else if (formValues.confirmPassword !== password) errors.confirmPassword = 'Passwords do not match'
 
     setFormErrors(errors)
     return Object.values(errors).every((e) => e === '')
@@ -67,23 +69,26 @@ export const Register = () => {
     setFormValues((prev) => ({ ...prev, [name]: value }))
   }
 
-  const collectedData = useMemo(() => {
-    return {
+  const handleFormSubmit = (passwordData) => {
+    const otherFieldsValid = validateOtherFields()
+    if (!otherFieldsValid) return
+
+    const collectedData = {
       firstName: formValues.firstName.trim(),
       lastName: formValues.lastName.trim(),
-      email: formValues.email.trim(),
+      email: passwordData.email,
       contactNumber: formValues.contactNumber.trim(),
-      password: formValues.password,
+      password: passwordData.password,
     }
-  }, [formValues])
+
+    // TODO BACKEND: Replace this with your API call
+    console.log('Collected data:', collectedData)
+    alert('Datos recopilados:\n' + JSON.stringify(collectedData, null, 2))
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    const ok = validate()
-    if (!ok) return
-    // Replace this with your API call
-    console.log('Collected data:', collectedData)
-    alert('Datos recopilados:\n' + JSON.stringify(collectedData, null, 2))
+    handlePasswordSubmit(e)
   }
 
   return (
@@ -138,10 +143,9 @@ export const Register = () => {
                   name="email"
                   type="email"
                   placeholder="john@gmail.com"
-                  value={formValues.email}
-                  onChange={handleChange}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
-                {formErrors.email && <span className="error">{formErrors.email}</span>}
               </div>
               <div className="field">
                 <label htmlFor="contactNumber">Contact Number</label>
@@ -166,8 +170,10 @@ export const Register = () => {
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="********"
-                    value={formValues.password}
-                    onChange={handleChange}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    aria-invalid={Boolean(passwordError)}
+                    aria-describedby={passwordError ? 'password-errors' : undefined}
                   />
                   <button
                     type="button"
@@ -178,7 +184,11 @@ export const Register = () => {
                     <i className={showPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'} />
                   </button>
                 </div>
-                {formErrors.password && <span className="error">{formErrors.password}</span>}
+                {passwordError && (
+                  <div id="password-errors" className="form-error">
+                    <span className="error">{passwordError}</span>
+                  </div>
+                )}
               </div>
               <div className="field">
                 <label htmlFor="confirmPassword">Confirm Password</label>

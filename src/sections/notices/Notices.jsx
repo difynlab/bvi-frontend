@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { useAuth } from '../../context/AuthContext'
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '../../context/useAuth'
 import { can } from '../../auth/acl'
 import { useNoticesState } from '../../hooks/useNoticesState'
 import { useNoticeForm } from '../../hooks/useNoticeForm'
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
 import { useTitleMarquee } from '../../hooks/useTitleMarquee'
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import RichTextEditor from '../../components/editor/RichTextEditor'
 import '../../styles/sections/Notices.scss'
 
@@ -16,7 +17,6 @@ export const Notices = () => {
     categories,
     notices,
     addCategory,
-    deleteCategory,
     deleteCategoryAndNotices,
     addNotice,
     updateNotice,
@@ -37,10 +37,7 @@ export const Notices = () => {
   const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false)
 
   // Form management
-  const noticeForm = useNoticeForm({
-    initial: {},
-    mode: modalMode
-  })
+  const noticeForm = useNoticeForm()
 
   // Cancel handler for modal close
   const handleCancel = () => {
@@ -65,6 +62,9 @@ export const Notices = () => {
 
   // Title marquee behavior
   const titleMarquee = useTitleMarquee()
+
+  // Body scroll lock for modals
+  useBodyScrollLock(isModalOpen || addCategoryModalOpen || confirmModalOpen)
 
   // Utility function to truncate text at word boundary
   const truncateText = (text, maxLength = 110) => {
@@ -256,19 +256,20 @@ export const Notices = () => {
     setCategoryError('')
   }
 
-  const handleDeleteCategory = (categoryId) => {
-    if (categoryId === 'general') return // Don't allow deleting default category
+  // TODO: Implement category deletion functionality
+  // const handleDeleteCategory = (categoryId) => {
+  //   if (categoryId === 'general') return // Don't allow deleting default category
 
-    try {
-      deleteCategory(categoryId)
-      if (activeCategory === categoryId) {
-        setActiveCategory('general')
-      }
-    } catch (error) {
-      setCategoryError('Cannot delete category with existing notices')
-      setTimeout(() => setCategoryError(''), 3000)
-    }
-  }
+  //   try {
+  //     deleteCategory(categoryId)
+  //     if (activeCategory === categoryId) {
+  //       setActiveCategory('general')
+  //     }
+  //   } catch (error) {
+  //     setCategoryError('Cannot delete category with existing notices')
+  //     setTimeout(() => setCategoryError(''), 3000)
+  //   }
+  // }
 
   const openConfirmModal = (categoryId) => {
     setCategoryToDelete(categoryId)
@@ -389,14 +390,14 @@ export const Notices = () => {
               {can(user, 'events:create') ? (
                 // Admin empty state
                 <>
-                  <img src="/public/empty-state-admin.png" alt="" />
+                  <img src="/empty-state-admin.png" alt="" />
                   <h2>Oops nothing to see here yet!</h2>
                   <p>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</p>
                 </>
               ) : (
                 // User empty state
                 <>
-                  <img src="/public/empty-state-user.png" alt="" className="empty-state-user" />
+                  <img src="/empty-state-user.png" alt="" className="empty-state-user" />
                   <h2>Oops! No data found.</h2>
                   <p>Nothing's been added here yet, or there might be a hiccup.<br />Try again or check back later!</p>
                 </>
@@ -476,7 +477,8 @@ export const Notices = () => {
               onClick={modalBackdropClose.stopInsidePointer}
             >
               <div className="notices-modal-header">
-                <h2>{modalMode === 'create' ? 'Add New Notice' : 'Edit Notice'}</h2>
+                <h2>Upload Notices</h2>
+                <p>Please review the information before saving.</p>
                 <button
                   className="close-btn"
                   onClick={handleCancel}
@@ -487,7 +489,7 @@ export const Notices = () => {
 
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
-                  <label htmlFor="fileName">File Name</label>
+                  <label htmlFor="fileName">File Name<span className="req-star" aria-hidden="true">*</span></label>
                   <input
                     type="text"
                     id="fileName"
@@ -499,7 +501,7 @@ export const Notices = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="noticeType">Notice Type</label>
+                  <label htmlFor="noticeType">Notice Type<span className="req-star" aria-hidden="true">*</span></label>
                   <select
                     id="noticeType"
                     name="noticeType"
@@ -514,7 +516,7 @@ export const Notices = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="description">Description</label>
+                  <label htmlFor="description">Description<span className="req-star" aria-hidden="true">*</span></label>
                   <RichTextEditor
                     key={`rte-${modalMode === 'edit' ? editingNoticeId : 'new'}`}
                     contentKey={modalMode === 'edit' ? editingNoticeId : 'new'}
@@ -525,7 +527,7 @@ export const Notices = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="linkUrl">Upload Link</label>
+                  <label htmlFor="linkUrl">Upload Link<span className="req-star" aria-hidden="true">*</span></label>
                   <input
                     type="url"
                     id="linkUrl"
@@ -574,11 +576,8 @@ export const Notices = () => {
                 )}
 
                 <div className="form-actions">
-                  <button type="button" onClick={handleCancel}>
-                    Cancel
-                  </button>
-                  <button type="submit">
-                    {modalMode === 'create' ? 'Upload Notice' : 'Save Changes'}
+                  <button type="submit" className="upload-now-btn">
+                    Upload Now
                   </button>
                 </div>
               </form>

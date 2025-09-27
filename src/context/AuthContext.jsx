@@ -1,14 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
-
-const AuthContext = createContext()
-
-export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
+import React, { useState, useEffect } from 'react'
+import { resolveRole, getPermissions } from './authHelpers'
+import { AuthContext } from './AuthContext'
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -38,20 +30,8 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
-  const resolveRole = (email) => {
-    // MOCK RULE: role = "admin" if email endsWith "@admin.com", else "user"
-    return email.endsWith('@admin.com') ? 'admin' : 'user'
-  }
 
-  const getPermissions = (role) => {
-    // MOCK permissions
-    if (role === 'admin') {
-      return ['events:create', 'events:update', 'events:delete']
-    }
-    return []
-  }
-
-  const login = async ({ username, password }) => {
+  const login = async ({ username }) => {
     setLoading(true)
     setError(null)
 
@@ -90,7 +70,7 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const loginWithGoogle = async (credential) => {
+  const loginWithGoogle = async () => {
     setLoading(true)
     setError(null)
 

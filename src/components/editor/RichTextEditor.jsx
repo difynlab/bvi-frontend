@@ -83,13 +83,14 @@ const RichTextEditor = ({
     }
   }, [editor])
 
-  const setFontFamily = useCallback((fontFamily) => {
-    if (fontFamily === 'default') {
-      editor.chain().focus().unsetMark('textStyle').run()
-    } else {
-      editor.chain().focus().setMark('textStyle', { fontFamily }).run()
-    }
-  }, [editor])
+  // TODO: Implement font family functionality
+  // const setFontFamily = useCallback((fontFamily) => {
+  //   if (fontFamily === 'default') {
+  //     editor.chain().focus().unsetMark('textStyle').run()
+  //   } else {
+  //     editor.chain().focus().setMark('textStyle', { fontFamily }).run()
+  //   }
+  // }, [editor])
 
 
   const setTextAlign = useCallback((alignment) => {
@@ -110,13 +111,14 @@ const RichTextEditor = ({
     }
   }, [editor])
 
-  const setVerticalAlign = useCallback((alignment) => {
-    const wrapper = editor.view.dom.closest('.rte')
-    if (wrapper) {
-      wrapper.classList.remove('rte-vtop', 'rte-vmiddle', 'rte-vbottom')
-      wrapper.classList.add(`rte-v${alignment}`)
-    }
-  }, [editor])
+  // TODO: Implement vertical alignment functionality
+  // const setVerticalAlign = useCallback((alignment) => {
+  //   const wrapper = editor.view.dom.closest('.rte')
+  //   if (wrapper) {
+  //     wrapper.classList.remove('rte-vtop', 'rte-vmiddle', 'rte-vbottom')
+  //     wrapper.classList.add(`rte-v${alignment}`)
+  //   }
+  // }, [editor])
 
   // Subscribe to selection updates to track font and color changes
   useEffect(() => {
@@ -257,7 +259,7 @@ const RichTextEditor = ({
             }}
             aria-label="Clear text color"
           >
-            Clear
+            <i className="bi bi-x"></i>
           </button>
         </div>
 

@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { useAuth } from '../../context/AuthContext'
-import { can } from '../../auth/acl'
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '../../context/useAuth'
 import { useNewslettersState } from '../../hooks/useNewslettersState'
 import { useNewsletterForm } from '../../hooks/useNewsletterForm'
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import RichTextEditor from '../../components/editor/RichTextEditor'
 import '../../styles/sections/Newsletters.scss'
 
@@ -26,25 +26,25 @@ const Newsletters = () => {
     onChange,
     editorHtml,
     setEditorHtml,
-    editorText,
     setEditorText,
     errorMessage,
     setErrorMessage,
     fileInputRef,
     setFileFromInput,
     setFileFromDrop,
-    clearFile,
     validate,
     buildNewsletterObject,
-    resetForm
-  } = useNewsletterForm({
-    initial: editingNewsletter || {},
-    mode: editingNewsletter ? 'edit' : 'create'
-  })
+    resetForm,
+    initializeCreate,
+    initializeEdit
+  } = useNewsletterForm()
 
   const modalBackdropClose = useModalBackdropClose(() => {
     closeModal()
   })
+
+  // Body scroll lock for modals
+  useBodyScrollLock(isModalOpen)
 
 
   // Check if CSS line-clamp is supported
@@ -75,6 +75,12 @@ const Newsletters = () => {
     setEditingNewsletter(newsletter)
     setIsModalOpen(true)
     setErrorMessage('')
+    
+    if (newsletter) {
+      initializeEdit(newsletter)
+    } else {
+      initializeCreate()
+    }
   }
 
   const closeModal = () => {
@@ -178,14 +184,14 @@ const Newsletters = () => {
             {user?.role === 'admin' ? (
               // Admin empty state
               <>
-                <img src="/public/empty-state-admin.png" alt="" />
+                <img src="/empty-state-admin.png" alt="" />
                 <h2>Oops nothing to see here yet!</h2>
                 <p>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</p>
               </>
             ) : (
               // User empty state
               <>
-                <img src="/public/empty-state-user.png" alt="" className="empty-state-user" />
+                <img src="/empty-state-user.png" alt="" className="empty-state-user" />
                 <h2>Oops! No data found.</h2>
                 <p>Nothing's been added here yet, or there might be a hiccup.<br />Try again or check back later!</p>
               </>
@@ -254,7 +260,8 @@ const Newsletters = () => {
               onClick={modalBackdropClose.stopInsidePointer}
             >
               <div className="newsletters-modal-header">
-                <h2>{editingNewsletter ? 'Edit Newsletter' : 'Add Newsletter'}</h2>
+                <h2>Upload Newsletters</h2>
+                <p>Please review the information before saving.</p>
                 <button
                   className="close-btn"
                   onClick={closeModal}
@@ -271,7 +278,7 @@ const Newsletters = () => {
                 )}
 
                 <div className="form-group">
-                  <label htmlFor="fileName">File Name</label>
+                  <label htmlFor="fileName">File Name<span className="req-star" aria-hidden="true">*</span></label>
                   <input
                     type="text"
                     id="fileName"
@@ -283,7 +290,7 @@ const Newsletters = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="description">Description</label>
+                  <label htmlFor="description">Description<span className="req-star" aria-hidden="true">*</span></label>
                   <RichTextEditor
                     key={`rte-${editingNewsletter ? editingNewsletter.id : 'new'}`}
                     contentKey={editingNewsletter ? editingNewsletter.id : 'new'}
@@ -294,7 +301,7 @@ const Newsletters = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="linkUrl">Link URL</label>
+                  <label htmlFor="linkUrl">Link URL<span className="req-star" aria-hidden="true">*</span></label>
                   <input
                     type="url"
                     id="linkUrl"
@@ -307,7 +314,7 @@ const Newsletters = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="file">Upload File</label>
+                  <label htmlFor="file">Upload File<span className="req-star" aria-hidden="true">*</span></label>
                   <div
                     className="file-upload-area"
                     onDragOver={handleFileDragOver}
@@ -338,11 +345,8 @@ const Newsletters = () => {
                 </div>
 
                 <div className="form-actions">
-                  <button type="button" onClick={closeModal}>
-                    Cancel
-                  </button>
-                  <button type="submit">
-                    {editingNewsletter ? 'Save Changes' : 'Upload Newsletter'}
+                  <button type="submit" className="upload-now-btn">
+                    Upload Now
                   </button>
                 </div>
               </form>

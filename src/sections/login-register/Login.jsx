@@ -1,22 +1,29 @@
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth } from '../../context/useAuth'
+import { useLoginForm } from '../../hooks/useLoginForm'
 import '../../styles/sections/Login.scss'
 
 export const Login = () => {
   const { login, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
-  const [formValues, setFormValues] = useState({
-    username: '',
-    password: '',
-    rememberPassword: false,
-  })
+  const [rememberPassword, setRememberPassword] = useState(false)
+  const [emailError, setEmailError] = useState('')
 
-  const [formErrors, setFormErrors] = useState({
-    username: '',
-    password: '',
+  // Use the password policy hook for email and password
+  const { 
+    email, 
+    setEmail, 
+    password, 
+    setPassword, 
+    error: passwordError, 
+    handleSubmit: handlePasswordSubmit 
+  } = useLoginForm(async (data) => {
+    // Handle successful password validation
+    await login({ username: data.email })
+    navigate('/events')
   })
 
   const isValidEmail = (value) => {
@@ -24,49 +31,33 @@ export const Login = () => {
     return emailPattern.test(value)
   }
 
-  const validate = () => {
-    const errors = {
-      username: '',
-      password: '',
-    }
-
-    if (!formValues.username.trim()) errors.username = 'Username is required'
-    else if (!isValidEmail(formValues.username)) errors.username = 'Enter a valid email'
-
-    if (!formValues.password) errors.password = 'Password is required'
-
-    setFormErrors(errors)
-    return Object.values(errors).every((e) => e === '')
+  const validateEmail = (emailValue) => {
+    if (!emailValue.trim()) return 'Username is required'
+    if (!isValidEmail(emailValue)) return 'Enter a valid email'
+    return ''
   }
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setFormValues((prev) => ({ 
-      ...prev, 
-      [name]: type === 'checkbox' ? checked : value 
-    }))
-  }
-
-  const loginData = useMemo(() => {
-    return {
-      username: formValues.username.trim(),
-      password: formValues.password,
-      rememberPassword: formValues.rememberPassword,
+  const handleEmailChange = (e) => {
+    const value = e.target.value
+    setEmail(value)
+    // Only validate if user has started typing or if there's already an error
+    if (emailError || value.length > 0) {
+      setEmailError(validateEmail(value))
     }
-  }, [formValues])
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const ok = validate()
-    if (!ok) return
+    const currentEmailError = validateEmail(email)
+    setEmailError(currentEmailError)
     
-    await login({ username: formValues.username, password: formValues.password })
-    navigate('/events')
+    if (currentEmailError) return
+    handlePasswordSubmit(e)
   }
 
-  const handleGoogleSuccess = async (credentialResponse) => {
-    console.log('Google login success:', credentialResponse)
-    await loginWithGoogle(credentialResponse.credential)
+  const handleGoogleSuccess = async () => {
+    console.log('Google login success')
+    await loginWithGoogle()
     navigate('/events')
   }
 
@@ -98,10 +89,10 @@ export const Login = () => {
                 name="username"
                 type="email"
                 placeholder="john@gmail.com"
-                value={formValues.username}
-                onChange={handleChange}
+                value={email}
+                onChange={handleEmailChange}
               />
-              {formErrors.username && <span className="error">{formErrors.username}</span>}
+              {emailError && <span className="error">{emailError}</span>}
             </div>
 
             <div className="field">
@@ -112,8 +103,10 @@ export const Login = () => {
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="********"
-                  value={formValues.password}
-                  onChange={handleChange}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  aria-invalid={Boolean(passwordError)}
+                  aria-describedby={passwordError ? 'password-errors' : undefined}
                 />
                 <button
                   type="button"
@@ -124,7 +117,11 @@ export const Login = () => {
                   <i className={showPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'} />
                 </button>
               </div>
-              {formErrors.password && <span className="error">{formErrors.password}</span>}
+              {passwordError && (
+                <div id="password-errors" className="form-error">
+                  <span className="error">{passwordError}</span>
+                </div>
+              )}
             </div>
 
             <div className="login-options">
@@ -132,8 +129,8 @@ export const Login = () => {
                 <input
                   type="checkbox"
                   name="rememberPassword"
-                  checked={formValues.rememberPassword}
-                  onChange={handleChange}
+                  checked={rememberPassword}
+                  onChange={(e) => setRememberPassword(e.target.checked)}
                 />
                 <span>Remember password</span>
               </label>

@@ -1,26 +1,25 @@
-// Import Variables
-@import 'variables';
+@use 'vars' as *;
 
-// Import Bootstrap Icons
+@use 'layout/MainLayout.scss';
+
+@use 'auth/RouteGuard.scss';
+
+@use 'pages/ResetPassword.scss';
+@use 'pages/Forbidden.scss';
+
+@use 'sections/Events.scss';
+@use 'sections/Notices.scss';
+@use 'sections/Membership.scss';
+
 @import 'bootstrap-icons/font/bootstrap-icons.css';
-
-// Import Layout Styles
-@import 'layout/MainLayout.scss';
-
-// Import Auth Styles
-@import 'auth/RouteGuard.scss';
-
-// Import Page Styles
-@import 'pages/ResetPassword.scss';
-@import 'pages/Forbidden.scss';
-
-// Import Section Styles
-@import 'sections/Events.scss';
-@import 'sections/Notices.scss';
 
 body {
   background-color: #f8f9fa;
-  ;
+}
+
+body.modal-open {
+  overflow: hidden;
+  touch-action: none;
 }
 
 * {

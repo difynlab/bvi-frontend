@@ -1,5 +1,4 @@
-// Forbidden Page Styles
-@import '../variables';
+@use '../vars' as *;
 
 .forbidden-page {
   display: flex;

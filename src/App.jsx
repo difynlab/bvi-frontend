@@ -6,6 +6,7 @@ import { ForgetPassword } from './sections/login-register/ForgetPassword'
 import { Events } from './sections/events/Events'
 import { Notices } from './sections/notices/Notices'
 import { Newsletters } from './sections/newsletters/Newsletters'
+import Membership from './sections/membership/Membership'
 import RouteGuard from './auth/RouteGuard'
 import Forbidden from './pages/Forbidden'
 import ResetPassword from './pages/ResetPassword'
@@ -31,19 +32,6 @@ const Dashboard = () => (
   </div>
 )
 
-const Newsletter = () => (
-  <div className="page-content">
-    <h1>Newsletter</h1>
-    <p>Manage newsletter subscriptions and content.</p>
-  </div>
-)
-
-const Membership = () => (
-  <div className="page-content">
-    <h1>Membership</h1>
-    <p>Manage membership information and benefits.</p>
-  </div>
-)
 
 const Subscription = () => (
   <div className="page-content">
