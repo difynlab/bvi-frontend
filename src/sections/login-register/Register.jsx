@@ -3,6 +3,8 @@ import '../../styles/sections/Register.scss'
 import { NavLink } from 'react-router-dom'
 
 export const Register = () => {
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formValues, setFormValues] = useState({
     firstName: '',
     lastName: '',
@@ -158,26 +160,46 @@ export const Register = () => {
             <div className="grid two-cols">
               <div className="field">
                 <label htmlFor="password">Password</label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="********"
-                  value={formValues.password}
-                  onChange={handleChange}
-                />
+                <div className="password-field">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="********"
+                    value={formValues.password}
+                    onChange={handleChange}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    onClick={() => setShowPassword(v => !v)}
+                  >
+                    <i className={showPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'} />
+                  </button>
+                </div>
                 {formErrors.password && <span className="error">{formErrors.password}</span>}
               </div>
               <div className="field">
                 <label htmlFor="confirmPassword">Confirm Password</label>
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  placeholder="********"
-                  value={formValues.confirmPassword}
-                  onChange={handleChange}
-                />
+                <div className="password-field">
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="********"
+                    value={formValues.confirmPassword}
+                    onChange={handleChange}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    onClick={() => setShowConfirmPassword(v => !v)}
+                  >
+                    <i className={showConfirmPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'} />
+                  </button>
+                </div>
                 {formErrors.confirmPassword && (
                   <span className="error">{formErrors.confirmPassword}</span>
                 )}

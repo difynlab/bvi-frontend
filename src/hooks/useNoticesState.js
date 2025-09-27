@@ -158,7 +158,8 @@ export const useNoticesState = () => {
         fileName: 'Quarterly Earnings Q2',
         noticeType: 'finances',
         description: 'Review of Q2 financial performance including revenue growth, profit margins, and key financial metrics.',
-        imageFileName: 'placeholder.png',
+        imageFileName: 'earnings-q2.jpg',
+        imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
         linkUrl: 'https://example.com/earnings-q2',
         createdAt: new Date().toISOString().slice(0, 10)
@@ -168,7 +169,8 @@ export const useNoticesState = () => {
         fileName: 'Budget Allocation Update',
         noticeType: 'finances',
         description: 'Updated budget allocation for the upcoming quarter with focus on operational efficiency and growth initiatives.',
-        imageFileName: 'placeholder.png',
+        imageFileName: 'budget-update.jpg',
+        imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
         linkUrl: 'https://example.com/budget-update',
         createdAt: new Date().toISOString().slice(0, 10)
@@ -178,7 +180,8 @@ export const useNoticesState = () => {
         fileName: 'Financial Compliance Report',
         noticeType: 'finances',
         description: 'Monthly compliance report covering regulatory requirements, audit findings, and recommended actions.',
-        imageFileName: 'placeholder.png',
+        imageFileName: 'compliance-report.jpg',
+        imageUrl: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
         linkUrl: 'https://example.com/compliance-report',
         createdAt: new Date().toISOString().slice(0, 10)
@@ -189,7 +192,8 @@ export const useNoticesState = () => {
         fileName: 'Market Analysis Update',
         noticeType: 'trading',
         description: 'Weekly market analysis covering key trends, trading opportunities, and risk assessment for portfolio management.',
-        imageFileName: 'placeholder.png',
+        imageFileName: 'market-analysis.jpg',
+        imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
         linkUrl: 'https://example.com/market-analysis',
         createdAt: new Date().toISOString().slice(0, 10)
@@ -199,7 +203,8 @@ export const useNoticesState = () => {
         fileName: 'Portfolio Performance Review',
         noticeType: 'trading',
         description: 'Monthly portfolio performance review with detailed analysis of returns, risk metrics, and strategic recommendations.',
-        imageFileName: 'placeholder.png',
+        imageFileName: 'portfolio-review.jpg',
+        imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
         linkUrl: 'https://example.com/portfolio-review',
         createdAt: new Date().toISOString().slice(0, 10)
@@ -209,7 +214,8 @@ export const useNoticesState = () => {
         fileName: 'Risk Management Guidelines',
         noticeType: 'trading',
         description: 'Updated risk management guidelines and procedures for trading operations to ensure compliance and minimize exposure.',
-        imageFileName: 'placeholder.png',
+        imageFileName: 'risk-guidelines.jpg',
+        imageUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
         linkUrl: 'https://example.com/risk-guidelines',
         createdAt: new Date().toISOString().slice(0, 10)
@@ -220,7 +226,8 @@ export const useNoticesState = () => {
         fileName: 'Company Policy Update',
         noticeType: 'company',
         description: 'Important updates to company policies including remote work guidelines, code of conduct, and operational procedures.',
-        imageFileName: 'placeholder.png',
+        imageFileName: 'policy-update.jpg',
+        imageUrl: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
         linkUrl: 'https://example.com/policy-update',
         createdAt: new Date().toISOString().slice(0, 10)
@@ -230,7 +237,8 @@ export const useNoticesState = () => {
         fileName: 'Team Meeting Schedule',
         noticeType: 'company',
         description: 'Updated schedule for team meetings, all-hands sessions, and departmental reviews for the upcoming month.',
-        imageFileName: 'placeholder.png',
+        imageFileName: 'meeting-schedule.jpg',
+        imageUrl: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
         linkUrl: 'https://example.com/meeting-schedule',
         createdAt: new Date().toISOString().slice(0, 10)
@@ -240,7 +248,8 @@ export const useNoticesState = () => {
         fileName: 'HR Announcements',
         noticeType: 'company',
         description: 'Latest HR announcements including benefits updates, training opportunities, and employee recognition programs.',
-        imageFileName: 'placeholder.png',
+        imageFileName: 'hr-announcements.jpg',
+        imageUrl: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
         linkUrl: 'https://example.com/hr-announcements',
         createdAt: new Date().toISOString().slice(0, 10)

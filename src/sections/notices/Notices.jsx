@@ -5,58 +5,67 @@ import { useNoticesState } from '../../hooks/useNoticesState'
 import { useNoticeForm } from '../../hooks/useNoticeForm'
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
 import { useTitleMarquee } from '../../hooks/useTitleMarquee'
-import { stripHtmlToPlainText } from '../../helpers/noticesValidation'
+import RichTextEditor from '../../components/editor/RichTextEditor'
 import '../../styles/sections/Notices.scss'
 
 export const Notices = () => {
   const { user, toggleRole, isInitialized } = useAuth()
-  
+
   // Notices state management
-  const { 
-    categories, 
-    notices, 
-    addCategory, 
-    deleteCategory, 
+  const {
+    categories,
+    notices,
+    addCategory,
+    deleteCategory,
     deleteCategoryAndNotices,
-    addNotice, 
-    updateNotice, 
-    deleteNotice, 
+    addNotice,
+    updateNotice,
+    deleteNotice,
     getGroup,
     seedDemoNotices
   } = useNoticesState()
-  
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState('create')
   const [editingNoticeId, setEditingNoticeId] = useState(null)
   const [activeCategory, setActiveCategory] = useState('general')
   const [newCategoryName, setNewCategoryName] = useState('')
-  const [showAddCategory, setShowAddCategory] = useState(false)
   const [categoryError, setCategoryError] = useState('')
   const [confirmModalOpen, setConfirmModalOpen] = useState(false)
   const [categoryToDelete, setCategoryToDelete] = useState(null)
-  
+  const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false)
+
   // Form management
-  const initialFormData = useMemo(() => {
-    if (modalMode === 'edit' && editingNoticeId) {
-      const allNotices = notices.flatMap(group => group.items)
-      return allNotices.find(notice => notice.id === editingNoticeId) || {}
-    }
-    return {}
-  }, [modalMode, editingNoticeId, notices])
-  
-  const noticeForm = useNoticeForm({ 
-    initial: initialFormData,
-    mode: modalMode 
+  const noticeForm = useNoticeForm({
+    initial: {},
+    mode: modalMode
   })
-  
+
+  // Cancel handler for modal close
+  const handleCancel = () => {
+    try {
+      if (modalMode === 'edit') {
+        noticeForm.rollbackEdit()
+      } else {
+        noticeForm.resetForm()
+      }
+      setIsModalOpen(false)
+      setModalMode('create')
+      setEditingNoticeId(null)
+    } catch (error) {
+      console.error('Error in handleCancel:', error)
+    }
+  }
+
   // Modal backdrop close behavior
-  const modalBackdropClose = useModalBackdropClose(() => setIsModalOpen(false))
+  const modalBackdropClose = useModalBackdropClose(handleCancel)
   const confirmModalBackdropClose = useModalBackdropClose(() => setConfirmModalOpen(false))
-  
+  const addCategoryModalBackdropClose = useModalBackdropClose(() => setAddCategoryModalOpen(false))
+
   // Title marquee behavior
   const titleMarquee = useTitleMarquee()
-  
+
   // Utility function to truncate text at word boundary
   const truncateText = (text, maxLength = 110) => {
     if (!text || text.length <= maxLength) return text
@@ -74,7 +83,7 @@ export const Notices = () => {
     testElement.style.webkitLineClamp = '2'
     testElement.style.webkitBoxOrient = 'vertical'
     testElement.style.overflow = 'hidden'
-    
+
     // If the browser doesn't support line-clamp, the styles won't be applied
     const supportsLineClamp = testElement.style.webkitLineClamp === '2'
     setUseFallback(!supportsLineClamp)
@@ -99,41 +108,11 @@ export const Notices = () => {
     noticeForm.onChange(name, value)
   }
 
-  // WYSIWYG Editor Functions
-  const execCommand = (command, value = null) => {
-    try {
-      document.execCommand(command, false, value)
-      noticeForm.editorRef.current?.focus()
-    } catch (error) {
-      console.error('Error in execCommand:', error)
-    }
-  }
-
-  const handleEditorChange = () => {
-    try {
-      if (noticeForm.editorRef.current) {
-        const plainText = noticeForm.editorRef.current.textContent || noticeForm.editorRef.current.innerText || ''
-        noticeForm.onChange('description', plainText)
-      }
-    } catch (error) {
-      console.error('Error in handleEditorChange:', error)
-    }
-  }
-
-  const clearFormatting = () => {
-    execCommand('removeFormat')
-    execCommand('formatBlock', 'p')
-  }
-
-  const insertLink = () => {
-    const url = prompt('Enter URL:')
-    if (url) {
-      execCommand('createLink', url)
-    }
-  }
-
-  const removeLink = () => {
-    execCommand('unlink')
+  // Rich Text Editor handler
+  const handleEditorChange = ({ html, text }) => {
+    noticeForm.setEditorHtml(html)
+    noticeForm.setEditorText(text)
+    noticeForm.onChange('description', text)
   }
 
   const handleFileInputChange = (e) => {
@@ -188,14 +167,11 @@ export const Notices = () => {
     }
   }
 
-  const resetForm = () => {
-    noticeForm.resetForm()
-  }
-
   const openCreateModal = () => {
     try {
       setModalMode('create')
       setEditingNoticeId(null)
+      noticeForm.initializeCreate()
       setIsModalOpen(true)
     } catch (error) {
       console.error('Error in openCreateModal:', error)
@@ -205,9 +181,14 @@ export const Notices = () => {
 
   const openEditModal = (noticeId) => {
     try {
-      setModalMode('edit')
-      setEditingNoticeId(noticeId)
-      setIsModalOpen(true)
+      const allNotices = notices.flatMap(group => group.items)
+      const notice = allNotices.find(n => n.id === noticeId)
+      if (notice) {
+        setModalMode('edit')
+        setEditingNoticeId(noticeId)
+        noticeForm.beginEdit(notice)
+        setIsModalOpen(true)
+      }
     } catch (error) {
       console.error('Error in openEditModal:', error)
       alert('An error occurred while opening edit modal')
@@ -219,7 +200,7 @@ export const Notices = () => {
       setIsModalOpen(false)
       setModalMode('create')
       setEditingNoticeId(null)
-      resetForm()
+      noticeForm.resetForm()
     } catch (error) {
       console.error('Error in closeModal:', error)
     }
@@ -244,22 +225,40 @@ export const Notices = () => {
   }
 
   const handleAddCategory = () => {
-    if (!newCategoryName.trim()) return
-    
+    if (!newCategoryName.trim()) {
+      setCategoryError('Category name is required')
+      return
+    }
+
     try {
       addCategory(newCategoryName.trim())
       setNewCategoryName('')
-      setShowAddCategory(false)
+      setAddCategoryModalOpen(false)
       setCategoryError('')
+      // Set the new category as active
+      const slug = newCategoryName.trim().toLowerCase().replace(/\s+/g, '-')
+      setActiveCategory(slug)
     } catch (error) {
       console.error('Error adding category:', error)
-      alert('An error occurred while adding the category')
+      setCategoryError('An error occurred while adding the category')
     }
+  }
+
+  const openAddCategoryModal = () => {
+    setAddCategoryModalOpen(true)
+    setNewCategoryName('')
+    setCategoryError('')
+  }
+
+  const closeAddCategoryModal = () => {
+    setAddCategoryModalOpen(false)
+    setNewCategoryName('')
+    setCategoryError('')
   }
 
   const handleDeleteCategory = (categoryId) => {
     if (categoryId === 'general') return // Don't allow deleting default category
-    
+
     try {
       deleteCategory(categoryId)
       if (activeCategory === categoryId) {
@@ -284,7 +283,7 @@ export const Notices = () => {
   const handleConfirmDelete = () => {
     if (categoryToDelete) {
       deleteCategoryAndNotices(categoryToDelete)
-      
+
       // Switch to first remaining category if current was deleted
       if (activeCategory === categoryToDelete) {
         const remainingCategories = categories.filter(cat => cat.id !== categoryToDelete)
@@ -294,7 +293,7 @@ export const Notices = () => {
           setActiveCategory('general')
         }
       }
-      
+
       closeConfirmModal()
     }
   }
@@ -314,44 +313,6 @@ export const Notices = () => {
 
   return (
     <>
-      <style>
-        {`
-          .notice-description {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            word-break: break-word;
-          }
-          
-          .one-line-ellipsis {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: block;
-            position: relative;
-          }
-          
-          .notice-title[data-marquee="1"]:hover .notice-title__inner {
-            animation: notice-title-slide var(--marquee-duration, 10s) linear infinite alternate;
-            will-change: transform;
-          }
-          
-          @keyframes notice-title-slide {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(calc(-1 * var(--overflow-px, 0px))); }
-          }
-          
-          @media (prefers-reduced-motion: reduce) {
-            .notice-title[data-marquee="1"]:hover .notice-title__inner {
-              animation: none;
-            }
-          }
-          
-        `}
-      </style>
       <div className="notices-page">
         <div className="notices-container">
           <div className="notices-header">
@@ -367,14 +328,14 @@ export const Notices = () => {
               >
                 {user?.role === 'admin' ? 'Switch to User View' : 'Switch to Admin View'}
               </button>
-              
+
               <button
                 className="notices-seed-btn"
                 onClick={handleSeedNotices}
               >
                 Seed Notices
               </button>
-              
+
               {can(user, 'notices:create') && (
                 <button
                   className="add-notice-btn"
@@ -408,34 +369,14 @@ export const Notices = () => {
                   )}
                 </div>
               ))}
-              
+
               {can(user, 'notices:create') && (
-                <div className="add-category-control">
-                  {showAddCategory ? (
-                    <div className="add-category-input">
-                      <input
-                        type="text"
-                        placeholder="Category name"
-                        value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleAddCategory()}
-                        autoFocus
-                      />
-                      <button onClick={handleAddCategory}>Add</button>
-                      <button onClick={() => {
-                        setShowAddCategory(false)
-                        setNewCategoryName('')
-                      }}>Cancel</button>
-                    </div>
-                  ) : (
-                    <button
-                      className="add-category-btn"
-                      onClick={() => setShowAddCategory(true)}
-                    >
-                      + Category
-                    </button>
-                  )}
-                </div>
+                <button
+                  className="add-category-btn"
+                  onClick={openAddCategoryModal}
+                >
+                  <i className="bi bi-plus"></i>
+                </button>
               )}
             </div>
             {categoryError && (
@@ -445,9 +386,21 @@ export const Notices = () => {
 
           {currentNotices.length === 0 ? (
             <div className="empty-state">
-              <img src="/public/empty-state-admin.png" alt="" />
-              <h2>No notices in this category</h2>
-              <p>This category doesn't have any notices yet.</p>
+              {can(user, 'events:create') ? (
+                // Admin empty state
+                <>
+                  <img src="/public/empty-state-admin.png" alt="" />
+                  <h2>Oops nothing to see here yet!</h2>
+                  <p>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</p>
+                </>
+              ) : (
+                // User empty state
+                <>
+                  <img src="/public/empty-state-user.png" alt="" className="empty-state-user" />
+                  <h2>Oops! No data found.</h2>
+                  <p>Nothing's been added here yet, or there might be a hiccup.<br />Try again or check back later!</p>
+                </>
+              )}
             </div>
           ) : (
             <div className="notices-list">
@@ -455,43 +408,53 @@ export const Notices = () => {
                 <div key={notice.id} className="notice-card">
                   <div className="notice-content">
                     <div className="notice-header">
-                      <div 
-                        className="notice-title one-line-ellipsis"
-                        ref={titleMarquee.titleContainerRef}
-                        onMouseEnter={titleMarquee.onMouseEnter}
-                        onMouseLeave={titleMarquee.onMouseLeave}
-                      >
-                        <span className="notice-title__inner" title={notice.fileName}>{notice.fileName}</span>
+                      <div className="notice-info">
+                        <h3
+                          className="notice-title one-line-ellipsis"
+                          ref={titleMarquee.titleContainerRef}
+                          onMouseEnter={titleMarquee.onMouseEnter}
+                          onMouseLeave={titleMarquee.onMouseLeave}
+                        >
+                          <span className="notice-title__inner" title={notice.fileName}>{notice.fileName}</span>
+                        </h3>
+                        <p className="notice-description">
+                          {useFallback ? truncateText(notice.description) : notice.description}
+                        </p>
                       </div>
-                      <span className="notice-date">{formatDate(notice.createdAt)}</span>
-                    </div>
-                    <p className="notice-description">
-                      {useFallback ? truncateText(notice.description) : notice.description}
-                    </p>
-                    <div className="notice-actions">
-                      {can(user, 'notices:update') && (
+                      <div className="notice-actions">
+                        {can(user, 'notices:delete') && (
+                          <button
+                            className="notice-card__delete-btn"
+                            onClick={() => handleDelete(notice.id)}
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        )}
+                        {can(user, 'notices:update') && (
+                          <button
+                            className="edit-btn"
+                            onClick={() => handleEdit(notice.id)}
+                          >
+                            Edit Notice
+                          </button>
+                        )}
                         <button
-                          className="edit-btn"
-                          onClick={() => handleEdit(notice.id)}
+                          className="download-btn"
+                          onClick={() => {/* TODO: Implement download functionality */ }}
                         >
-                          Edit Notice
+                          Download Notice
                         </button>
-                      )}
-                      {can(user, 'notices:delete') && (
-                        <button
-                          className="notice-card__delete-btn"
-                          onClick={() => handleDelete(notice.id)}
-                        >
-                          Delete Notice
-                        </button>
-                      )}
-                      <button
-                        className="download-btn"
-                        onClick={() => {/* TODO: Implement download functionality */}}
-                      >
-                        Download Notice
-                      </button>
+                      </div>
                     </div>
+                    {(notice.imagePreviewUrl || notice.imageUrl) && (
+                      <div className="notice-image">
+                        <img
+                          src={notice.imagePreviewUrl || notice.imageUrl}
+                          alt={notice.fileName || 'Notice image'}
+                        />
+                      </div>
+                    )}
+                    <span className="notice-date">Published: {formatDate(notice.createdAt)}</span>
                   </div>
                 </div>
               ))}
@@ -501,13 +464,13 @@ export const Notices = () => {
 
         {/* Add/Edit Notice Modal */}
         {isModalOpen && (
-          <div 
-            className="notices-modal-overlay" 
+          <div
+            className="notices-modal-overlay"
             onPointerDown={modalBackdropClose.onBackdropPointerDown}
             onPointerUp={modalBackdropClose.onBackdropPointerUp}
             onPointerCancel={modalBackdropClose.onBackdropPointerCancel}
           >
-            <div 
+            <div
               className="notices-modal"
               onPointerDown={modalBackdropClose.stopInsidePointer}
               onClick={modalBackdropClose.stopInsidePointer}
@@ -516,7 +479,7 @@ export const Notices = () => {
                 <h2>{modalMode === 'create' ? 'Add New Notice' : 'Edit Notice'}</h2>
                 <button
                   className="close-btn"
-                  onClick={closeModal}
+                  onClick={handleCancel}
                 >
                   <i className="bi bi-x"></i>
                 </button>
@@ -552,101 +515,12 @@ export const Notices = () => {
 
                 <div className="form-group">
                   <label htmlFor="description">Description</label>
-                  <div className="wysiwyg-toolbar">
-                    {/* Format Dropdown */}
-                    <select
-                      onChange={(e) => execCommand('formatBlock', e.target.value)}
-                      defaultValue="p"
-                    >
-                      <option value="p">Paragraph</option>
-                      <option value="h1">Heading 1</option>
-                      <option value="h2">Heading 2</option>
-                      <option value="h3">Heading 3</option>
-                    </select>
-
-                    {/* Text Formatting */}
-                    <button type="button" onClick={() => execCommand('bold')} title="Bold">
-                      <strong>B</strong>
-                    </button>
-                    <button type="button" onClick={() => execCommand('italic')} title="Italic">
-                      <em>I</em>
-                    </button>
-                    <button type="button" onClick={() => execCommand('underline')} title="Underline">
-                      <u>U</u>
-                    </button>
-                    <button type="button" onClick={() => execCommand('strikeThrough')} title="Strikethrough">
-                      <s>S</s>
-                    </button>
-
-                    <div className="toolbar-separator"></div>
-
-                    {/* Lists */}
-                    <button type="button" onClick={() => execCommand('insertUnorderedList')} title="Bullet List">
-                      • List
-                    </button>
-                    <button type="button" onClick={() => execCommand('insertOrderedList')} title="Numbered List">
-                      1. List
-                    </button>
-
-                    <div className="toolbar-separator"></div>
-
-                    {/* Alignment */}
-                    <button type="button" onClick={() => execCommand('justifyLeft')} title="Align Left">
-                      ←
-                    </button>
-                    <button type="button" onClick={() => execCommand('justifyCenter')} title="Align Center">
-                      ↔
-                    </button>
-                    <button type="button" onClick={() => execCommand('justifyRight')} title="Align Right">
-                      →
-                    </button>
-
-                    <div className="toolbar-separator"></div>
-
-                    {/* Special Formatting */}
-                    <button type="button" onClick={() => execCommand('formatBlock', 'blockquote')} title="Quote">
-                      " Quote
-                    </button>
-                    <button type="button" onClick={() => execCommand('insertText', '`code`')} title="Inline Code">
-                      `code`
-                    </button>
-                    <button type="button" onClick={() => execCommand('formatBlock', 'pre')} title="Code Block">
-                      { } Code
-                    </button>
-
-                    <div className="toolbar-separator"></div>
-
-                    {/* Links */}
-                    <button type="button" onClick={insertLink} title="Insert Link">
-                      🔗 Link
-                    </button>
-                    <button type="button" onClick={removeLink} title="Remove Link">
-                      🔗× Unlink
-                    </button>
-
-                    <div className="toolbar-separator"></div>
-
-                    {/* History */}
-                    <button type="button" onClick={() => execCommand('undo')} title="Undo">
-                      ↶ Undo
-                    </button>
-                    <button type="button" onClick={() => execCommand('redo')} title="Redo">
-                      ↷ Redo
-                    </button>
-
-                    <div className="toolbar-separator"></div>
-
-                    {/* Clear */}
-                    <button type="button" onClick={clearFormatting} title="Clear Formatting">
-                      ✕ Clear
-                    </button>
-                  </div>
-                  <div
-                    ref={noticeForm.editorRef}
-                    className="wysiwyg-content wysiwyg-content-fix"
-                    contentEditable
-                    onInput={handleEditorChange}
-                    suppressContentEditableWarning={true}
+                  <RichTextEditor
+                    key={`rte-${modalMode === 'edit' ? editingNoticeId : 'new'}`}
+                    contentKey={modalMode === 'edit' ? editingNoticeId : 'new'}
+                    initialHtml={noticeForm.editorHtml}
+                    onChange={handleEditorChange}
+                    placeholder="Write a description..."
                   />
                 </div>
 
@@ -665,7 +539,7 @@ export const Notices = () => {
 
                 <div className="form-group">
                   <label htmlFor="file">Upload File</label>
-                  <div 
+                  <div
                     className="file-upload-area"
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
@@ -694,13 +568,13 @@ export const Notices = () => {
                 </div>
 
                 {noticeForm.errorMessage && (
-                  <div style={{ color: '#ff0a0a', fontSize: '12px', marginBottom: '10px' }}>
+                  <div className="error-message">
                     {noticeForm.errorMessage}
                   </div>
                 )}
 
                 <div className="form-actions">
-                  <button type="button" onClick={closeModal}>
+                  <button type="button" onClick={handleCancel}>
                     Cancel
                   </button>
                   <button type="submit">
@@ -713,15 +587,80 @@ export const Notices = () => {
         )}
       </div>
 
+      {/* Add Category Modal */}
+      {addCategoryModalOpen && (
+        <div
+          className="notices-modal-overlay"
+          onPointerDown={addCategoryModalBackdropClose.onBackdropPointerDown}
+          onPointerUp={addCategoryModalBackdropClose.onBackdropPointerUp}
+          onPointerCancel={addCategoryModalBackdropClose.onBackdropPointerCancel}
+        >
+          <div
+            className="notices-modal notices-addcat-modal"
+            onPointerDown={addCategoryModalBackdropClose.stopInsidePointer}
+            onClick={addCategoryModalBackdropClose.stopInsidePointer}
+          >
+            <div className="notices-modal-header">
+              <button
+                className="close-btn"
+                onClick={closeAddCategoryModal}
+              >
+                <i className="bi bi-x"></i>
+              </button>
+            </div>
+
+            <div className="notices-addcat-modal__content">
+              <h2 className="notices-addcat-modal__title">Add New Tab</h2>
+              <p className="notices-addcat-modal__subtitle">Please add new tab details</p>
+
+              <div className="form-group">
+                <label htmlFor="categoryName" className="notices-addcat-modal__label">Enter the Tab Name</label>
+                <input
+                  type="text"
+                  id="categoryName"
+                  placeholder="Please mention the name of the new tab which you want to create"
+                  className="notices-addcat-modal__input"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCategory();
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
+
+              {categoryError && (
+                <div className="error-message">
+                  {categoryError}
+                </div>
+              )}
+
+              <div className="notices-addcat-modal__actions">
+                <button
+                  type="button"
+                  className="notices-addcat-modal__update-btn"
+                  onClick={handleAddCategory}
+                >
+                  Update
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirm Delete Modal */}
       {confirmModalOpen && (
-        <div 
-          className="notices-modal-overlay" 
+        <div
+          className="notices-modal-overlay"
           onPointerDown={confirmModalBackdropClose.onBackdropPointerDown}
           onPointerUp={confirmModalBackdropClose.onBackdropPointerUp}
           onPointerCancel={confirmModalBackdropClose.onBackdropPointerCancel}
         >
-          <div 
+          <div
             className="notices-modal"
             onPointerDown={confirmModalBackdropClose.stopInsidePointer}
             onClick={confirmModalBackdropClose.stopInsidePointer}
@@ -736,14 +675,14 @@ export const Notices = () => {
               </button>
             </div>
 
-            <div style={{ padding: '20px' }}>
-              <p>This will permanently delete the category and all its notices. Are you sure?</p>
-              
+            <div className="confirm-modal-content">
+              <p>This will permanently delete the category and all its notices.</p>
+
               <div className="form-actions">
-                <button type="button" onClick={closeConfirmModal}>
+                <button type="button" onClick={closeConfirmModal} className="cancel-button">
                   Cancel
                 </button>
-                <button type="button" onClick={handleConfirmDelete} style={{ backgroundColor: '#dc3545', color: 'white' }}>
+                <button type="button" onClick={handleConfirmDelete} className="delete-button">
                   Delete
                 </button>
               </div>

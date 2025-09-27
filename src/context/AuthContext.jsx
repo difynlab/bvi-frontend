@@ -157,9 +157,13 @@ export const AuthProvider = ({ children }) => {
       setUser(updatedUser)
       
       // Update localStorage with new role
-      const session = JSON.parse(localStorage.getItem('session') || '{}')
-      session.user = updatedUser
-      localStorage.setItem('session', JSON.stringify(session))
+      try {
+        const session = JSON.parse(localStorage.getItem('session') || '{}')
+        session.user = updatedUser
+        localStorage.setItem('session', JSON.stringify(session))
+      } catch (error) {
+        console.error('Error updating session in localStorage:', error)
+      }
     }
   }
 

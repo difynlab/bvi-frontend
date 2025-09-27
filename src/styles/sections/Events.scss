@@ -3,6 +3,50 @@
   min-height: 100vh;
 }
 
+// Estilos movidos desde JSX
+.event-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+.one-line-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  position: relative;
+}
+
+.event-title[data-marquee="1"]:hover .event-title__inner {
+  animation: event-title-slide var(--marquee-duration, 10s) linear infinite alternate;
+  will-change: transform;
+}
+
+@keyframes event-title-slide {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-1 * var(--overflow-px, 0px))); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-title[data-marquee="1"]:hover .event-title__inner {
+    animation: none;
+  }
+}
+
+@import '../variables';
+
+// Estilos para mensajes de error
+.error-message {
+  color: $vivid_red;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
 .events-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -16,7 +60,7 @@
   height: 55px;
 }
 
-.events-header-title, .notices-header-title {
+.events-header-title, .notices-header-title, .newsletters-header-title {
   height: 55px;
   display: flex;
   flex-direction: column;
@@ -35,8 +79,8 @@
   }
 }
 
-.add-event-btn {
-  background-color: #e93125;
+.add-event-btn, .add-notice-btn, .add-newsletter-btn {
+  background-color: $vivid_red;
   position: relative;
   width: 135px;
   display: flex;
@@ -50,7 +94,7 @@
   font-weight: 300;
   cursor: pointer;
   transition: background-color 0.3s;
-
+  
   i {
     position: absolute;
     left: 12.5px;
@@ -69,7 +113,7 @@
 }
 
 .add-event-btn:hover {
-  background-color: #ff392a;
+  background-color: lighten($vivid_red, 5%);
 }
 
 .events-list {
@@ -145,7 +189,7 @@
 }
 
 .event-type.conference {
-  color: #e93125;
+  color: $vivid_red;
   background-color: rgb(233, 49, 37, 0.2);
 }
 
@@ -155,7 +199,7 @@
 }
 
 .event-type.workshop {
-  color: #3b82f6;
+  color: $vivid_blue;
   background-color: rgba(59, 131, 246, 0.2);
 }
 
@@ -239,8 +283,8 @@
 
 .delete-btn {
   background-color: white;
-  color: #ef4444;
-  border: 1px solid #ef4444;
+  color: $vivid_red;
+  border: 1px solid $vivid_red;
   padding: 10px 15px;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -251,7 +295,7 @@
 }
 
 .delete-btn:hover {
-  background-color: #ef4444;
+  background-color: $vivid_red;
   color: white;
 }
 
@@ -363,7 +407,7 @@
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: $vivid_blue;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -434,7 +478,7 @@
 }
 
 .wysiwyg-content:focus {
-  border-color: #3b82f6;
+  border-color: $vivid_blue;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -483,13 +527,10 @@
 }
 
 .wysiwyg-content a {
-  color: #3b82f6;
+  color: $vivid_blue;
   text-decoration: underline;
 }
 
-.wysiwyg-content a:hover {
-  color: #1d4ed8;
-}
 
 /* Empty State Styles */
 .empty-state {
@@ -646,13 +687,13 @@ img.empty-state-user {
 }
 
 .dropzone.drag-over {
-  border-color: #3b82f6;
+  border-color: $vivid_blue;
   background-color: #eff6ff;
 }
 
 .file-input-label {
   display: inline-block;
-  background-color: #3b82f6;
+  background-color: $vivid_blue;
   color: white;
   padding: 8px 16px;
   border-radius: 6px;
@@ -712,7 +753,7 @@ img.empty-state-user {
 }
 
 .upload-btn {
-  background-color: #3b82f6;
+  background-color: $vivid_blue;
   color: white;
   border: none;
 }
@@ -798,7 +839,7 @@ img.empty-state-user {
   }
 
   &.user {
-    background-color: #007bff4b;
+    background-color: rgba(16, 67, 148, 0.3);
   }
 
   &:hover {

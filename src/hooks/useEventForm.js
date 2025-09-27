@@ -1,4 +1,54 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+
+// Utility to convert plain text to minimal HTML
+const htmlFromPlain = (txt = '') => {
+  if (!txt || txt.trim() === '') return ''
+  return '<p>' + escapeHtml(txt).replace(/\n/g, '<br/>') + '</p>'
+}
+
+// Utility to escape HTML
+const escapeHtml = (text) => {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+// Utility to strip HTML
+const stripHtml = (html = '') => {
+  const el = document.createElement('div')
+  el.innerHTML = html
+  return el.textContent || ''
+}
+
+// Utility to deep clone an object
+const deepClone = (obj) => {
+  if (obj === null || typeof obj !== 'object') return obj
+  if (obj instanceof Date) return new Date(obj.getTime())
+  if (obj instanceof Array) return obj.map(item => deepClone(item))
+  if (typeof obj === 'object') {
+    const clonedObj = {}
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        clonedObj[key] = deepClone(obj[key])
+      }
+    }
+    return clonedObj
+  }
+  return obj
+}
+
+// Utility to build form state from item
+const fromItem = (item) => ({
+  title: item.title || '',
+  date: item.date || '',
+  startTime: item.startTime || '',
+  endTime: item.endTime || '',
+  timeZone: item.timeZone || 'UTC',
+  eventType: item.eventType || 'Conference',
+  description: item.description || '',
+  location: item.location || '',
+  file: null,
+  imageFileName: item.imageFileName || '',
+  imagePreviewUrl: item.imagePreviewUrl || ''
+})
 
 const TIME_ZONES = [
   'UTC',
@@ -21,57 +71,64 @@ const EVENT_TYPES = [
 ]
 
 export const useEventForm = ({ initial = {}, mode = 'create' }) => {
-  const editorRef = useRef(null)
+  // Reference to store original item data for rollback
+  const originalRef = useRef(null)
   
-  // Memoize the initial form data to prevent infinite loops
-  const initialFormData = useMemo(() => ({
-    title: initial.title || '',
-    date: initial.date || '',
-    startTime: initial.startTime || '',
-    endTime: initial.endTime || '',
-    timeZone: initial.timeZone || 'UTC',
-    eventType: initial.eventType || 'Conference',
-    description: initial.description || '',
-    location: initial.location || '',
+  // Default empty form state
+  const emptyForm = {
+    title: '',
+    date: '',
+    startTime: '',
+    endTime: '',
+    timeZone: 'UTC',
+    eventType: 'Conference',
+    description: '',
+    location: '',
     file: null,
-    imageFileName: initial.imageFileName || '',
-    imagePreviewUrl: initial.imagePreviewUrl || ''
-  }), [initial])
+    imageFileName: '',
+    imagePreviewUrl: ''
+  }
   
-  const [form, setForm] = useState(initialFormData)
-  const [editorHtml, setEditorHtml] = useState(initial.description || '')
+  const [form, setForm] = useState(emptyForm)
+  const [editorHtml, setEditorHtml] = useState('')
+  const [editorText, setEditorText] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
 
-  // Initialize form with initial data
-  useEffect(() => {
-    if (initial && Object.keys(initial).length > 0) {
-      setForm(initialFormData)
-      setEditorHtml(initial.description || '')
-    } else if (mode === 'create') {
-      // Reset form for create mode
-      setForm({
-        title: '',
-        date: '',
-        startTime: '',
-        endTime: '',
-        timeZone: 'UTC',
-        eventType: 'Conference',
-        description: '',
-        location: '',
-        file: null,
-        imageFileName: '',
-        imagePreviewUrl: ''
-      })
-      setEditorHtml('')
-    }
-  }, [initialFormData, initial.description, mode])
+  // Begin editing - take snapshot and initialize form
+  const beginEdit = (item) => {
+    originalRef.current = deepClone(item)
+    const formData = fromItem(originalRef.current)
+    const initialHtml = originalRef.current.editorHtml || htmlFromPlain(originalRef.current.description || '')
+    const description = originalRef.current.description || stripHtml(originalRef.current.editorHtml || '')
+    
+    setForm(formData)
+    setEditorHtml(initialHtml)
+    setEditorText(description)
+    setErrorMessage('')
+  }
 
-  // Set editor content when editing
-  useEffect(() => {
-    if (mode === 'edit' && editorRef.current && initial.description) {
-      editorRef.current.innerHTML = initial.description
-    }
-  }, [mode, initial.description])
+  // Rollback to original data
+  const rollbackEdit = () => {
+    if (!originalRef.current) return
+    
+    const formData = fromItem(originalRef.current)
+    const initialHtml = originalRef.current.editorHtml || htmlFromPlain(originalRef.current.description || '')
+    const description = originalRef.current.description || stripHtml(originalRef.current.editorHtml || '')
+    
+    setForm(formData)
+    setEditorHtml(initialHtml)
+    setEditorText(description)
+    setErrorMessage('')
+  }
+
+  // Initialize form for create mode
+  const initializeCreate = () => {
+    originalRef.current = null
+    setForm(emptyForm)
+    setEditorHtml('')
+    setEditorText('')
+    setErrorMessage('')
+  }
 
   const onChange = (key, value) => {
     let newValue = value
@@ -172,7 +229,8 @@ export const useEventForm = ({ initial = {}, mode = 'create' }) => {
       endTime: form.endTime,
       timeZone: form.timeZone,
       eventType: form.eventType,
-      description: form.description,
+      description: editorText,
+      editorHtml: editorHtml,
       location: form.location,
       imageFileName: form.imageFileName || 'no-image.jpg',
       imagePreviewUrl: form.imagePreviewUrl || ''
@@ -180,20 +238,10 @@ export const useEventForm = ({ initial = {}, mode = 'create' }) => {
   }
 
   const resetForm = () => {
-    setForm({
-      title: '',
-      date: '',
-      startTime: '',
-      endTime: '',
-      timeZone: 'UTC',
-      eventType: 'Conference',
-      description: '',
-      location: '',
-      file: null,
-      imageFileName: '',
-      imagePreviewUrl: ''
-    })
+    originalRef.current = null
+    setForm(emptyForm)
     setEditorHtml('')
+    setEditorText('')
     setErrorMessage('')
   }
 
@@ -202,15 +250,19 @@ export const useEventForm = ({ initial = {}, mode = 'create' }) => {
     setForm,
     editorHtml,
     setEditorHtml,
+    editorText,
+    setEditorText,
     errorMessage,
     setErrorMessage,
-    editorRef,
     setFileFromInput,
     setFileFromDrop,
     onChange,
     validate,
     buildEventObject,
     resetForm,
+    beginEdit,
+    rollbackEdit,
+    initializeCreate,
     TIME_ZONES,
     EVENT_TYPES
   }

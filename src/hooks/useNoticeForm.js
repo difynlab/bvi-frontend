@@ -1,49 +1,106 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 
+// Utility to convert plain text to minimal HTML
+const htmlFromPlain = (txt = '') => {
+  if (!txt || txt.trim() === '') return ''
+  return '<p>' + escapeHtml(txt).replace(/\n/g, '<br/>') + '</p>'
+}
+
+// Utility to escape HTML
+const escapeHtml = (text) => {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+// Utility to strip HTML
+const stripHtml = (html = '') => {
+  const el = document.createElement('div')
+  el.innerHTML = html
+  return el.textContent || ''
+}
+
+// Utility to deep clone an object
+const deepClone = (obj) => {
+  if (obj === null || typeof obj !== 'object') return obj
+  if (obj instanceof Date) return new Date(obj.getTime())
+  if (obj instanceof Array) return obj.map(item => deepClone(item))
+  if (typeof obj === 'object') {
+    const clonedObj = {}
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        clonedObj[key] = deepClone(obj[key])
+      }
+    }
+    return clonedObj
+  }
+  return obj
+}
+
+// Utility to build form state from item
+const fromItem = (item) => ({
+  fileName: item.fileName || '',
+  noticeType: item.noticeType || '',
+  description: item.description || '',
+  imageFileName: item.imageFileName || '',
+  imagePreviewUrl: item.imagePreviewUrl || '',
+  file: null,
+  linkUrl: item.linkUrl || ''
+})
+
 export const useNoticeForm = ({ initial = {}, mode = 'create' }) => {
-  const editorRef = useRef(null)
+  // Reference to store original item data for rollback
+  const originalRef = useRef(null)
   
-  // Memoize the initial form data to prevent infinite loops
-  const initialFormData = useMemo(() => ({
-    fileName: initial.fileName || '',
-    noticeType: initial.noticeType || '',
-    description: initial.description || '',
-    imageFileName: initial.imageFileName || '',
-    imagePreviewUrl: initial.imagePreviewUrl || '',
+  // Default empty form state
+  const emptyForm = {
+    fileName: '',
+    noticeType: '',
+    description: '',
+    imageFileName: '',
+    imagePreviewUrl: '',
     file: null,
-    linkUrl: initial.linkUrl || ''
-  }), [initial])
+    linkUrl: ''
+  }
   
-  const [form, setForm] = useState(initialFormData)
-  const [editorHtml, setEditorHtml] = useState(initial.description || '')
+  const [form, setForm] = useState(emptyForm)
+  const [editorHtml, setEditorHtml] = useState('')
+  const [editorText, setEditorText] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
 
-  // Initialize form with initial data
-  useEffect(() => {
-    if (initial && Object.keys(initial).length > 0) {
-      setForm(initialFormData)
-      setEditorHtml(initial.description || '')
-    } else if (mode === 'create') {
-      // Reset form for create mode
-      setForm({
-        fileName: '',
-        noticeType: '',
-        description: '',
-        imageFileName: '',
-        imagePreviewUrl: '',
-        file: null,
-        linkUrl: ''
-      })
-      setEditorHtml('')
-    }
-  }, [initialFormData, initial.description, mode])
+  // Begin editing - take snapshot and initialize form
+  const beginEdit = (item) => {
+    originalRef.current = deepClone(item)
+    const formData = fromItem(originalRef.current)
+    const initialHtml = originalRef.current.editorHtml || htmlFromPlain(originalRef.current.description || '')
+    const description = originalRef.current.description || stripHtml(originalRef.current.editorHtml || '')
+    
+    setForm(formData)
+    setEditorHtml(initialHtml)
+    setEditorText(description)
+    setErrorMessage('')
+  }
 
-  // Set editor content when editing
-  useEffect(() => {
-    if (mode === 'edit' && editorRef.current && initial.description) {
-      editorRef.current.innerHTML = initial.description
-    }
-  }, [mode, initial.description])
+  // Rollback to original data
+  const rollbackEdit = () => {
+    if (!originalRef.current) return
+    
+    const formData = fromItem(originalRef.current)
+    const initialHtml = originalRef.current.editorHtml || htmlFromPlain(originalRef.current.description || '')
+    const description = originalRef.current.description || stripHtml(originalRef.current.editorHtml || '')
+    
+    setForm(formData)
+    setEditorHtml(initialHtml)
+    setEditorText(description)
+    setErrorMessage('')
+  }
+
+  // Initialize form for create mode
+  const initializeCreate = () => {
+    originalRef.current = null
+    setForm(emptyForm)
+    setEditorHtml('')
+    setEditorText('')
+    setErrorMessage('')
+  }
 
   const onChange = (key, value) => {
     setForm(prev => ({ ...prev, [key]: value }))
@@ -123,25 +180,20 @@ export const useNoticeForm = ({ initial = {}, mode = 'create' }) => {
       id,
       fileName: form.fileName,
       noticeType: form.noticeType,
-      description: form.description,
+      description: editorText,
+      editorHtml: editorHtml,
       imageFileName: form.imageFileName || 'no-image.jpg',
       imagePreviewUrl: form.imagePreviewUrl || '',
       linkUrl: form.linkUrl,
-      createdAt: existingId ? initial.createdAt : new Date().toISOString().split('T')[0]
+      createdAt: existingId ? (initial.createdAt || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0]
     }
   }
 
   const resetForm = () => {
-    setForm({
-      fileName: '',
-      noticeType: '',
-      description: '',
-      imageFileName: '',
-      imagePreviewUrl: '',
-      file: null,
-      linkUrl: ''
-    })
+    originalRef.current = null
+    setForm(emptyForm)
     setEditorHtml('')
+    setEditorText('')
     setErrorMessage('')
   }
 
@@ -150,14 +202,18 @@ export const useNoticeForm = ({ initial = {}, mode = 'create' }) => {
     setForm,
     editorHtml,
     setEditorHtml,
+    editorText,
+    setEditorText,
     errorMessage,
     setErrorMessage,
-    editorRef,
     setFileFromInput,
     setFileFromDrop,
     onChange,
     validate,
     buildNoticeObject,
-    resetForm
+    resetForm,
+    beginEdit,
+    rollbackEdit,
+    initializeCreate
   }
 }

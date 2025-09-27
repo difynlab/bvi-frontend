@@ -5,6 +5,7 @@ import { Login } from './sections/login-register/Login'
 import { ForgetPassword } from './sections/login-register/ForgetPassword'
 import { Events } from './sections/events/Events'
 import { Notices } from './sections/notices/Notices'
+import { Newsletters } from './sections/newsletters/Newsletters'
 import RouteGuard from './auth/RouteGuard'
 import Forbidden from './pages/Forbidden'
 import ResetPassword from './pages/ResetPassword'
@@ -114,7 +115,7 @@ function App() {
         <Route path='/newsletter' element={
           <RouteGuard requireAuth>
             <MainLayout>
-              <Newsletter />
+              <Newsletters />
             </MainLayout>
           </RouteGuard>
         }></Route>

@@ -5,7 +5,7 @@ import { useEventsState } from '../../hooks/useEventsState'
 import { useEventForm } from '../../hooks/useEventForm'
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
 import { useTitleMarquee } from '../../hooks/useTitleMarquee'
-import { stripHtmlToPlainText } from '../../helpers/eventsValidation'
+import RichTextEditor from '../../components/editor/RichTextEditor'
 import '../../styles/sections/Events.scss'
 
 export const Events = () => {
@@ -22,20 +22,29 @@ export const Events = () => {
   const [registeringEvent, setRegisteringEvent] = useState(null)
   
   // Form management
-  const initialFormData = useMemo(() => {
-    if (modalMode === 'edit' && editingEventId) {
-      return events.find(e => e.id === editingEventId) || {}
-    }
-    return {}
-  }, [modalMode, editingEventId, events])
-  
   const eventForm = useEventForm({ 
-    initial: initialFormData,
+    initial: {},
     mode: modalMode 
   })
+
+  // Cancel handler for modal close
+  const handleCancel = () => {
+    try {
+      if (modalMode === 'edit') {
+        eventForm.rollbackEdit()
+      } else {
+        eventForm.resetForm()
+      }
+      setIsModalOpen(false)
+      setModalMode('create')
+      setEditingEventId(null)
+    } catch (error) {
+      console.error('Error in handleCancel:', error)
+    }
+  }
   
   // Modal backdrop close behavior
-  const modalBackdropClose = useModalBackdropClose(() => setIsModalOpen(false))
+  const modalBackdropClose = useModalBackdropClose(handleCancel)
   const registerModalBackdropClose = useModalBackdropClose(() => setIsRegisterModalOpen(false))
   
   // Title marquee behavior
@@ -126,48 +135,18 @@ export const Events = () => {
     eventForm.onChange(name, value)
   }
 
-  // WYSIWYG Editor Functions
-  const execCommand = (command, value = null) => {
-    try {
-      document.execCommand(command, false, value)
-      eventForm.editorRef.current?.focus()
-    } catch (error) {
-      console.error('Error in execCommand:', error)
-    }
-  }
-
-  const handleEditorChange = () => {
-    try {
-      if (eventForm.editorRef.current) {
-        const plainText = eventForm.editorRef.current.textContent || eventForm.editorRef.current.innerText || ''
-        eventForm.onChange('description', plainText)
-      }
-    } catch (error) {
-      console.error('Error in handleEditorChange:', error)
-    }
-  }
-
-  const clearFormatting = () => {
-    execCommand('removeFormat')
-    execCommand('formatBlock', 'p')
-  }
-
-  const insertLink = () => {
-    const url = prompt('Enter URL:')
-    if (url) {
-      execCommand('createLink', url)
-    }
-  }
-
-  const removeLink = () => {
-    execCommand('unlink')
+  // Rich Text Editor handler
+  const handleEditorChange = ({ html, text }) => {
+    eventForm.setEditorHtml(html)
+    eventForm.setEditorText(text)
+    eventForm.onChange('description', text)
   }
 
   const openCreateModal = () => {
     try {
       setModalMode('create')
       setEditingEventId(null)
-      resetForm()
+      eventForm.initializeCreate()
       setIsModalOpen(true)
     } catch (error) {
       console.error('Error in openCreateModal:', error)
@@ -181,6 +160,7 @@ export const Events = () => {
       if (event) {
         setModalMode('edit')
         setEditingEventId(eventId)
+        eventForm.beginEdit(event)
         setIsModalOpen(true)
       }
     } catch (error) {
@@ -204,7 +184,7 @@ export const Events = () => {
       setIsModalOpen(false)
       setModalMode('create')
       setEditingEventId(null)
-      resetForm()
+      eventForm.resetForm()
     } catch (error) {
       console.error('Error in closeModal:', error)
     }
@@ -297,10 +277,6 @@ export const Events = () => {
     }
   }
 
-  const resetForm = () => {
-    eventForm.resetForm()
-  }
-
   const handleEdit = (eventId) => {
     try {
       openEditModal(eventId)
@@ -321,43 +297,6 @@ export const Events = () => {
 
   return (
     <>
-      <style>
-        {`
-          .event-description {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            word-break: break-word;
-          }
-          
-          .one-line-ellipsis {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: block;
-            position: relative;
-          }
-          
-          .event-title[data-marquee="1"]:hover .event-title__inner {
-            animation: event-title-slide var(--marquee-duration, 10s) linear infinite alternate;
-            will-change: transform;
-          }
-          
-          @keyframes event-title-slide {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(calc(-1 * var(--overflow-px, 0px))); }
-          }
-          
-          @media (prefers-reduced-motion: reduce) {
-            .event-title[data-marquee="1"]:hover .event-title__inner {
-              animation: none;
-            }
-          }
-        `}
-      </style>
       <div className="events-page">
       <div className="events-container">
         <div className="events-header">
@@ -497,7 +436,7 @@ export const Events = () => {
               <h2>{modalMode === 'create' ? 'Add New Event' : 'Edit Event'}</h2>
               <button
                 className="close-btn"
-                onClick={closeModal}
+                onClick={handleCancel}
               >
                 ×
               </button>
@@ -582,104 +521,13 @@ export const Events = () => {
 
               <div className="form-group">
                 <label htmlFor="description">Description</label>
-                <div className="wysiwyg-editor">
-                  <div className="wysiwyg-toolbar">
-                    {/* Format Dropdown */}
-                    <select
-                      onChange={(e) => execCommand('formatBlock', e.target.value)}
-                      defaultValue="p"
-                    >
-                      <option value="p">Paragraph</option>
-                      <option value="h1">Heading 1</option>
-                      <option value="h2">Heading 2</option>
-                      <option value="h3">Heading 3</option>
-                    </select>
-
-                    {/* Text Formatting */}
-                    <button type="button" onClick={() => execCommand('bold')} title="Bold">
-                      <strong>B</strong>
-                    </button>
-                    <button type="button" onClick={() => execCommand('italic')} title="Italic">
-                      <em>I</em>
-                    </button>
-                    <button type="button" onClick={() => execCommand('underline')} title="Underline">
-                      <u>U</u>
-                    </button>
-                    <button type="button" onClick={() => execCommand('strikeThrough')} title="Strikethrough">
-                      <s>S</s>
-                    </button>
-
-                    <div className="toolbar-separator"></div>
-
-                    {/* Lists */}
-                    <button type="button" onClick={() => execCommand('insertUnorderedList')} title="Bullet List">
-                      • List
-                    </button>
-                    <button type="button" onClick={() => execCommand('insertOrderedList')} title="Numbered List">
-                      1. List
-                    </button>
-
-                    <div className="toolbar-separator"></div>
-
-                    {/* Alignment */}
-                    <button type="button" onClick={() => execCommand('justifyLeft')} title="Align Left">
-                      ←
-                    </button>
-                    <button type="button" onClick={() => execCommand('justifyCenter')} title="Align Center">
-                      ↔
-                    </button>
-                    <button type="button" onClick={() => execCommand('justifyRight')} title="Align Right">
-                      →
-                    </button>
-
-                    <div className="toolbar-separator"></div>
-
-                    {/* Special Formatting */}
-                    <button type="button" onClick={() => execCommand('formatBlock', 'blockquote')} title="Quote">
-                      " Quote
-                    </button>
-                    <button type="button" onClick={() => execCommand('insertText', '`code`')} title="Inline Code">
-                      `code`
-                    </button>
-                    <button type="button" onClick={() => execCommand('formatBlock', 'pre')} title="Code Block">
-                      { } Code
-                    </button>
-
-                    <div className="toolbar-separator"></div>
-
-                    {/* Links */}
-                    <button type="button" onClick={insertLink} title="Insert Link">
-                      🔗 Link
-                    </button>
-                    <button type="button" onClick={removeLink} title="Remove Link">
-                      🔗× Unlink
-                    </button>
-
-                    <div className="toolbar-separator"></div>
-
-                    {/* History */}
-                    <button type="button" onClick={() => execCommand('undo')} title="Undo">
-                      ↶ Undo
-                    </button>
-                    <button type="button" onClick={() => execCommand('redo')} title="Redo">
-                      ↷ Redo
-                    </button>
-
-                    <div className="toolbar-separator"></div>
-
-                    {/* Clear */}
-                    <button type="button" onClick={clearFormatting} title="Clear Formatting">
-                      ✕ Clear
-                    </button>
-                  </div>
-                  <div
-                    ref={eventForm.editorRef}
-                    className="wysiwyg-content wysiwyg-content-fix"
-                    contentEditable
-                    onInput={handleEditorChange}
-                    suppressContentEditableWarning={true}
-                  />
-                </div>
+                <RichTextEditor
+                  key={`rte-${modalMode === 'edit' ? editingEventId : 'new'}`}
+                  contentKey={modalMode === 'edit' ? editingEventId : 'new'}
+                  initialHtml={eventForm.editorHtml}
+                  onChange={handleEditorChange}
+                  placeholder="Write a description..."
+                />
               </div>
 
               <div className="form-group">
@@ -723,13 +571,13 @@ export const Events = () => {
               </div>
 
               {eventForm.errorMessage && (
-                <div style={{ color: '#ff0a0a', fontSize: '12px', marginBottom: '10px' }}>
+                <div className="error-message">
                   {eventForm.errorMessage}
                 </div>
               )}
 
               <div className="form-actions">
-                <button type="button" onClick={closeModal}>
+                <button type="button" onClick={handleCancel}>
                   Cancel
                 </button>
                 <button type="submit" className="upload-btn">

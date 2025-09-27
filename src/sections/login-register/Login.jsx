@@ -7,6 +7,7 @@ import '../../styles/sections/Login.scss'
 export const Login = () => {
   const { login, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
+  const [showPassword, setShowPassword] = useState(false)
   const [formValues, setFormValues] = useState({
     username: '',
     password: '',
@@ -105,14 +106,24 @@ export const Login = () => {
 
             <div className="field">
               <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="********"
-                value={formValues.password}
-                onChange={handleChange}
-              />
+              <div className="password-field">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="********"
+                  value={formValues.password}
+                  onChange={handleChange}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword(v => !v)}
+                >
+                  <i className={showPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'} />
+                </button>
+              </div>
               {formErrors.password && <span className="error">{formErrors.password}</span>}
             </div>
 
