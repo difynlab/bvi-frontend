@@ -1,0 +1,226 @@
+// Settings page styles - ONLY class-based selectors with settings-* naming convention
+.settings-container { 
+  padding: 30px; 
+}
+
+.settings-header-title { 
+  margin: 0 0 20px 0; 
+}
+
+.settings-grid { 
+  display: grid; 
+  gap: 20px; 
+}
+
+.settings-card { 
+  border-radius: 12px; 
+}
+
+
+.settings-card-title { 
+  margin: 0 0 10px 0; 
+  font-weight: 400;
+  font-size: 16px;
+}
+
+.settings-field { 
+  margin-bottom: 16px; 
+}
+
+.settings-label { 
+  display: inline-block; 
+  position: relative; 
+}
+
+.settings-input { 
+  width: 100%; 
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.settings-input:focus {
+  outline: none;
+  border: 1px solid #686868;
+}
+
+.settings-input--password {
+  padding-right: 48px;
+}
+
+.settings-file { 
+  display: block; 
+}
+
+.settings-req { 
+  color: #ff3b30; 
+  margin-left: 4px; 
+}
+
+.settings-preview-note { 
+  font-size: 12px; 
+  opacity: .8; 
+}
+
+.settings-password-toggle { 
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 1.2rem;
+  color: #666;
+  transition: color 0.2s ease;
+}
+
+.settings-password-toggle:hover {
+  color: #333;
+}
+
+.settings-password-toggle:focus {
+  outline: none;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.settings-actions { 
+  display: flex; 
+  justify-content: center; 
+  margin-top: 24px; 
+}
+
+.settings-save-btn { 
+  background: #262626; 
+  color: #fff; 
+  padding: 12px 20px; 
+  border: 0; 
+  font-size: 16px;
+  border-radius: 8px; 
+  cursor: pointer; 
+}
+
+.settings-save-btn:disabled { 
+  display: none; 
+}
+
+// Contact row - two fields in single flex row
+.settings-contact-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.settings-contact-field {
+  flex: 1;
+}
+
+.settings-contact-field--phone-group {
+  flex: 1;
+}
+
+.settings-phone-group {
+  display: flex;
+  gap: 10px;
+}
+
+.settings-input--country-code {
+  flex: 0 0 100px; // Fixed width for country code
+}
+
+// Preferences layout - two separate flex rows
+.settings-preferences-row {
+  display: flex;
+  gap: 20px;
+}
+
+.settings-field-group {
+  flex: 1;
+}
+
+// Password fields row - single horizontal flex row
+.settings-password-row {
+  display: flex;
+  gap: 20px;
+}
+
+.settings-password-field {
+  flex: 1;
+}
+
+.settings-password-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 16px;
+  }
+
+  .settings-contact-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .settings-phone-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .settings-input--country-code {
+    flex: 1; // Reset to full width on mobile
+  }
+
+  .settings-preferences-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .settings-password-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .settings-password-toggle {
+    right: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-header-title {
+    h1 {
+      font-size: 1.75rem;
+    }
+
+    p {
+      font-size: 0.9rem;
+    }
+  }
+
+  .settings-card {
+    padding: 16px;
+  }
+
+  .settings-save-btn {
+    width: 100%;
+    margin-top: 20px;
+  }
+}

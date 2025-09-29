@@ -1,8 +1,16 @@
 import React from 'react';
 import Card from '../../components/Card';
-import '../../styles/sections/Membership.scss';
+import '../../styles/sections/Membership.scss'; 
+import { NavLink } from 'react-router-dom';
+import { useCurrentUser } from '../../hooks/useCurrentUser';
+
+// TODO BACKEND: Replace localStorage/context source with a secure API call:
+// fetch('/api/me', { credentials: 'include' }).then(res => res.json())...
 
 const Membership = () => {
+  const { name, email } = useCurrentUser();
+  const safeName = name && name.trim() ? name : '—';
+  const safeEmail = email && email.trim() ? email : '—';
   return (
     <div className="membership-page">
       <div className="membership-container">
@@ -14,18 +22,16 @@ const Membership = () => {
         </div>
 
         <div className="membership">
-          {/* Left Column */}
           <div className="membership-left">
-        {/* My Profile Section */}
         <Card title="My Profile" className="profile-section">
           <div className="profile-info">
             <div className="profile-field">
               <label>Name:</label>
-              <span>John Doe</span>
+              <span>{safeName}</span>
             </div>
             <div className="profile-field">
               <label>Email:</label>
-              <span>john.doe@example.com</span>
+              <span>{safeEmail}</span>
             </div>
             <div className="profile-field">
               <label>Lorem:</label>
@@ -33,7 +39,7 @@ const Membership = () => {
             </div>
           </div>
           <div className="profile-actions">
-            <a href="/settings" className="edit-link">Edit Profile</a>
+            <NavLink to="/settings" className="edit-link">Edit Profile</NavLink>
           </div>
         </Card>
 

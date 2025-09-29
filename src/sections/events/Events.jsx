@@ -620,15 +620,6 @@ export const Events = () => {
               onPointerDown={registerModalBackdropClose.stopInsidePointer}
               onClick={registerModalBackdropClose.stopInsidePointer}
             >
-              <div className="register-modal-header">
-                <h2>{registeringEvent.title}</h2>
-                <button
-                  className="close-btn"
-                  onClick={closeRegisterModal}
-                >
-                  ×
-                </button>
-              </div>
 
               <div className="register-modal-content">
                 <div className="register-event-image">
@@ -636,25 +627,31 @@ export const Events = () => {
                 </div>
 
                 <div className="register-event-details">
-                  <div className="register-event-header">
-                    <span className={`event-type ${registeringEvent.eventType.toLowerCase()}`}>
-                      {registeringEvent.eventType}
-                    </span>
-                    <span className="event-date">{formatDate(registeringEvent.date)}</span>
-                  </div>
-
-                  <div className="register-event-info">
-                    <div className="register-event-time">
-                      <span className="icon">🕐</span>
-                      {formatTime(registeringEvent.startTime)} - {formatTime(registeringEvent.endTime)} {registeringEvent.timeZone}
+                  <div className="register-event-content">
+                    <div className="register-event-header">
+                      <span className={`event-type ${registeringEvent.eventType.toLowerCase()}`}>
+                        {registeringEvent.eventType}
+                      </span>
                     </div>
-                    <div className="register-event-location">
-                      <span className="icon">📍</span>
-                      {registeringEvent.location}
+
+                    <div className="register-event-info">
+                      <div className="register-event-detail">
+                        <span className="icon"><i className="bi bi-calendar"></i></span>
+                        {formatDate(registeringEvent.date)}
+                      </div>
+                      <div className="register-event-detail">
+                        <span className="icon"><i className="bi bi-clock"></i></span>
+                        {formatTime(registeringEvent.startTime)} - {formatTime(registeringEvent.endTime)} {registeringEvent.timeZone}
+                      </div>
+                      <div className="register-event-detail">
+                        <span className="icon"><i className="bi bi-geo-alt"></i></span>
+                        {registeringEvent.location}
+                      </div>
                     </div>
                   </div>
 
                   <div className="register-event-description">
+                    <h2>{registeringEvent.title}</h2>
                     <h3>About this event</h3>
                     <p>{registeringEvent.description}</p>
                   </div>

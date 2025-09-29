@@ -7,12 +7,13 @@ import { Events } from './sections/events/Events'
 import { Notices } from './sections/notices/Notices'
 import { Newsletters } from './sections/newsletters/Newsletters'
 import Membership from './sections/membership/Membership'
+import Settings from './sections/settings/Settings'
+import Reports from './sections/reports/Reports'
 import RouteGuard from './auth/RouteGuard'
 import Forbidden from './pages/Forbidden'
 import ResetPassword from './pages/ResetPassword'
 import SideNav from './components/SideNav'
 
-// Layout component for pages with SideNav
 const MainLayout = ({ children }) => {
   return (
     <div className="main-layout">
@@ -24,7 +25,6 @@ const MainLayout = ({ children }) => {
   )
 }
 
-// Placeholder components for new routes
 const Dashboard = () => (
   <div className="page-content">
     <h1>Dashboard</h1>
@@ -47,19 +47,6 @@ const Legislation = () => (
   </div>
 )
 
-const Reports = () => (
-  <div className="page-content">
-    <h1>Reports</h1>
-    <p>Generate and view reports.</p>
-  </div>
-)
-
-const Settings = () => (
-  <div className="page-content">
-    <h1>Settings</h1>
-    <p>Configure application settings.</p>
-  </div>
-)
 
 function App() {
 
@@ -67,7 +54,6 @@ function App() {
     <>
       <BrowserRouter>
       <Routes>
-        {/* Public routes without SideNav */}
         <Route path='/' element={<Navigate to="/login" replace />}></Route>
         <Route path='/register' element={<Register />}></Route>
         <Route path='/login' element={<Login />}></Route>
@@ -75,7 +61,6 @@ function App() {
         <Route path='/reset-password/:token' element={<ResetPassword />}></Route>
         <Route path='/forbidden' element={<Forbidden />}></Route>
 
-        {/* Protected routes with SideNav */}
         <Route path='/dashboard' element={
           <RouteGuard requireAuth>
             <MainLayout>

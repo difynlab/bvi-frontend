@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { resolveRole, getPermissions } from './authHelpers'
 import { AuthContext } from './AuthContext'
+import { seedMissingContactFields } from '../helpers/mockUserSeeder'
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -41,27 +42,40 @@ export const AuthProvider = ({ children }) => {
       const role = resolveRole(username)
       const permissions = getPermissions(role)
       
-      const mockUser = {
+      const baseUser = {
         id: Date.now().toString(),
         email: username,
         name: 'Test User',
         role,
-        permissions
+        permissions,
+        countryCode: '+54',
+        phoneNumber: '',
+        profilePicture: '',
+        dateFormat: 'MM/DD/YYYY',
+        timeZone: 'EST',
+        country: 'Argentina',
+        language: 'English (Default)',
+        password: 'mockPassword123' // TODO: remove in production
       }
+
+      // TODO BACKEND: remove seeding when API includes phone + countryCode
+      const enriched = seedMissingContactFields(baseUser)
 
       const mockToken = 'mock.jwt.token'
 
-      setUser(mockUser)
+      setUser(enriched)
       setToken(mockToken)
       setIsAuthenticated(true)
 
       // TODO TEMPORARY: storing session in localStorage. REMOVE this before production.
       localStorage.setItem('session', JSON.stringify({
-        user: mockUser,
+        user: enriched,
         token: mockToken
       }))
+      // Also store user separately for Settings compatibility
+      localStorage.setItem('user', JSON.stringify(enriched))
       
-      console.log('Mock login successful:', mockUser)
+      console.log('Mock login successful:', enriched)
     } catch (err) {
       setError('Login failed')
       console.error('Login error:', err)
@@ -81,27 +95,40 @@ export const AuthProvider = ({ children }) => {
       const role = resolveRole(mockEmail)
       const permissions = getPermissions(role)
       
-      const mockUser = {
+      const baseUser = {
         id: Date.now().toString(),
         email: mockEmail,
         name: 'Google User',
         role,
-        permissions
+        permissions,
+        countryCode: '+54',
+        phoneNumber: '',
+        profilePicture: '',
+        dateFormat: 'MM/DD/YYYY',
+        timeZone: 'EST',
+        country: 'Argentina',
+        language: 'English (Default)',
+        password: 'mockPassword123' // TODO: remove in production
       }
+
+      // TODO BACKEND: remove seeding when API includes phone + countryCode
+      const enriched = seedMissingContactFields(baseUser)
 
       const mockToken = 'mock.google.jwt.token'
 
-      setUser(mockUser)
+      setUser(enriched)
       setToken(mockToken)
       setIsAuthenticated(true)
 
       // TODO TEMPORARY: storing session in localStorage. REMOVE this before production.
       localStorage.setItem('session', JSON.stringify({
-        user: mockUser,
+        user: enriched,
         token: mockToken
       }))
+      // Also store user separately for Settings compatibility
+      localStorage.setItem('user', JSON.stringify(enriched))
       
-      console.log('Mock Google login successful:', mockUser)
+      console.log('Mock Google login successful:', enriched)
     } catch (err) {
       setError('Google login failed')
       console.error('Google login error:', err)
@@ -152,6 +179,29 @@ export const AuthProvider = ({ children }) => {
     console.log('Refresh token - TODO BACKEND')
   }
 
+  const updateUserProfile = (updatedUserData) => {
+    if (!user) return
+
+    const mergedUser = {
+      ...user,
+      ...updatedUserData
+    }
+
+    setUser(mergedUser)
+
+    // Update localStorage with merged user data
+    try {
+      const session = JSON.parse(localStorage.getItem('session') || '{}')
+      session.user = mergedUser
+      localStorage.setItem('session', JSON.stringify(session))
+      // Also update user key for Settings compatibility
+      localStorage.setItem('user', JSON.stringify(mergedUser))
+      console.log('User profile updated:', mergedUser)
+    } catch (error) {
+      console.error('Error updating user profile in localStorage:', error)
+    }
+  }
+
   const value = {
     isAuthenticated,
     user,
@@ -163,6 +213,7 @@ export const AuthProvider = ({ children }) => {
     loginWithGoogle,
     logout,
     refresh,
+    updateUserProfile,
     toggleRole // TODO TEMPORARY: role toggle function for testing only. REMOVE before production.
   }
 

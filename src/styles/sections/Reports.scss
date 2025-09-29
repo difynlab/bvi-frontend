@@ -1,0 +1,521 @@
+// Reports section styles
+.reports-container {
+  padding: 30px;
+  position: relative;
+  .empty-state {
+    padding-top: 19px;
+  }
+}
+
+.reports-header-title {
+  margin-bottom: 20px;
+}
+
+
+.add-report-btn {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+}
+
+
+.reports-tabs {
+  display: flex;
+  border-bottom: 1px solid #eaeaea;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.reports-tab-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.reports-tab {
+  padding: 12px 35px 12px 20px;
+  border: 0;
+  background: none;
+  border-bottom: 2px solid #e0e0e0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 400;
+  color: #333;
+  transition: border-color 0.2s ease;
+}
+
+.reports-tab__delete {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: #999;
+  font-size: 12px;
+  padding: 4px;
+  border-radius: 50%;
+  transition: color 0.2s ease;
+  z-index: 1;
+}
+
+.reports-tab__delete:hover {
+  color: #1a1a1a;
+}
+
+.reports-tab:hover {
+  color: #1a1a1a;
+}
+
+.reports-tab.active {
+  border-bottom-color: var(--vivid_red, #e53935);
+  color: var(--vivid_red, #e53935);
+}
+
+
+.confirm-modal-content {
+  padding: 20px;
+
+  .form-actions {
+    button {
+      background-color: var(--vivid_blue, #1976d2);
+    }
+
+    .cancel-button {
+      background-color: #fff;
+      border: 1px solid #262626;
+      color: #262626;
+
+      &:hover {
+        background-color: rgba(233, 233, 233, 0.5);
+      }
+    }
+
+    .delete-button {
+      background-color: var(--vivid_red, #e53935);
+
+      &:hover {
+        filter: brightness(1.3);
+        background-color: var(--vivid_red, #e53935);
+      }
+    }
+  }
+}
+
+.delete-button {
+  background-color: var(--vivid_red, #e53935);
+  color: white;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 8px;
+  padding: 40px 20px;
+}
+
+.empty-state img {
+  width: 300px;
+  height: 300px;
+  opacity: 0.8;
+  object-fit: cover;
+  margin-bottom: 20px;
+}
+
+img.empty-state-user {
+  width: 250px;
+  height: 250px;
+  margin-bottom: 0;
+}
+
+.empty-state h2 {
+  color: #333;
+  margin: 0 0 10px 0;
+  font-size: 1.5rem;
+}
+
+.empty-state p {
+  color: #666;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.reports-list-wrap {
+  margin-top: 16px;
+}
+
+.reports-list-title {
+  margin: 0 0 16px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.reports-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.report-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.report-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 200px;
+}
+
+.report-meta {
+  font-size: 12px;
+  color: #6b6b6b;
+  margin-bottom: 4px;
+}
+
+.report-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.report-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.btn-edit {
+  background: #f8f8f8;
+  color: #333;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-edit:hover {
+  background: #e8e8e8;
+}
+
+.btn-download {
+  background: #262626;
+  color: #fff;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-download:hover {
+  background: #1a1a1a;
+}
+
+.btn-delete {
+  background: #f2f2f2;
+  color: #333;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-delete:hover {
+  background: #e8e8e8;
+}
+
+// Modal styles
+.reports-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.reports-modal {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: calc(100dvw - 350px);
+  max-height: 90vh;
+  padding: 40px;
+  position: relative;
+  overflow-y: auto;
+  
+  // Hide scrollbar but keep scroll functionality
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  
+  &::-webkit-scrollbar {
+    display: none; /* WebKit browsers (Chrome, Safari, Edge) */
+  }
+}
+
+.reports-modal-header {
+  padding: 20px 20px 0 20px;
+  text-align: center;
+}
+
+.reports-modal-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.reports-modal-header p {
+  margin: 0 0 20px 0;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.close-btn {
+  position: absolute;
+  top: 40px;
+  right: 40px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: #999;
+  font-size: 18px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s ease;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+// Category modal specific styles
+.reports-addcat-modal {
+  position: relative;
+}
+
+.reports-addcat-modal__title {
+  margin: 0 0 5px 0;
+  text-align: center;
+  padding-top: 30px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.reports-addcat-modal__subtitle {
+  margin: 0 0 20px 0;
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+}
+
+.reports-addcat-modal__label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #333;
+}
+
+.reports-addcat-modal__input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.reports-addcat-modal__input:focus {
+  outline: none;
+  border-color: #262626;
+}
+
+.reports-addcat-modal__actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.reports-addcat-modal__update-btn {
+  background: #262626;
+  color: #fff;
+  padding: 20px 45px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.reports-addcat-modal__update-btn:hover {
+  background: #1a1a1a;
+}
+
+// Form styles
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #262626;
+}
+
+.req-star {
+  color: #e53935;
+  margin-left: 4px;
+}
+
+.error-message {
+  color: #e53935;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.file-upload-area {
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  transition: border-color 0.2s ease;
+}
+
+.file-upload-area:hover {
+  border-color: #262626;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.file-input-label {
+  display: inline-block;
+  background: #262626;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.file-input-label:hover {
+  background: #1a1a1a;
+}
+
+.file-status {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.form-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.upload-now-btn {
+  background: #262626;
+  color: #fff;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.upload-now-btn:hover {
+  background: #1a1a1a;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .reports-container {
+    padding: 16px;
+  }
+
+  .add-report-btn {
+    position: static;
+    margin-bottom: 20px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .report-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .report-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .reports-tabs {
+    gap: 16px;
+  }
+
+  .reports-tab {
+    font-size: 14px;
+    padding: 8px 0;
+  }
+
+  .reports-modal {
+    width: 95%;
+    margin: 20px;
+  }
+}

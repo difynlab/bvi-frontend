@@ -79,6 +79,13 @@ export const Register = () => {
       email: passwordData.email,
       contactNumber: formValues.contactNumber.trim(),
       password: passwordData.password,
+      countryCode: '+54',
+      phoneNumber: formValues.contactNumber.trim(),
+      profilePicture: '',
+      dateFormat: 'MM/DD/YYYY',
+      timeZone: 'EST',
+      country: 'Argentina',
+      language: 'English (Default)'
     }
 
     // TODO BACKEND: Replace this with your API call

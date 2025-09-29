@@ -348,7 +348,6 @@ export const Notices = () => {
             </div>
           </div>
 
-          {/* Category Tabs */}
           <div className="category-tabs">
             <div className="tabs-container">
               {categories.map(category => (

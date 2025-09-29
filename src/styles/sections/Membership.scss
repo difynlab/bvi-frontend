@@ -1,7 +1,6 @@
 @use '../vars' as *;
 @use 'sass:color';
 
-// Membership page container
 .membership-page {
   padding: 30px;
   min-height: 100vh;
@@ -40,13 +39,12 @@
   }
 }
 
-// Main membership layout
 .membership {
   display: grid;
   grid-template-columns: 3fr 2fr;
   gap: 30px;
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background-color: $light_grey;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -54,63 +52,55 @@
   }
 }
 
-.membership-left,
-.membership-right {
+.membership-left {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 30px;
 }
 
-// Card base styles
 .card {
   background: white;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
   overflow: hidden;
   transition: box-shadow 0.2s ease;
-
-  &:hover {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
+  position: relative;
+  box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.2);
 }
 
 .card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   color: #262626;
   margin: 0;
-  padding: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
-  background-color: #f9fafb;
+  padding: 15px;
+  padding-bottom: 0;
 }
 
 .card-content {
-  padding: 20px;
+  padding: 15px;
+  height: fit-content;
 }
 
-// Profile section
 .profile-section {
+  height: 160px;
+  .card-content {
+    height: 130px;
+    padding-bottom: 0;
+  }
   .profile-info {
     margin-bottom: 24px;
   }
 
   .profile-field {
     display: flex;
-    justify-content: space-between;
+    justify-content: left;
     align-items: center;
     padding: 8px 0;
-    border-bottom: 1px solid #f3f4f6;
-
-    &:last-child {
-      border-bottom: none;
-    }
 
     label {
       font-weight: 500;
       color: #374151;
-      min-width: 80px;
+      min-width: 60px;
     }
 
     span {
@@ -120,23 +110,25 @@
   }
 
   .profile-actions {
-    text-align: right;
+    width: fit-content;
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    padding: 8px 15px;
+    border-radius: 6px;
+    background-color: rgb(245, 245, 245);
   }
 
   .edit-link {
-    color: $vivid_blue;
+    color: #262626;
     text-decoration: none;
+    font-size: 14px;
     font-weight: 500;
     transition: color 0.2s ease;
 
-    &:hover {
-      color: color.adjust($vivid_blue, $lightness: -10%);
-      text-decoration: underline;
-    }
   }
 }
 
-// Table styles
 .table-container {
   overflow-x: auto;
 }
@@ -180,7 +172,6 @@
   }
 }
 
-// Status and links
 .status-pending {
   display: flex;
   align-items: center;
@@ -202,8 +193,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .receipt-link,
@@ -219,7 +215,6 @@
   }
 }
 
-// Status section
 .status-section {
   .status-banner {
     text-align: center;
@@ -312,7 +307,6 @@
   }
 }
 
-// Details section
 .details-section {
   .benefits-list {
     list-style: none;
@@ -353,12 +347,11 @@
   }
 }
 
-// Membership Events section
 .membership-events-section {
+  margin-top: 30px;
   .membership-events-list {
     list-style: none;
     padding: 0;
-    margin: 0;
   }
 
   .membership-event-item {
@@ -399,7 +392,7 @@
 
   .membership-event-content {
     flex: 1;
-    min-width: 0; // Prevents flex item from overflowing
+    min-width: 0;
   }
 
   .membership-event-title {
@@ -418,7 +411,6 @@
   }
 }
 
-// Responsive adjustments
 @media (max-width: 768px) {
 
   .card-title {

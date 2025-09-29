@@ -207,7 +207,7 @@
     color: #334155;
 
     &:hover {
-      background-color: #f8f9fa;
+      background-color: $light_grey;
     }
   }
 
@@ -245,7 +245,7 @@
       }
       
       &:hover {
-        background-color: #f8f9fa !important;
+        background-color: $light_grey !important;
         box-shadow: none !important;
       }
       

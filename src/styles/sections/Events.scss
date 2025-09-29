@@ -67,7 +67,9 @@
 
 .events-header-title,
 .notices-header-title,
-.newsletters-header-title {
+.newsletters-header-title,
+.reports-header-title,
+.settings-header-title {
   height: 55px;
   display: flex;
   flex-direction: column;
@@ -89,7 +91,8 @@
 
 .add-event-btn,
 .add-notice-btn,
-.add-newsletter-btn {
+.add-newsletter-btn,
+.add-report-btn {
   background-color: $vivid_red;
   position: relative;
   width: 135px;
@@ -612,24 +615,8 @@ img.empty-state-user {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
-.register-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px 24px 0 24px;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 24px;
-}
-
-.register-modal-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
-}
-
 .register-modal-content {
-  padding: 0 24px 24px 24px;
+  padding: 0;
 }
 
 .register-event-image {
@@ -637,6 +624,8 @@ img.empty-state-user {
   height: 300px;
   overflow: hidden;
   border-radius: 8px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
   margin-bottom: 24px;
 }
 
@@ -653,23 +642,33 @@ img.empty-state-user {
   margin-bottom: 16px;
 }
 
-.register-event-info {
+.register-event-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 24px;
 }
 
-.register-event-time,
-.register-event-location {
+.register-event-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.register-event-detail {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
   font-size: 0.875rem;
   color: #374151;
 }
 
-.register-event-time .icon,
-.register-event-location .icon {
+.register-event-detail .icon {
   margin-right: 8px;
   font-size: 1rem;
+}
+
+.register-event-details {
+  padding: 0 20px
 }
 
 .register-event-description h3 {
@@ -688,7 +687,7 @@ img.empty-state-user {
 .register-modal-actions {
   display: flex;
   justify-content: center;
-  padding: 24px;
+  padding: 20px;
 }
 
 .register-now-btn {
