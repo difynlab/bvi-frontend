@@ -1,156 +1,130 @@
-import { useState, useEffect } from 'react'
-
-const defaultCategories = [
-  { id: 'general', name: 'General', slug: 'general' }
-]
-
-const defaultNotices = [
-  { categoryId: 'general', items: [] }
-]
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { 
+  readNotices, 
+  writeNotices, 
+  addCategory, 
+  deleteCategory, 
+  deleteCategoryAndNotices, 
+  upsertNotice, 
+  updateNotice, 
+  deleteNotice 
+} from '../helpers/noticesStorage'
+import { makeRecentDate, fmtDateForCreatedAt } from '../helpers/seedUtils'
 
 export const useNoticesState = () => {
   const [categories, setCategories] = useState([])
   const [notices, setNotices] = useState([])
+  const [activeCategory, setActiveCategory] = useState('')
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+  const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false)
+  const [editingNotice, setEditingNotice] = useState(null)
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false)
+  const [categoryToDelete, setCategoryToDelete] = useState(null)
 
-  // Load data from localStorage on mount
+  // Load data from storage on mount
   useEffect(() => {
-    try {
-      const savedCategories = localStorage.getItem('noticeCategories')
-      const savedNotices = localStorage.getItem('notices')
-      
-      if (savedCategories && savedNotices) {
-        const parsedCategories = JSON.parse(savedCategories)
-        const parsedNotices = JSON.parse(savedNotices)
-        setCategories(parsedCategories)
-        setNotices(parsedNotices)
-      } else {
-        // If no saved data, seed with defaults
-        setCategories(defaultCategories)
-        setNotices(defaultNotices)
-        localStorage.setItem('noticeCategories', JSON.stringify(defaultCategories))
-        localStorage.setItem('notices', JSON.stringify(defaultNotices))
-      }
-    } catch (error) {
-      console.error('Error loading notices data from localStorage:', error)
-      // Fallback to defaults
-      setCategories(defaultCategories)
-      setNotices(defaultNotices)
+    const { categories: storedCategories, items: storedNotices } = readNotices()
+    setCategories(storedCategories)
+    setNotices(storedNotices)
+    // Set first category as active if available
+    if (storedCategories.length > 0) {
+      setActiveCategory(storedCategories[0].id)
     }
   }, [])
 
-  // Save data to localStorage whenever data changes
-  useEffect(() => {
-    try {
-      localStorage.setItem('noticeCategories', JSON.stringify(categories))
-    } catch (error) {
-      console.error('Error saving categories to localStorage:', error)
-    }
-  }, [categories])
+  // Derived state
+  const visibleItems = useMemo(() => {
+    const group = notices.find(group => group.categoryId === activeCategory)
+    return group?.items || []
+  }, [notices, activeCategory])
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('notices', JSON.stringify(notices))
-    } catch (error) {
-      console.error('Error saving notices to localStorage:', error)
-    }
+  const getGroup = useCallback((categoryId) => {
+    return notices.find(group => group.categoryId === categoryId)
   }, [notices])
 
-  const getGroup = (categoryId) => {
-    return notices.find(group => group.categoryId === categoryId)
-  }
-
-  const addCategory = (name) => {
+  // Category actions
+  const handleAddCategory = useCallback((name) => {
+    const { categories: updatedCategories, items: updatedItems } = addCategory(name)
+    setCategories(updatedCategories)
+    setNotices(updatedItems)
+    setIsCategoryModalOpen(false)
+    // Set the new category as active
     const slug = name.toLowerCase().replace(/\s+/g, '-')
-    const newCategory = {
-      id: slug,
-      name: name.trim(),
-      slug: slug
+    setActiveCategory(slug)
+  }, [])
+
+  const handleDeleteCategory = useCallback((id) => {
+    setCategoryToDelete(id)
+    setConfirmModalOpen(true)
+  }, [])
+
+  const handleConfirmDelete = useCallback(() => {
+    if (categoryToDelete) {
+      const { categories: updatedCategories, items: updatedItems } = deleteCategoryAndNotices(categoryToDelete)
+      setCategories(updatedCategories)
+      setNotices(updatedItems)
+      
+      // Switch to first remaining category if current was deleted
+      if (activeCategory === categoryToDelete) {
+        if (updatedCategories.length > 0) {
+          setActiveCategory(updatedCategories[0].id)
+        } else {
+          setActiveCategory('')
+        }
+      }
+      
+      setConfirmModalOpen(false)
+      setCategoryToDelete(null)
     }
-    
-    // TODO BACKEND: Save new category to backend
-    // try {
-    //   const response = await fetch('/api/notice-categories', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       'Authorization': `Bearer ${token}`
-    //     },
-    //     body: JSON.stringify(newCategory)
-    //   })
-    //   if (!response.ok) throw new Error('Failed to create category')
-    //   const savedCategory = await response.json()
-    //   setCategories(prev => [...prev, savedCategory])
-    // } catch (error) {
-    //   console.error('Error creating category:', error)
-    //   alert('Failed to create category. Please try again.')
-    //   return
-    // }
+  }, [categoryToDelete, activeCategory])
 
-    // LOCALSTORAGE: Add to local state (will be saved to localStorage via useEffect)
-    setCategories(prev => [...prev, newCategory])
-    
-    // Create empty group for new category
-    setNotices(prev => [...prev, { categoryId: slug, items: [] }])
-  }
+  // Notice actions
+  const openCreateNotice = useCallback(() => {
+    setEditingNotice(null)
+    setIsNoticeModalOpen(true)
+  }, [])
 
-  const deleteCategory = (id) => {
-    const group = getGroup(id)
-    if (group && group.items.length > 0) {
-      throw new Error('Cannot delete category with existing notices')
+  const openEditNotice = useCallback((notice) => {
+    setEditingNotice(notice)
+    setIsNoticeModalOpen(true)
+  }, [])
+
+  const closeNoticeModal = useCallback(() => {
+    setIsNoticeModalOpen(false)
+    setEditingNotice(null)
+  }, [])
+
+  const handleUpsertNotice = useCallback((payload) => {
+    // TODO BACKEND: replace seeds with GET /api/notices
+    if (editingNotice) {
+      // Update existing notice
+      const { categories: updatedCategories, items: updatedItems } = updateNotice(payload)
+      setCategories(updatedCategories)
+      setNotices(updatedItems)
+    } else {
+      // Create new notice
+      const { categories: updatedCategories, items: updatedItems } = upsertNotice(payload)
+      setCategories(updatedCategories)
+      setNotices(updatedItems)
     }
+    closeNoticeModal()
+  }, [editingNotice, closeNoticeModal])
 
-    // TODO BACKEND: Delete category from backend
-    // try {
-    //   const response = await fetch(`/api/notice-categories/${id}`, {
-    //     method: 'DELETE',
-    //     headers: {
-    //       'Authorization': `Bearer ${token}`
-    //     }
-    //   })
-    //   if (!response.ok) throw new Error('Failed to delete category')
-    //   setCategories(prev => prev.filter(cat => cat.id !== id))
-    // } catch (error) {
-    //   console.error('Error deleting category:', error)
-    //   alert('Failed to delete category. Please try again.')
-    //   return
-    // }
+  const handleDeleteNotice = useCallback((id) => {
+    const { categories: updatedCategories, items: updatedItems } = deleteNotice(id)
+    setCategories(updatedCategories)
+    setNotices(updatedItems)
+  }, [])
 
-    // LOCALSTORAGE: Remove from local state (will be saved to localStorage via useEffect)
-    setCategories(prev => prev.filter(cat => cat.id !== id))
-    setNotices(prev => prev.filter(group => group.categoryId !== id))
-  }
-
-  const deleteCategoryAndNotices = (id) => {
-    // TODO BACKEND: Delete category and all its notices from backend
-    // try {
-    //   const response = await fetch(`/api/notice-categories/${id}`, {
-    //     method: 'DELETE',
-    //     headers: {
-    //       'Authorization': `Bearer ${token}`
-    //     }
-    //   })
-    //   if (!response.ok) throw new Error('Failed to delete category')
-    //   setCategories(prev => prev.filter(cat => cat.id !== id))
-    //   setNotices(prev => prev.filter(group => group.categoryId !== id))
-    // } catch (error) {
-    //   console.error('Error deleting category:', error)
-    //   alert('Failed to delete category. Please try again.')
-    //   return
-    // }
-
-    // LOCALSTORAGE: Remove category and all its notices from local state (will be saved to localStorage via useEffect)
-    setCategories(prev => prev.filter(cat => cat.id !== id))
-    setNotices(prev => prev.filter(group => group.categoryId !== id))
-  }
-
-  const seedDemoNotices = () => {
+  // Demo seeding with recent dates (≤7 days old)
+  const seedDemoNotices = useCallback(() => {
     const demoCategories = [
       { id: 'finances', name: 'Finances', slug: 'finances' },
       { id: 'trading', name: 'Trading', slug: 'trading' },
       { id: 'company', name: 'Company', slug: 'company' }
     ]
 
-    const demoNotices = [
+    const noticeTemplates = [
       // Finances notices
       {
         id: 'finances-1',
@@ -160,8 +134,7 @@ export const useNoticesState = () => {
         imageFileName: 'earnings-q2.jpg',
         imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
-        linkUrl: 'https://example.com/earnings-q2',
-        createdAt: new Date().toISOString().slice(0, 10)
+        linkUrl: 'https://example.com/earnings-q2'
       },
       {
         id: 'finances-2',
@@ -171,8 +144,7 @@ export const useNoticesState = () => {
         imageFileName: 'budget-update.jpg',
         imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
-        linkUrl: 'https://example.com/budget-update',
-        createdAt: new Date().toISOString().slice(0, 10)
+        linkUrl: 'https://example.com/budget-update'
       },
       {
         id: 'finances-3',
@@ -182,8 +154,7 @@ export const useNoticesState = () => {
         imageFileName: 'compliance-report.jpg',
         imageUrl: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
-        linkUrl: 'https://example.com/compliance-report',
-        createdAt: new Date().toISOString().slice(0, 10)
+        linkUrl: 'https://example.com/compliance-report'
       },
       // Trading notices
       {
@@ -194,8 +165,7 @@ export const useNoticesState = () => {
         imageFileName: 'market-analysis.jpg',
         imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
-        linkUrl: 'https://example.com/market-analysis',
-        createdAt: new Date().toISOString().slice(0, 10)
+        linkUrl: 'https://example.com/market-analysis'
       },
       {
         id: 'trading-2',
@@ -205,8 +175,7 @@ export const useNoticesState = () => {
         imageFileName: 'portfolio-review.jpg',
         imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
-        linkUrl: 'https://example.com/portfolio-review',
-        createdAt: new Date().toISOString().slice(0, 10)
+        linkUrl: 'https://example.com/portfolio-review'
       },
       {
         id: 'trading-3',
@@ -216,8 +185,7 @@ export const useNoticesState = () => {
         imageFileName: 'risk-guidelines.jpg',
         imageUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
-        linkUrl: 'https://example.com/risk-guidelines',
-        createdAt: new Date().toISOString().slice(0, 10)
+        linkUrl: 'https://example.com/risk-guidelines'
       },
       // Company notices
       {
@@ -228,8 +196,7 @@ export const useNoticesState = () => {
         imageFileName: 'policy-update.jpg',
         imageUrl: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
-        linkUrl: 'https://example.com/policy-update',
-        createdAt: new Date().toISOString().slice(0, 10)
+        linkUrl: 'https://example.com/policy-update'
       },
       {
         id: 'company-2',
@@ -239,8 +206,7 @@ export const useNoticesState = () => {
         imageFileName: 'meeting-schedule.jpg',
         imageUrl: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
-        linkUrl: 'https://example.com/meeting-schedule',
-        createdAt: new Date().toISOString().slice(0, 10)
+        linkUrl: 'https://example.com/meeting-schedule'
       },
       {
         id: 'company-3',
@@ -250,10 +216,15 @@ export const useNoticesState = () => {
         imageFileName: 'hr-announcements.jpg',
         imageUrl: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&h=600&fit=crop',
         imagePreviewUrl: '',
-        linkUrl: 'https://example.com/hr-announcements',
-        createdAt: new Date().toISOString().slice(0, 10)
+        linkUrl: 'https://example.com/hr-announcements'
       }
     ]
+
+    // Generate notices with recent dates (0-6 days ago)
+    const demoNotices = noticeTemplates.map(template => ({
+      ...template,
+      createdAt: fmtDateForCreatedAt(makeRecentDate({ maxDaysAgo: 6 }))
+    }))
 
     // Create new categories array (ensure Finances, Trading, Company exist)
     const newCategories = [...categories]
@@ -291,149 +262,39 @@ export const useNoticesState = () => {
     setNotices(newNoticesGroups)
 
     // Persist to localStorage immediately
-    try {
-      localStorage.setItem('noticeCategories', JSON.stringify(newCategories))
-      localStorage.setItem('notices', JSON.stringify(newNoticesGroups))
-    } catch (error) {
-      console.error('Error saving seeded data to localStorage:', error)
-    }
+    writeNotices(newCategories, newNoticesGroups)
 
     // Return the first category ID for UI activation
     return 'finances'
-  }
-
-  const addNotice = (noticeObj) => {
-    const group = getGroup(noticeObj.noticeType)
-    if (!group) {
-      console.error('Category group not found for notice')
-      return
-    }
-
-    // TODO BACKEND: Save new notice to backend
-    // try {
-    //   const response = await fetch('/api/notices', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       'Authorization': `Bearer ${token}`
-    //     },
-    //     body: JSON.stringify(noticeObj)
-    //   })
-    //   if (!response.ok) throw new Error('Failed to create notice')
-    //   const savedNotice = await response.json()
-    //   setNotices(prev => prev.map(group => 
-    //     group.categoryId === noticeObj.noticeType 
-    //       ? { ...group, items: [...group.items, savedNotice] }
-    //       : group
-    //   ))
-    // } catch (error) {
-    //   console.error('Error creating notice:', error)
-    //   alert('Failed to create notice. Please try again.')
-    //   return
-    // }
-
-    // LOCALSTORAGE: Add to local state (will be saved to localStorage via useEffect)
-    setNotices(prev => prev.map(group => 
-      group.categoryId === noticeObj.noticeType 
-        ? { ...group, items: [...group.items, noticeObj] }
-        : group
-    ))
-  }
-
-  const updateNotice = (noticeObj) => {
-    const oldGroup = notices.find(group => 
-      group.items.some(notice => notice.id === noticeObj.id)
-    )
-    const newGroup = getGroup(noticeObj.noticeType)
-
-    if (!oldGroup || !newGroup) {
-      console.error('Category groups not found for notice update')
-      return
-    }
-
-    // TODO BACKEND: Update existing notice in backend
-    // try {
-    //   const response = await fetch(`/api/notices/${noticeObj.id}`, {
-    //     method: 'PUT',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       'Authorization': `Bearer ${token}`
-    //     },
-    //     body: JSON.stringify(noticeObj)
-    //   })
-    //   if (!response.ok) throw new Error('Failed to update notice')
-    //   const updatedNotice = await response.json()
-    //   // Handle category change logic here
-    // } catch (error) {
-    //   console.error('Error updating notice:', error)
-    //   alert('Failed to update notice. Please try again.')
-    //   return
-    // }
-
-    // LOCALSTORAGE: Update in local state (will be saved to localStorage via useEffect)
-    if (oldGroup.categoryId === newGroup.categoryId) {
-      // Same category - just update the notice
-      setNotices(prev => prev.map(group => 
-        group.categoryId === oldGroup.categoryId
-          ? { ...group, items: group.items.map(notice => 
-              notice.id === noticeObj.id ? noticeObj : notice
-            )}
-          : group
-      ))
-    } else {
-      // Different category - move notice between groups
-      setNotices(prev => prev.map(group => {
-        if (group.categoryId === oldGroup.categoryId) {
-          // Remove from old group
-          return { ...group, items: group.items.filter(notice => notice.id !== noticeObj.id) }
-        } else if (group.categoryId === newGroup.categoryId) {
-          // Add to new group
-          return { ...group, items: [...group.items, noticeObj] }
-        }
-        return group
-      }))
-    }
-  }
-
-  const deleteNotice = (id) => {
-    // TODO BACKEND: Delete notice from backend
-    // try {
-    //   const response = await fetch(`/api/notices/${id}`, {
-    //     method: 'DELETE',
-    //     headers: {
-    //       'Authorization': `Bearer ${token}`
-    //     }
-    //   })
-    //   if (!response.ok) throw new Error('Failed to delete notice')
-    //   setNotices(prev => prev.map(group => ({
-    //     ...group,
-    //     items: group.items.filter(notice => notice.id !== id)
-    //   })))
-    // } catch (error) {
-    //   console.error('Error deleting notice:', error)
-    //   alert('Failed to delete notice. Please try again.')
-    //   return
-    // }
-
-    // LOCALSTORAGE: Remove from local state (will be saved to localStorage via useEffect)
-    setNotices(prev => prev.map(group => ({
-      ...group,
-      items: group.items.filter(notice => notice.id !== id)
-    })))
-  }
+  }, [categories, notices])
 
   return {
+    // State
     categories,
-    setCategories,
-    notices,
-    setNotices,
-    addCategory,
-    deleteCategory,
-    deleteCategoryAndNotices,
-    addNotice,
-    updateNotice,
-    deleteNotice,
-    getGroup,
-    seedDemoNotices
+    activeCategory,
+    visibleItems,
+    isCategoryModalOpen,
+    isNoticeModalOpen,
+    editingNotice,
+    confirmModalOpen,
+    categoryToDelete,
+    
+    // Actions
+    setActiveCategory,
+    handleAddCategory,
+    handleDeleteCategory,
+    openCreateNotice,
+    openEditNotice,
+    closeNoticeModal,
+    handleUpsertNotice,
+    handleDeleteNotice,
+    handleConfirmDelete,
+    setIsCategoryModalOpen,
+    setConfirmModalOpen,
+    setCategoryToDelete,
+    seedDemoNotices,
+    
+    // Legacy compatibility
+    getGroup
   }
 }

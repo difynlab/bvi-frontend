@@ -1,0 +1,154 @@
+// Subscription Info Modal Styles
+.subscription-info-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.subscription-info-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+  padding: 20px;
+}
+
+.subscription-info-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.subscription-info-modal__close:hover {
+  color: #374151;
+}
+
+.subscription-info-modal__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.subscription-info-modal__header.user {
+  text-align: center;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.subscription-info-modal__titles {
+  flex: 1;
+}
+
+.subscription-info-modal__title {
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.subscription-info-modal__subtitle {
+  font-size: 16px;
+  font-weight: 300;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.subscription-info-modal__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.subscription-info-modal__update-btn {
+  color: #fff;
+  padding: 10px 20px;
+  border: 0;
+  margin-right: 35px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  width: 150px;
+  gap: 8px;
+}
+
+.subscription-info-modal__update-btn:hover {
+  background: #404040;
+}
+
+
+
+.subscription-info-modal__body {
+  margin-top: 16px;
+}
+
+.subscription-info-modal__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  max-height: 60vh;
+  object-fit: contain;
+  background-color: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  min-height: 200px;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .subscription-info-modal {
+    width: 95%;
+    margin: 20px;
+    padding: 15px;
+  }
+  
+  .subscription-info-modal__header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .subscription-info-modal__header.admin {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .subscription-info-modal__actions {
+    justify-content: center;
+  }
+  
+  .subscription-info-modal__update-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

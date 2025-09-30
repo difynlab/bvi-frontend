@@ -1,5 +1,135 @@
 @use '../vars' as *;
 
+// Global modal form styles - needed for modals across all pages
+.form-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 20px;
+
+  label {
+    display: block;
+    font-weight: 400;
+    font-size: 16px;
+    position: relative;
+    padding-right: 5px;
+  }
+
+  label .req-star {
+    position: absolute;
+    top: 0;
+    right: 0;
+    color: $vivid_red;
+    font-size: 0.85em;
+    line-height: 1;
+    pointer-events: none;
+  }
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: $vivid_blue;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.form-actions button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.form-actions button[type="button"] {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+}
+
+.form-actions button[type="button"]:hover {
+  background-color: #5a6268;
+}
+
+.form-actions button[type="submit"] {
+  background-color: $vivid_blue;
+  color: white;
+  border: none;
+}
+
+.file-upload-area {
+  border: 2px dashed #ddd;
+  border-radius: 6px;
+  padding: 20px;
+  text-align: center;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.file-upload-area:hover {
+  border-color: $vivid_blue;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.file-input-label {
+  background-color: $vivid_blue;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  display: inline-block;
+  transition: background-color 0.2s;
+}
+
+.file-status {
+  color: #666;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.image-preview {
+  margin-top: 15px;
+}
+
+.image-preview img {
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.error-message {
+  color: $vivid_red;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
 .notices-page {
   padding: 30px;
   min-height: 100vh;
@@ -45,11 +175,6 @@
   }
 }
 
-.error-message {
-  color: $vivid_red;
-  font-size: 12px;
-  margin-bottom: 10px;
-}
 
 .confirm-modal-content {
   padding: 20px;
@@ -168,14 +293,139 @@
 .notices-container {
   max-width: 1200px;
   margin: 0 auto;
-}
 
-.notices-container {
+  .error-message {
+    color: $vivid_red;
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: $vivid_blue;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+
+  .file-upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .file-upload-area:hover {
+    border-color: $vivid_blue;
+  }
+
+  .hidden-file-input {
+    display: none;
+  }
+
+  .file-input-label {
+    background-color: $vivid_blue;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    display: inline-block;
+    transition: background-color 0.2s;
+  }
+
+  .file-status {
+    color: #666;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  .image-preview {
+    margin-top: 15px;
+  }
+
+  .image-preview img {
+    max-width: 200px;
+    max-height: 150px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 0;
+    margin-top: 20px;
+  }
+
+  .form-actions button {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .form-actions button[type="button"] {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+  }
+
+  .form-actions button[type="button"]:hover {
+    background-color: #5a6268;
+  }
+
+  .form-actions button[type="submit"] {
+    background-color: $vivid_blue;
+    color: white;
+    border: none;
+  }
+
   .empty-state {
-    padding-top: 0px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: 8px;
 
-    &-user {
-      margin-top: 30px;
+    img {
+      width: 300px;
+      height: 300px;
+      opacity: 0.8;
+      object-fit: cover;
+      margin-bottom: 20px;
+    }
+
+    img.empty-state-user {
+      width: 250px;
+      height: 250px;
+      margin-bottom: 0;
+    }
+
+    h2 {
+      color: #333;
+      margin: 0 0 10px 0;
+      font-size: 1.5rem;
+    }
+
+    p {
+      color: #666;
+      margin: 0;
+      font-size: 0.9rem;
     }
   }
 }
@@ -515,40 +765,6 @@
   color: $vivid_red;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  border-radius: 8px;
-}
-
-.empty-state img {
-  width: 300px;
-  height: 300px;
-  opacity: 0.8;
-  object-fit: cover;
-  margin-bottom: 20px;
-}
-
-img.empty-state-user {
-  width: 250px;
-  height: 250px;
-  margin-bottom: 0;
-}
-
-.empty-state h2 {
-  color: #333;
-  margin: 0 0 10px 0;
-  font-size: 1.5rem;
-}
-
-.empty-state p {
-  color: #666;
-  margin: 0;
-  font-size: 0.9rem;
-}
 
 .notices-modal-overlay {
   position: fixed;
@@ -593,6 +809,140 @@ img.empty-state-user {
       color: #374151;
     }
   }
+
+  .form-group {
+    padding: 0;
+
+    &:first-of-type {
+      padding-top: 0;
+    }
+
+    label {
+      display: block;
+      font-weight: 400;
+      color: #333;
+      font-size: 16px;
+      position: relative;
+      padding-right: 5px;
+
+      .req-star {
+        position: absolute;
+        top: 0;
+        right: 0;
+        color: $vivid_red;
+        font-size: 0.85em;
+        line-height: 1;
+        pointer-events: none;
+      }
+    }
+  }
+
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: $vivid_blue;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    margin-top: 20px;
+  }
+
+  .form-actions button {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .form-actions button[type="button"] {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+  }
+
+  .form-actions button[type="button"]:hover {
+    background-color: #5a6268;
+  }
+
+  .form-actions button[type="submit"] {
+    background-color: $vivid_blue;
+    color: white;
+    border: none;
+  }
+
+  .upload-now-btn {
+    background: #262626;
+    color: #fff;
+    padding: 10px 30px;
+    height: 55px;
+    width: fit-content;
+    font-size: 16px;
+    font-weight: 300;
+    border: none;
+    cursor: pointer;
+  }
+
+  .file-upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .file-upload-area:hover {
+    border-color: $vivid_blue;
+  }
+
+  .hidden-file-input {
+    display: none;
+  }
+
+  .file-input-label {
+    background-color: $vivid_blue;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    display: inline-block;
+    transition: background-color 0.2s;
+  }
+
+  .file-status {
+    color: #666;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  .image-preview {
+    margin-top: 15px;
+  }
+
+  .image-preview img {
+    max-width: 200px;
+    max-height: 150px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
 }
 
 .notices-modal-header {
@@ -634,21 +984,6 @@ img.empty-state-user {
   }
 }
 
-.form-group input,
-.form-group select {
-  width: 100%;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  transition: border-color 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: $vivid_blue;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
 
 .wysiwyg-toolbar {
   display: flex;
@@ -703,83 +1038,7 @@ img.empty-state-user {
   overflow-wrap: break-word;
 }
 
-.file-upload-area {
-  border: 2px dashed #ddd;
-  border-radius: 6px;
-  padding: 20px;
-  text-align: center;
-  transition: border-color 0.2s;
-  width: 100%;
-}
 
-.file-upload-area:hover {
-  border-color: $vivid_blue;
-}
-
-.hidden-file-input {
-  display: none;
-}
-
-.file-input-label {
-  background-color: $vivid_blue;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  display: inline-block;
-  transition: background-color 0.2s;
-}
-
-.file-status {
-  color: #666;
-  font-size: 0.875rem;
-  margin: 0;
-}
-
-.image-preview {
-  margin-top: 15px;
-}
-
-.image-preview img {
-  max-width: 200px;
-  max-height: 150px;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.form-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  padding: 0;
-  margin-top: 20px;
-}
-
-.form-actions button {
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.form-actions button[type="button"] {
-  background-color: #6c757d;
-  color: white;
-  border: none;
-}
-
-.form-actions button[type="button"]:hover {
-  background-color: #5a6268;
-}
-
-.form-actions button[type="submit"] {
-  background-color: $vivid_blue;
-  color: white;
-  border: none;
-}
 
 .loading-state {
   text-align: center;
@@ -857,39 +1116,4 @@ img.empty-state-user {
   .form-actions {
     flex-direction: column;
   }
-}
-
-.notices-modal .form-group label {
-  position: relative;
-  display: inline-block;
-  padding-right: 5px;
-}
-
-.notices-modal .form-group label .req-star {
-  position: absolute;
-  top: 0;
-  right: 0;
-  color: $vivid_red;
-  font-size: 0.85em;
-  line-height: 1;
-  pointer-events: none;
-}
-
-.notices-modal .form-actions {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.notices-modal .form-actions .upload-now-btn {
-  background: #262626;
-  color: inherit;
-  padding: 10px 30px;
-  height: 55px;
-  width: fit-content;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 300;
-  border: none;
-  cursor: pointer;
 }

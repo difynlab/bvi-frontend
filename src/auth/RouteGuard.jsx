@@ -13,7 +13,7 @@ const RouteGuard = ({ children, requireAuth = true, allowRoles = [] }) => {
   }
 
   if (requireAuth && !isAuthenticated) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/register" replace />
   }
 
   if (allowRoles.length && (!user || !allowRoles.includes(user.role))) {

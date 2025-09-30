@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
+import { isValidUrl } from '../helpers/urlValidation'
 
 // Utility to convert plain text to minimal HTML
 const htmlFromPlain = (txt = '') => {
@@ -67,20 +68,27 @@ export const useNoticeForm = () => {
   const [errorMessage, setErrorMessage] = useState('')
 
   // Begin editing - take snapshot and initialize form
-  const beginEdit = (item) => {
-    originalRef.current = deepClone(item)
-    const formData = fromItem(originalRef.current)
-    const initialHtml = originalRef.current.editorHtml || htmlFromPlain(originalRef.current.description || '')
-    const description = originalRef.current.description || stripHtml(originalRef.current.editorHtml || '')
-    
-    setForm(formData)
-    setEditorHtml(initialHtml)
-    setEditorText(description)
+  const loadFrom = useCallback((item) => {
+    if (item) {
+      originalRef.current = deepClone(item)
+      const formData = fromItem(originalRef.current)
+      const initialHtml = originalRef.current.editorHtml || htmlFromPlain(originalRef.current.description || '')
+      const description = originalRef.current.description || stripHtml(originalRef.current.editorHtml || '')
+      
+      setForm(formData)
+      setEditorHtml(initialHtml)
+      setEditorText(description)
+    } else {
+      originalRef.current = null
+      setForm(emptyForm)
+      setEditorHtml('')
+      setEditorText('')
+    }
     setErrorMessage('')
-  }
+  }, [])
 
   // Rollback to original data
-  const rollbackEdit = () => {
+  const rollbackEdit = useCallback(() => {
     if (!originalRef.current) return
     
     const formData = fromItem(originalRef.current)
@@ -91,47 +99,45 @@ export const useNoticeForm = () => {
     setEditorHtml(initialHtml)
     setEditorText(description)
     setErrorMessage('')
-  }
+  }, [])
 
   // Initialize form for create mode
-  const initializeCreate = () => {
+  const initializeCreate = useCallback(() => {
     originalRef.current = null
     setForm(emptyForm)
     setEditorHtml('')
     setEditorText('')
     setErrorMessage('')
-  }
+  }, [])
 
-  const onChange = (key, value) => {
+  const onChange = useCallback((key, value) => {
     setForm(prev => ({ ...prev, [key]: value }))
     
     // Clear error when user starts editing
     if (errorMessage) {
       setErrorMessage('')
     }
-  }
+  }, [errorMessage])
 
-  const setFileFromInput = (e) => {
+  const setFileFromInput = useCallback((e) => {
     const file = e.target.files[0]
     if (file) {
       setFileFromDrop(file)
     }
-  }
+  }, [])
 
-  const setFileFromDrop = (file) => {
+  const setFileFromDrop = useCallback((file) => {
     if (file && file.type.startsWith('image/')) {
-      setForm(prev => ({ ...prev, file }))
-      setForm(prev => ({ ...prev, imageFileName: file.name }))
-      setForm(prev => ({ ...prev, imagePreviewUrl: URL.createObjectURL(file) }))
+      setForm(prev => ({ ...prev, file, imageFileName: file.name, imagePreviewUrl: URL.createObjectURL(file) }))
       
       // Clear error when user selects a file
       if (errorMessage) {
         setErrorMessage('')
       }
     }
-  }
+  }, [errorMessage])
 
-  const validate = (categories) => {
+  const validate = useCallback((categories) => {
     const errors = []
     
     // Check all required fields are not empty
@@ -155,25 +161,18 @@ export const useNoticeForm = () => {
       errors.push('Please select a valid category.')
     }
     
-    // Check URL is valid
-    if (form.linkUrl) {
-      try {
-        new URL(form.linkUrl)
-        if (!form.linkUrl.startsWith('http://') && !form.linkUrl.startsWith('https://')) {
-          errors.push('Please enter a valid URL (http:// or https://).')
-        }
-      } catch {
-        errors.push('Please enter a valid URL.')
-      }
+    // Check URL is valid using helper
+    if (form.linkUrl && !isValidUrl(form.linkUrl)) {
+      errors.push('Please enter a valid URL.')
     }
     
     // Convert array to single error message
     const message = errors.length > 0 ? errors.join(' ') : ''
     setErrorMessage(message)
     return message === ''
-  }
+  }, [form])
 
-  const buildNoticeObject = (existingId = null) => {
+  const toPayload = useCallback((existingId = null) => {
     const id = existingId || (Date.now().toString() + Math.random().toString(36).substring(2, 11))
     
     return {
@@ -187,33 +186,38 @@ export const useNoticeForm = () => {
       linkUrl: form.linkUrl,
       createdAt: existingId ? new Date().toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     }
-  }
+  }, [form, editorText, editorHtml])
 
-  const resetForm = () => {
+  const reset = useCallback(() => {
     originalRef.current = null
     setForm(emptyForm)
     setEditorHtml('')
     setEditorText('')
     setErrorMessage('')
-  }
+  }, [])
 
   return {
     form,
-    setForm,
     editorHtml,
-    setEditorHtml,
     editorText,
-    setEditorText,
     errorMessage,
-    setErrorMessage,
+    onChange,
+    setEditorHtml,
+    setEditorText,
     setFileFromInput,
     setFileFromDrop,
-    onChange,
     validate,
-    buildNoticeObject,
-    resetForm,
-    beginEdit,
+    toPayload,
+    loadFrom,
     rollbackEdit,
-    initializeCreate
+    initializeCreate,
+    reset,
+    
+    // Legacy compatibility
+    setForm,
+    setErrorMessage,
+    buildNoticeObject: toPayload,
+    resetForm: reset,
+    beginEdit: loadFrom
   }
 }

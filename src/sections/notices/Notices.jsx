@@ -15,56 +15,52 @@ export const Notices = () => {
   // Notices state management
   const {
     categories,
-    notices,
-    addCategory,
-    deleteCategoryAndNotices,
-    addNotice,
-    updateNotice,
-    deleteNotice,
-    getGroup,
+    activeCategory,
+    visibleItems,
+    isCategoryModalOpen,
+    isNoticeModalOpen,
+    editingNotice,
+    confirmModalOpen,
+    categoryToDelete,
+    setActiveCategory,
+    handleAddCategory,
+    handleDeleteCategory,
+    openCreateNotice,
+    openEditNotice,
+    closeNoticeModal,
+    handleUpsertNotice,
+    handleDeleteNotice,
+    handleConfirmDelete,
+    setIsCategoryModalOpen,
+    setConfirmModalOpen,
+    setCategoryToDelete,
     seedDemoNotices
   } = useNoticesState()
-
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [modalMode, setModalMode] = useState('create')
-  const [editingNoticeId, setEditingNoticeId] = useState(null)
-  const [activeCategory, setActiveCategory] = useState('general')
-  const [newCategoryName, setNewCategoryName] = useState('')
-  const [categoryError, setCategoryError] = useState('')
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false)
-  const [categoryToDelete, setCategoryToDelete] = useState(null)
-  const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false)
 
   // Form management
   const noticeForm = useNoticeForm()
 
-  // Cancel handler for modal close
-  const handleCancel = () => {
-    try {
-      if (modalMode === 'edit') {
-        noticeForm.rollbackEdit()
-      } else {
-        noticeForm.resetForm()
-      }
-      setIsModalOpen(false)
-      setModalMode('create')
-      setEditingNoticeId(null)
-    } catch (error) {
-      console.error('Error in handleCancel:', error)
-    }
-  }
+  // Local state for modals
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [categoryError, setCategoryError] = useState('')
 
   // Modal backdrop close behavior
-  const modalBackdropClose = useModalBackdropClose(handleCancel)
+  const modalBackdropClose = useModalBackdropClose(() => {
+    if (editingNotice) {
+      noticeForm.rollbackEdit()
+    } else {
+      noticeForm.reset()
+    }
+    closeNoticeModal()
+  })
   const confirmModalBackdropClose = useModalBackdropClose(() => setConfirmModalOpen(false))
-  const addCategoryModalBackdropClose = useModalBackdropClose(() => setAddCategoryModalOpen(false))
+  const addCategoryModalBackdropClose = useModalBackdropClose(() => setIsCategoryModalOpen(false))
 
   // Title marquee behavior
   const titleMarquee = useTitleMarquee()
 
   // Body scroll lock for modals
-  useBodyScrollLock(isModalOpen || addCategoryModalOpen || confirmModalOpen)
+  useBodyScrollLock(isNoticeModalOpen || isCategoryModalOpen || confirmModalOpen)
 
   // Utility function to truncate text at word boundary
   const truncateText = (text, maxLength = 110) => {
@@ -88,6 +84,15 @@ export const Notices = () => {
     const supportsLineClamp = testElement.style.webkitLineClamp === '2'
     setUseFallback(!supportsLineClamp)
   }, [])
+
+  // Load form data when editing
+  useEffect(() => {
+    if (isNoticeModalOpen && editingNotice) {
+      noticeForm.loadFrom(editingNotice)
+    } else if (isNoticeModalOpen && !editingNotice) {
+      noticeForm.reset()
+    }
+  }, [isNoticeModalOpen, editingNotice])
 
   // Safety check for initialization and user context
   if (!isInitialized) {
@@ -143,174 +148,35 @@ export const Notices = () => {
     })
   }
 
-  const validateForm = () => {
-    return noticeForm.validate(categories)
-  }
-
   const handleSubmit = (e) => {
-    try {
-      e.preventDefault()
-      if (!validateForm()) return
-
-      if (modalMode === 'create') {
-        const newNotice = noticeForm.buildNoticeObject()
-        addNotice(newNotice)
-      } else if (modalMode === 'edit' && editingNoticeId) {
-        const updatedNotice = noticeForm.buildNoticeObject(editingNoticeId)
-        updateNotice(updatedNotice)
-      }
-
-      closeModal()
-    } catch (error) {
-      console.error('Error in handleSubmit:', error)
-      alert('An error occurred while saving the notice')
+    e.preventDefault()
+    if (noticeForm.validate(categories)) {
+      const payload = noticeForm.toPayload(editingNotice?.id)
+      handleUpsertNotice(payload)
     }
   }
 
-  const openCreateModal = () => {
-    try {
-      setModalMode('create')
-      setEditingNoticeId(null)
-      noticeForm.initializeCreate()
-      setIsModalOpen(true)
-    } catch (error) {
-      console.error('Error in openCreateModal:', error)
-      alert('An error occurred while opening create modal')
-    }
-  }
-
-  const openEditModal = (noticeId) => {
-    try {
-      const allNotices = notices.flatMap(group => group.items)
-      const notice = allNotices.find(n => n.id === noticeId)
-      if (notice) {
-        setModalMode('edit')
-        setEditingNoticeId(noticeId)
-        noticeForm.beginEdit(notice)
-        setIsModalOpen(true)
-      }
-    } catch (error) {
-      console.error('Error in openEditModal:', error)
-      alert('An error occurred while opening edit modal')
-    }
-  }
-
-  const closeModal = () => {
-    try {
-      setIsModalOpen(false)
-      setModalMode('create')
-      setEditingNoticeId(null)
-      noticeForm.resetForm()
-    } catch (error) {
-      console.error('Error in closeModal:', error)
-    }
-  }
-
-  const handleEdit = (noticeId) => {
-    try {
-      openEditModal(noticeId)
-    } catch (error) {
-      console.error('Error in handleEdit:', error)
-      alert('An error occurred while opening edit modal')
-    }
-  }
-
-  const handleDelete = (noticeId) => {
-    try {
-      deleteNotice(noticeId)
-    } catch (error) {
-      console.error('Error in handleDelete:', error)
-      alert('An error occurred while deleting the notice')
-    }
-  }
-
-  const handleAddCategory = () => {
-    if (!newCategoryName.trim()) {
+  const handleAddCategorySubmit = () => {
+    const trimmedName = newCategoryName.trim()
+    if (!trimmedName) {
       setCategoryError('Category name is required')
       return
     }
-
-    try {
-      addCategory(newCategoryName.trim())
-      setNewCategoryName('')
-      setAddCategoryModalOpen(false)
-      setCategoryError('')
-      // Set the new category as active
-      const slug = newCategoryName.trim().toLowerCase().replace(/\s+/g, '-')
-      setActiveCategory(slug)
-    } catch (error) {
-      console.error('Error adding category:', error)
-      setCategoryError('An error occurred while adding the category')
-    }
-  }
-
-  const openAddCategoryModal = () => {
-    setAddCategoryModalOpen(true)
+    handleAddCategory(trimmedName)
     setNewCategoryName('')
     setCategoryError('')
   }
 
-  const closeAddCategoryModal = () => {
-    setAddCategoryModalOpen(false)
+  const closeCategoryModal = () => {
     setNewCategoryName('')
     setCategoryError('')
-  }
-
-  // TODO: Implement category deletion functionality
-  // const handleDeleteCategory = (categoryId) => {
-  //   if (categoryId === 'general') return // Don't allow deleting default category
-
-  //   try {
-  //     deleteCategory(categoryId)
-  //     if (activeCategory === categoryId) {
-  //       setActiveCategory('general')
-  //     }
-  //   } catch (error) {
-  //     setCategoryError('Cannot delete category with existing notices')
-  //     setTimeout(() => setCategoryError(''), 3000)
-  //   }
-  // }
-
-  const openConfirmModal = (categoryId) => {
-    setCategoryToDelete(categoryId)
-    setConfirmModalOpen(true)
-  }
-
-  const closeConfirmModal = () => {
-    setConfirmModalOpen(false)
-    setCategoryToDelete(null)
-  }
-
-  const handleConfirmDelete = () => {
-    if (categoryToDelete) {
-      deleteCategoryAndNotices(categoryToDelete)
-
-      // Switch to first remaining category if current was deleted
-      if (activeCategory === categoryToDelete) {
-        const remainingCategories = categories.filter(cat => cat.id !== categoryToDelete)
-        if (remainingCategories.length > 0) {
-          setActiveCategory(remainingCategories[0].id)
-        } else {
-          setActiveCategory('general')
-        }
-      }
-
-      closeConfirmModal()
-    }
+    setIsCategoryModalOpen(false)
   }
 
   const handleSeedNotices = () => {
-    try {
-      const firstCategoryId = seedDemoNotices()
-      // Immediately activate the first category to show the seeded notices
-      setActiveCategory(firstCategoryId)
-    } catch (error) {
-      console.error('Error seeding notices:', error)
-      alert('An error occurred while seeding notices')
-    }
+    const firstCategoryId = seedDemoNotices()
+    setActiveCategory(firstCategoryId)
   }
-
-  const currentNotices = getGroup(activeCategory)?.items || []
 
   return (
     <>
@@ -340,7 +206,7 @@ export const Notices = () => {
               {can(user, 'notices:create') && (
                 <button
                   className="add-notice-btn"
-                  onClick={openCreateModal}
+                  onClick={openCreateNotice}
                 >
                   <i className="bi bi-plus"></i> Add New
                 </button>
@@ -358,10 +224,10 @@ export const Notices = () => {
                   >
                     <span>{category.name}</span>
                   </button>
-                  {can(user, 'notices:delete') && category.id !== 'general' && (
+                  {can(user, 'notices:delete') && (
                     <button
                       className="category-tab__delete"
-                      onClick={(e) => { e.stopPropagation(); openConfirmModal(category.id); }}
+                      onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id); }}
                       aria-label="Delete category"
                     >
                       <i className="bi bi-x-lg"></i>
@@ -373,7 +239,7 @@ export const Notices = () => {
               {can(user, 'notices:create') && (
                 <button
                   className="add-category-btn"
-                  onClick={openAddCategoryModal}
+                  onClick={() => setIsCategoryModalOpen(true)}
                 >
                   <i className="bi bi-plus"></i>
                 </button>
@@ -384,27 +250,45 @@ export const Notices = () => {
             )}
           </div>
 
-          {currentNotices.length === 0 ? (
+          {categories.length === 0 ? (
             <div className="empty-state">
-              {can(user, 'events:create') ? (
+              {can(user, 'notices:create') ? (
                 // Admin empty state
                 <>
                   <img src="/empty-state-admin.png" alt="" />
-                  <h2>Oops nothing to see here yet!</h2>
-                  <p>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</p>
+                  <h2>No categories yet!</h2>
+                  <p>Create your first category to get started with notices.</p>
                 </>
               ) : (
                 // User empty state
                 <>
                   <img src="/empty-state-user.png" alt="" className="empty-state-user" />
-                  <h2>Oops! No data found.</h2>
-                  <p>Nothing's been added here yet, or there might be a hiccup.<br />Try again or check back later!</p>
+                  <h2>No categories available.</h2>
+                  <p>No notice categories have been created yet.</p>
+                </>
+              )}
+            </div>
+          ) : visibleItems.length === 0 ? (
+            <div className="empty-state">
+              {can(user, 'notices:create') ? (
+                // Admin empty state
+                <>
+                  <img src="/empty-state-admin.png" alt="" />
+                  <h2>No notices in this category!</h2>
+                  <p>This category is empty. Add your first notice to get started!</p>
+                </>
+              ) : (
+                // User empty state
+                <>
+                  <img src="/empty-state-user.png" alt="" className="empty-state-user" />
+                  <h2>No notices found.</h2>
+                  <p>This category doesn't have any notices yet.</p>
                 </>
               )}
             </div>
           ) : (
             <div className="notices-list">
-              {currentNotices.map(notice => (
+              {visibleItems.map(notice => (
                 <div key={notice.id} className="notice-card">
                   <div className="notice-content">
                     <div className="notice-header">
@@ -425,7 +309,7 @@ export const Notices = () => {
                         {can(user, 'notices:delete') && (
                           <button
                             className="notice-card__delete-btn"
-                            onClick={() => handleDelete(notice.id)}
+                            onClick={() => handleDeleteNotice(notice.id)}
                           >
                             <i className="bi bi-trash"></i>
                           </button>
@@ -433,7 +317,7 @@ export const Notices = () => {
                         {can(user, 'notices:update') && (
                           <button
                             className="edit-btn"
-                            onClick={() => handleEdit(notice.id)}
+                            onClick={() => openEditNotice(notice)}
                           >
                             Edit Notice
                           </button>
@@ -463,7 +347,7 @@ export const Notices = () => {
         </div>
 
         {/* Add/Edit Notice Modal */}
-        {isModalOpen && (
+        {isNoticeModalOpen && (
           <div
             className="notices-modal-overlay"
             onPointerDown={modalBackdropClose.onBackdropPointerDown}
@@ -480,7 +364,14 @@ export const Notices = () => {
                 <p>Please review the information before saving.</p>
                 <button
                   className="close-btn"
-                  onClick={handleCancel}
+                  onClick={() => {
+                    if (editingNotice) {
+                      noticeForm.rollbackEdit()
+                    } else {
+                      noticeForm.reset()
+                    }
+                    closeNoticeModal()
+                  }}
                 >
                   <i className="bi bi-x"></i>
                 </button>
@@ -517,8 +408,8 @@ export const Notices = () => {
                 <div className="form-group">
                   <label htmlFor="description">Description<span className="req-star" aria-hidden="true">*</span></label>
                   <RichTextEditor
-                    key={`rte-${modalMode === 'edit' ? editingNoticeId : 'new'}`}
-                    contentKey={modalMode === 'edit' ? editingNoticeId : 'new'}
+                    key={`rte-${editingNotice ? editingNotice.id : 'new'}`}
+                    contentKey={editingNotice ? editingNotice.id : 'new'}
                     initialHtml={noticeForm.editorHtml}
                     onChange={handleEditorChange}
                     placeholder="Write a description..."
@@ -586,7 +477,7 @@ export const Notices = () => {
       </div>
 
       {/* Add Category Modal */}
-      {addCategoryModalOpen && (
+      {isCategoryModalOpen && (
         <div
           className="notices-modal-overlay"
           onPointerDown={addCategoryModalBackdropClose.onBackdropPointerDown}
@@ -601,7 +492,7 @@ export const Notices = () => {
             <div className="notices-modal-header">
               <button
                 className="close-btn"
-                onClick={closeAddCategoryModal}
+                onClick={closeCategoryModal}
               >
                 <i className="bi bi-x"></i>
               </button>
@@ -623,7 +514,7 @@ export const Notices = () => {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      handleAddCategory();
+                      handleAddCategorySubmit();
                     }
                   }}
                   autoFocus
@@ -640,7 +531,7 @@ export const Notices = () => {
                 <button
                   type="button"
                   className="notices-addcat-modal__update-btn"
-                  onClick={handleAddCategory}
+                  onClick={handleAddCategorySubmit}
                 >
                   Update
                 </button>
@@ -667,7 +558,7 @@ export const Notices = () => {
               <h2>Delete category?</h2>
               <button
                 className="close-btn"
-                onClick={closeConfirmModal}
+                onClick={() => setConfirmModalOpen(false)}
               >
                 <i className="bi bi-x"></i>
               </button>
@@ -677,7 +568,7 @@ export const Notices = () => {
               <p>This will permanently delete the category and all its notices.</p>
 
               <div className="form-actions">
-                <button type="button" onClick={closeConfirmModal} className="cancel-button">
+                <button type="button" onClick={() => setConfirmModalOpen(false)} className="cancel-button">
                   Cancel
                 </button>
                 <button type="button" onClick={handleConfirmDelete} className="delete-button">

@@ -1,32 +1,45 @@
-export const loadEventsLS = (key = 'events') => {
+// Events storage helper functions for localStorage operations
+const KEY = 'events.storage.v1'
+const defaults = { items: [] }
+
+export function readEvents() {
   try {
-    const savedEvents = localStorage.getItem(key)
-    if (savedEvents) {
-      return JSON.parse(savedEvents)
-    }
-    return []
-  } catch (error) {
-    console.error('Error loading events from localStorage:', error)
-    return []
+    const o = JSON.parse(localStorage.getItem(KEY))
+    return { ...defaults, ...(o || {}) }
+  } catch {
+    return defaults
   }
 }
 
-export const saveEventsLS = (events, key = 'events') => {
+export function writeEvents(data) {
   try {
-    localStorage.setItem(key, JSON.stringify(events))
-    return true
-  } catch (error) {
-    console.error('Error saving events to localStorage:', error)
-    return false
+    localStorage.setItem(KEY, JSON.stringify({ items: data.items || [] }))
+  } catch {}
+}
+
+export function seedEventsIfEmpty(seedFn) {
+  const d = readEvents()
+  if (!Array.isArray(d.items) || d.items.length === 0) {
+    const seeded = (typeof seedFn === 'function' ? seedFn() : [])
+    writeEvents({ items: Array.isArray(seeded) ? seeded : [] })
   }
 }
 
-export const clearEventsLS = (key = 'events') => {
-  try {
-    localStorage.removeItem(key)
-    return true
-  } catch (error) {
-    console.error('Error clearing events from localStorage:', error)
-    return false
+export function upsertEvent(ev) {
+  const d = readEvents()
+  const idx = d.items.findIndex(x => x.id === ev.id)
+  if (idx >= 0) {
+    d.items[idx] = ev
+  } else {
+    d.items = [...d.items, ev]
   }
+  writeEvents(d)
+  return d.items
+}
+
+export function deleteEvent(id) {
+  const d = readEvents()
+  d.items = d.items.filter(x => x.id !== id)
+  writeEvents(d)
+  return d.items
 }

@@ -3,6 +3,7 @@
 
 .membership-page {
   padding: 30px;
+  padding-right: 130px;
   min-height: 100vh;
 }
 
@@ -140,16 +141,16 @@
 
   thead {
     background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px 10px 0 0;
   }
 
   th {
     padding: 16px 8px;
     text-align: left;
     font-weight: 600;
-    color: #374151;
-    border-bottom: 2px solid #e5e7eb;
-    font-size: 0.75rem;
-    text-transform: uppercase;
+    color: #262626;
+    font-size: 14px;
     letter-spacing: 0.05em;
   }
 
@@ -165,10 +166,6 @@
     &:hover {
       background-color: #f9fafb;
     }
-
-    &:nth-child(even) {
-      background-color: #fafafa;
-    }
   }
 }
 
@@ -179,17 +176,15 @@
 }
 
 .pending-text {
-  color: #f59e0b;
+  color: $vivid_red;
   font-weight: 500;
 }
 
 .spinner {
   width: 12px;
   height: 12px;
-  border: 2px solid #e5e7eb;
-  border-top: 2px solid #f59e0b;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 5s linear infinite;
 }
 
 @keyframes spin {
@@ -204,105 +199,177 @@
 
 .receipt-link,
 .download-link {
-  color: $vivid_blue;
+  color: #6b7280;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s ease;
 
   &:hover {
     color: color.adjust($vivid_blue, $lightness: -10%);
-    text-decoration: underline;
+    text-decoration: none;
+  }
+}
+
+.processing-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: $vivid_blue;
+  font-weight: 500;
+  font-size: 0.875rem;
+
+  i {
+    font-size: 14px;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
 .status-section {
-  .status-banner {
-    text-align: center;
-  }
 
   .status-header {
-    margin-bottom: 16px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    .card-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1f2937;
+      margin: 0;
+      padding: 0;
+    }
+    .valid-until {
+      font-size: 12px;
+      font-weight: 400;
+      color: #6b7280;
+      margin: 0;
+      padding: 0;
+    }
   }
+
+  .plan-image {
+    width: 160px;
+    img {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .gold-text {
+    font-family: 'Georgia', serif;
+    font-size: 24px;
+    font-weight: bold;
+    color: #92400e;
+    margin-bottom: 4px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .member-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: #92400e;
+    letter-spacing: 0.5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .status-header-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .status-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  
 
   .status-badge {
     display: inline-block;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 0.75rem;
+    border-radius: 12px;
+    font-size: 12px;
+    padding: 5px 10px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.5px;
 
     &.active {
       background-color: #dcfce7;
       color: #166534;
-      border: 1px solid #bbf7d0;
     }
-  }
-
-  .status-info {
-    margin-bottom: 24px;
   }
 
   .valid-until {
     color: #6b7280;
-    font-size: 0.875rem;
+    font-size: 14px;
     margin: 0;
+    font-weight: 400;
   }
 
   .status-actions {
     display: flex;
-    gap: 16px;
+    gap: 12px;
     justify-content: center;
-    margin-bottom: 24px;
-
-    @media (max-width: 480px) {
-      flex-direction: column;
-      align-items: center;
-    }
+    margin-bottom: 20px;
   }
 
   .btn {
-    padding: 8px 24px;
-    border-radius: 6px;
+    padding: 10px 20px;
+    border-radius: 8px;
     font-weight: 500;
-    font-size: 0.875rem;
+    font-size: 14px;
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
     text-decoration: none;
     display: inline-block;
     text-align: center;
-
-    &.btn-primary {
-      background-color: $vivid_blue;
-      color: white;
+    
+    &.btn-renew {
+      width: 100%;
+      background-color: #f3f4f6;
+      color: #374151;
 
       &:hover {
-        background-color: color.adjust($vivid_blue, $lightness: -10%);
+        background-color: #e5e7eb;
       }
     }
 
-    &.btn-secondary {
-      background-color: white;
-      color: $vivid_blue;
-      border: 1px solid $vivid_blue;
+    &.btn-upgrade {
+      background-color: #1f2937;
+      color: white;
 
       &:hover {
-        background-color: #f8fafc;
+        background-color: #374151;
       }
     }
   }
 
+  .status-links {
+    text-align: center;
+  }
+
   .subscription-link {
-    color: #6b7280;
+    color: $vivid_blue;
     text-decoration: none;
-    font-size: 0.875rem;
+    font-size: 14px;
     transition: color 0.2s ease;
 
     &:hover {
-      color: $vivid_blue;
-      text-decoration: underline;
+      color: #1d4ed8;
     }
   }
 }
@@ -319,7 +386,6 @@
     align-items: flex-start;
     gap: 16px;
     padding: 8px 0;
-    border-bottom: 1px solid #f3f4f6;
 
     &:last-child {
       border-bottom: none;
@@ -332,11 +398,8 @@
     justify-content: center;
     width: 20px;
     height: 20px;
-    background-color: #dcfce7;
-    color: #166534;
-    border-radius: 50%;
-    font-size: 0.75rem;
-    font-weight: bold;
+    color: #2edf6c;
+    font-size: 16px;
     flex-shrink: 0;
     margin-top: 2px;
   }

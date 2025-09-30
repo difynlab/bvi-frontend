@@ -22,7 +22,8 @@ export function readReports() {
   try {
     const o = JSON.parse(localStorage.getItem(KEY));
     return { ...defaults, ...(o || {}) };
-  } catch {
+  } catch (error) {
+    console.error('Error reading reports from localStorage:', error);
     return defaults;
   }
 }
@@ -30,7 +31,11 @@ export function readReports() {
 export function writeReports(data) {
   try {
     localStorage.setItem(KEY, JSON.stringify(data));
-  } catch {}
+    return true;
+  } catch (error) {
+    console.error('Error writing reports to localStorage:', error);
+    return false;
+  }
 }
 
 export function addCategory(name) {

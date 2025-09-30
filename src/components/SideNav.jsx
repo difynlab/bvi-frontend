@@ -1,8 +1,34 @@
-import React from 'react'
-import { NavLink } from 'react-router-dom'
+import React, { useState } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/useAuth'
+import ConfirmLogoutModal from './modals/ConfirmLogoutModal'
 import '../styles/components/SideNav.scss'
 
 const SideNav = () => {
+  const [isLogoutOpen, setLogoutOpen] = useState(false);
+  const navigate = useNavigate();
+  const auth = useAuth?.() || null;
+
+  const openLogoutModal = () => setLogoutOpen(true);
+  const closeLogoutModal = () => setLogoutOpen(false);
+
+  const handleConfirmLogout = () => {
+    try {
+      if (auth?.logout) {
+        auth.logout();
+      } else {
+        try { localStorage.removeItem('user'); } catch {}
+        try { localStorage.removeItem('auth'); } catch {}
+        try { localStorage.removeItem('token'); } catch {}
+        try { localStorage.removeItem('session'); } catch {}
+      }
+    } finally {
+      closeLogoutModal();
+      navigate('/login');
+    }
+    // TODO BACKEND: Invalidate server session/token before redirect
+  };
+
   return (
     <nav className="side-nav">
       {/* Header Section */}
@@ -66,10 +92,14 @@ const SideNav = () => {
           <span>Settings</span>
         </NavLink>
 
-        <NavLink to="/logout" className="nav-item">
+        <button 
+          type="button"
+          className="nav-item nav-item--button"
+          onClick={openLogoutModal}
+        >
           <i className="bi bi-power"></i>
           <span>Logout</span>
-        </NavLink>
+        </button>
 
         <div className="user-profile">
           <div className="profile-picture">
@@ -81,6 +111,12 @@ const SideNav = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmLogoutModal 
+        isOpen={isLogoutOpen} 
+        onClose={closeLogoutModal} 
+        onConfirm={handleConfirmLogout} 
+      />
     </nav>
   )
 }

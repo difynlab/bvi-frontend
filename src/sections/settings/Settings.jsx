@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSettingsForm } from '../../hooks/useSettingsForm';
 import { usePasswordVisibility } from '../../hooks/usePasswordVisibility';
+import ImageUpload from '../../components/ImageUpload';
 import '../../styles/sections/Settings.scss';
 
 export default function Settings() {
@@ -8,6 +9,7 @@ export default function Settings() {
     form, 
     onChange, 
     profilePreview, 
+    selectedFile,
     onSelectFile,
     currentPassword, 
     setCurrentPassword,
@@ -83,14 +85,12 @@ export default function Settings() {
           </div>
 
           <div className="settings-field">
-            <label className="settings-label">Profile Picture<span className="settings-req">*</span></label>
-            <input 
-              className="settings-file" 
-              type="file" 
-              accept="image/*" 
-              onChange={(e) => onSelectFile(e.target.files?.[0])} 
+            <ImageUpload
+              onFileSelect={onSelectFile}
+              selectedFile={selectedFile}
+              preview={profilePreview}
+              accept="image/*"
             />
-            {profilePreview ? <div className="settings-preview-note">Selected</div> : null}
             {/* TODO BACKEND: upload to backend and store remote URL; hydrate on load */}
           </div>
         </section>
@@ -102,27 +102,31 @@ export default function Settings() {
             <div className="settings-preferences-row">
               <div className="settings-field-group">
                 <label className="settings-label">Date Format</label>
-                <select 
-                  className="settings-input" 
-                  value={form.dateFormat} 
-                  onChange={(e) => onChange('dateFormat', e.target.value)}
-                >
-                  <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                  <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                </select>
+                <div className="settings-select-wrapper">
+                  <select 
+                    className="settings-input" 
+                    value={form.dateFormat} 
+                    onChange={(e) => onChange('dateFormat', e.target.value)}
+                  >
+                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                  </select>
+                </div>
               </div>
               <div className="settings-field-group">
                 <label className="settings-label">Time Zone</label>
-                <select 
-                  className="settings-input" 
-                  value={form.timeZone} 
-                  onChange={(e) => onChange('timeZone', e.target.value)}
-                >
-                  <option value="EST">EST</option>
-                  <option value="PST">PST</option>
-                  <option value="UTC">UTC</option>
-                </select>
+                <div className="settings-select-wrapper">
+                  <select 
+                    className="settings-input" 
+                    value={form.timeZone} 
+                    onChange={(e) => onChange('timeZone', e.target.value)}
+                  >
+                    <option value="EST">EST</option>
+                    <option value="PST">PST</option>
+                    <option value="UTC">UTC</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -141,15 +145,17 @@ export default function Settings() {
               </div>
               <div className="settings-field-group">
                 <label className="settings-label">Language</label>
-                <select 
-                  className="settings-input" 
-                  value={form.language} 
-                  onChange={(e) => onChange('language', e.target.value)}
-                >
-                  <option>English (Default)</option>
-                  <option>Español</option>
-                  <option>Português</option>
-                </select>
+                <div className="settings-select-wrapper">
+                  <select 
+                    className="settings-input" 
+                    value={form.language} 
+                    onChange={(e) => onChange('language', e.target.value)}
+                  >
+                    <option>English (Default)</option>
+                    <option>Español</option>
+                    <option>Português</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>

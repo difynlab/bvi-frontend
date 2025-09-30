@@ -1,0 +1,64 @@
+import React from 'react';
+import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import '../../styles/components/ConfirmLogoutModal.scss';
+
+export default function ConfirmLogoutModal({ isOpen, onClose, onConfirm }) {
+  // Modal backdrop close behavior
+  const modalBackdropClose = useModalBackdropClose(onClose);
+
+  // Body scroll lock for modal
+  useBodyScrollLock(isOpen);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="logout-modal-overlay"
+      onPointerDown={modalBackdropClose.onBackdropPointerDown}
+      onPointerUp={modalBackdropClose.onBackdropPointerUp}
+      onPointerCancel={modalBackdropClose.onBackdropPointerCancel}
+    >
+      <div
+        className="logout-modal"
+        onPointerDown={modalBackdropClose.stopInsidePointer}
+        onClick={modalBackdropClose.stopInsidePointer}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="logout-modal-title"
+      >
+        <div className="logout-modal-header">
+          <h2 id="logout-modal-title">Confirm Logout</h2>
+          <button
+            className="close-btn"
+            onClick={onClose}
+            aria-label="Close modal"
+          >
+            <i className="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <div className="logout-modal-content">
+          <p>Are you sure you want to log out of your account?</p>
+
+          <div className="logout-modal-footer">
+            <button 
+              type="button" 
+              onClick={onClose} 
+              className="modal-btn-cancel"
+            >
+              Cancel
+            </button>
+            <button 
+              type="button" 
+              onClick={onConfirm} 
+              className="modal-btn-danger"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -4,7 +4,7 @@
 }
 
 .settings-header-title { 
-  margin: 0 0 20px 0; 
+  margin: 0 0 30px 0; 
 }
 
 .settings-grid { 
@@ -18,7 +18,7 @@
 
 
 .settings-card-title { 
-  margin: 0 0 10px 0; 
+  margin: 0 0 20px 0; 
   font-weight: 400;
   font-size: 16px;
 }
@@ -30,6 +30,7 @@
 .settings-label { 
   display: inline-block; 
   position: relative; 
+  margin-bottom: 10px;
 }
 
 .settings-input { 
@@ -49,6 +50,35 @@
 
 .settings-input--password {
   padding-right: 48px;
+}
+
+.settings-select-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.settings-input[type="select"],
+.settings-input select,
+select.settings-input {
+  padding-right: 32px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+}
+
+.settings-select-wrapper::after {
+  content: "\F282"; /* Bootstrap Icons chevron-down */
+  font-family: "bootstrap-icons";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  font-size: 16px;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .settings-file { 
@@ -109,6 +139,7 @@
   background: #262626; 
   color: #fff; 
   padding: 12px 20px; 
+  height: 55px;
   border: 0; 
   font-size: 16px;
   border-radius: 8px; 

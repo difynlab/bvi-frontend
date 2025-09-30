@@ -24,7 +24,9 @@ export function writeUserToStorage(user) {
       localStorage.setItem('session', JSON.stringify(parsed));
     }
     localStorage.setItem('user', JSON.stringify(user)); 
-  } catch {}
+  } catch (error) {
+    console.error('Error writing user to storage:', error);
+  }
 }
 
 export function ensureUserDefaults(u = {}) {

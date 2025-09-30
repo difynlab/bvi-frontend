@@ -9,6 +9,7 @@ import { Newsletters } from './sections/newsletters/Newsletters'
 import Membership from './sections/membership/Membership'
 import Settings from './sections/settings/Settings'
 import Reports from './sections/reports/Reports'
+import Subscription from './sections/subscription/Subscription'
 import RouteGuard from './auth/RouteGuard'
 import Forbidden from './pages/Forbidden'
 import ResetPassword from './pages/ResetPassword'
@@ -33,12 +34,6 @@ const Dashboard = () => (
 )
 
 
-const Subscription = () => (
-  <div className="page-content">
-    <h1>Subscription</h1>
-    <p>Manage subscription plans and billing.</p>
-  </div>
-)
 
 const Legislation = () => (
   <div className="page-content">
@@ -54,7 +49,7 @@ function App() {
     <>
       <BrowserRouter>
       <Routes>
-        <Route path='/' element={<Navigate to="/login" replace />}></Route>
+        <Route path='/' element={<Navigate to="/register" replace />}></Route>
         <Route path='/register' element={<Register />}></Route>
         <Route path='/login' element={<Login />}></Route>
         <Route path='/forget-password' element={<ForgetPassword />}></Route>
@@ -139,17 +134,6 @@ function App() {
               <div className="page-content-centered">
                 <h1>Admin Panel</h1>
                 <p>Welcome to the admin panel!</p>
-              </div>
-            </MainLayout>
-          </RouteGuard>
-        }></Route>
-
-        <Route path='/logout' element={
-          <RouteGuard requireAuth>
-            <MainLayout>
-              <div className="page-content-centered">
-                <h1>Logout</h1>
-                <p>You have been logged out.</p>
               </div>
             </MainLayout>
           </RouteGuard>

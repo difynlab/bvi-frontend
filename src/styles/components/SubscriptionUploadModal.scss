@@ -1,0 +1,188 @@
+// Subscription Upload Modal Styles
+.subscription-upload-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.subscription-upload-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+  padding: 20px;
+}
+
+.subscription-upload-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.subscription-upload-modal__close:hover {
+  color: #374151;
+}
+
+.subscription-upload-modal__header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.subscription-upload-modal__title {
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.subscription-upload-modal__subtitle {
+  font-size: 16px;
+  font-weight: 300;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.subscription-upload-modal__body {
+  margin-bottom: 20px;
+}
+
+.subscription-upload-modal__dropzone {
+  border: 2px dashed #e93125;
+  border-radius: 12px;
+  padding: 24px;
+  background: #fff6f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.subscription-upload-modal__dropzone.active {
+  background: #ffecec;
+  border-color: #d32f2f;
+}
+
+.subscription-upload-modal__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.subscription-upload-modal__icon {
+  font-size: 40px;
+  color: #e93125;
+  margin-bottom: 12px;
+}
+
+.subscription-upload-modal__label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1f2937;
+  margin: 0 0 12px 0;
+}
+
+.subscription-upload-modal__separator {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 8px 0;
+}
+
+.subscription-upload-modal__browse {
+  background: #e93125;
+  color: #fff;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-block;
+  margin: 12px 0;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.subscription-upload-modal__browse:hover {
+  background: #d32f2f;
+}
+
+.subscription-upload-modal__hint {
+  color: #8a8a8a;
+  font-size: 14px;
+  margin: 8px 0 0 0;
+}
+
+.subscription-upload-modal__file {
+  display: none;
+}
+
+.subscription-upload-modal__footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.subscription-upload-modal__update {
+  background: #262626;
+  color: #fff;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.subscription-upload-modal__update:hover:not(:disabled) {
+  background: #404040;
+}
+
+.subscription-upload-modal__update:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .subscription-upload-modal {
+    width: 95%;
+    margin: 20px;
+    padding: 15px;
+  }
+  
+  .subscription-upload-modal__dropzone {
+    min-height: 200px;
+    padding: 20px;
+  }
+  
+  .subscription-upload-modal__update {
+    width: 100%;
+  }
+}

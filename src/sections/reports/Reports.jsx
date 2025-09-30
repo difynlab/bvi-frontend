@@ -7,7 +7,7 @@ import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import '../../styles/sections/Reports.scss';
 
 export default function Reports() {
-  const { user } = useAuth();
+  const { user, toggleRole, isInitialized } = useAuth();
   const isAdmin = user?.role === 'admin';
 
   const {
@@ -21,10 +21,7 @@ export default function Reports() {
     categoryToDelete,
     setActiveCategory,
     handleAddCategory,
-    confirmAddCategory,
     handleDeleteCategory,
-    openConfirmModal,
-    closeConfirmModal,
     handleConfirmDelete,
     openCreateReportModal,
     openEditReportModal,
@@ -33,7 +30,9 @@ export default function Reports() {
     onDeleteReport,
     downloadReport,
     formatDate,
-    setIsCategoryModalOpen
+    seedDemoReports,
+    setIsCategoryModalOpen,
+    setConfirmModalOpen
   } = useReportsState();
 
   const reportForm = useReportForm();
@@ -43,7 +42,7 @@ export default function Reports() {
   // Modal backdrop close handlers
   const categoryModalBackdropClose = useModalBackdropClose(() => setIsCategoryModalOpen(false));
   const reportModalBackdropClose = useModalBackdropClose(() => closeReportModal());
-  const confirmModalBackdropClose = useModalBackdropClose(() => closeConfirmModal());
+  const confirmModalBackdropClose = useModalBackdropClose(() => setConfirmModalOpen(false));
 
   // Body scroll lock for modals
   useBodyScrollLock(isCategoryModalOpen || isReportModalOpen || confirmModalOpen);
@@ -55,7 +54,7 @@ export default function Reports() {
     } else if (isReportModalOpen && !editingReport) {
       reportForm.reset();
     }
-  }, [isReportModalOpen, editingReport]);
+  }, [isReportModalOpen, editingReport, reportForm]);
 
   const closeCategoryModal = () => {
     setNewCategoryName('');
@@ -73,7 +72,7 @@ export default function Reports() {
       setCategoryError('Category already exists');
       return;
     }
-    confirmAddCategory(trimmedName);
+    handleAddCategory(trimmedName);
     closeCategoryModal();
   };
 
@@ -85,18 +84,54 @@ export default function Reports() {
     }
   };
 
+  const handleSeedReports = () => {
+    const firstCategory = seedDemoReports();
+    setActiveCategory(firstCategory);
+  };
+
+  // Safety check for initialization and user context
+  if (!isInitialized) {
+    return (
+      <div className="reports-container">
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="reports-container">
-      <div className="reports-header-title">
-        <h1>Reports</h1>
-        <p>Plan, view, and download annual and other key reports with ease.</p>
-      </div>
+      <div className="reports-header">
+        <div className="reports-header-title">
+          <h1>Reports</h1>
+          <p>Plan, view, and download annual and other key reports with ease.</p>
+        </div>
 
-      {isAdmin && (
-        <button type="button" className="add-report-btn" onClick={openCreateReportModal}>
-          <i className="bi bi-plus" aria-hidden="true"></i> Add New
+      <div className="reports-header-actions">
+        {/* TODO TEMPORARY: button to switch between admin and user view. REMOVE before production. */}
+        <button
+          className="temp-role-toggle-btn"
+          onClick={toggleRole}
+        >
+          {user?.role === 'admin' ? 'Switch to User View' : 'Switch to Admin View'}
         </button>
-      )}
+
+        <button
+          className="reports-seed-btn"
+          onClick={handleSeedReports}
+        >
+          Seed Reports
+        </button>
+
+        {isAdmin && (
+          <button type="button" className="add-report-btn" onClick={openCreateReportModal}>
+            <i className="bi bi-plus" aria-hidden="true"></i> Add New
+          </button>
+        )}
+      </div>
+      </div>
 
       <div className="reports-tabs" role="tablist">
         {categories.map(cat => (
@@ -110,7 +145,7 @@ export default function Reports() {
             {isAdmin && (
               <button
                 className="reports-tab__delete"
-                onClick={(e) => { e.stopPropagation(); openConfirmModal(cat); }}
+                onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat); }}
                 aria-label="Delete category"
               >
                 <i className="bi bi-x-lg"></i>
@@ -361,7 +396,7 @@ export default function Reports() {
               <h2>Delete category?</h2>
               <button
                 className="close-btn"
-                onClick={closeConfirmModal}
+                onClick={() => setConfirmModalOpen(false)}
               >
                 <i className="bi bi-x-lg"></i>
               </button>
@@ -371,7 +406,7 @@ export default function Reports() {
               <p>This will permanently delete the category and all its reports.</p>
 
               <div className="form-actions">
-                <button type="button" onClick={closeConfirmModal} className="cancel-button">
+                <button type="button" onClick={() => setConfirmModalOpen(false)} className="cancel-button">
                   Cancel
                 </button>
                 <button type="button" onClick={handleConfirmDelete} className="delete-button">

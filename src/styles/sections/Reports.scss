@@ -1,22 +1,213 @@
+// Global modal form styles - needed for modals across all pages
+.form-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 20px;
+
+  label {
+    display: block;
+    font-weight: 500;
+    color: #333;
+    font-size: 16px;
+    position: relative;
+    padding-right: 5px;
+  }
+
+  label .req-star {
+    position: absolute;
+    top: 0;
+    right: 0;
+    color: #e53935;
+    font-size: 0.85em;
+    line-height: 1;
+    pointer-events: none;
+  }
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #262626;
+}
+
+.form-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.form-actions button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.file-upload-area {
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  transition: border-color 0.2s ease;
+}
+
+.file-upload-area:hover {
+  border-color: #262626;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.file-input-label {
+  display: inline-block;
+  background: #262626;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.file-input-label:hover {
+  background: #1a1a1a;
+}
+
+.file-status {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+}
+
+.image-preview {
+  margin-top: 12px;
+}
+
+.image-preview img {
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.error-message {
+  color: #e53935;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.req-star {
+  color: #e53935;
+  margin-left: 4px;
+}
+
 // Reports section styles
 .reports-container {
   padding: 30px;
   position: relative;
+
   .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: 8px;
+    padding: 40px 20px;
     padding-top: 19px;
+
+    img {
+      width: 300px;
+      height: 300px;
+      opacity: 0.8;
+      object-fit: cover;
+      margin-bottom: 20px;
+    }
+
+    img.empty-state-user {
+      width: 250px;
+      height: 250px;
+      margin-bottom: 0;
+    }
+
+    h2 {
+      color: #333;
+      margin: 0 0 10px 0;
+      font-size: 1.5rem;
+    }
+
+    p {
+      color: #666;
+      margin: 0;
+      font-size: 0.9rem;
+    }
   }
 }
 
 .reports-header-title {
-  margin-bottom: 20px;
+  margin-bottom: 33px;
 }
 
-
-.add-report-btn {
-  position: absolute;
-  top: 30px;
-  right: 30px;
+.reports-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
+
+.reports-header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: fit-content;
+}
+
+.temp-role-toggle-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #5a6268;
+  }
+}
+
+.reports-seed-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #218838;
+  }
+}
+
 
 
 .reports-tabs {
@@ -108,41 +299,6 @@
   color: white;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  border-radius: 8px;
-  padding: 40px 20px;
-}
-
-.empty-state img {
-  width: 300px;
-  height: 300px;
-  opacity: 0.8;
-  object-fit: cover;
-  margin-bottom: 20px;
-}
-
-img.empty-state-user {
-  width: 250px;
-  height: 250px;
-  margin-bottom: 0;
-}
-
-.empty-state h2 {
-  color: #333;
-  margin: 0 0 10px 0;
-  font-size: 1.5rem;
-}
-
-.empty-state p {
-  color: #666;
-  margin: 0;
-  font-size: 0.9rem;
-}
 
 .reports-list-wrap {
   margin-top: 16px;
@@ -188,8 +344,8 @@ img.empty-state-user {
 }
 
 .report-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 400;
   color: #1a1a1a;
   margin: 0;
 }
@@ -223,7 +379,7 @@ img.empty-state-user {
   border: 0;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
@@ -279,6 +435,121 @@ img.empty-state-user {
   &::-webkit-scrollbar {
     display: none; /* WebKit browsers (Chrome, Safari, Edge) */
   }
+
+  .close-btn {
+    position: absolute;
+    top: 40px;
+    right: 40px;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    color: #999;
+    font-size: 18px;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #333;
+    }
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+  }
+  
+  .form-group input:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: #262626;
+  }
+  
+  .req-star {
+    color: #e53935;
+    margin-left: 4px;
+  }
+  
+  .error-message {
+    color: #e53935;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  
+  .file-upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: border-color 0.2s ease;
+  }
+  
+  .file-upload-area:hover {
+    border-color: #262626;
+  }
+  
+  .hidden-file-input {
+    display: none;
+  }
+  
+  .file-input-label {
+    display: inline-block;
+    background: #262626;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+  }
+  
+  .file-input-label:hover {
+    background: #1a1a1a;
+  }
+  
+  .file-status {
+    margin: 8px 0 0 0;
+    font-size: 12px;
+  }
+  
+  .form-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .upload-now-btn {
+    background: #262626;
+    color: #fff;
+    padding: 10px 20px;
+    border: 0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .upload-now-btn:hover {
+    background: #1a1a1a;
+  }
 }
 
 .reports-modal-header {
@@ -300,23 +571,6 @@ img.empty-state-user {
   line-height: 1.4;
 }
 
-.close-btn {
-  position: absolute;
-  top: 40px;
-  right: 40px;
-  background: none;
-  border: 0;
-  cursor: pointer;
-  color: #999;
-  font-size: 18px;
-  padding: 4px;
-  border-radius: 4px;
-  transition: color 0.2s ease;
-}
-
-.close-btn:hover {
-  color: #333;
-}
 
 // Category modal specific styles
 .reports-addcat-modal {
@@ -381,105 +635,7 @@ img.empty-state-user {
 .reports-addcat-modal__update-btn:hover {
   background: #1a1a1a;
 }
-
 // Form styles
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: #333;
-}
-
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
-  transition: border-color 0.2s ease;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #262626;
-}
-
-.req-star {
-  color: #e53935;
-  margin-left: 4px;
-}
-
-.error-message {
-  color: #e53935;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.file-upload-area {
-  border: 2px dashed #ddd;
-  border-radius: 8px;
-  padding: 20px;
-  text-align: center;
-  transition: border-color 0.2s ease;
-}
-
-.file-upload-area:hover {
-  border-color: #262626;
-}
-
-.hidden-file-input {
-  display: none;
-}
-
-.file-input-label {
-  display: inline-block;
-  background: #262626;
-  color: #fff;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s ease;
-}
-
-.file-input-label:hover {
-  background: #1a1a1a;
-}
-
-.file-status {
-  margin: 8px 0 0 0;
-  font-size: 12px;
-  color: #666;
-}
-
-.form-actions {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-}
-
-.upload-now-btn {
-  background: #262626;
-  color: #fff;
-  padding: 10px 20px;
-  border: 0;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.upload-now-btn:hover {
-  background: #1a1a1a;
-}
 
 // Responsive design
 @media (max-width: 768px) {

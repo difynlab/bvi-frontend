@@ -16,6 +16,7 @@ export function useSettingsForm() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [profilePreview, setProfilePreview] = useState(baseUser.profilePicture || '');
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const requiredOk = useMemo(() => 
     Boolean(form.name?.trim()) && 
@@ -47,14 +48,18 @@ export function useSettingsForm() {
   }, [baseUser]);
 
   const onSelectFile = useCallback((file) => {
-    if (!file) return;
+    setSelectedFile(file);
+    if (!file) {
+      setProfilePreview(baseUser.profilePicture || '');
+      return;
+    }
     const r = new FileReader();
     r.onload = () => { 
       setProfilePreview(String(r.result || '')); 
       setDirty(true); 
     };
     r.readAsDataURL(file);
-  }, []);
+  }, [baseUser.profilePicture]);
 
   const resetAfterSave = useCallback((u) => {
     setForm(ensureUserDefaults(u || {}));
@@ -62,6 +67,7 @@ export function useSettingsForm() {
     setCurrentPassword(''); 
     setNewPassword(''); 
     setConfirmPassword('');
+    setSelectedFile(null);
   }, []);
 
   const save = useCallback(() => {
@@ -72,14 +78,14 @@ export function useSettingsForm() {
       profilePicture: profilePreview || form.profilePicture || baseUser.profilePicture,
       ...(wantsPasswordChange ? { password: newPassword } : {}),
     };
+    
+    // TODO BACKEND: GET /api/me for hydration and PATCH /api/me for updates
     if (ctx?.updateUserProfile) {
       ctx.updateUserProfile(merged);
     } else {
       writeUserToStorage(merged);
     }
     resetAfterSave(merged);
-    // TODO BACKEND: replace localStorage/context hydration with GET /api/me
-    // TODO BACKEND: PATCH /api/me; verificar contraseña actual server-side; subir profilePicture y guardar URL remota
   }, [canSave, baseUser, form, profilePreview, wantsPasswordChange, newPassword, ctx, resetAfterSave]);
 
   useEffect(() => {
@@ -98,6 +104,7 @@ export function useSettingsForm() {
     form, 
     onChange,
     profilePreview, 
+    selectedFile,
     onSelectFile,
     currentPassword, 
     setCurrentPassword,

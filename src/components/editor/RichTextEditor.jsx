@@ -42,7 +42,7 @@ const RichTextEditor = ({
         types: ['heading', 'paragraph', 'image'],
       }),
     ],
-    content: initialHtml,
+    content: initialHtml || '',
     onUpdate: ({ editor }) => {
       if (onChange) {
         onChange({
@@ -141,8 +141,17 @@ const RichTextEditor = ({
 
   // Sync content when initialHtml or contentKey changes
   useEffect(() => {
-    if (editor && initialHtml && editor.getHTML() !== initialHtml) {
-      editor.commands.setContent(initialHtml, true)
+    if (editor) {
+      const currentHtml = editor.getHTML()
+      // Handle empty content explicitly
+      if (!initialHtml || initialHtml.trim() === '') {
+        // Clear editor content completely for new items
+        if (currentHtml !== '<p></p>' && currentHtml !== '') {
+          editor.commands.clearContent(true)
+        }
+      } else if (currentHtml !== initialHtml) {
+        editor.commands.setContent(initialHtml, true)
+      }
     }
   }, [editor, initialHtml, contentKey])
 
