@@ -363,7 +363,7 @@
 .newsletters-header-title,
 .reports-header-title,
 .settings-header-title,
-.subscription-header-title {
+.subscription-header-title, .legislation-header-title {
   height: 55px;
   display: flex;
   flex-direction: column;
@@ -388,7 +388,7 @@
 .add-notice-btn,
 .add-newsletter-btn,
 .add-report-btn,
-.subscription-info-modal__update-btn  {
+.subscription-info-modal__update-btn, .legislation-edit-btn {
   background-color: $vivid_red;
   position: relative;
   width: 135px;

@@ -74,7 +74,6 @@
 }
 
 .form-actions button[type="submit"] {
-  background-color: $vivid_blue;
   color: white;
   border: none;
 }
@@ -389,7 +388,6 @@
   }
 
   .form-actions button[type="submit"] {
-    background-color: $vivid_blue;
     color: white;
     border: none;
   }
@@ -820,7 +818,6 @@
     label {
       display: block;
       font-weight: 400;
-      color: #333;
       font-size: 16px;
       position: relative;
       padding-right: 5px;
@@ -882,7 +879,6 @@
   }
 
   .form-actions button[type="submit"] {
-    background-color: $vivid_blue;
     color: white;
     border: none;
   }
@@ -917,7 +913,6 @@
   }
 
   .file-input-label {
-    background-color: $vivid_blue;
     color: white;
     padding: 8px 16px;
     border-radius: 4px;
@@ -979,7 +974,6 @@
   .form-group label {
     display: block;
     font-weight: 400;
-    color: #333;
     font-size: 16px;
   }
 }

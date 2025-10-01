@@ -10,6 +10,7 @@ import Membership from './sections/membership/Membership'
 import Settings from './sections/settings/Settings'
 import Reports from './sections/reports/Reports'
 import Subscription from './sections/subscription/Subscription'
+import { Legislation } from './sections/legislation/Legislation'
 import RouteGuard from './auth/RouteGuard'
 import Forbidden from './pages/Forbidden'
 import ResetPassword from './pages/ResetPassword'
@@ -35,12 +36,6 @@ const Dashboard = () => (
 
 
 
-const Legislation = () => (
-  <div className="page-content">
-    <h1>Legislation</h1>
-    <p>View and manage legislative information.</p>
-  </div>
-)
 
 
 function App() {

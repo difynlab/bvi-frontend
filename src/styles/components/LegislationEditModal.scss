@@ -1,0 +1,208 @@
+@use '../vars' as *;
+
+.legislation-edit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $spacing-md;
+}
+
+.legislation-edit-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  width: 100%;
+  width: calc(100dvw - 350px);
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  
+  /* Hide scrollbar but keep functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  
+  &::-webkit-scrollbar {
+    display: none; /* WebKit */
+  }
+}
+
+.legislation-edit-modal__close {
+  position: absolute;
+  top: $spacing-md;
+  right: $spacing-md;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+  z-index: 1;
+}
+
+.legislation-edit-modal__header {
+  padding-top: 60px;
+  text-align: center;
+}
+
+.legislation-edit-modal__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 $spacing-xs;
+  color: #333;
+}
+
+.legislation-edit-modal__subtitle {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.legislation-edit-modal__body {
+  padding-top: 0;
+}
+
+.form-group {
+  margin-bottom: $spacing-lg;
+  
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: $spacing-sm;
+  }
+  
+  .req-star {
+    color: #e93125;
+    margin-left: 2px;
+  }
+}
+
+.legislation-edit-modal__editor {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.dropzone {
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: $spacing-lg;
+  text-align: center;
+  background: #fafafa;
+  transition: all 0.2s ease;
+  
+  &.drag-over {
+    border-color: #104394;
+    background: #f0f4ff;
+  }
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.file-input-label {
+  display: inline-block;
+  padding: $spacing-sm $spacing-md;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-bottom: $spacing-sm;
+  
+  &:hover {
+    background: #0d3a7a;
+  }
+}
+
+.file-status {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.form-input {
+  width: 100%;
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  
+  &:focus {
+    outline: none;
+    border-color: #104394;
+    box-shadow: 0 0 0 2px rgba(16, 67, 148, 0.1);
+  }
+}
+
+.error-message {
+  color: #e93125;
+  font-size: 0.8rem;
+  margin-top: $spacing-xs;
+}
+
+.legislation-edit-modal__footer {
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.btn {
+  padding: $spacing-sm $spacing-md;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &.btn-secondary {
+    background: #f5f5f5;
+    color: #333;
+    
+    &:hover {
+      background: #e5e5e5;
+    }
+  }
+  
+  &.btn-primary {
+    color: white;
+  
+  }
+  
+  &.update-now-btn {
+    height: 55px;
+    width: fit-content;
+    background: #262626;
+    color: white;
+    font-size: 1rem;
+    font-weight: 400;
+    padding: 10px 30px;
+    
+    &:hover {
+      background: #1a1a1a;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .legislation-edit-modal-overlay {
+    padding: $spacing-sm;
+  }
+  
+  .legislation-edit-modal {
+    max-height: 95vh;
+  }
+  
+  .legislation-edit-modal__header,
+  .legislation-edit-modal__body,
+  .legislation-edit-modal__footer {
+    padding-left: $spacing-md;
+    padding-right: $spacing-md;
+  }
+}

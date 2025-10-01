@@ -102,27 +102,45 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm }) => {
         </header>
 
         <div className="subscription-upload-modal__body">
-          <div
-            className={`subscription-upload-modal__dropzone ${dragActive ? 'active' : ''}`}
-            onDragEnter={handleDragIn}
-            onDragLeave={handleDragOut}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-          >
-            <div className="subscription-upload-modal__content">
-              <i className="bi bi-cloud-upload subscription-upload-modal__icon" aria-hidden="true"></i>
-              <p className="subscription-upload-modal__label">Drag and drop files here</p>
-              <p className="subscription-upload-modal__separator">or</p>
+          {previewDataUrl ? (
+            <div className="subscription-upload-modal__preview">
+              <img 
+                src={previewDataUrl} 
+                alt="Preview" 
+                className="subscription-upload-modal__preview-image"
+              />
               <button
                 type="button"
-                className="subscription-upload-modal__browse"
-                onClick={handleBrowseClick}
+                className="subscription-upload-modal__remove-preview"
+                onClick={() => setPreviewDataUrl('')}
+                aria-label="Remove preview"
               >
-                Browse File
+                <i className="bi bi-x" aria-hidden="true"></i>
               </button>
-              <p className="subscription-upload-modal__hint">Maximum file size is 200MB</p>
             </div>
-          </div>
+          ) : (
+            <div
+              className={`subscription-upload-modal__dropzone ${dragActive ? 'active' : ''}`}
+              onDragEnter={handleDragIn}
+              onDragLeave={handleDragOut}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <div className="subscription-upload-modal__content">
+                <i className="bi bi-cloud-upload subscription-upload-modal__icon" aria-hidden="true"></i>
+                <p className="subscription-upload-modal__label">Drag and drop files here</p>
+                <p className="subscription-upload-modal__separator">or</p>
+                <button
+                  type="button"
+                  className="subscription-upload-modal__browse"
+                  onClick={handleBrowseClick}
+                >
+                  Browse File
+                </button>
+                <p className="subscription-upload-modal__hint">Maximum file size is 200MB</p>
+              </div>
+            </div>
+          )}
 
           <input
             ref={fileInputRef}

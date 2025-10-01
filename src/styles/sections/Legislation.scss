@@ -1,0 +1,189 @@
+@use '../vars' as *;
+
+.legislation-container {
+  padding: 30px;
+
+  .legislation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: $spacing-lg;
+  }
+
+  .legislation-header-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .legislation-header-subtitle {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  .legislation-edit-btn {
+    display: flex;
+    align-items: center;
+    width: 165px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    i {
+      font-size: 25px;
+    }
+  }
+
+  .legislation-meta {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: $grid-gap-lg;
+    row-gap: $grid-gap-sm;
+    margin-bottom: $spacing-lg;
+
+    dt {
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+
+    dd {
+      margin: 0;
+      color: #555;
+    }
+  }
+
+  .legislation-divider {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.1);
+    margin: $spacing-lg 0;
+  }
+
+  .legislation-list {
+    padding-left: 1.25rem;
+    list-style: disc;
+    margin: $spacing-sm 0;
+
+    li {
+      margin-bottom: $spacing-sm;
+      color: #555;
+      line-height: 1.5;
+    }
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: $spacing-sm;
+  }
+
+  p {
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: $spacing-sm;
+  }
+
+  .legislation-attachments {
+    margin-top: $spacing-lg;
+
+    .attachment-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: $spacing-md;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: none;
+      border: 1px solid #eaeaea;
+
+      & + .attachment-item {
+        margin-top: $spacing-sm;
+      }
+
+      .meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        .source-label {
+          font-size: 0.8rem;
+          color: #666;
+          font-weight: 500;
+        }
+
+        .attachment-title {
+          font-weight: 600;
+          color: #333;
+        }
+      }
+
+      .actions {
+        display: flex;
+        gap: $spacing-sm;
+
+        .btn {
+          padding: $spacing-xs $spacing-sm;
+          border: none;
+          border-radius: 6px;
+          font-size: 0.8rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          &.btn-sm {
+            padding: $spacing-xs $spacing-sm;
+            font-size: 0.8rem;
+          }
+
+          &.btn-primary {
+            color: white;
+
+          }
+
+          &.btn-danger {
+            background: #e93125;
+            color: white;
+
+            &:hover {
+              background: #c62828;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: $spacing-md;
+
+    .legislation-header {
+      flex-direction: column;
+      gap: $spacing-md;
+      align-items: stretch;
+    }
+
+    .legislation-edit-btn {
+      align-self: flex-start;
+    }
+
+    .legislation-meta {
+      grid-template-columns: 1fr;
+      row-gap: $spacing-xs;
+
+      dt {
+        margin-bottom: $spacing-xs;
+      }
+    }
+
+    .legislation-attachments {
+      .attachment-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: $spacing-sm;
+
+        .actions {
+          justify-content: flex-end;
+        }
+      }
+    }
+  }
+}
