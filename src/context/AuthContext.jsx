@@ -1,84 +1,139 @@
 import React, { useState, useEffect } from 'react'
-import { resolveRole, getPermissions } from './authHelpers'
+import { deriveRoleFromEmail, getPermissions, hashPassword } from './authHelpers'
 import { AuthContext } from './AuthContext'
-import { seedMissingContactFields } from '../helpers/mockUserSeeder'
+import { getSession, saveSession, clearSession, getUsers, setUsers, findUserByEmail } from '../helpers/authStorage'
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
-  const [token, setToken] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [isInitialized, setIsInitialized] = useState(false) // Track initialization
+  const [isInitialized, setIsInitialized] = useState(false)
 
-  // TODO TEMPORARY: storing session in localStorage. REMOVE this before production.
   // Load session from localStorage on provider mount
   useEffect(() => {
     try {
-      const savedSession = localStorage.getItem('session')
-      if (savedSession) {
-        const session = JSON.parse(savedSession)
+      const session = getSession()
+      if (session?.user) {
         setIsAuthenticated(true)
         setUser(session.user)
-        setToken(session.token)
       }
     } catch (error) {
       console.error('Error loading session from localStorage:', error)
       // Clear corrupted session
-      localStorage.removeItem('session')
+      clearSession()
     } finally {
-      setIsInitialized(true) // Mark as initialized regardless of success/failure
+      setIsInitialized(true)
     }
   }, [])
 
 
-  const login = async ({ username }) => {
+  const register = async (payload) => {
     setLoading(true)
     setError(null)
 
     try {
-      // TODO BACKEND: POST /api/auth/login
-      // MOCK: resolve role by email rule; build user object
-      const role = resolveRole(username)
-      const permissions = getPermissions(role)
+      const { firstName, lastName, email, phoneNumber, password } = payload
       
-      const baseUser = {
-        id: Date.now().toString(),
-        email: username,
-        name: 'Test User',
-        role,
-        permissions,
-        countryCode: '+54',
-        phoneNumber: '',
-        profilePicture: '',
-        dateFormat: 'MM/DD/YYYY',
-        timeZone: 'EST',
-        country: 'Argentina',
-        language: 'English (Default)',
-        password: 'mockPassword123' // TODO: remove in production
+      // Check if user already exists
+      const existingUser = findUserByEmail(email)
+      if (existingUser) {
+        setError('User with this email already exists')
+        return false
       }
 
-      // TODO BACKEND: remove seeding when API includes phone + countryCode
-      const enriched = seedMissingContactFields(baseUser)
+      // Derive role from email
+      const role = deriveRoleFromEmail(email)
+      const permissions = getPermissions(role)
+      
+      // Hash password
+      const passwordHash = await hashPassword(password)
+      
+      // Create new user
+      const newUser = {
+        id: Date.now().toString(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.toLowerCase().trim(),
+        phoneNumber: phoneNumber || '',
+        role,
+        permissions,
+        passwordHash,
+        createdAt: new Date().toISOString()
+      }
 
-      const mockToken = 'mock.jwt.token'
+      // Save user to storage
+      const users = getUsers()
+      users.push(newUser)
+      setUsers(users)
 
-      setUser(enriched)
-      setToken(mockToken)
+      // Create session
+      const sessionUser = {
+        id: newUser.id,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        phoneNumber: newUser.phoneNumber,
+        role: newUser.role,
+        permissions: newUser.permissions
+      }
+
+      saveSession(sessionUser)
+      setUser(sessionUser)
       setIsAuthenticated(true)
 
-      // TODO TEMPORARY: storing session in localStorage. REMOVE this before production.
-      localStorage.setItem('session', JSON.stringify({
-        user: enriched,
-        token: mockToken
-      }))
-      // Also store user separately for Settings compatibility
-      localStorage.setItem('user', JSON.stringify(enriched))
-      
-      console.log('Mock login successful:', enriched)
+      console.log('Registration successful:', sessionUser)
+      return true
     } catch (err) {
-      setError('Login failed')
+      setError('Registration failed')
+      console.error('Registration error:', err)
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const login = async ({ email, password }) => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Find user by email
+      const user = findUserByEmail(email)
+      if (!user) {
+        setError({ type: 'email', message: 'User not found' })
+        return false
+      }
+
+      // Hash provided password and compare
+      const providedPasswordHash = await hashPassword(password)
+      if (providedPasswordHash !== user.passwordHash) {
+        setError({ type: 'password', message: 'Invalid password' })
+        return false
+      }
+
+      // Create session user object (without password hash)
+      const sessionUser = {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        permissions: user.permissions
+      }
+
+      // Save session
+      saveSession(sessionUser)
+      setUser(sessionUser)
+      setIsAuthenticated(true)
+
+      console.log('Login successful:', sessionUser)
+      return true
+    } catch (err) {
+      setError({ type: 'general', message: 'Login failed' })
       console.error('Login error:', err)
+      return false
     } finally {
       setLoading(false)
     }
@@ -92,46 +147,29 @@ export const AuthProvider = ({ children }) => {
       // TODO BACKEND: POST /api/auth/google { credential }
       // MOCK: email "googleuser@user.com" → resolve role; set session
       const mockEmail = 'googleuser@user.com'
-      const role = resolveRole(mockEmail)
+      const role = deriveRoleFromEmail(mockEmail)
       const permissions = getPermissions(role)
       
-      const baseUser = {
+      const sessionUser = {
         id: Date.now().toString(),
+        firstName: 'Google',
+        lastName: 'User',
         email: mockEmail,
-        name: 'Google User',
-        role,
-        permissions,
-        countryCode: '+54',
         phoneNumber: '',
-        profilePicture: '',
-        dateFormat: 'MM/DD/YYYY',
-        timeZone: 'EST',
-        country: 'Argentina',
-        language: 'English (Default)',
-        password: 'mockPassword123' // TODO: remove in production
+        role,
+        permissions
       }
 
-      // TODO BACKEND: remove seeding when API includes phone + countryCode
-      const enriched = seedMissingContactFields(baseUser)
-
-      const mockToken = 'mock.google.jwt.token'
-
-      setUser(enriched)
-      setToken(mockToken)
+      saveSession(sessionUser)
+      setUser(sessionUser)
       setIsAuthenticated(true)
-
-      // TODO TEMPORARY: storing session in localStorage. REMOVE this before production.
-      localStorage.setItem('session', JSON.stringify({
-        user: enriched,
-        token: mockToken
-      }))
-      // Also store user separately for Settings compatibility
-      localStorage.setItem('user', JSON.stringify(enriched))
       
-      console.log('Mock Google login successful:', enriched)
+      console.log('Mock Google login successful:', sessionUser)
+      return true
     } catch (err) {
       setError('Google login failed')
       console.error('Google login error:', err)
+      return false
     } finally {
       setLoading(false)
     }
@@ -139,12 +177,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null)
-    setToken(null)
     setIsAuthenticated(false)
     setError(null)
-
-    // TODO TEMPORARY: storing session in localStorage. REMOVE this before production.
-    localStorage.removeItem('session')
+    clearSession()
     
     console.log('User logged out')
   }
@@ -162,59 +197,36 @@ export const AuthProvider = ({ children }) => {
       }
       
       setUser(updatedUser)
-      
-      // Update localStorage with new role
-      try {
-        const session = JSON.parse(localStorage.getItem('session') || '{}')
-        session.user = updatedUser
-        localStorage.setItem('session', JSON.stringify(session))
-      } catch (error) {
-        console.error('Error updating session in localStorage:', error)
-      }
+      saveSession(updatedUser)
     }
   }
 
-  const refresh = async () => {
-    // TODO BACKEND: POST /api/auth/refresh
-    console.log('Refresh token - TODO BACKEND')
-  }
-
-  const updateUserProfile = (updatedUserData) => {
+  const updateProfile = (partial) => {
     if (!user) return
 
-    const mergedUser = {
+    const updatedUser = {
       ...user,
-      ...updatedUserData
+      ...partial
     }
 
-    setUser(mergedUser)
-
-    // Update localStorage with merged user data
-    try {
-      const session = JSON.parse(localStorage.getItem('session') || '{}')
-      session.user = mergedUser
-      localStorage.setItem('session', JSON.stringify(session))
-      // Also update user key for Settings compatibility
-      localStorage.setItem('user', JSON.stringify(mergedUser))
-      console.log('User profile updated:', mergedUser)
-    } catch (error) {
-      console.error('Error updating user profile in localStorage:', error)
-    }
+    setUser(updatedUser)
+    saveSession(updatedUser)
+    console.log('User profile updated:', updatedUser)
   }
 
   const value = {
-    isAuthenticated,
     user,
-    token,
+    isInitialized,
+    register,
+    login,
+    logout,
+    updateProfile,
+    toggleRole, // TODO TEMPORARY: role toggle function for testing only. REMOVE before production.
+    // Legacy compatibility
+    isAuthenticated,
     loading,
     error,
-    isInitialized, // Add initialization state
-    login,
-    loginWithGoogle,
-    logout,
-    refresh,
-    updateUserProfile,
-    toggleRole // TODO TEMPORARY: role toggle function for testing only. REMOVE before production.
+    loginWithGoogle
   }
 
   return (

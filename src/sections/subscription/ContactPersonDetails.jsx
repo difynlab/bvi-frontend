@@ -28,7 +28,7 @@ const ContactPersonDetails = ({ onNext = () => {} }) => {
         };
         setContacts(normalizedData);
       } catch (error) {
-        console.error('Error loading contact persons data:', error);
+        // Silently handle error - data will use defaults
       }
     }
     setIsLoaded(true);

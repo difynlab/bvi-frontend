@@ -1,36 +1,42 @@
 import React, { useState } from 'react'
 import '../../styles/sections/Register.scss'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useRegisterForm } from '../../hooks/useRegisterForm'
+import { useAuth } from '../../context/useAuth'
+import { passwordPolicyMissing } from '../../helpers/passwordPolicy'
 
 export const Register = () => {
+  const { register } = useAuth()
+  const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formValues, setFormValues] = useState({
     firstName: '',
     lastName: '',
-    contactNumber: '',
+    phoneNumber: '',
     confirmPassword: '',
   })
 
   const [formErrors, setFormErrors] = useState({
     firstName: '',
     lastName: '',
-    contactNumber: '',
+    email: '',
+    phoneNumber: '',
+    password: '',
     confirmPassword: '',
   })
+
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Use the password policy hook for email and password
   const { 
     email, 
     setEmail, 
     password, 
-    setPassword, 
-    error: passwordError, 
-    handleSubmit: handlePasswordSubmit 
-  } = useRegisterForm((data) => {
+    setPassword
+  } = useRegisterForm(async (data) => {
     // Handle successful password validation
-    handleFormSubmit(data)
+    await handleFormSubmit(data)
   })
 
   const isValidEmail = (value) => {
@@ -47,20 +53,23 @@ export const Register = () => {
     const errors = {
       firstName: '',
       lastName: '',
-      contactNumber: '',
+      email: '',
+      phoneNumber: '',
+      password: '',
       confirmPassword: '',
     }
 
     if (!formValues.firstName.trim()) errors.firstName = 'First name is required'
     if (!formValues.lastName.trim()) errors.lastName = 'Last name is required'
 
-    if (!formValues.contactNumber.trim()) errors.contactNumber = 'Contact number is required'
-    else if (!isValidPhone(formValues.contactNumber)) errors.contactNumber = 'Enter a valid phone number'
+    if (formValues.phoneNumber && !isValidPhone(formValues.phoneNumber)) {
+      errors.phoneNumber = 'Enter a valid phone number'
+    }
 
     if (!formValues.confirmPassword) errors.confirmPassword = 'Please confirm password'
     else if (formValues.confirmPassword !== password) errors.confirmPassword = 'Passwords do not match'
 
-    setFormErrors(errors)
+    setFormErrors(prev => ({ ...prev, ...errors }))
     return Object.values(errors).every((e) => e === '')
   }
 
@@ -69,38 +78,99 @@ export const Register = () => {
     setFormValues((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleFormSubmit = (passwordData) => {
+  const handleFormSubmit = async (passwordData) => {
     const otherFieldsValid = validateOtherFields()
     if (!otherFieldsValid) return
 
-    const collectedData = {
-      firstName: formValues.firstName.trim(),
-      lastName: formValues.lastName.trim(),
-      email: passwordData.email,
-      contactNumber: formValues.contactNumber.trim(),
-      password: passwordData.password,
-      countryCode: '+54',
-      phoneNumber: formValues.contactNumber.trim(),
-      profilePicture: '',
-      dateFormat: 'MM/DD/YYYY',
-      timeZone: 'EST',
-      country: 'Argentina',
-      language: 'English (Default)'
-    }
+    setIsSubmitting(true)
 
-    // TODO BACKEND: Replace this with your API call
-    console.log('Collected data:', collectedData)
-    alert('Datos recopilados:\n' + JSON.stringify(collectedData, null, 2))
+    try {
+      const registrationData = {
+        firstName: formValues.firstName.trim(),
+        lastName: formValues.lastName.trim(),
+        email: passwordData.email,
+        phoneNumber: formValues.phoneNumber.trim() || '',
+        password: passwordData.password
+      }
+
+      const success = await register(registrationData)
+      if (success) {
+        navigate('/events')
+      }
+    } catch (error) {
+      console.error('Registration error:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    handlePasswordSubmit(e)
+    console.log('Form submitted!')
+    console.log('Form values:', formValues)
+    console.log('Email:', email)
+    console.log('Password:', password)
+    
+    // Clear all errors first
+    setFormErrors({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phoneNumber: '',
+      password: '',
+      confirmPassword: '',
+    })
+    
+    // Validate all fields
+    const errors = {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phoneNumber: '',
+      password: '',
+      confirmPassword: '',
+    }
+    
+    // Validate required fields
+    if (!formValues.firstName.trim()) errors.firstName = 'First name is required'
+    if (!formValues.lastName.trim()) errors.lastName = 'Last name is required'
+    if (!email.trim()) errors.email = 'Email is required'
+    else if (!isValidEmail(email)) errors.email = 'Enter a valid email'
+    if (!password.trim()) errors.password = 'Password is required'
+    else {
+      const missing = passwordPolicyMissing(password)
+      if (missing.length) {
+        errors.password = `Password must contain: ${missing.join(', ')}.`
+      }
+    }
+    if (!formValues.confirmPassword) errors.confirmPassword = 'Please confirm password'
+    else if (formValues.confirmPassword !== password) errors.confirmPassword = 'Passwords do not match'
+    
+    // Validate phone if provided
+    if (formValues.phoneNumber && !isValidPhone(formValues.phoneNumber)) {
+      errors.phoneNumber = 'Enter a valid phone number'
+    }
+    
+    console.log('Validation errors:', errors)
+    
+    // Set all errors at once
+    setFormErrors(errors)
+    
+    // Check if all fields are valid
+    const allValid = Object.values(errors).every(error => error === '')
+    console.log('All valid:', allValid)
+    
+    if (allValid) {
+      console.log('Calling handleFormSubmit...')
+      handleFormSubmit({ email, password })
+    } else {
+      console.log('Form has validation errors, not submitting')
+    }
   }
 
   return (
     <div className="auth-page">
-      <div className="auth-container">
+      <div className="auth-container register-container">
         <div className="auth-left" aria-hidden>
           <img
             src="https://images.unsplash.com/photo-1497215842964-222b430dc094?q=80&w=1600&auto=format&fit=crop"
@@ -126,7 +196,7 @@ export const Register = () => {
                   value={formValues.firstName}
                   onChange={handleChange}
                 />
-                {formErrors.firstName && <span className="error">{formErrors.firstName}</span>}
+                {formErrors.firstName && <div className="register-error"><span className="error">{formErrors.firstName}</span></div>}
               </div>
               <div className="field">
                 <label htmlFor="lastName">Last Name</label>
@@ -138,7 +208,7 @@ export const Register = () => {
                   value={formValues.lastName}
                   onChange={handleChange}
                 />
-                {formErrors.lastName && <span className="error">{formErrors.lastName}</span>}
+                {formErrors.lastName && <div className="register-error"><span className="error">{formErrors.lastName}</span></div>}
               </div>
             </div>
 
@@ -153,18 +223,19 @@ export const Register = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
+                {formErrors.email && <div className="register-error"><span className="error">{formErrors.email}</span></div>}
               </div>
               <div className="field">
-                <label htmlFor="contactNumber">Contact Number</label>
+                <label htmlFor="phoneNumber">Contact Number</label>
                 <input
-                  id="contactNumber"
-                  name="contactNumber"
+                  id="phoneNumber"
+                  name="phoneNumber"
                   type="tel"
                   placeholder="00 00 000 0000"
-                  value={formValues.contactNumber}
+                  value={formValues.phoneNumber}
                   onChange={handleChange}
                 />
-                {formErrors.contactNumber && <span className="error">{formErrors.contactNumber}</span>}
+                {formErrors.phoneNumber && <div className="register-error"><span className="error">{formErrors.phoneNumber}</span></div>}
               </div>
             </div>
 
@@ -179,8 +250,8 @@ export const Register = () => {
                     placeholder="********"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    aria-invalid={Boolean(passwordError)}
-                    aria-describedby={passwordError ? 'password-errors' : undefined}
+                    aria-invalid={Boolean(formErrors.password)}
+                    aria-describedby={formErrors.password ? 'password-errors' : undefined}
                   />
                   <button
                     type="button"
@@ -191,9 +262,12 @@ export const Register = () => {
                     <i className={showPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'} />
                   </button>
                 </div>
-                {passwordError && (
-                  <div id="password-errors" className="form-error">
-                    <span className="error">{passwordError}</span>
+                {formErrors.password && (
+                  <div 
+                    id="password-errors" 
+                    className={`register-error ${formErrors.password.includes('Password must contain') ? 'password-error' : ''}`}
+                  >
+                    <span className="error">{formErrors.password}</span>
                   </div>
                 )}
               </div>
@@ -218,12 +292,16 @@ export const Register = () => {
                   </button>
                 </div>
                 {formErrors.confirmPassword && (
-                  <span className="error">{formErrors.confirmPassword}</span>
+                  <div className="register-error">
+                    <span className="error">{formErrors.confirmPassword}</span>
+                  </div>
                 )}
               </div>
             </div>
             <div className="auth-footer">
-              <button type="submit" className="auth-footer-cta">Register Now</button>
+              <button type="submit" className="auth-footer-cta" disabled={isSubmitting}>
+                {isSubmitting ? 'Registering...' : 'Register Now'}
+              </button>
               <p className='auth-footer-already'>
                 Already have an account? <NavLink to={'/login'}>Sign In</NavLink>
               </p>

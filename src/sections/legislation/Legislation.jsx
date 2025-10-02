@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { useLegislationState } from '../../hooks/useLegislationState';
 import { useAuth } from '../../context/useAuth';
+import { can } from '../../auth/acl';
 import LegislationEditModal from '../../components/modals/LegislationEditModal';
 import '../../styles/sections/Legislation.scss';
 
 const Legislation = () => {
   const { legislation, attachments, addAttachment, removeAttachment } = useLegislationState();
-  const auth = useAuth();
+  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleEditClick = () => {
-    setIsModalOpen(true);
+    if (can(user, 'legislation:update')) {
+      setIsModalOpen(true);
+    }
   };
 
   const handleModalClose = () => {
@@ -29,7 +32,9 @@ const Legislation = () => {
   };
 
   const handleDeleteAttachment = (attachmentId) => {
-    removeAttachment(attachmentId);
+    if (can(user, 'legislation:delete')) {
+      removeAttachment(attachmentId);
+    }
   };
 
   if (!legislation) {
@@ -54,7 +59,7 @@ const Legislation = () => {
           <h1>Legislation Details</h1>
           <p>Manage your account and adjust settings to optimize your workflow.</p>
         </div>
-        {auth?.user?.role === 'admin' && (
+        {can(user, 'legislation:update') && (
           <button 
             className="btn btn-primary legislation-edit-btn"
             onClick={handleEditClick}
@@ -149,7 +154,7 @@ const Legislation = () => {
             </div>
             <div className="actions">
               <button
-                className="btn btn-primary btn-sm"
+                className="download-btn"
                 onClick={() => handleDownloadAttachment(attachment)}
                 aria-label={`Download ${attachment.title}`}
               >

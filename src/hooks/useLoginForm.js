@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { isStrongPassword } from '../helpers/passwordPolicy';
 
 /**
  * Custom hook for handling login form state and validation
@@ -13,12 +12,12 @@ export function useLoginForm(onSubmitValid) {
 
   const handleSubmit = useCallback((e) => {
     e.preventDefault();
-    if (!isStrongPassword(password)) {
-      setError('Incorrect or invalid password.');
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter both email and password.');
       return;
     }
     setError('');
-    onSubmitValid({ email: email.trim(), password: password.trim() }); // TODO BACKEND
+    onSubmitValid({ email: email.trim(), password: password.trim() });
   }, [email, password, onSubmitValid]);
 
   return { 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { makeUpcomingDateRange, fmtDateYMD, fmtTimeHM } from '../helpers/seedUtils'
-import { readEvents, seedEventsIfEmpty, upsertEvent, deleteEvent } from '../helpers/eventsStorage'
+import { readEvents, writeEvents, seedEventsIfEmpty, upsertEvent, deleteEvent } from '../helpers/eventsStorage'
 
 // Generate Events seeds with upcoming dates (tomorrow to +30 days)
 const generateEventSeeds = () => {
@@ -87,8 +87,7 @@ export const useEventsState = () => {
     if (hydratedRef.current) return
     hydratedRef.current = true
 
-    // Seed ONLY if empty, then hydrate
-    seedEventsIfEmpty(() => generateEventSeeds())
+    // Load from storage without auto-seeding
     const { items: stored } = readEvents()
     setEvents(Array.isArray(stored) ? stored : [])
   }, [])
@@ -112,9 +111,10 @@ export const useEventsState = () => {
   }, [])
 
   const seedIfEmpty = useCallback(() => {
-    seedEventsIfEmpty(() => generateEventSeeds())
-    const { items: stored } = readEvents()
-    setEvents(Array.isArray(stored) ? stored : [])
+    // Always seed when explicitly called (overwrite existing data)
+    const seededEvents = generateEventSeeds()
+    writeEvents({ items: seededEvents })
+    setEvents(seededEvents)
   }, [])
 
   return {

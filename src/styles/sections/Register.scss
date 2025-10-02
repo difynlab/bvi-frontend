@@ -57,7 +57,7 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 35px;
+  gap: 30px;
 }
 
 .grid.two-cols {
@@ -65,25 +65,28 @@
   gap: 20px;
 }
 
-.field {
+.register-container .field {
   display: flex;
   flex-direction: column;
   gap: 8px;
   flex: 1;
+  height: 72px;
   position: relative;
 }
 
-.password-field {
+.register-container .password-field {
   position: relative;
+  display: block;
+  height: 72px;
   width: 100%;
 }
 
-.field label {
+.register-container .field label {
   font-size: 16px;
   color: #334155;
 }
 
-.field input {
+.register-container .field input {
   height: 44px;
   padding: 0 14px;
   border: 1px solid #25252520;
@@ -97,20 +100,21 @@
   }
 }
 
-.password-field input {
+.register-container .password-field input {
   padding-right: 44px;
+  margin-bottom: 18px;
 }
 
-.field input:focus {
+.register-container .field input:focus {
   outline: none;
   border: 1px solid #686868;
 }
 
-.password-toggle {
+.register-container .password-toggle {
   position: absolute;
   right: 12px;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-75%);
   border: 0;
   background: transparent;
   padding: 0;
@@ -123,29 +127,40 @@
   color: #6b7280;
 }
 
-.password-toggle:hover,
-.password-toggle:focus {
+.register-container .password-toggle:hover,
+.register-container .password-toggle:focus {
   color: #374151;
   outline: none;
 }
 
-.password-toggle i {
+.register-container .password-toggle i {
   font-size: 16px;
   line-height: 1;
 }
-
-.error {
-  color: $vivid_red;
-  font-size: 12px;
+.register-container .register-error {
   position: absolute;
-  bottom: -18px;
+  bottom: -20px;
   left: 0;
   right: 0;
+  
+  .error{
+    color: $vivid_red;
+    font-size: 12px;
+    display: block;
+  }
 }
 
-.auth-footer {
+// Special positioning for long password error messages
+.register-container .register-error.password-error {
+  bottom: -35px;
+}
+
+.register-container {
+
+  .auth-footer {
   &-cta {
     height: 55px;
+    margin-top: 18px;
     width: 100%;
     font-size: 14px;
     border-radius: 10px;
@@ -176,6 +191,7 @@
     a {
       text-decoration: none;
       color: rgb(52, 52, 200);
+      }
     }
   }
 }

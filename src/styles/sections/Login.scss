@@ -50,14 +50,18 @@
   text-align: center;
 }
 
-.auth-form {
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  gap: 35px;
+.login-container {
+
+  .auth-form {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 35px;
+    position: relative;
+  }
 }
 
-.field {
+.login-container .field {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -66,17 +70,19 @@
   position: relative;
 }
 
-.password-field {
+.login-container .password-field {
   position: relative;
   width: 100%;
+  margin-bottom: 18px;
 }
 
-.field label {
+.login-container .field label {
   font-size: 16px;
   color: #334155;
+  position: relative;
 }
 
-.field input {
+.login-container .field input {
   height: 44px;
   padding: 0 14px;
   border: 1px solid #25252520;
@@ -90,20 +96,20 @@
   }
 }
 
-.password-field input {
+.login-container .password-field input {
   padding-right: 44px;
 }
 
-.field input:focus {
+.login-container .field input:focus {
   outline: none;
   border: 1px solid #686868;
 }
 
-.password-toggle {
+.login-container .password-field .password-toggle {
   position: absolute;
-  right: 12px;
   top: 50%;
   transform: translateY(-50%);
+  right: 12px;
   border: 0;
   background: transparent;
   padding: 0;
@@ -116,31 +122,37 @@
   color: #6b7280;
 }
 
-.password-toggle:hover,
-.password-toggle:focus {
+.login-container .password-toggle:hover,
+.login-container .password-toggle:focus {
   color: #374151;
   outline: none;
 }
 
-.password-toggle i {
+.login-container .password-toggle i {
   font-size: 16px;
   line-height: 1;
 }
 
-.error {
-  color: $vivid_red;
-  font-size: 12px;
+.login-container .form-error {
   position: absolute;
-  bottom: -18px;
+  bottom: -5px;
   left: 0;
   right: 0;
+  
+  .error {
+    color: $vivid_red;
+    font-size: 12px;
+    bottom: -15px;
+    display: block;
+  }
 }
 
 .login-options {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: -10px;
+  margin-top: 0;
+  margin-bottom: 20px;
 }
 
 .remember-checkbox {
@@ -264,6 +276,18 @@
       text-decoration: none;
       color: rgb(52, 52, 200);
     }
+  }
+}
+
+.auth-error {
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  right: 0;
+  
+  .error {
+    color: $vivid_red;
+    font-size: 12px;
   }
 }
 

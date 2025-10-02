@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { makeRecentDate, fmtDateForCreatedAt } from '../helpers/seedUtils'
-import { readNewsletters, seedNewslettersIfEmpty, upsertNewsletter, deleteNewsletter } from '../helpers/newslettersStorage'
+import { readNewsletters, setNewsletters, getMockNewsletters, upsertNewsletter, deleteNewsletter } from '../helpers/newslettersStorage'
 
 // Generate Newsletter seeds with recent dates (≤7 days old)
 const generateNewsletterSeeds = () => {
@@ -73,8 +72,7 @@ export const useNewslettersState = () => {
     if (hydratedRef.current) return
     hydratedRef.current = true
 
-    // Seed ONLY if empty, then hydrate
-    seedNewslettersIfEmpty(() => generateNewsletterSeeds())
+    // Load from storage without auto-seeding
     const { items: stored } = readNewsletters()
     setNewsletters(Array.isArray(stored) ? stored : [])
   }, [])
@@ -105,26 +103,15 @@ export const useNewslettersState = () => {
     setNewsletters(next)
   }, [])
 
-  const seedDemoNewsletters = useCallback(() => {
-    // Check if already seeded to avoid duplicates
-    const { items: stored } = readNewsletters()
-    const hasExistingNewsletters = stored && stored.length > 0
+  const seedFromMocks = useCallback(() => {
+    // Get mock newsletters with recent dates
+    const mockNewsletters = getMockNewsletters()
     
-    if (!hasExistingNewsletters) {
-      seedNewslettersIfEmpty(() => generateNewsletterSeeds())
-      const { items: updated } = readNewsletters()
-      setNewsletters(Array.isArray(updated) ? updated : [])
-    } else {
-      // If newsletters already exist, add only new ones that don't exist
-      const existingIds = new Set(stored.map(n => n.id))
-      const newNewsletters = generateNewsletterSeeds().filter(n => !existingIds.has(n.id))
-      
-      if (newNewsletters.length > 0) {
-        newNewsletters.forEach(nl => upsertNewsletter(nl))
-        const { items: updated } = readNewsletters()
-        setNewsletters(Array.isArray(updated) ? updated : [])
-      }
-    }
+    // Overwrite current list with mock data
+    setNewsletters(mockNewsletters)
+    
+    // Persist to storage
+    setNewsletters(mockNewsletters)
   }, [])
 
   return {
@@ -135,6 +122,6 @@ export const useNewslettersState = () => {
     addNewsletter,
     updateNewsletter,
     deleteNewsletter: deleteNewsletterById,
-    seedDemoNewsletters
+    seedFromMocks
   }
 }

@@ -36,20 +36,42 @@ const deepClone = (obj) => {
 }
 
 // Utility to build form state from item
-const fromItem = (item) => ({
-  title: item.title || '',
-  date: item.date || '',
-  startTime: item.startTime || '',
-  endTime: item.endTime || '',
-  timeZone: item.timeZone || 'UTC',
-  eventType: item.eventType || 'Conference',
-  repeat: item.repeat || 'NO_REPEAT',
-  description: item.description || '',
-  location: item.location || '',
-  file: null,
-  imageFileName: item.imageFileName || '',
-  imagePreviewUrl: item.imagePreviewUrl || ''
-})
+const fromItem = (item) => {
+  const recurrence = item.recurrence || {
+    kind: 'NONE',
+    interval: 1,
+    unit: 'week',
+    daysOfWeek: ['MO','TU','WE','TH','FR','SA','SU'],
+    ends: { mode: 'NEVER', date: '', count: null }
+  }
+  
+  // Derive repeat value from recurrence kind
+  let repeat = 'NONE'
+  if (recurrence.kind === 'WEEKLY') {
+    repeat = 'WEEKLY'
+  } else if (recurrence.kind === 'CUSTOM') {
+    repeat = 'CUSTOM'
+  } else if (item.repeat) {
+    // Fallback to stored repeat value if recurrence kind is not set
+    repeat = item.repeat
+  }
+  
+  return {
+    title: item.title || '',
+    date: item.date || '',
+    startTime: item.startTime || '',
+    endTime: item.endTime || '',
+    timeZone: item.timeZone || 'UTC',
+    eventType: item.eventType || 'Conference',
+    repeat: repeat,
+    description: item.description || '',
+    location: item.location || '',
+    file: null,
+    imageFileName: item.imageFileName || '',
+    imagePreviewUrl: item.imagePreviewUrl || '',
+    recurrence: recurrence
+  }
+}
 
 const TIME_ZONES = [
   'UTC',
@@ -72,11 +94,11 @@ const EVENT_TYPES = [
 ]
 
 const REPEAT_OPTIONS = [
-  { label: 'Does not repeat',      value: 'NO_REPEAT' },
-  { label: 'Daily (Monday - Friday)', value: 'DAILY_MF' },
+  { label: 'None',      value: 'NONE' },
+  { label: 'Daily', value: 'DAILY' },
   { label: 'Weekly',                 value: 'WEEKLY'   },
   { label: 'Monthly',                value: 'MONTHLY'  },
-  { label: 'Annually',               value: 'ANNUALLY' },
+  { label: 'Yearly',               value: 'YEARLY' },
   { label: 'Custom...',              value: 'CUSTOM'   }
 ]
 
@@ -92,12 +114,19 @@ export const useEventForm = () => {
     endTime: '',
     timeZone: 'UTC',
     eventType: 'Conference',
-    repeat: 'NO_REPEAT',
+    repeat: 'NONE',
     description: '',
     location: '',
     file: null,
     imageFileName: '',
-    imagePreviewUrl: ''
+    imagePreviewUrl: '',
+    recurrence: {
+      kind: 'NONE',
+      interval: 1,
+      unit: 'week',
+      daysOfWeek: ['MO','TU','WE','TH','FR','SA','SU'],
+      ends: { mode: 'NEVER', date: '', count: null }
+    }
   }
   
   const [form, setForm] = useState(emptyForm)
@@ -241,7 +270,9 @@ export const useEventForm = () => {
       editorHtml: editorHtml,
       location: form.location,
       imageFileName: form.imageFileName || 'no-image.jpg',
-      imagePreviewUrl: form.imagePreviewUrl || ''
+      imagePreviewUrl: form.imagePreviewUrl || '',
+      recurrence: form.recurrence
+      // TODO BACKEND: send normalized recurrence to API
     }
   }
 
@@ -251,6 +282,31 @@ export const useEventForm = () => {
     setEditorHtml('')
     setEditorText('')
     setErrorMessage('')
+  }
+
+  // Update recurrence state
+  const updateRecurrence = (recurrenceData) => {
+    setForm(prev => ({ ...prev, recurrence: recurrenceData }))
+  }
+
+  // Normalize recurrence based on settings
+  const normalizeRecurrence = (recurrence) => {
+    // If unit is week and all 7 days are selected, treat as Weekly
+    if (recurrence.unit === 'week' && recurrence.daysOfWeek.length === 7) {
+      return {
+        kind: 'WEEKLY',
+        interval: 1,
+        unit: 'week',
+        daysOfWeek: ['MO','TU','WE','TH','FR','SA','SU'],
+        ends: recurrence.ends
+      }
+    }
+    
+    // Otherwise keep as CUSTOM
+    return {
+      ...recurrence,
+      kind: 'CUSTOM'
+    }
   }
 
   return {
@@ -271,6 +327,8 @@ export const useEventForm = () => {
     beginEdit,
     rollbackEdit,
     initializeCreate,
+    updateRecurrence,
+    normalizeRecurrence,
     TIME_ZONES,
     EVENT_TYPES,
     REPEAT_OPTIONS

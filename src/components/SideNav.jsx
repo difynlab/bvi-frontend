@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
+import { useCurrentUser } from '../hooks/useCurrentUser'
 import ConfirmLogoutModal from './modals/ConfirmLogoutModal'
 import '../styles/components/SideNav.scss'
 
@@ -8,6 +9,7 @@ const SideNav = () => {
   const [isLogoutOpen, setLogoutOpen] = useState(false);
   const navigate = useNavigate();
   const auth = useAuth?.() || null;
+  const { name, role } = useCurrentUser();
 
   const openLogoutModal = () => setLogoutOpen(true);
   const closeLogoutModal = () => setLogoutOpen(false);
@@ -59,9 +61,9 @@ const SideNav = () => {
           <span>Notices</span>
         </NavLink>
 
-        <NavLink to="/newsletter" className="nav-item">
+        <NavLink to="/newsletters" className="nav-item">
           <i className="bi bi-file-earmark-text"></i>
-          <span>Newsletter</span>
+          <span>Newsletters</span>
         </NavLink>
 
         <NavLink to="/membership" className="nav-item">
@@ -106,8 +108,8 @@ const SideNav = () => {
             <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" alt="Profile" />
           </div>
           <div className="profile-info">
-            <h3 className="user-name">Johnston</h3>
-            <p className="user-role">Lorem</p>
+            <h3 className="user-name">{name || 'User'}</h3>
+            <p className="user-role">{role === 'admin' ? 'Administrator' : 'User'}</p>
           </div>
         </div>
       </div>

@@ -13,13 +13,33 @@ export function useRegisterForm(onSubmitValid) {
 
   const handleSubmit = useCallback((e) => {
     e.preventDefault();
+    
+    // Validate email
+    if (!email.trim()) {
+      setError('Email is required');
+      return;
+    }
+    
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+    if (!emailPattern.test(email)) {
+      setError('Enter a valid email');
+      return;
+    }
+    
+    // Validate password
+    if (!password.trim()) {
+      setError('Password is required');
+      return;
+    }
+    
     const missing = passwordPolicyMissing(password);
     if (missing.length) {
       setError(`Password must contain: ${missing.join(', ')}.`);
       return;
     }
+    
     setError('');
-    onSubmitValid({ email: email.trim(), password: password.trim() }); // TODO BACKEND
+    onSubmitValid({ email: email.trim(), password: password.trim() });
   }, [email, password, onSubmitValid]);
 
   return { 

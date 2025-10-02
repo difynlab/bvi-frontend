@@ -11,6 +11,7 @@ import Settings from './sections/settings/Settings'
 import Reports from './sections/reports/Reports'
 import Subscription from './sections/subscription/Subscription'
 import { Legislation } from './sections/legislation/Legislation'
+import Dashboard from './sections/dashboard/Dashboard'
 import RouteGuard from './auth/RouteGuard'
 import Forbidden from './pages/Forbidden'
 import ResetPassword from './pages/ResetPassword'
@@ -27,12 +28,6 @@ const MainLayout = ({ children }) => {
   )
 }
 
-const Dashboard = () => (
-  <div className="page-content">
-    <h1>Dashboard</h1>
-    <p>Welcome to the dashboard!</p>
-  </div>
-)
 
 
 
@@ -75,7 +70,7 @@ function App() {
           </RouteGuard>
         }></Route>
 
-        <Route path='/newsletter' element={
+        <Route path='/newsletters' element={
           <RouteGuard requireAuth>
             <MainLayout>
               <Newsletters />

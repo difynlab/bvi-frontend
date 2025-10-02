@@ -21,7 +21,7 @@ export const isTimeOrderValid = (start, end) => {
   return startMinutes < endMinutes
 }
 
-const ALLOWED_REPEAT = ['NO_REPEAT', 'DAILY_MF', 'WEEKLY', 'MONTHLY', 'ANNUALLY', 'CUSTOM']
+const ALLOWED_REPEAT = ['NONE', 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'CUSTOM']
 
 export const validateEvent = (form) => {
   const errors = []
@@ -55,9 +55,9 @@ export const validateEvent = (form) => {
     errors.push('Start time must be earlier than end time.')
   }
   
-  // Validate repeat field - coerce to NO_REPEAT if invalid
+  // Validate repeat field - coerce to NONE if invalid
   if (form.repeat && !ALLOWED_REPEAT.includes(form.repeat)) {
-    form.repeat = 'NO_REPEAT'
+    form.repeat = 'NONE'
   }
   
   // Convert array to single error message
@@ -66,5 +66,45 @@ export const validateEvent = (form) => {
   return {
     ok: message === '',
     message
+  }
+}
+
+// Validate custom recurrence settings
+export const validateRecurrence = (recurrence) => {
+  const errors = {}
+  
+  // Validate interval
+  if (!recurrence.interval || recurrence.interval < 1) {
+    errors.interval = 'Interval must be at least 1'
+  }
+  
+  // Validate days of week for weekly recurrence
+  if (recurrence.unit === 'week' && recurrence.kind === 'CUSTOM') {
+    if (!recurrence.daysOfWeek || recurrence.daysOfWeek.length === 0) {
+      errors.daysOfWeek = 'Select at least one day'
+    }
+  }
+  
+  // Validate ends
+  if (recurrence.ends) {
+    if (recurrence.ends.mode === 'ON_DATE') {
+      if (!recurrence.ends.date) {
+        errors.endsDate = 'Date is required'
+      } else {
+        const today = new Date().toISOString().split('T')[0]
+        if (recurrence.ends.date < today) {
+          errors.endsDate = 'Date must be today or later'
+        }
+      }
+    } else if (recurrence.ends.mode === 'AFTER_OCCURRENCES') {
+      if (!recurrence.ends.count || recurrence.ends.count < 1) {
+        errors.endsCount = 'Count must be at least 1'
+      }
+    }
+  }
+  
+  return {
+    ok: Object.keys(errors).length === 0,
+    errors
   }
 }

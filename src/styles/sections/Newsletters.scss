@@ -63,21 +63,6 @@
   transition: background-color 0.2s;
 }
 
-.form-actions button[type="button"] {
-  background-color: #6c757d;
-  color: white;
-  border: none;
-}
-
-.form-actions button[type="button"]:hover {
-  background-color: #5a6268;
-}
-
-.form-actions button[type="submit"] {
-  color: white;
-  border: none;
-}
-
 .file-upload-area {
   border: 2px dashed #ced4da;
   border-radius: 8px;
@@ -227,20 +212,6 @@
     transition: background-color 0.2s;
   }
 
-  .form-actions button[type="button"] {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-  }
-
-  .form-actions button[type="button"]:hover {
-    background-color: #5a6268;
-  }
-
-  .form-actions button[type="submit"] {
-    color: white;
-    border: none;
-  }
 
   .empty-state {
     text-align: center;
@@ -539,16 +510,6 @@
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s;
-  }
-
-  .form-actions button[type="button"] {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-  }
-
-  .form-actions button[type="button"]:hover {
-    background-color: #5a6268;
   }
 
   .form-actions button[type="submit"] {

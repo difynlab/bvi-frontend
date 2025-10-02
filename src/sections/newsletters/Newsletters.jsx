@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../context/useAuth'
+import { can } from '../../auth/acl'
 import { useNewslettersState } from '../../hooks/useNewslettersState'
 import { useNewsletterForm } from '../../hooks/useNewsletterForm'
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
@@ -14,7 +15,7 @@ const Newsletters = () => {
     addNewsletter,
     updateNewsletter,
     deleteNewsletter,
-    seedDemoNewsletters
+    seedFromMocks
   } = useNewslettersState()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -160,12 +161,14 @@ const Newsletters = () => {
               {user?.role === 'admin' ? 'Switch to User View' : 'Switch to Admin View'}
             </button>
 
-            <button
-              className="newsletters-seed-btn"
-              onClick={seedDemoNewsletters}
-            >
-              Seed Newsletters
-            </button>
+            {user?.role === 'admin' && (
+              <button
+                className="newsletters-seed-btn"
+                onClick={seedFromMocks}
+              >
+                Seeds
+              </button>
+            )}
 
             {user?.role === 'admin' && (
               <button

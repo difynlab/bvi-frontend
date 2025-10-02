@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/useAuth';
+import { can } from '../../auth/acl';
 import { useReportsState } from '../../hooks/useReportsState';
 import { useReportForm } from '../../hooks/useReportForm';
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
@@ -8,7 +9,6 @@ import '../../styles/sections/Reports.scss';
 
 export default function Reports() {
   const { user, toggleRole, isInitialized } = useAuth();
-  const isAdmin = user?.role === 'admin';
 
   const {
     categories,
@@ -125,7 +125,7 @@ export default function Reports() {
           Seed Reports
         </button>
 
-        {isAdmin && (
+        {can(user, 'reports:create') && (
           <button type="button" className="add-report-btn" onClick={openCreateReportModal}>
             <i className="bi bi-plus" aria-hidden="true"></i> Add New
           </button>
@@ -142,7 +142,7 @@ export default function Reports() {
             >
               <span>{cat}</span>
             </button>
-            {isAdmin && (
+            {can(user, 'reports:create') && (
               <button
                 className="reports-tab__delete"
                 onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat); }}
@@ -154,7 +154,7 @@ export default function Reports() {
           </div>
         ))}
 
-        {isAdmin && (
+        {can(user, 'reports:create') && (
           <button
             className="reports-add-category-btn"
             onClick={() => setIsCategoryModalOpen(true)}
@@ -167,7 +167,7 @@ export default function Reports() {
       <section className="reports-list-wrap" aria-live="polite">
         {visibleItems.length === 0 ? (
           <div className="empty-state">
-            {isAdmin ? (
+            {can(user, 'reports:create') ? (
               // Admin empty state
               <>
                 <img src="/empty-state-admin.png" alt="" />
@@ -192,7 +192,7 @@ export default function Reports() {
                   <div className="report-title">{r.title}</div>
                 </div>
                 <div className="report-actions">
-                  {isAdmin && (
+                  {can(user, 'reports:create') && (
                     <button type="button" className="btn-edit" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.title}`}>
                       Edit Report
                     </button>

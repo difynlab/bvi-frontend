@@ -72,6 +72,10 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 
+  .repeat-field {
+    position: relative;
+  }
+
   .dropzone {
     border: 2px dashed #d1d5db;
     border-radius: 8px;
@@ -1153,4 +1157,367 @@
   direction: ltr;
   unicode-bidi: plaintext;
   transform: none;
+}
+
+// Custom Recurrence Popover Styles
+.events-modal {
+  .custom-recurrence-popover {
+    position: absolute;
+    right: calc(100% + 15px);
+    top: 0;
+    width: 320px;
+    max-width: 320px;
+    padding: $spacing-md;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    z-index: 1001;
+    border: 1px solid #e5e7eb;
+
+    h3 {
+      margin: 0 0 16px 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .repeat-every {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+
+      label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+      }
+
+      .interval-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        input[type="number"] {
+          width: 60px;
+          padding: 8px;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 0.875rem;
+          text-align: center;
+
+          &:focus {
+            outline: none;
+            border-color: $vivid_blue;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          }
+
+          &[aria-invalid="true"] {
+            border-color: $vivid_red;
+          }
+
+          // Hide number input spinners
+          &::-webkit-outer-spin-button,
+          &::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
+          }
+
+          &[type=number] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+          }
+        }
+
+        .stepper {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+
+          button {
+            width: 24px;
+            height: 16px;
+            border: 1px solid #d1d5db;
+            background: white;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+
+            &:hover {
+              background-color: #f3f4f6;
+            }
+
+            &:active {
+              background-color: #e5e7eb;
+            }
+          }
+        }
+
+        select {
+          flex: 1;
+          padding: 8px;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 0.875rem;
+
+          &:focus {
+            outline: none;
+            border-color: $vivid_blue;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          }
+        }
+      }
+    }
+
+    .repeat-on {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+
+      label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+      }
+
+      .dow {
+        display: flex;
+        gap: 8px;
+
+        .day {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+
+          input[type="checkbox"] {
+            display: none;
+          }
+
+          label {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #d1d5db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #6b7280;
+            transition: all 0.2s;
+
+            &:hover {
+              background-color: #f3f4f6;
+            }
+          }
+
+          input[type="checkbox"]:checked + label {
+            background-color: $vivid_blue;
+            color: white;
+            border-color: $vivid_blue;
+          }
+        }
+      }
+    }
+
+    .ends {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+      border: none;
+      padding: 0;
+      width: 100%;
+
+      legend {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 8px;
+        padding: 0;
+        text-align: left;
+        width: 100%;
+      }
+
+      .ends-option {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 8px;
+        flex-wrap: nowrap;
+
+        input[type="radio"] {
+          margin: 0;
+          width: 16px;
+          flex-shrink: 0;
+        }
+
+        label {
+          font-size: 0.875rem;
+          color: #374151;
+          margin: 0;
+          flex-shrink: 0;
+          line-height: 1.4;
+        }
+
+        input[type="date"] {
+          padding: 6px 8px;
+          border: 1px solid #d1d5db;
+          border-radius: 4px;
+          font-size: 0.875rem;
+          flex: 1;
+          min-width: 0;
+          max-width: 140px;
+
+          &:focus {
+            outline: none;
+            border-color: $vivid_blue;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          }
+
+          &:disabled {
+            background-color: #f9fafb;
+            color: #9ca3af;
+          }
+
+          &[aria-invalid="true"] {
+            border-color: $vivid_red;
+          }
+
+          // Hide calendar icon
+          &::-webkit-calendar-picker-indicator {
+            display: none;
+          }
+        }
+
+        .occurrences-controls {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex: 1;
+          min-width: 0;
+          max-width: 100%;
+          flex-wrap: nowrap;
+
+          input[type="number"] {
+            width: 60px;
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            text-align: center;
+
+            &:focus {
+              outline: none;
+              border-color: $vivid_blue;
+              box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+            }
+
+            &:disabled {
+              background-color: #f9fafb;
+              color: #9ca3af;
+            }
+
+            &[aria-invalid="true"] {
+              border-color: $vivid_red;
+            }
+
+            // Hide number input spinners
+            &::-webkit-outer-spin-button,
+            &::-webkit-inner-spin-button {
+              -webkit-appearance: none;
+              appearance: none;
+              margin: 0;
+            }
+
+            &[type=number] {
+              -moz-appearance: textfield;
+              appearance: textfield;
+            }
+          }
+
+          .stepper {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+
+            button {
+              width: 20px;
+              height: 14px;
+              border: 1px solid #d1d5db;
+              background: white;
+              cursor: pointer;
+              font-size: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: 2px;
+
+              &:hover:not(:disabled) {
+                background-color: #f3f4f6;
+              }
+
+              &:active:not(:disabled) {
+                background-color: #e5e7eb;
+              }
+
+              &:disabled {
+                background-color: #f9fafb;
+                color: #9ca3af;
+                cursor: not-allowed;
+              }
+            }
+          }
+
+          span {
+            font-size: 0.875rem;
+            color: #6b7280;
+            flex-shrink: 0;
+          }
+        }
+      }
+    }
+
+    .actions {
+      margin-top: 16px;
+      display: flex;
+      justify-content: flex-start;
+
+      .update-btn {
+        background-color: $vivid_blue;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        &:hover {
+          background-color: #2563eb;
+        }
+
+        &:active {
+          background-color: #1d4ed8;
+        }
+      }
+    }
+
+    .error-text {
+      color: $vivid_red;
+      font-size: 0.75rem;
+      margin-top: 4px;
+    }
+  }
 }

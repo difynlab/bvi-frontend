@@ -1,15 +1,39 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { readUserFromStorage, writeUserToStorage, ensureUserDefaults } from '../helpers/profileStorage';
+import { getProfile, setProfile } from '../helpers/profileStorage';
+import { getSession } from '../helpers/authStorage';
 
 // Optional-context import guarded at runtime
 let useAuthHook = null; 
 try { 
-  ({ useAuth: useAuthHook } = require('../context/AuthContext')); 
+  ({ useAuth: useAuthHook } = require('../context/useAuth')); 
 } catch {}
 
 export function useSettingsForm() {
   const ctx = typeof useAuthHook === 'function' ? useAuthHook() : null;
-  const baseUser = ensureUserDefaults(ctx?.user || readUserFromStorage() || {});
+  
+  // Get current user data from session or context
+  const currentUser = useMemo(() => {
+    return ctx?.user || getSession()?.user || {};
+  }, [ctx?.user]);
+  
+  // Get profile data with defaults from registration
+  const profileData = useMemo(() => {
+    return currentUser.id ? getProfile(currentUser.id) : {};
+  }, [currentUser.id]);
+  
+  // Merge user data with profile data, using registration data as defaults
+  const baseUser = useMemo(() => ({
+    name: profileData.name || `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || '',
+    email: profileData.email || currentUser.email || '',
+    countryCode: profileData.countryCode || '+54',
+    phoneNumber: profileData.phoneNumber || currentUser.phoneNumber || '',
+    dateFormat: profileData.dateFormat || 'MM/DD/YYYY',
+    timeZone: profileData.timeZone || 'EST',
+    country: profileData.country || 'Argentina',
+    language: profileData.language || 'English (Default)',
+    profilePicture: profileData.profilePicture || ''
+  }), [profileData, currentUser]);
+  
   const [form, setForm] = useState(baseUser);
   const [dirty, setDirty] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -34,8 +58,9 @@ export function useSettingsForm() {
     if (!wantsPasswordChange) return true;
     if (!currentPassword || !newPassword || !confirmPassword) return false;
     if (newPassword !== confirmPassword) return false;
-    return currentPassword === baseUser.password;
-  }, [wantsPasswordChange, currentPassword, newPassword, confirmPassword, baseUser.password]);
+    // TODO BACKEND: verify current password against backend
+    return true; // For now, allow password change
+  }, [wantsPasswordChange, currentPassword, newPassword, confirmPassword]);
 
   const canSave = requiredOk && passwordRulesOk && dirty;
 
@@ -61,8 +86,8 @@ export function useSettingsForm() {
     r.readAsDataURL(file);
   }, [baseUser.profilePicture]);
 
-  const resetAfterSave = useCallback((u) => {
-    setForm(ensureUserDefaults(u || {}));
+  const resetAfterSave = useCallback((updatedProfile) => {
+    setForm(updatedProfile);
     setDirty(false);
     setCurrentPassword(''); 
     setNewPassword(''); 
@@ -71,34 +96,59 @@ export function useSettingsForm() {
   }, []);
 
   const save = useCallback(() => {
-    if (!canSave) return;
-    const merged = {
-      ...baseUser,
-      ...form,
-      profilePicture: profilePreview || form.profilePicture || baseUser.profilePicture,
-      ...(wantsPasswordChange ? { password: newPassword } : {}),
-    };
+    if (!canSave || !currentUser.id) return;
     
-    // TODO BACKEND: GET /api/me for hydration and PATCH /api/me for updates
-    if (ctx?.updateUserProfile) {
-      ctx.updateUserProfile(merged);
-    } else {
-      writeUserToStorage(merged);
-    }
-    resetAfterSave(merged);
-  }, [canSave, baseUser, form, profilePreview, wantsPasswordChange, newPassword, ctx, resetAfterSave]);
-
-  useEffect(() => {
-    const stored = ensureUserDefaults(ctx?.user || readUserFromStorage() || {});
-    if (!stored.phoneNumber) {
-      const migrated = { ...stored, phoneNumber: '' };
-      if (ctx?.updateUserProfile) {
-        ctx.updateUserProfile(migrated);
-      } else {
-        writeUserToStorage(migrated);
+    // Validate email format if changed
+    if (form.email && form.email !== baseUser.email) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i
+      if (!emailPattern.test(form.email)) {
+        console.error('Invalid email format')
+        return
       }
     }
-  }, []); // mount
+    
+    // Validate phone number if present (digits only)
+    if (form.phoneNumber && form.phoneNumber !== baseUser.phoneNumber) {
+      const digitsOnly = form.phoneNumber.replace(/[^0-9]/g, '')
+      if (digitsOnly && (digitsOnly.length < 8 || digitsOnly.length > 15)) {
+        console.error('Invalid phone number format')
+        return
+      }
+    }
+    
+    const updatedProfile = {
+      ...form,
+      profilePicture: profilePreview || form.profilePicture || baseUser.profilePicture,
+    };
+    
+    // Save to profile storage
+    setProfile(currentUser.id, updatedProfile);
+    
+    // Update AuthContext if available
+    if (ctx?.updateProfile) {
+      ctx.updateProfile(updatedProfile);
+    }
+    
+    resetAfterSave(updatedProfile);
+  }, [canSave, currentUser.id, form, profilePreview, baseUser, ctx, resetAfterSave]);
+
+  // Initialize form when user data changes
+  useEffect(() => {
+    const newBaseUser = {
+      name: profileData.name || `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || '',
+      email: profileData.email || currentUser.email || '',
+      countryCode: profileData.countryCode || '+54',
+      phoneNumber: profileData.phoneNumber || currentUser.phoneNumber || '',
+      dateFormat: profileData.dateFormat || 'MM/DD/YYYY',
+      timeZone: profileData.timeZone || 'EST',
+      country: profileData.country || 'Argentina',
+      language: profileData.language || 'English (Default)',
+      profilePicture: profileData.profilePicture || ''
+    };
+    
+    setForm(newBaseUser);
+    setProfilePreview(newBaseUser.profilePicture || '');
+  }, [currentUser.id, currentUser.firstName, currentUser.lastName, currentUser.email, currentUser.phoneNumber, profileData]);
 
   return {
     form, 

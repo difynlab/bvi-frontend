@@ -28,6 +28,7 @@
     width: 165px;
     font-size: 0.9rem;
     white-space: nowrap;
+
     i {
       font-size: 25px;
     }
@@ -96,7 +97,7 @@
       box-shadow: none;
       border: 1px solid #eaeaea;
 
-      & + .attachment-item {
+      &+.attachment-item {
         margin-top: $spacing-sm;
       }
 
@@ -140,12 +141,10 @@
           }
 
           &.btn-danger {
-            background: #e93125;
-            color: white;
 
-            &:hover {
-              background: #c62828;
-            }
+            background-color: rgb(245, 245, 245);
+            color: #374151;
+
           }
         }
       }
@@ -186,4 +185,21 @@
       }
     }
   }
+}
+
+// Download button styles (matching newsletters)
+.download-btn {
+  background: #262626;
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 6px;
+  width: fit-content;
+  cursor: pointer;
+  font-size: 14px;
+  transition: filter 0.2s;
+}
+
+.download-btn:hover {
+  filter: brightness(1.3);
 }

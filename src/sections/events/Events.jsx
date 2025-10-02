@@ -7,6 +7,7 @@ import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
 import { useTitleMarquee } from '../../hooks/useTitleMarquee'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import RichTextEditor from '../../components/editor/RichTextEditor'
+import { CustomRecurrencePopover } from '../../components/events/CustomRecurrencePopover'
 import '../../styles/sections/Events.scss'
 
 export const Events = () => {
@@ -23,6 +24,7 @@ export const Events = () => {
   const [registeringEvent, setRegisteringEvent] = useState(null)
   const [isDragOver, setIsDragOver] = useState(false)
   const [useFallback, setUseFallback] = useState(false)
+  const [isCustomRecurrenceOpen, setIsCustomRecurrenceOpen] = useState(false)
 
   // Form management
   const eventForm = useEventForm()
@@ -45,6 +47,15 @@ export const Events = () => {
 
   // Modal backdrop close behavior
   const modalBackdropClose = useModalBackdropClose(handleCancel)
+
+  // Effect to handle custom recurrence popover when form is loaded with CUSTOM repeat
+  useEffect(() => {
+    if (isModalOpen && eventForm.form.repeat === 'CUSTOM' && !isCustomRecurrenceOpen) {
+      // Form has CUSTOM repeat but popover is closed - this happens when editing an event
+      // that already has custom recurrence. We need to ensure the popover can be opened.
+      // Don't auto-open, but ensure the state is ready for user interaction.
+    }
+  }, [isModalOpen, eventForm.form.repeat, isCustomRecurrenceOpen])
   const registerModalBackdropClose = useModalBackdropClose(() => setIsRegisterModalOpen(false))
 
   // Title marquee behavior
@@ -133,6 +144,29 @@ export const Events = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target
     eventForm.onChange(name, value)
+    
+    // Handle custom recurrence popover and clear custom recurrence when changing to non-custom
+    if (name === 'repeat' && value === 'CUSTOM') {
+      setIsCustomRecurrenceOpen(true)
+    } else if (name === 'repeat' && value !== 'CUSTOM') {
+      setIsCustomRecurrenceOpen(false)
+      // Clear custom recurrence when changing to non-custom repeat option
+      eventForm.updateRecurrence({
+        kind: value, // Use the selected repeat value as the kind
+        interval: 1,
+        unit: 'week',
+        daysOfWeek: ['MO','TU','WE','TH','FR','SA','SU'],
+        ends: { mode: 'NEVER', date: '', count: null }
+      })
+    }
+  }
+
+  // Handle click on repeat select to ensure custom popover can open
+  const handleRepeatSelectClick = (e) => {
+    // If the current value is CUSTOM and popover is closed, open it
+    if (eventForm.form.repeat === 'CUSTOM' && !isCustomRecurrenceOpen) {
+      setIsCustomRecurrenceOpen(true)
+    }
   }
 
   // Rich Text Editor handler
@@ -148,6 +182,8 @@ export const Events = () => {
       setEditingEventId(null)
       eventForm.initializeCreate()
       setIsModalOpen(true)
+      // Ensure custom recurrence popover is closed when opening create modal
+      setIsCustomRecurrenceOpen(false)
     } catch (error) {
       console.error('Error in openCreateModal:', error)
       alert('An error occurred while opening create modal')
@@ -162,6 +198,15 @@ export const Events = () => {
         setEditingEventId(eventId)
         eventForm.beginEdit(event)
         setIsModalOpen(true)
+        
+        // Check if event has custom recurrence and set popover state accordingly
+        // but don't auto-open it - let user click "Custom" to open
+        if (event.recurrence && event.recurrence.kind === 'CUSTOM') {
+          // Event has custom recurrence, but don't auto-open popover
+          setIsCustomRecurrenceOpen(false)
+        } else {
+          setIsCustomRecurrenceOpen(false)
+        }
       }
     } catch (error) {
       console.error('Error in openEditModal:', error)
@@ -184,6 +229,7 @@ export const Events = () => {
       setIsModalOpen(false)
       setModalMode('create')
       setEditingEventId(null)
+      setIsCustomRecurrenceOpen(false)
       eventForm.resetForm()
     } catch (error) {
       console.error('Error in closeModal:', error)
@@ -299,6 +345,23 @@ export const Events = () => {
       console.error('Error in handleDelete:', error)
       alert('An error occurred while deleting the event')
     }
+  }
+
+  // Handle custom recurrence update
+  const handleCustomRecurrenceUpdate = (recurrenceData) => {
+    const normalizedRecurrence = eventForm.normalizeRecurrence(recurrenceData)
+    
+    // Update the recurrence in form state
+    eventForm.updateRecurrence(normalizedRecurrence)
+    
+    // Update the repeat field based on normalization
+    if (normalizedRecurrence.kind === 'WEEKLY') {
+      eventForm.onChange('repeat', 'WEEKLY')
+    } else {
+      eventForm.onChange('repeat', 'CUSTOM')
+    }
+    
+    setIsCustomRecurrenceOpen(false)
   }
 
   return (
@@ -512,18 +575,25 @@ export const Events = () => {
                       ))}
                     </select>
                   </div>
-                  <div className="form-group">
+                  <div className="form-group repeat-field">
                     <label htmlFor="repeat">Repeat</label>
                     <select
                       id="repeat"
                       name="repeat"
                       value={eventForm.form.repeat}
                       onChange={handleInputChange}
+                      onClick={handleRepeatSelectClick}
                     >
                       {eventForm.REPEAT_OPTIONS.map(option => (
                         <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
                     </select>
+                    <CustomRecurrencePopover
+                      isOpen={isCustomRecurrenceOpen}
+                      onClose={() => setIsCustomRecurrenceOpen(false)}
+                      onUpdate={handleCustomRecurrenceUpdate}
+                      initialRecurrence={eventForm.form.recurrence}
+                    />
                   </div>
                   <div className="form-group">
                     <label htmlFor="eventType">Event Type</label>

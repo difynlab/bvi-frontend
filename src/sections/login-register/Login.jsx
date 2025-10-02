@@ -6,11 +6,13 @@ import { useLoginForm } from '../../hooks/useLoginForm'
 import '../../styles/sections/Login.scss'
 
 export const Login = () => {
-  const { login, loginWithGoogle } = useAuth()
+  const { login, loginWithGoogle, error: authError } = useAuth()
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [rememberPassword, setRememberPassword] = useState(false)
   const [emailError, setEmailError] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Use the password policy hook for email and password
   const { 
@@ -18,12 +20,22 @@ export const Login = () => {
     setEmail, 
     password, 
     setPassword, 
-    error: passwordError, 
     handleSubmit: handlePasswordSubmit 
   } = useLoginForm(async (data) => {
     // Handle successful password validation
-    await login({ username: data.email })
-    navigate('/events')
+    setIsSubmitting(true)
+    setEmailError('')
+    setPasswordError('')
+    try {
+      const success = await login({ email: data.email, password: data.password })
+      if (success) {
+        navigate('/events')
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
   })
 
   const isValidEmail = (value) => {
@@ -46,6 +58,19 @@ export const Login = () => {
     }
   }
 
+  // Handle auth errors by type
+  React.useEffect(() => {
+    if (authError) {
+      if (authError.type === 'email') {
+        setEmailError(authError.message)
+        setPasswordError('')
+      } else if (authError.type === 'password') {
+        setPasswordError(authError.message)
+        setEmailError('')
+      }
+    }
+  }, [authError])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     const currentEmailError = validateEmail(email)
@@ -57,8 +82,17 @@ export const Login = () => {
 
   const handleGoogleSuccess = async () => {
     console.log('Google login success')
-    await loginWithGoogle()
-    navigate('/events')
+    setIsSubmitting(true)
+    try {
+      const success = await loginWithGoogle()
+      if (success) {
+        navigate('/events')
+      }
+    } catch (error) {
+      console.error('Google login error:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleGoogleError = () => {
@@ -68,7 +102,7 @@ export const Login = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-container">
+      <div className="auth-container login-container">
         <div className="auth-left" aria-hidden>
           <img
             src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
@@ -92,7 +126,7 @@ export const Login = () => {
                 value={email}
                 onChange={handleEmailChange}
               />
-              {emailError && <span className="error">{emailError}</span>}
+              {emailError && <div className="form-error"><span className="error">{emailError}</span></div>}
             </div>
 
             <div className="field">
@@ -140,7 +174,9 @@ export const Login = () => {
             </div>
 
             <div className="auth-footer">
-              <button type="submit" className="auth-footer-cta">Login Now</button>
+              <button type="submit" className="auth-footer-cta" disabled={isSubmitting}>
+                {isSubmitting ? 'Logging in...' : 'Login Now'}
+              </button>
               <div className="google-login-container">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
