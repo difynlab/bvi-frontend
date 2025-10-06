@@ -9,11 +9,10 @@ import '../../styles/sections/Dashboard.scss'
 const Dashboard = () => {
   const { user } = useAuth()
   const { events } = useEventsState()
-  const { visibleItems: notices } = useNoticesState()
+  const { notices } = useNoticesState()
   const { newsletters } = useNewslettersState()
   const [, forceUpdate] = useState({})
 
-  // Pure helper functions for date handling
   const startOfToday = () => {
     const d = new Date()
     d.setHours(0, 0, 0, 0)
@@ -22,11 +21,20 @@ const Dashboard = () => {
 
   const parseEventDate = (ev) => new Date(`${ev.date}T00:00:00`)
 
-  // Multi-tab resilience: listen for storage changes
+  // Bucketed "time ago" helper (no decimals, no live timer)
+  const timeAgo = (ms) => {
+    const diffMin = Math.max(0, Math.floor((Date.now() - ms) / 60000))
+    if (diffMin < 60) return `${diffMin} ${diffMin === 1 ? 'minute' : 'minutes'} ago`
+    if (diffMin < 120) return '1 hour ago'
+    if (diffMin < 1440) return '2 hours ago'
+    if (diffMin < 2880) return '1 day ago'
+    const days = Math.floor(diffMin / 1440)
+    return `${days} ${days === 1 ? 'day' : 'days'} ago`
+  }
+
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === 'events' && e.storageArea === localStorage) {
-        // Trigger harmless re-render when events storage changes
         forceUpdate({})
       }
     }
@@ -35,12 +43,8 @@ const Dashboard = () => {
     return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
-  // Get user's full name
-  const fullName = user?.firstName && user?.lastName 
-    ? `${user.firstName} ${user.lastName}` 
-    : 'Member'
+  const displayName = user?.firstName || 'Member'
 
-  // Filter and sort future events
   const today = startOfToday()
   const futureEvents = events
     .filter(event => {
@@ -52,56 +56,69 @@ const Dashboard = () => {
       const dateB = parseEventDate(b)
       return dateA - dateB
     })
-    .slice(0, 3) // Take up to 3 events
+    .slice(0, 3)
 
-  // Create placeholders to maintain 3-row layout
-  const upcomingEvents = futureEvents.length === 0 
-    ? [] // No placeholders for empty state
-    : [
-        ...futureEvents,
-        ...Array(Math.max(0, 3 - futureEvents.length)).fill(null) // Add null placeholders
-      ]
+  const upcomingEvents = futureEvents
 
-  // Get up to 3 notices
-  const latestNotices = notices.slice(0, 3)
+  // Get all notices from all categories and sort by publication time
+  const allNotices = notices.flatMap(group => group.items || [])
+  
+  const latestNotices = allNotices
+    .map(notice => {
+      // Compute publishedMs with priority: createdAtMs → updatedAtMs → parse createdAt as local midnight
+      let publishedMs = null
+      
+      if (notice.createdAtMs) {
+        publishedMs = notice.createdAtMs
+      } else if (notice.updatedAtMs) {
+        publishedMs = notice.updatedAtMs
+      } else if (notice.createdAt) {
+        // Parse createdAt as local midnight (YYYY-MM-DDT00:00:00)
+        try {
+          const date = new Date(`${notice.createdAt}T00:00:00`)
+          if (!isNaN(date.getTime())) {
+            publishedMs = date.getTime()
+          }
+        } catch (e) {
+          // Invalid date, skip this notice
+        }
+      }
+      
+      return { ...notice, publishedMs }
+    })
+    .filter(notice => notice.publishedMs !== null) // Skip items lacking a valid timestamp
+    .sort((a, b) => b.publishedMs - a.publishedMs) // Sort descending by publishedMs
+    .slice(0, 2) // Take first 2 items
 
-  // Get up to 3 newsletters
   const latestNewsletters = newsletters.slice(0, 3)
 
   return (
     <div className="dashboard-container">
-      {/* Header */}
       <div className="dashboard-header">
         <div className="dashboard-header-title">
-          <h1>Welcome back, {fullName}!</h1>
+          <h1>Welcome back, {displayName}!</h1>
           <p>Here's what's happening with your membership.</p>
         </div>
       </div>
 
-      {/* Cards */}
       <div className="dashboard-cards">
-        {/* Card 1: Upcoming Events */}
         <div className="dashboard-card events-card">
-          <h3 className="card-title">Upcoming Events</h3>
+          <h3 className="card-title">Upcoming Events<span className="card-events-icon"><i className="bi bi-calendar"></i></span></h3>
           {futureEvents.length === 0 ? (
             <h3 className="empty-title">No upcoming events yet...</h3>
           ) : (
             <ul className="list">
-              {upcomingEvents.map((event, index) => 
-                event ? (
-                  <li key={event.id} className="list-item">
-                    <div className={`event-bullet ${event.eventType?.toLowerCase() || 'webinar'}`}></div>
-                    <div className="item-content">
-                      <div className="item-title">{event.title || 'Event'}</div>
-                      <div className="item-meta">
-                        {event.date}{event.startTime ? ` · ${event.startTime}` : ''}{event.timeZone ? ` ${event.timeZone}` : ''}
-                      </div>
+              {upcomingEvents.map((event) => (
+                <li key={event.id} className="list-item">
+                  <div className={`event-bullet ${event.eventType?.toLowerCase() || 'webinar'}`}></div>
+                  <div className="item-content">
+                    <div className="item-title">{event.title || 'Event'}</div>
+                    <div className="item-meta">
+                      {event.date}{event.startTime ? ` · ${event.startTime}` : ''}{event.timeZone ? ` ${event.timeZone}` : ''}
                     </div>
-                  </li>
-                ) : (
-                  <li key={`placeholder-${index}`} className="list-item placeholder" aria-hidden="true"></li>
-                )
-              )}
+                  </div>
+                </li>
+              ))}
             </ul>
           )}
           <div className="card-footer">
@@ -109,15 +126,16 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Card 2: Latest Notices */}
-        <div className="dashboard-card">
-          <h3 className="card-title">Latest Notices</h3>
+        <div className="dashboard-card notices-card">
+          <h3 className="card-title">Latest Notices<span className="card-notices-icon"><i className="bi bi-calendar"></i></span></h3>
           <div className="list">
             {latestNotices.length > 0 ? (
               latestNotices.map((notice) => (
                 <div key={notice.id} className="list-item">
                   <div className="item-title">{notice.fileName}</div>
-                  <div className="item-meta">{notice.createdAt}</div>
+                  <div className="item-meta">
+                    <span className="time-ago">{timeAgo(notice.publishedMs)}</span>
+                  </div>
                 </div>
               ))
             ) : (
@@ -129,9 +147,8 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Card 3: Latest News Letters */}
         <div className="dashboard-card">
-          <h3 className="card-title">Latest News Letters</h3>
+          <h3 className="card-title">Latest News Letters<span className="card-newsletters-icon"><i className="bi bi-file-earmark-text"></i></span></h3>
           <div className="list">
             {latestNewsletters.length > 0 ? (
               latestNewsletters.map((newsletter) => (
@@ -149,9 +166,8 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Card 4: Quick Actions */}
         <div className="dashboard-card">
-          <h3 className="card-title">Quick Actions</h3>
+          <h3 className="card-title">Quick Actions<span className="card-quickActions-icon"><i className="bi bi-gear"></i></span></h3>
           <div className="qa-actions">
             <NavLink to="/membership">Renew Membership</NavLink>
             <NavLink to="/settings">Update Profile</NavLink>

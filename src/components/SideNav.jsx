@@ -1,23 +1,21 @@
 import React, { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
-import { useCurrentUser } from '../hooks/useCurrentUser'
 import ConfirmLogoutModal from './modals/ConfirmLogoutModal'
 import '../styles/components/SideNav.scss'
 
 const SideNav = () => {
   const [isLogoutOpen, setLogoutOpen] = useState(false);
   const navigate = useNavigate();
-  const auth = useAuth?.() || null;
-  const { name, role } = useCurrentUser();
+  const { user, logout } = useAuth();
 
   const openLogoutModal = () => setLogoutOpen(true);
   const closeLogoutModal = () => setLogoutOpen(false);
 
   const handleConfirmLogout = () => {
     try {
-      if (auth?.logout) {
-        auth.logout();
+      if (logout) {
+        logout();
       } else {
         try { localStorage.removeItem('user'); } catch {}
         try { localStorage.removeItem('auth'); } catch {}
@@ -31,9 +29,11 @@ const SideNav = () => {
     // TODO BACKEND: Invalidate server session/token before redirect
   };
 
+  const displayName = user?.firstName || 'User'
+  const role = user?.role || 'user'
+
   return (
     <nav className="side-nav">
-      {/* Header Section */}
       <div className="nav-header">
         <div className="logo-section">
           <img src="/logo.png" alt="BVI Finance Logo"></img>
@@ -44,7 +44,6 @@ const SideNav = () => {
         </div>
       </div>
 
-      {/* Navigation Links */}
       <div className="nav-links">
         <NavLink to="/dashboard" className="nav-item">
           <i className="bi bi-grid"></i>
@@ -87,7 +86,6 @@ const SideNav = () => {
         </NavLink>
       </div>
 
-      {/* Footer Section */}
       <div className="nav-footer">
         <NavLink to="/settings" className="nav-item">
           <i className="bi bi-gear"></i>
@@ -108,7 +106,7 @@ const SideNav = () => {
             <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" alt="Profile" />
           </div>
           <div className="profile-info">
-            <h3 className="user-name">{name || 'User'}</h3>
+            <h3 className="user-name">{displayName}</h3>
             <p className="user-role">{role === 'admin' ? 'Administrator' : 'User'}</p>
           </div>
         </div>

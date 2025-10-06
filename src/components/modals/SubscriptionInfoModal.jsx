@@ -28,12 +28,10 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   
-  // Initialize with default image based on infoKey
   const getDefaultImage = () => {
     return infoKey && MAP[infoKey] ? MAP[infoKey].img : '';
   };
 
-  // Get saved image from localStorage or default
   const getSavedImage = () => {
     if (!infoKey) return '';
     const savedImage = localStorage.getItem(`subscription-image-${infoKey}`);
@@ -45,10 +43,8 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
   const [isUploadOpen, setUploadOpen] = useState(false);
   const [isConfirmOpen, setConfirmOpen] = useState(false);
   
-  // Body scroll lock for modal
   useBodyScrollLock(isOpen);
 
-  // Update image source when infoKey changes
   useEffect(() => {
     if (infoKey && MAP[infoKey]) {
       const savedImage = getSavedImage();
@@ -82,7 +78,6 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
   };
 
   const handleSave = () => {
-    // Save image to localStorage
     if (infoKey && imgSrc) {
       localStorage.setItem(`subscription-image-${infoKey}`, imgSrc);
     }
@@ -93,7 +88,6 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
   };
 
   const handleDiscard = () => {
-    // Remove saved image from localStorage and revert to default
     if (infoKey) {
       localStorage.removeItem(`subscription-image-${infoKey}`);
     }
@@ -104,7 +98,6 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
     onClose();
   };
 
-  // Modal backdrop close behavior - now defined after handleCloseAttempt
   const modalBackdropClose = useModalBackdropClose(handleCloseAttempt);
 
   if (!isOpen || !infoKey || !MAP[infoKey]) return null;

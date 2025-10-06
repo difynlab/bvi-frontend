@@ -12,13 +12,11 @@ const ContactPersonDetails = ({ onNext = () => {} }) => {
   const [errors, setErrors] = useState({});
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load data from localStorage on mount
   useEffect(() => {
     const savedData = localStorage.getItem('membership.contactPersons');
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
-        // Ensure all contact objects have the required structure
         const normalizedData = {
           lead: { name: '', title: '', phone: '', email: '', ...parsedData.lead },
           contact2: { name: '', title: '', phone: '', email: '', ...parsedData.contacts?.[0] },
@@ -28,13 +26,11 @@ const ContactPersonDetails = ({ onNext = () => {} }) => {
         };
         setContacts(normalizedData);
       } catch (error) {
-        // Silently handle error - data will use defaults
       }
     }
     setIsLoaded(true);
   }, []);
 
-  // Helper functions
   const isComplete = (contact) => {
     return contact.name.trim() && contact.title.trim() && contact.phone.trim() && contact.email.trim();
   };
@@ -46,12 +42,10 @@ const ContactPersonDetails = ({ onNext = () => {} }) => {
   const validateAll = () => {
     const newErrors = {};
 
-    // Validate Lead Contact (mandatory)
     if (!isComplete(contacts.lead)) {
       newErrors.lead = 'Lead Contact is incomplete. Complete all fields.';
     }
 
-    // Validate optional contacts (all-or-nothing)
     const optionalContacts = ['contact2', 'contact3', 'contact4', 'contact5'];
     const incompleteContacts = [];
 
@@ -117,7 +111,6 @@ const ContactPersonDetails = ({ onNext = () => {} }) => {
       }
     }));
 
-    // Clear error when field is updated
     if (errors[contactKey] || errors.optional) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -129,7 +122,6 @@ const ContactPersonDetails = ({ onNext = () => {} }) => {
   };
 
   const handlePhoneChange = (contactKey, value) => {
-    // Only allow digits
     const digitsOnly = value.replace(/\D/g, '');
     handleFieldChange(contactKey, 'phone', digitsOnly);
   };

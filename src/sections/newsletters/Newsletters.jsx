@@ -44,11 +44,9 @@ const Newsletters = () => {
     closeModal()
   })
 
-  // Body scroll lock for modals
   useBodyScrollLock(isModalOpen)
 
 
-  // Check if CSS line-clamp is supported
   useEffect(() => {
     const testElement = document.createElement('div')
     testElement.style.display = '-webkit-box'
@@ -56,12 +54,10 @@ const Newsletters = () => {
     testElement.style.webkitBoxOrient = 'vertical'
     testElement.style.overflow = 'hidden'
 
-    // If the browser doesn't support line-clamp, the styles won't be applied
     const supportsLineClamp = testElement.style.webkitLineClamp === '2'
     setUseFallback(!supportsLineClamp)
   }, [])
 
-  // Safety check for initialization and user context
   if (!user) {
     return (
       <div className="newsletters-page">
@@ -185,14 +181,12 @@ const Newsletters = () => {
         {newsletters.length === 0 ? (
           <div className="empty-state">
             {user?.role === 'admin' ? (
-              // Admin empty state
               <>
                 <img src="/empty-state-admin.png" alt="" />
                 <h2>Oops nothing to see here yet!</h2>
                 <p>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</p>
               </>
             ) : (
-              // User empty state
               <>
                 <img src="/empty-state-user.png" alt="" className="empty-state-user" />
                 <h2>Oops! No data found.</h2>

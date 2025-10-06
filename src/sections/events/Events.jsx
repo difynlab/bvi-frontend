@@ -13,10 +13,8 @@ import '../../styles/sections/Events.scss'
 export const Events = () => {
   const { user, toggleRole, isInitialized } = useAuth()
 
-  // Events state management
   const { events, addEvent, updateEvent, deleteEvent, seedIfEmpty } = useEventsState()
 
-  // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState('create')
   const [editingEventId, setEditingEventId] = useState(null)
@@ -26,10 +24,8 @@ export const Events = () => {
   const [useFallback, setUseFallback] = useState(false)
   const [isCustomRecurrenceOpen, setIsCustomRecurrenceOpen] = useState(false)
 
-  // Form management
   const eventForm = useEventForm()
 
-  // Cancel handler for modal close
   const handleCancel = () => {
     try {
       if (modalMode === 'edit') {
@@ -45,26 +41,18 @@ export const Events = () => {
     }
   }
 
-  // Modal backdrop close behavior
   const modalBackdropClose = useModalBackdropClose(handleCancel)
 
-  // Effect to handle custom recurrence popover when form is loaded with CUSTOM repeat
   useEffect(() => {
     if (isModalOpen && eventForm.form.repeat === 'CUSTOM' && !isCustomRecurrenceOpen) {
-      // Form has CUSTOM repeat but popover is closed - this happens when editing an event
-      // that already has custom recurrence. We need to ensure the popover can be opened.
-      // Don't auto-open, but ensure the state is ready for user interaction.
     }
   }, [isModalOpen, eventForm.form.repeat, isCustomRecurrenceOpen])
   const registerModalBackdropClose = useModalBackdropClose(() => setIsRegisterModalOpen(false))
 
-  // Title marquee behavior
   const titleMarquee = useTitleMarquee()
 
-  // Body scroll lock for modals
   useBodyScrollLock(isModalOpen || isRegisterModalOpen)
 
-  // Check if CSS line-clamp is supported
   useEffect(() => {
     const testElement = document.createElement('div')
     testElement.style.display = '-webkit-box'
@@ -72,12 +60,10 @@ export const Events = () => {
     testElement.style.webkitBoxOrient = 'vertical'
     testElement.style.overflow = 'hidden'
 
-    // If the browser doesn't support line-clamp, the styles won't be applied
     const supportsLineClamp = testElement.style.webkitLineClamp === '2'
     setUseFallback(!supportsLineClamp)
   }, [])
 
-  // Utility function to truncate text at word boundary
   const truncateText = (text, maxLength = 110) => {
     if (!text || text.length <= maxLength) return text
     const truncated = text.substring(0, maxLength)
@@ -85,7 +71,6 @@ export const Events = () => {
     return lastSpaceIndex > 0 ? truncated.substring(0, lastSpaceIndex) + '…' : truncated + '…'
   }
 
-  // Safety check for initialization and user context
   if (!isInitialized) {
     return (
       <div className="events-page">

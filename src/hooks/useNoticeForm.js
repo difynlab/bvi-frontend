@@ -175,7 +175,16 @@ export const useNoticeForm = () => {
   const toPayload = useCallback((existingId = null) => {
     const id = existingId || (Date.now().toString() + Math.random().toString(36).substring(2, 11))
     
-    return {
+    // Helper function to get local date in YYYY-MM-DD format
+    const getLocalDateString = () => {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+    
+    const payload = {
       id,
       fileName: form.fileName,
       noticeType: form.noticeType,
@@ -184,8 +193,23 @@ export const useNoticeForm = () => {
       imageFileName: form.imageFileName || 'no-image.jpg',
       imagePreviewUrl: form.imagePreviewUrl || '',
       linkUrl: form.linkUrl,
-      createdAt: existingId ? new Date().toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+      createdAt: getLocalDateString()
     }
+
+    // Add timestamps based on create vs edit
+    if (existingId) {
+      // Editing existing notice - preserve creation timestamps and add update timestamps
+      // Note: createdAtISO and createdAtMs should be preserved from the original notice
+      // They will be handled in the component layer
+      payload.updatedAtISO = new Date().toISOString()
+      payload.updatedAtMs = Date.now()
+    } else {
+      // Creating new notice - add creation timestamps
+      payload.createdAtISO = new Date().toISOString()
+      payload.createdAtMs = Date.now()
+    }
+
+    return payload
   }, [form, editorText, editorHtml])
 
   const reset = useCallback(() => {

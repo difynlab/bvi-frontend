@@ -61,7 +61,6 @@ const GeneralDetailsForm = ({ values, errors, setField, onNext }) => {
 
   const handleSubmit = () => {
     if (onNext()) {
-      // Save to localStorage on successful navigation
       setGeneralDetails(values);
     }
   };

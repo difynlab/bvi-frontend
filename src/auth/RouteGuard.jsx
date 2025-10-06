@@ -5,7 +5,6 @@ import { useAuth } from '../context/useAuth'
 const RouteGuard = ({ children, requireAuth = true, allowRoles = [] }) => {
   const { isAuthenticated, user, loading, isInitialized } = useAuth()
 
-  // Wait for initialization to complete before making routing decisions
   if (!isInitialized || loading) {
     return <div className="route-guard-loading">
       Loading...
@@ -13,7 +12,7 @@ const RouteGuard = ({ children, requireAuth = true, allowRoles = [] }) => {
   }
 
   if (requireAuth && !isAuthenticated) {
-    return <Navigate to="/register" replace />
+    return <Navigate to="/login" replace />
   }
 
   if (allowRoles.length && (!user || !allowRoles.includes(user.role))) {

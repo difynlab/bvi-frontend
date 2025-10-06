@@ -8,10 +8,8 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm }) => {
   const [previewDataUrl, setPreviewDataUrl] = useState('');
   const fileInputRef = useRef(null);
   
-  // Modal backdrop close behavior
   const modalBackdropClose = useModalBackdropClose(onClose);
   
-  // Body scroll lock for modal
   useBodyScrollLock(isOpen);
 
   const handleDrag = (e) => {

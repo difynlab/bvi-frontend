@@ -73,7 +73,6 @@
 .login-container .password-field {
   position: relative;
   width: 100%;
-  margin-bottom: 18px;
 }
 
 .login-container .field label {
@@ -135,7 +134,7 @@
 
 .login-container .form-error {
   position: absolute;
-  bottom: -5px;
+  bottom: -15px;
   left: 0;
   right: 0;
   
@@ -291,6 +290,19 @@
   }
 }
 
+.login-success-message {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border: 1px solid #c3e6cb;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 @media (max-width: 900px) {
   .auth-container {
     flex-direction: column;
@@ -304,5 +316,23 @@
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
+  }
+
+  .login-success-message {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border: 1px solid #c3e6cb;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &::before {
+      content: '✅';
+      font-size: 16px;
+    }
   }
 }

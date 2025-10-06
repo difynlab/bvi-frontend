@@ -15,10 +15,8 @@ const LegislationEditModal = ({ isOpen, onClose, onSave }) => {
   
   const fileInputRef = useRef(null);
   
-  // Modal backdrop close behavior
   const modalBackdropClose = useModalBackdropClose(onClose);
   
-  // Body scroll lock for modal
   useBodyScrollLock(isOpen);
 
   const handleDragOver = (e) => {
@@ -52,14 +50,12 @@ const LegislationEditModal = ({ isOpen, onClose, onSave }) => {
   };
 
   const handleFileSelect = (file) => {
-    // Validate file size (200MB max)
     const maxSize = 200 * 1024 * 1024; // 200MB in bytes
     if (file.size > maxSize) {
       setErrors(prev => ({ ...prev, file: 'File size must be less than 200MB' }));
       return;
     }
 
-    // Validate file type (allow common document types)
     const allowedTypes = [
       'application/pdf',
       'application/msword',
@@ -127,7 +123,6 @@ const LegislationEditModal = ({ isOpen, onClose, onSave }) => {
       return;
     }
 
-    // Create attachment object
     const newAttachment = {
       id: `attachment-${Date.now()}`,
       title: fileName || 'New Attachment',

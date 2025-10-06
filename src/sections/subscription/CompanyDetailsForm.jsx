@@ -22,7 +22,6 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
     'Real Estate', 'Stockbrokers', 'Taxation Practitioners', 'Trust & Company Administration', 'Other'
   ];
 
-  // Helper function to create valid HTML IDs
   const createValidId = (text) => {
     return text.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
   };
@@ -36,10 +35,8 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
 
   const handleSubmit = () => {
     if (onNext()) {
-      // Save to localStorage on successful navigation
       setCompanyDetails(companyValues);
     } else {
-      // Focus first invalid field
       const firstErrorField = Object.keys(errors).find(key => key.startsWith('companyDetails.'));
       if (firstErrorField) {
         const fieldName = firstErrorField.split('.')[1];
@@ -52,7 +49,6 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
   };
 
   const handleTelephoneChange = (e) => {
-    // Only allow digits
     const value = e.target.value.replace(/\D/g, '');
     setField('companyDetails', 'telephone', value);
   };

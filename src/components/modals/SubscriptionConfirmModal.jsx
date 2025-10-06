@@ -4,10 +4,8 @@ import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import '../../styles/components/SubscriptionConfirmModal.scss';
 
 const SubscriptionConfirmModal = ({ isOpen, onClose, onSave, onDiscard }) => {
-  // Modal backdrop close behavior
   const modalBackdropClose = useModalBackdropClose(onClose);
   
-  // Body scroll lock for modal
   useBodyScrollLock(isOpen);
 
   if (!isOpen) return null;

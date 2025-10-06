@@ -6,7 +6,7 @@ import { useAuth } from '../../context/useAuth'
 import { passwordPolicyMissing } from '../../helpers/passwordPolicy'
 
 export const Register = () => {
-  const { register } = useAuth()
+  const { register, error: authError, clearAllUsers, showRegisteredUsers } = useAuth()
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -28,16 +28,12 @@ export const Register = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Use the password policy hook for email and password
   const { 
     email, 
     setEmail, 
     password, 
     setPassword
-  } = useRegisterForm(async (data) => {
-    // Handle successful password validation
-    await handleFormSubmit(data)
-  })
+  } = useRegisterForm()
 
   const isValidEmail = (value) => {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i
@@ -49,79 +45,12 @@ export const Register = () => {
     return digitsOnly.length >= 8 && digitsOnly.length <= 15
   }
 
-  const validateOtherFields = () => {
-    const errors = {
-      firstName: '',
-      lastName: '',
-      email: '',
-      phoneNumber: '',
-      password: '',
-      confirmPassword: '',
-    }
-
-    if (!formValues.firstName.trim()) errors.firstName = 'First name is required'
-    if (!formValues.lastName.trim()) errors.lastName = 'Last name is required'
-
-    if (formValues.phoneNumber && !isValidPhone(formValues.phoneNumber)) {
-      errors.phoneNumber = 'Enter a valid phone number'
-    }
-
-    if (!formValues.confirmPassword) errors.confirmPassword = 'Please confirm password'
-    else if (formValues.confirmPassword !== password) errors.confirmPassword = 'Passwords do not match'
-
-    setFormErrors(prev => ({ ...prev, ...errors }))
-    return Object.values(errors).every((e) => e === '')
-  }
-
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormValues((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleFormSubmit = async (passwordData) => {
-    const otherFieldsValid = validateOtherFields()
-    if (!otherFieldsValid) return
-
-    setIsSubmitting(true)
-
-    try {
-      const registrationData = {
-        firstName: formValues.firstName.trim(),
-        lastName: formValues.lastName.trim(),
-        email: passwordData.email,
-        phoneNumber: formValues.phoneNumber.trim() || '',
-        password: passwordData.password
-      }
-
-      const success = await register(registrationData)
-      if (success) {
-        navigate('/events')
-      }
-    } catch (error) {
-      console.error('Registration error:', error)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log('Form submitted!')
-    console.log('Form values:', formValues)
-    console.log('Email:', email)
-    console.log('Password:', password)
-    
-    // Clear all errors first
-    setFormErrors({
-      firstName: '',
-      lastName: '',
-      email: '',
-      phoneNumber: '',
-      password: '',
-      confirmPassword: '',
-    })
-    
-    // Validate all fields
+  const validateForm = () => {
     const errors = {
       firstName: '',
       lastName: '',
@@ -130,8 +59,7 @@ export const Register = () => {
       password: '',
       confirmPassword: '',
     }
-    
-    // Validate required fields
+
     if (!formValues.firstName.trim()) errors.firstName = 'First name is required'
     if (!formValues.lastName.trim()) errors.lastName = 'Last name is required'
     if (!email.trim()) errors.email = 'Email is required'
@@ -146,26 +74,70 @@ export const Register = () => {
     if (!formValues.confirmPassword) errors.confirmPassword = 'Please confirm password'
     else if (formValues.confirmPassword !== password) errors.confirmPassword = 'Passwords do not match'
     
-    // Validate phone if provided
     if (formValues.phoneNumber && !isValidPhone(formValues.phoneNumber)) {
       errors.phoneNumber = 'Enter a valid phone number'
     }
     
-    console.log('Validation errors:', errors)
-    
-    // Set all errors at once
+    return errors
+  }
+
+  const handleFormSubmit = async () => {
+    setFormErrors({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phoneNumber: '',
+      password: '',
+      confirmPassword: '',
+    })
+
+    const errors = validateForm()
+
     setFormErrors(errors)
-    
-    // Check if all fields are valid
+
     const allValid = Object.values(errors).every(error => error === '')
-    console.log('All valid:', allValid)
-    
+
     if (allValid) {
-      console.log('Calling handleFormSubmit...')
-      handleFormSubmit({ email, password })
-    } else {
-      console.log('Form has validation errors, not submitting')
+      setIsSubmitting(true)
+
+      try {
+        const registrationData = {
+          firstName: formValues.firstName.trim(),
+          lastName: formValues.lastName.trim(),
+          email: email,
+          phoneNumber: formValues.phoneNumber.trim() || '',
+          password: password
+        }
+
+        const success = await register(registrationData)
+        
+        if (success) {
+          navigate('/login', { 
+            state: { 
+              prefilledEmail: email,
+              prefilledPassword: password,
+              message: 'Registration successful! Please log in to continue.'
+            }
+          })
+        } else {
+          if (authError) {
+            setFormErrors(prev => ({ ...prev, email: authError }))
+          } else {
+            setFormErrors(prev => ({ ...prev, email: 'Registration failed. Please try again.' }))
+          }
+        }
+      } catch (error) {
+        console.error('Registration error:', error)
+        setFormErrors(prev => ({ ...prev, email: 'An unexpected error occurred. Please try again.' }))
+      } finally {
+        setIsSubmitting(false)
+      }
     }
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    handleFormSubmit()
   }
 
   return (
@@ -305,6 +277,36 @@ export const Register = () => {
               <p className='auth-footer-already'>
                 Already have an account? <NavLink to={'/login'}>Sign In</NavLink>
               </p>
+              
+              {/* TEMPORARY DEBUG AREA - REMOVE BEFORE PRODUCTION */}
+              <div className="debug-panel">
+                <p className="debug-title">🛠️ Debug Panel (Temporary)</p>
+                <button 
+                  type="button" 
+                  className="debug-button"
+                  onClick={() => {
+                    showRegisteredUsers()
+                    alert('Check console to see registered users')
+                  }}
+                >
+                  Show Users
+                </button>
+                <button 
+                  type="button" 
+                  className="debug-button"
+                  onClick={() => {
+                    if (confirm('This will clear ALL registered users. Are you sure?')) {
+                      clearAllUsers()
+                      alert('All users cleared! You can now register with any email.')
+                    }
+                  }}
+                >
+                  Clear All Users
+                </button>
+                <p className="debug-description">
+                  Use "Clear All Users" to reset and test with different emails
+                </p>
+              </div>
             </div>
           </form>
         </div>

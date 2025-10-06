@@ -81,6 +81,7 @@ export function upsertNotice(noticeObj) {
     return { categories, items }
   }
 
+  // TODO BACKEND: timestamps must be set by server for audit integrity
   // TODO BACKEND: POST /api/notices or PUT /api/notices/:id
   const updatedItems = items.map(group => 
     group.categoryId === noticeObj.noticeType 
@@ -104,6 +105,7 @@ export function updateNotice(noticeObj) {
     return { categories, items }
   }
 
+  // TODO BACKEND: timestamps must be set by server for audit integrity
   // TODO BACKEND: PUT /api/notices/:id
   let updatedItems
   if (oldGroup.categoryId === newGroup.categoryId) {
@@ -144,4 +146,44 @@ export function deleteNotice(id) {
   
   writeNotices(categories, updatedItems)
   return { categories, items: updatedItems }
+}
+
+// Mock notices factory with recent timestamps for Dashboard integration
+export function getMockNotices() {
+  const now = Date.now()
+  const mk = (fileName, offsetMinutes, noticeType = 'general') => {
+    const ms = now - offsetMinutes * 60_000
+    const d = new Date(ms)
+    
+    // Helper to get local date string (YYYY-MM-DD)
+    const getLocalDateString = () => {
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+    
+    return {
+      id: crypto.randomUUID(),
+      fileName,
+      noticeType,
+      description: 'Seed notice description',
+      editorHtml: '<p>Seed notice description</p>',
+      imageFileName: 'seed-notice.jpg',
+      imagePreviewUrl: '',
+      linkUrl: 'https://example.com/seed-notice',
+      createdAt: getLocalDateString(),
+      createdAtISO: d.toISOString(),
+      createdAtMs: ms
+    }
+  }
+  
+  // Spread within last ~3 days for deterministic ordering
+  return [
+    mk('Support Notice A', 30, 'general'),     // 30 minutes ago
+    mk('Support Notice B', 120, 'general'),    // 2 hours ago  
+    mk('Support Notice C', 1500, 'general'),   // ~1 day ago
+    mk('Support Notice D', 3000, 'general'),   // ~2 days ago
+    mk('Support Notice E', 4500, 'general'),   // ~3 days ago
+  ]
 }

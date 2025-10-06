@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../../context/useAuth'
 import { useLoginForm } from '../../hooks/useLoginForm'
@@ -8,57 +8,68 @@ import '../../styles/sections/Login.scss'
 export const Login = () => {
   const { login, loginWithGoogle, error: authError } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [showPassword, setShowPassword] = useState(false)
   const [rememberPassword, setRememberPassword] = useState(false)
   const [emailError, setEmailError] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
-  // Use the password policy hook for email and password
+  const prefilledData = location.state || {}
+  const { prefilledEmail, prefilledPassword, message } = prefilledData
+
   const { 
     email, 
     setEmail, 
     password, 
-    setPassword, 
-    handleSubmit: handlePasswordSubmit 
-  } = useLoginForm(async (data) => {
-    // Handle successful password validation
-    setIsSubmitting(true)
-    setEmailError('')
-    setPasswordError('')
-    try {
-      const success = await login({ email: data.email, password: data.password })
-      if (success) {
-        navigate('/events')
-      }
-    } catch (error) {
-      console.error('Login error:', error)
-    } finally {
-      setIsSubmitting(false)
+    setPassword
+  } = useLoginForm()
+
+  React.useEffect(() => {
+    if (prefilledEmail) {
+      setEmail(prefilledEmail)
     }
-  })
+    if (prefilledPassword) {
+      setPassword(prefilledPassword)
+    }
+    if (message) {
+      setSuccessMessage(message)
+    }
+  }, [prefilledEmail, prefilledPassword, message, setEmail, setPassword])
 
   const isValidEmail = (value) => {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i
     return emailPattern.test(value)
   }
 
-  const validateEmail = (emailValue) => {
-    if (!emailValue.trim()) return 'Username is required'
-    if (!isValidEmail(emailValue)) return 'Enter a valid email'
-    return ''
+  const validateForm = () => {
+    const errors = {
+      email: '',
+      password: ''
+    }
+
+    if (!email.trim()) {
+      errors.email = 'Username is required'
+    } else if (!isValidEmail(email)) {
+      errors.email = 'Enter a valid email'
+    }
+
+    if (!password.trim()) {
+      errors.password = 'Password is required'
+    }
+
+    return errors
   }
 
   const handleEmailChange = (e) => {
     const value = e.target.value
     setEmail(value)
-    // Only validate if user has started typing or if there's already an error
-    if (emailError || value.length > 0) {
-      setEmailError(validateEmail(value))
+    if (emailError) {
+      setEmailError('')
     }
   }
 
-  // Handle auth errors by type
   React.useEffect(() => {
     if (authError) {
       if (authError.type === 'email') {
@@ -71,13 +82,35 @@ export const Login = () => {
     }
   }, [authError])
 
+  const handleFormSubmit = async () => {
+    setEmailError('')
+    setPasswordError('')
+
+    const errors = validateForm()
+
+    setEmailError(errors.email)
+    setPasswordError(errors.password)
+
+    const allValid = Object.values(errors).every(error => error === '')
+
+    if (allValid) {
+      setIsSubmitting(true)
+      try {
+        const success = await login({ email: email.trim(), password: password.trim() })
+        if (success) {
+          navigate('/dashboard')
+        }
+      } catch (error) {
+        console.error('Login error:', error)
+      } finally {
+        setIsSubmitting(false)
+      }
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const currentEmailError = validateEmail(email)
-    setEmailError(currentEmailError)
-    
-    if (currentEmailError) return
-    handlePasswordSubmit(e)
+    handleFormSubmit()
   }
 
   const handleGoogleSuccess = async () => {
@@ -86,7 +119,7 @@ export const Login = () => {
     try {
       const success = await loginWithGoogle()
       if (success) {
-        navigate('/events')
+        navigate('/dashboard')
       }
     } catch (error) {
       console.error('Google login error:', error)
@@ -110,10 +143,17 @@ export const Login = () => {
           />
         </div>
         <div className="auth-right">
+          {successMessage && (
+            <div className="login-success-message">
+              {successMessage}
+            </div>
+          )}
           <h1 className="auth-title">Login Your Account</h1>
           <p className="auth-subtitle">
             Log in with your data that you entered during your registration
           </p>
+          
+          
 
           <form onSubmit={handleSubmit} noValidate className="auth-form">
             <div className="field">

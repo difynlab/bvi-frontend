@@ -83,7 +83,6 @@ const RichTextEditor = ({
     }
   }, [editor])
 
-  // TODO: Implement font family functionality
   // const setFontFamily = useCallback((fontFamily) => {
   //   if (fontFamily === 'default') {
   //     editor.chain().focus().unsetMark('textStyle').run()
@@ -96,13 +95,11 @@ const RichTextEditor = ({
   const setTextAlign = useCallback((alignment) => {
     if (alignment === 'justify') {
       editor.commands.setTextAlign('left')
-      // Add justify class to content wrapper
       const contentElement = editor.view.dom.querySelector('.rte__content')
       if (contentElement) {
         contentElement.classList.add('text-justify')
       }
     } else {
-      // Remove justify class if switching away from justify
       const contentElement = editor.view.dom.querySelector('.rte__content')
       if (contentElement) {
         contentElement.classList.remove('text-justify')
@@ -111,7 +108,6 @@ const RichTextEditor = ({
     }
   }, [editor])
 
-  // TODO: Implement vertical alignment functionality
   // const setVerticalAlign = useCallback((alignment) => {
   //   const wrapper = editor.view.dom.closest('.rte')
   //   if (wrapper) {
@@ -120,7 +116,6 @@ const RichTextEditor = ({
   //   }
   // }, [editor])
 
-  // Subscribe to selection updates to track font and color changes
   useEffect(() => {
     if (!editor) return
 
@@ -139,13 +134,10 @@ const RichTextEditor = ({
     }
   }, [editor])
 
-  // Sync content when initialHtml or contentKey changes
   useEffect(() => {
     if (editor) {
       const currentHtml = editor.getHTML()
-      // Handle empty content explicitly
       if (!initialHtml || initialHtml.trim() === '') {
-        // Clear editor content completely for new items
         if (currentHtml !== '<p></p>' && currentHtml !== '') {
           editor.commands.clearContent(true)
         }
@@ -163,7 +155,6 @@ const RichTextEditor = ({
   return (
     <div className={`rte rte-v${initialAlignment} ${className}`}>
       <div className="rte__toolbar">
-        {/* Paragraph Style */}
         <div className="rte__group">
           <select
             className="rte__select"
@@ -183,7 +174,6 @@ const RichTextEditor = ({
           </select>
         </div>
 
-        {/* Font Family */}
         <div className="rte__group">
           <select
             className="rte__select rte__select--font"
@@ -204,7 +194,6 @@ const RichTextEditor = ({
           </select>
         </div>
 
-        {/* Text Formatting */}
         <div className="rte__group">
           <button
             type="button"
@@ -240,7 +229,6 @@ const RichTextEditor = ({
           </button>
         </div>
 
-        {/* Text Color */}
         <div className="rte__group">
           <input
             type="color"
@@ -272,7 +260,6 @@ const RichTextEditor = ({
           </button>
         </div>
 
-        {/* Lists */}
         <div className="rte__group">
           <button
             type="button"
@@ -300,7 +287,6 @@ const RichTextEditor = ({
           </button>
         </div>
 
-        {/* Links and Images */}
         <div className="rte__group">
           <button
             type="button"
@@ -320,7 +306,6 @@ const RichTextEditor = ({
           </button>
         </div>
 
-        {/* History */}
         <div className="rte__group">
           <button
             type="button"
@@ -342,7 +327,6 @@ const RichTextEditor = ({
           </button>
         </div>
 
-        {/* Text Alignment */}
         <div className="rte__group">
           <button
             type="button"

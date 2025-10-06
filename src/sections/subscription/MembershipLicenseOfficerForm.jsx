@@ -19,17 +19,14 @@ const MembershipLicenseOfficerForm = ({ values, errors, setOfficer, onSave }) =>
   };
 
   const handlePhoneChange = (officerIndex, value) => {
-    // Only allow digits
     const digitsOnly = value.replace(/\D/g, '');
     setOfficer(officerIndex, 'phone', digitsOnly);
   };
 
   const handleSubmit = () => {
     if (onSave()) {
-      // Save to localStorage on successful save
       setMembershipLicenseOfficers(values.membershipLicenseOfficers);
       
-      // Show unobtrusive confirmation
       const button = document.querySelector('.membership-license-officer .update-button');
       if (button) {
         const originalText = button.textContent;
@@ -41,7 +38,6 @@ const MembershipLicenseOfficerForm = ({ values, errors, setOfficer, onSave }) =>
         }, 2000);
       }
     } else {
-      // Focus first invalid field
       const firstErrorField = Object.keys(errors).find(key => key.startsWith('membershipLicenseOfficers.'));
       if (firstErrorField) {
         const fieldElement = document.getElementById(firstErrorField);

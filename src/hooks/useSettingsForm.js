@@ -1,15 +1,10 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { getProfile, setProfile } from '../helpers/profileStorage';
 import { getSession } from '../helpers/authStorage';
-
-// Optional-context import guarded at runtime
-let useAuthHook = null; 
-try { 
-  ({ useAuth: useAuthHook } = require('../context/useAuth')); 
-} catch {}
+import { useAuth } from '../context/useAuth';
 
 export function useSettingsForm() {
-  const ctx = typeof useAuthHook === 'function' ? useAuthHook() : null;
+  const ctx = useAuth();
   
   // Get current user data from session or context
   const currentUser = useMemo(() => {
@@ -116,18 +111,37 @@ export function useSettingsForm() {
       }
     }
     
+    // Build partial from current inputs: firstName, lastName, email (lowercased), phoneNumber (trimmed)
+    const partial = {}
+    
+    // Extract firstName and lastName from name field
+    const nameParts = (form.name || '').trim().split(' ')
+    if (nameParts.length > 0) {
+      partial.firstName = nameParts[0]
+    }
+    if (nameParts.length > 1) {
+      partial.lastName = nameParts.slice(1).join(' ')
+    }
+    
+    // Add other fields if they have values
+    if (form.email) {
+      partial.email = form.email.toLowerCase().trim()
+    }
+    if (form.phoneNumber) {
+      partial.phoneNumber = form.phoneNumber.trim()
+    }
+    
+    // Update AuthContext with partial - this will handle persistence
+    if (ctx?.updateProfile) {
+      ctx.updateProfile(partial);
+    }
+    
+    // Also save to profile storage for additional settings
     const updatedProfile = {
       ...form,
       profilePicture: profilePreview || form.profilePicture || baseUser.profilePicture,
     };
-    
-    // Save to profile storage
     setProfile(currentUser.id, updatedProfile);
-    
-    // Update AuthContext if available
-    if (ctx?.updateProfile) {
-      ctx.updateProfile(updatedProfile);
-    }
     
     resetAfterSave(updatedProfile);
   }, [canSave, currentUser.id, form, profilePreview, baseUser, ctx, resetAfterSave]);

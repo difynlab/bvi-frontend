@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { deriveRoleFromEmail, getPermissions, hashPassword } from './authHelpers'
 import { AuthContext } from './AuthContext'
 import { getSession, saveSession, clearSession, getUsers, setUsers, findUserByEmail } from '../helpers/authStorage'
+import { setProfile } from '../helpers/profileStorage'
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -10,7 +11,6 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null)
   const [isInitialized, setIsInitialized] = useState(false)
 
-  // Load session from localStorage on provider mount
   useEffect(() => {
     try {
       const session = getSession()
@@ -20,7 +20,6 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error loading session from localStorage:', error)
-      // Clear corrupted session
       clearSession()
     } finally {
       setIsInitialized(true)
@@ -35,21 +34,17 @@ export const AuthProvider = ({ children }) => {
     try {
       const { firstName, lastName, email, phoneNumber, password } = payload
       
-      // Check if user already exists
       const existingUser = findUserByEmail(email)
       if (existingUser) {
         setError('User with this email already exists')
         return false
       }
 
-      // Derive role from email
       const role = deriveRoleFromEmail(email)
       const permissions = getPermissions(role)
       
-      // Hash password
       const passwordHash = await hashPassword(password)
       
-      // Create new user
       const newUser = {
         id: Date.now().toString(),
         firstName: firstName.trim(),
@@ -62,7 +57,6 @@ export const AuthProvider = ({ children }) => {
         createdAt: new Date().toISOString()
       }
 
-      // Save user to storage
       const users = getUsers()
       users.push(newUser)
       setUsers(users)
@@ -85,8 +79,8 @@ export const AuthProvider = ({ children }) => {
       console.log('Registration successful:', sessionUser)
       return true
     } catch (err) {
-      setError('Registration failed')
       console.error('Registration error:', err)
+      setError('Registration failed')
       return false
     } finally {
       setLoading(false)
@@ -98,21 +92,18 @@ export const AuthProvider = ({ children }) => {
     setError(null)
 
     try {
-      // Find user by email
       const user = findUserByEmail(email)
       if (!user) {
         setError({ type: 'email', message: 'User not found' })
         return false
       }
 
-      // Hash provided password and compare
       const providedPasswordHash = await hashPassword(password)
       if (providedPasswordHash !== user.passwordHash) {
         setError({ type: 'password', message: 'Invalid password' })
         return false
       }
 
-      // Create session user object (without password hash)
       const sessionUser = {
         id: user.id,
         firstName: user.firstName,
@@ -123,7 +114,6 @@ export const AuthProvider = ({ children }) => {
         permissions: user.permissions
       }
 
-      // Save session
       saveSession(sessionUser)
       setUser(sessionUser)
       setIsAuthenticated(true)
@@ -201,20 +191,45 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // TEMPORARY: Debug function to clear all registered users (REMOVE before production)
+  const clearAllUsers = () => {
+    const users = getUsers()
+    console.log('Clearing users:', users)
+    localStorage.removeItem('bvi.auth.users')
+    localStorage.removeItem('bvi.auth.session')
+    setUser(null)
+    setIsAuthenticated(false)
+    setError(null)
+    console.log('All users cleared. You can now register with any email.')
+  }
+
+  // TEMPORARY: Debug function to show all registered users (REMOVE before production)
+  const showRegisteredUsers = () => {
+    const users = getUsers()
+    console.log('Currently registered users:', users.map(u => ({ email: u.email, role: u.role })))
+    return users
+  }
+
   const updateProfile = (partial) => {
     if (!user) return
 
+    // Create new user object by shallow-merging partial into current user
     const updatedUser = {
       ...user,
       ...partial
     }
 
-    setUser(updatedUser)
+    // Persist to profile storage for this user id
+    setProfile(user.id, partial)
+    
+    // Persist to session storage
     saveSession(updatedUser)
-    console.log('User profile updated:', updatedUser)
+    
+    // Update state with new object
+    setUser(updatedUser)
   }
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     isInitialized,
     register,
@@ -222,12 +237,13 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateProfile,
     toggleRole, // TODO TEMPORARY: role toggle function for testing only. REMOVE before production.
-    // Legacy compatibility
+    clearAllUsers, // TODO TEMPORARY: Debug function. REMOVE before production.
+    showRegisteredUsers, // TODO TEMPORARY: Debug function. REMOVE before production.
     isAuthenticated,
     loading,
     error,
     loginWithGoogle
-  }
+  }), [user, isInitialized, isAuthenticated, loading, error])
 
   return (
     <AuthContext.Provider value={value}>

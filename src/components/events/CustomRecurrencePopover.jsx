@@ -39,14 +39,12 @@ export const CustomRecurrencePopover = ({
   const [errors, setErrors] = useState({})
   const popoverRef = useRef(null)
 
-  // Initialize with provided recurrence or defaults
   useEffect(() => {
     if (initialRecurrence) {
       setRecurrence(initialRecurrence)
     }
   }, [initialRecurrence])
 
-  // Handle click outside to close
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (popoverRef.current && !popoverRef.current.contains(event.target)) {
@@ -60,7 +58,6 @@ export const CustomRecurrencePopover = ({
     }
   }, [isOpen, onClose])
 
-  // Handle ESC key
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'Escape' && isOpen) {
@@ -74,27 +71,22 @@ export const CustomRecurrencePopover = ({
     }
   }, [isOpen, onClose])
 
-  // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
     const today = new Date()
     return today.toISOString().split('T')[0]
   }
 
-  // Validate form
   const validateForm = () => {
     const newErrors = {}
 
-    // Validate interval
     if (!recurrence.interval || recurrence.interval < 1) {
       newErrors.interval = 'Interval must be at least 1'
     }
 
-    // Validate days of week for weekly recurrence
     if (recurrence.unit === 'week' && recurrence.daysOfWeek.length === 0) {
       newErrors.daysOfWeek = 'Select at least one day'
     }
 
-    // Validate ends
     if (recurrence.ends.mode === 'ON_DATE') {
       if (!recurrence.ends.date) {
         newErrors.endsDate = 'Date is required'
@@ -111,7 +103,6 @@ export const CustomRecurrencePopover = ({
     return Object.keys(newErrors).length === 0
   }
 
-  // Handle stepper increment
   const handleStepperIncrement = (field) => {
     if (field === 'ends.count') {
       setRecurrence(prev => ({
@@ -129,7 +120,6 @@ export const CustomRecurrencePopover = ({
     }
   }
 
-  // Handle stepper decrement
   const handleStepperDecrement = (field) => {
     if (field === 'ends.count') {
       setRecurrence(prev => ({
@@ -147,7 +137,6 @@ export const CustomRecurrencePopover = ({
     }
   }
 
-  // Handle day of week toggle
   const handleDayToggle = (dayValue) => {
     setRecurrence(prev => ({
       ...prev,
@@ -157,7 +146,6 @@ export const CustomRecurrencePopover = ({
     }))
   }
 
-  // Handle update
   const handleUpdate = () => {
     if (validateForm()) {
       onUpdate(recurrence)
@@ -176,7 +164,6 @@ export const CustomRecurrencePopover = ({
     >
       <h3 id="custom-recurrence-title">Custom Recurrence</h3>
       
-      {/* A) Repeat every */}
       <div className="repeat-every">
         <label htmlFor="interval">Repeat every:</label>
         <div className="interval-controls">
@@ -226,7 +213,6 @@ export const CustomRecurrencePopover = ({
         )}
       </div>
 
-      {/* B) Repeat on (only for weeks) */}
       {recurrence.unit === 'week' && (
         <div className="repeat-on">
           <label>Repeat on:</label>
@@ -249,7 +235,6 @@ export const CustomRecurrencePopover = ({
         </div>
       )}
 
-      {/* C) Ends */}
       <fieldset className="ends">
         <legend>Ends:</legend>
         {ENDS_MODES.map(mode => (
@@ -324,7 +309,6 @@ export const CustomRecurrencePopover = ({
         )}
       </fieldset>
 
-      {/* D) Update button */}
       <div className="actions">
         <button
           type="button"

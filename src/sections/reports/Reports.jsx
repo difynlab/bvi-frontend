@@ -39,15 +39,12 @@ export default function Reports() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [categoryError, setCategoryError] = useState('');
 
-  // Modal backdrop close handlers
   const categoryModalBackdropClose = useModalBackdropClose(() => setIsCategoryModalOpen(false));
   const reportModalBackdropClose = useModalBackdropClose(() => closeReportModal());
   const confirmModalBackdropClose = useModalBackdropClose(() => setConfirmModalOpen(false));
 
-  // Body scroll lock for modals
   useBodyScrollLock(isCategoryModalOpen || isReportModalOpen || confirmModalOpen);
 
-  // Load form data when editing
   useEffect(() => {
     if (isReportModalOpen && editingReport) {
       reportForm.loadFrom(editingReport);
@@ -89,7 +86,6 @@ export default function Reports() {
     setActiveCategory(firstCategory);
   };
 
-  // Safety check for initialization and user context
   if (!isInitialized) {
     return (
       <div className="reports-container">
@@ -168,14 +164,12 @@ export default function Reports() {
         {visibleItems.length === 0 ? (
           <div className="empty-state">
             {can(user, 'reports:create') ? (
-              // Admin empty state
               <>
                 <img src="/empty-state-admin.png" alt="" />
                 <h2>Oops nothing to see here yet!</h2>
                 <p>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</p>
               </>
             ) : (
-              // User empty state
               <>
                 <img src="/empty-state-user.png" alt="" className="empty-state-user" />
                 <h2>Oops! No data found.</h2>

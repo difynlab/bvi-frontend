@@ -7,9 +7,9 @@ import {
   deleteCategoryAndNotices, 
   upsertNotice, 
   updateNotice, 
-  deleteNotice 
+  deleteNotice,
+  getMockNotices
 } from '../helpers/noticesStorage'
-import { makeRecentDate, fmtDateForCreatedAt } from '../helpers/seedUtils'
 
 export const useNoticesState = () => {
   const [categories, setCategories] = useState([])
@@ -116,161 +116,60 @@ export const useNoticesState = () => {
     setNotices(updatedItems)
   }, [])
 
-  // Demo seeding with recent dates (≤7 days old)
+  // Demo seeding with mock notices that have proper timestamps
   const seedDemoNotices = useCallback(() => {
-    const demoCategories = [
-      { id: 'finances', name: 'Finances', slug: 'finances' },
-      { id: 'trading', name: 'Trading', slug: 'trading' },
-      { id: 'company', name: 'Company', slug: 'company' }
-    ]
-
-    const noticeTemplates = [
-      // Finances notices
-      {
-        id: 'finances-1',
-        fileName: 'Quarterly Earnings Q2',
-        noticeType: 'finances',
-        description: 'Review of Q2 financial performance including revenue growth, profit margins, and key financial metrics.',
-        imageFileName: 'earnings-q2.jpg',
-        imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop',
-        imagePreviewUrl: '',
-        linkUrl: 'https://example.com/earnings-q2'
-      },
-      {
-        id: 'finances-2',
-        fileName: 'Budget Allocation Update',
-        noticeType: 'finances',
-        description: 'Updated budget allocation for the upcoming quarter with focus on operational efficiency and growth initiatives.',
-        imageFileName: 'budget-update.jpg',
-        imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=600&fit=crop',
-        imagePreviewUrl: '',
-        linkUrl: 'https://example.com/budget-update'
-      },
-      {
-        id: 'finances-3',
-        fileName: 'Financial Compliance Report',
-        noticeType: 'finances',
-        description: 'Monthly compliance report covering regulatory requirements, audit findings, and recommended actions.',
-        imageFileName: 'compliance-report.jpg',
-        imageUrl: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&h=600&fit=crop',
-        imagePreviewUrl: '',
-        linkUrl: 'https://example.com/compliance-report'
-      },
-      // Trading notices
-      {
-        id: 'trading-1',
-        fileName: 'Market Analysis Update',
-        noticeType: 'trading',
-        description: 'Weekly market analysis covering key trends, trading opportunities, and risk assessment for portfolio management.',
-        imageFileName: 'market-analysis.jpg',
-        imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=600&fit=crop',
-        imagePreviewUrl: '',
-        linkUrl: 'https://example.com/market-analysis'
-      },
-      {
-        id: 'trading-2',
-        fileName: 'Portfolio Performance Review',
-        noticeType: 'trading',
-        description: 'Monthly portfolio performance review with detailed analysis of returns, risk metrics, and strategic recommendations.',
-        imageFileName: 'portfolio-review.jpg',
-        imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800&h=600&fit=crop',
-        imagePreviewUrl: '',
-        linkUrl: 'https://example.com/portfolio-review'
-      },
-      {
-        id: 'trading-3',
-        fileName: 'Risk Management Guidelines',
-        noticeType: 'trading',
-        description: 'Updated risk management guidelines and procedures for trading operations to ensure compliance and minimize exposure.',
-        imageFileName: 'risk-guidelines.jpg',
-        imageUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&h=600&fit=crop',
-        imagePreviewUrl: '',
-        linkUrl: 'https://example.com/risk-guidelines'
-      },
-      // Company notices
-      {
-        id: 'company-1',
-        fileName: 'Company Policy Update',
-        noticeType: 'company',
-        description: 'Important updates to company policies including remote work guidelines, code of conduct, and operational procedures.',
-        imageFileName: 'policy-update.jpg',
-        imageUrl: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&h=600&fit=crop',
-        imagePreviewUrl: '',
-        linkUrl: 'https://example.com/policy-update'
-      },
-      {
-        id: 'company-2',
-        fileName: 'Team Meeting Schedule',
-        noticeType: 'company',
-        description: 'Updated schedule for team meetings, all-hands sessions, and departmental reviews for the upcoming month.',
-        imageFileName: 'meeting-schedule.jpg',
-        imageUrl: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&h=600&fit=crop',
-        imagePreviewUrl: '',
-        linkUrl: 'https://example.com/meeting-schedule'
-      },
-      {
-        id: 'company-3',
-        fileName: 'HR Announcements',
-        noticeType: 'company',
-        description: 'Latest HR announcements including benefits updates, training opportunities, and employee recognition programs.',
-        imageFileName: 'hr-announcements.jpg',
-        imageUrl: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&h=600&fit=crop',
-        imagePreviewUrl: '',
-        linkUrl: 'https://example.com/hr-announcements'
-      }
-    ]
-
-    // Generate notices with recent dates (0-6 days ago)
-    const demoNotices = noticeTemplates.map(template => ({
-      ...template,
-      createdAt: fmtDateForCreatedAt(makeRecentDate({ maxDaysAgo: 6 }))
-    }))
-
-    // Create new categories array (ensure Finances, Trading, Company exist)
+    // Get mock notices with recent timestamps
+    const mockNotices = getMockNotices()
+    
+    // Create a general category if it doesn't exist
+    const generalCategory = {
+      id: 'general',
+      name: 'General',
+      slug: 'general'
+    }
+    
+    // Create new categories array (ensure General exists)
     const newCategories = [...categories]
-    demoCategories.forEach(demoCategory => {
-      const existingCategory = newCategories.find(cat => cat.id === demoCategory.id)
-      if (!existingCategory) {
-        newCategories.push(demoCategory)
-      }
-    })
-
+    const existingGeneralCategory = newCategories.find(cat => cat.id === 'general')
+    if (!existingGeneralCategory) {
+      newCategories.push(generalCategory)
+    }
+    
     // Create new notices groups array
     const newNoticesGroups = [...notices]
     
-    // Ensure all demo categories have groups
-    demoCategories.forEach(demoCategory => {
-      const existingGroup = newNoticesGroups.find(group => group.categoryId === demoCategory.id)
-      if (!existingGroup) {
-        newNoticesGroups.push({ categoryId: demoCategory.id, items: [] })
-      }
-    })
-
-    // Add demo notices to their respective groups (avoid duplicates)
-    demoNotices.forEach(demoNotice => {
-      const group = newNoticesGroups.find(g => g.categoryId === demoNotice.noticeType)
-      if (group) {
-        const existingNotice = group.items.find(notice => notice.id === demoNotice.id)
+    // Ensure general category has a group
+    const existingGeneralGroup = newNoticesGroups.find(group => group.categoryId === 'general')
+    if (!existingGeneralGroup) {
+      newNoticesGroups.push({ categoryId: 'general', items: [] })
+    }
+    
+    // Add mock notices to the general group (avoid duplicates)
+    const generalGroup = newNoticesGroups.find(g => g.categoryId === 'general')
+    if (generalGroup) {
+      mockNotices.forEach(mockNotice => {
+        const existingNotice = generalGroup.items.find(notice => notice.id === mockNotice.id)
         if (!existingNotice) {
-          group.items.push(demoNotice)
+          generalGroup.items.push(mockNotice)
         }
-      }
-    })
-
+      })
+    }
+    
     // Update state with new arrays
     setCategories(newCategories)
     setNotices(newNoticesGroups)
-
+    
     // Persist to localStorage immediately
     writeNotices(newCategories, newNoticesGroups)
-
-    // Return the first category ID for UI activation
-    return 'finances'
+    
+    // Return the general category ID for UI activation
+    return 'general'
   }, [categories, notices])
 
   return {
     // State
     categories,
+    notices,
     activeCategory,
     visibleItems,
     isCategoryModalOpen,

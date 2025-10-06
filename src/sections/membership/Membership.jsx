@@ -45,7 +45,6 @@ const Membership = () => {
               </div>
             </Card>
 
-            {/* Payment History Section */}
             <Card title="Payment History" className="payment-section">
               <div className="table-container">
                 <table className="data-table">
@@ -86,7 +85,6 @@ const Membership = () => {
               </div>
             </Card>
 
-            {/* Member Details Section */}
             <Card title="Member Details" className="member-details-section">
               <div className="table-container">
                 <table className="data-table">
@@ -113,9 +111,7 @@ const Membership = () => {
             </Card>
           </div>
 
-          {/* Right Column */}
           <div className="membership-right">
-            {/* Membership Status Section */}
             <Card className="status-section">
               <div className="status-banner">
                 <div className="status-header">
@@ -140,7 +136,6 @@ const Membership = () => {
               </div>
             </Card>
 
-            {/* Membership Details Section */}
             <Card title="Membership Details" className="details-section">
               <ul className="benefits-list">
                 <li className="benefit-item">
@@ -166,7 +161,6 @@ const Membership = () => {
               </ul>
             </Card>
 
-            {/* Upcoming Events Section */}
             <Card title="Upcoming Events" className="membership-events-section">
               <ul className="membership-events-list">
                 {upcomingEvents.length > 0 ? (

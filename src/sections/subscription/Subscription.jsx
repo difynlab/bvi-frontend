@@ -183,7 +183,6 @@ const Subscription = () => {
               errors={errors}
               setOfficer={setOfficer}
               onSave={() => {
-                // Use validateCurrent to check if form is valid
                 const isValid = goNext();
                 return isValid;
               }}

@@ -70,7 +70,6 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
 
   const handleSubmit = () => {
     if (onNext()) {
-      // Save to localStorage on successful navigation
       setMembershipDetails(membershipValues);
     }
   };
@@ -79,7 +78,6 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
     const newType = e.target.value;
     setField('membershipDetails', 'membershipType', newType);
     
-    // Reset ordinaryPlan when switching away from Ordinary Member
     if (newType !== 'Ordinary Member') {
       setField('membershipDetails', 'ordinaryPlan', '');
     }

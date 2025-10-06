@@ -42,18 +42,16 @@ export function getProfile(userId) {
 /**
  * Set user profile data by user ID
  * @param {string} userId - User ID
- * @param {Object} profilePartial - Partial profile data to update
+ * @param {Object} partial - Partial profile data to update
  * @returns {boolean} True if successful
  */
-export function setProfile(userId, profilePartial) {
-  if (!userId || !profilePartial) return false
+export function setProfile(userId, partial) {
+  if (!userId || !partial) return false
   
   try {
-    const profileKey = `${PROFILE_KEY_PREFIX}${userId}`
-    const existingProfile = getProfile(userId) || {}
-    const updatedProfile = { ...existingProfile, ...profilePartial }
-    localStorage.setItem(profileKey, JSON.stringify(updatedProfile))
-    // TODO BACKEND: sync profile with API
+    const key = `bvi.profile.${userId}`;          // TODO BACKEND
+    const prev = JSON.parse(localStorage.getItem(key) || '{}');
+    localStorage.setItem(key, JSON.stringify({ ...prev, ...partial }));
     return true
   } catch (error) {
     console.error('Error writing profile to storage:', error)

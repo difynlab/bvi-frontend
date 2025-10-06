@@ -30,7 +30,6 @@ export const ForgetPassword = () => {
     setIsLoading(true)
     
     try {
-      // Simulate API call to send password reset email
       await sendPasswordResetEmail(email)
       setIsEmailSent(true)
     } catch {
@@ -41,19 +40,12 @@ export const ForgetPassword = () => {
   }
 
   const sendPasswordResetEmail = async (email) => {
-    // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 2000))
     
     // TODO: Replace with actual API call
-    // Example: await fetch('/api/auth/forgot-password', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ email })
-    // })
     
     console.log('Password reset email sent to:', email)
     
-    // For demo purposes, always succeed
     return Promise.resolve()
   }
 

@@ -16,6 +16,7 @@ import RouteGuard from './auth/RouteGuard'
 import Forbidden from './pages/Forbidden'
 import ResetPassword from './pages/ResetPassword'
 import SideNav from './components/SideNav'
+import { AuthProvider } from './context/AuthContext.jsx'
 
 const MainLayout = ({ children }) => {
   return (
@@ -36,7 +37,7 @@ const MainLayout = ({ children }) => {
 function App() {
 
   return (
-    <>
+    <AuthProvider>
       <BrowserRouter>
       <Routes>
         <Route path='/' element={<Navigate to="/register" replace />}></Route>
@@ -129,8 +130,8 @@ function App() {
           </RouteGuard>
         }></Route>
       </Routes>
-      </BrowserRouter>
-    </>
+    </BrowserRouter>
+    </AuthProvider>
   )
 }
 

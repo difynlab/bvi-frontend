@@ -12,7 +12,6 @@ import '../../styles/sections/Notices.scss'
 export const Notices = () => {
   const { user, toggleRole, isInitialized } = useAuth()
 
-  // Notices state management
   const {
     categories,
     activeCategory,
@@ -37,14 +36,11 @@ export const Notices = () => {
     seedDemoNotices
   } = useNoticesState()
 
-  // Form management
   const noticeForm = useNoticeForm()
 
-  // Local state for modals
   const [newCategoryName, setNewCategoryName] = useState('')
   const [categoryError, setCategoryError] = useState('')
 
-  // Modal backdrop close behavior
   const modalBackdropClose = useModalBackdropClose(() => {
     if (editingNotice) {
       noticeForm.rollbackEdit()
@@ -56,13 +52,10 @@ export const Notices = () => {
   const confirmModalBackdropClose = useModalBackdropClose(() => setConfirmModalOpen(false))
   const addCategoryModalBackdropClose = useModalBackdropClose(() => setIsCategoryModalOpen(false))
 
-  // Title marquee behavior
   const titleMarquee = useTitleMarquee()
 
-  // Body scroll lock for modals
   useBodyScrollLock(isNoticeModalOpen || isCategoryModalOpen || confirmModalOpen)
 
-  // Utility function to truncate text at word boundary
   const truncateText = (text, maxLength = 110) => {
     if (!text || text.length <= maxLength) return text
     const truncated = text.substring(0, maxLength)
@@ -72,7 +65,6 @@ export const Notices = () => {
 
   const [useFallback, setUseFallback] = useState(false)
 
-  // Check if CSS line-clamp is supported
   useEffect(() => {
     const testElement = document.createElement('div')
     testElement.style.display = '-webkit-box'
@@ -80,12 +72,10 @@ export const Notices = () => {
     testElement.style.webkitBoxOrient = 'vertical'
     testElement.style.overflow = 'hidden'
 
-    // If the browser doesn't support line-clamp, the styles won't be applied
     const supportsLineClamp = testElement.style.webkitLineClamp === '2'
     setUseFallback(!supportsLineClamp)
   }, [])
 
-  // Load form data when editing
   useEffect(() => {
     if (isNoticeModalOpen && editingNotice) {
       noticeForm.loadFrom(editingNotice)
@@ -94,7 +84,6 @@ export const Notices = () => {
     }
   }, [isNoticeModalOpen, editingNotice])
 
-  // Safety check for initialization and user context
   if (!isInitialized) {
     return (
       <div className="notices-page">
@@ -113,7 +102,6 @@ export const Notices = () => {
     noticeForm.onChange(name, value)
   }
 
-  // Rich Text Editor handler
   const handleEditorChange = ({ html, text }) => {
     noticeForm.setEditorHtml(html)
     noticeForm.setEditorText(text)
@@ -152,6 +140,18 @@ export const Notices = () => {
     e.preventDefault()
     if (noticeForm.validate(categories)) {
       const payload = noticeForm.toPayload(editingNotice?.id)
+      
+      // Preserve creation timestamps when editing
+      if (editingNotice) {
+        // Preserve existing creation timestamps if they exist
+        if (editingNotice.createdAtISO) {
+          payload.createdAtISO = editingNotice.createdAtISO
+        }
+        if (editingNotice.createdAtMs) {
+          payload.createdAtMs = editingNotice.createdAtMs
+        }
+      }
+      
       handleUpsertNotice(payload)
     }
   }
@@ -253,14 +253,12 @@ export const Notices = () => {
           {categories.length === 0 ? (
             <div className="empty-state">
               {can(user, 'notices:create') ? (
-                // Admin empty state
                 <>
                   <img src="/empty-state-admin.png" alt="" />
                   <h2>No categories yet!</h2>
                   <p>Create your first category to get started with notices.</p>
                 </>
               ) : (
-                // User empty state
                 <>
                   <img src="/empty-state-user.png" alt="" className="empty-state-user" />
                   <h2>No categories available.</h2>
@@ -271,14 +269,12 @@ export const Notices = () => {
           ) : visibleItems.length === 0 ? (
             <div className="empty-state">
               {can(user, 'notices:create') ? (
-                // Admin empty state
                 <>
                   <img src="/empty-state-admin.png" alt="" />
                   <h2>No notices in this category!</h2>
                   <p>This category is empty. Add your first notice to get started!</p>
                 </>
               ) : (
-                // User empty state
                 <>
                   <img src="/empty-state-user.png" alt="" className="empty-state-user" />
                   <h2>No notices found.</h2>
@@ -430,7 +426,7 @@ export const Notices = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="file">Upload File</label>
+                  <label htmlFor="file">Upload File<span className="req-star" aria-hidden="true">*</span></label>
                   <div
                     className="file-upload-area"
                     onDragOver={handleDragOver}
