@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/useAuth'
 import { can } from '../../auth/acl'
 import { useNoticesState } from '../../hooks/useNoticesState'
@@ -7,9 +7,25 @@ import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
 import { useTitleMarquee } from '../../hooks/useTitleMarquee'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import RichTextEditor from '../../components/editor/RichTextEditor'
+import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
 import '../../styles/sections/Notices.scss'
 
 export const Notices = () => {
+  const NOTICE_PLACEHOLDER = '/images/notices-mock.png'
+  const failedImageIdsRef = useRef(new Set())
+  const [fallbackTick, setFallbackTick] = useState(0)
+  const getNoticeImage = (n) => {
+    if (!n) return NOTICE_PLACEHOLDER
+    if (failedImageIdsRef.current.has(n.id)) return NOTICE_PLACEHOLDER
+    return (n.imagePreviewUrl || n.imageUrl || NOTICE_PLACEHOLDER)
+  }
+  const onImgError = (n) => {
+    if (!n?.id) return
+    if (!failedImageIdsRef.current.has(n.id)) {
+      failedImageIdsRef.current.add(n.id)
+      setFallbackTick(t => t + 1)
+    }
+  }
   const { user, toggleRole, isInitialized } = useAuth()
 
   const {
@@ -33,13 +49,15 @@ export const Notices = () => {
     setIsCategoryModalOpen,
     setConfirmModalOpen,
     setCategoryToDelete,
-    seedDemoNotices
+    seedFromMocks
   } = useNoticesState()
 
   const noticeForm = useNoticeForm()
 
   const [newCategoryName, setNewCategoryName] = useState('')
   const [categoryError, setCategoryError] = useState('')
+  const [isNoticeDeleteConfirmOpen, setIsNoticeDeleteConfirmOpen] = useState(false)
+  const [noticeToDelete, setNoticeToDelete] = useState(null)
 
   const modalBackdropClose = useModalBackdropClose(() => {
     if (editingNotice) {
@@ -54,7 +72,7 @@ export const Notices = () => {
 
   const titleMarquee = useTitleMarquee()
 
-  useBodyScrollLock(isNoticeModalOpen || isCategoryModalOpen || confirmModalOpen)
+  useBodyScrollLock(isNoticeModalOpen || isCategoryModalOpen || confirmModalOpen || isNoticeDeleteConfirmOpen)
 
   const truncateText = (text, maxLength = 110) => {
     if (!text || text.length <= maxLength) return text
@@ -67,12 +85,12 @@ export const Notices = () => {
 
   useEffect(() => {
     const testElement = document.createElement('div')
-    testElement.style.display = '-webkit-box'
-    testElement.style.webkitLineClamp = '2'
-    testElement.style.webkitBoxOrient = 'vertical'
-    testElement.style.overflow = 'hidden'
-
-    const supportsLineClamp = testElement.style.webkitLineClamp === '2'
+    testElement.className = 'lineclamp-test'
+    document.body.appendChild(testElement)
+    const computed = window.getComputedStyle(testElement)
+    const lineClamp = computed.getPropertyValue('-webkit-line-clamp') || computed.webkitLineClamp
+    const supportsLineClamp = lineClamp === '2'
+    document.body.removeChild(testElement)
     setUseFallback(!supportsLineClamp)
   }, [])
 
@@ -173,9 +191,33 @@ export const Notices = () => {
     setIsCategoryModalOpen(false)
   }
 
+  const handleDeleteNoticeLocal = (noticeId) => {
+    const notice = visibleItems.find(n => n.id === noticeId)
+    if (notice && can(user, 'notices:delete')) {
+      setNoticeToDelete(notice)
+      setIsNoticeDeleteConfirmOpen(true)
+    }
+  }
+
+  const handleConfirmDeleteNotice = () => {
+    if (noticeToDelete) {
+      handleDeleteNotice(noticeToDelete.id)
+      setNoticeToDelete(null)
+    }
+  }
+
   const handleSeedNotices = () => {
-    const firstCategoryId = seedDemoNotices()
-    setActiveCategory(firstCategoryId)
+    seedFromMocks()
+  }
+
+  const getNoticeDescriptionText = (n) => {
+    const raw =
+      (typeof n?.description === 'string' && n.description) ||
+      (typeof n?.descriptionHTML === 'string' && n.descriptionHTML) ||
+      (typeof n?.summary === 'string' && n.summary) ||
+      '';
+    // strip HTML tags
+    return raw.replace(/<[^>]+>/g, '').trim();
   }
 
   return (
@@ -297,15 +339,12 @@ export const Notices = () => {
                         >
                           <span className="notice-title__inner" title={notice.fileName}>{notice.fileName}</span>
                         </h3>
-                        <p className="notice-description">
-                          {useFallback ? truncateText(notice.description) : notice.description}
-                        </p>
                       </div>
                       <div className="notice-actions">
                         {can(user, 'notices:delete') && (
                           <button
                             className="notice-card__delete-btn"
-                            onClick={() => handleDeleteNotice(notice.id)}
+                            onClick={() => handleDeleteNoticeLocal(notice.id)}
                           >
                             <i className="bi bi-trash"></i>
                           </button>
@@ -326,15 +365,15 @@ export const Notices = () => {
                         </button>
                       </div>
                     </div>
-                    {(notice.imagePreviewUrl || notice.imageUrl) && (
-                      <div className="notice-image">
-                        <img
-                          src={notice.imagePreviewUrl || notice.imageUrl}
-                          alt={notice.fileName || 'Notice image'}
-                        />
-                      </div>
-                    )}
-                    <span className="notice-date">Published: {formatDate(notice.createdAt)}</span>
+                    <p className="notice-description">{getNoticeDescriptionText(notice)}</p>
+                    <img
+                      className="notice-card-image"
+                      src={getNoticeImage(notice)}
+                      alt={notice.title || 'Notice image'}
+                      loading="lazy"
+                      onError={() => onImgError(notice)}
+                    />
+                    <span className="notice-date">Published: {formatDate(notice.createdAt || notice.publishDate)}</span>
                   </div>
                 </div>
               ))}
@@ -575,6 +614,18 @@ export const Notices = () => {
           </div>
         </div>
       )}
+
+      {/* Confirm Delete Notice Modal */}
+      <ConfirmDeleteModal
+        isOpen={isNoticeDeleteConfirmOpen}
+        onClose={() => {
+          setIsNoticeDeleteConfirmOpen(false)
+          setNoticeToDelete(null)
+        }}
+        onConfirm={handleConfirmDeleteNotice}
+        entityLabel="Notice"
+        itemName={noticeToDelete?.fileName}
+      />
     </>
   )
 }

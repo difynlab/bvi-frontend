@@ -180,7 +180,7 @@ const GeneralDetailsForm = ({ values, errors, setField, onNext }) => {
         type="file"
         accept=".png,.jpg,.jpeg,.pdf"
         onChange={handleFileInput}
-        style={{ display: 'none' }}
+        className="hidden-file-input"
         aria-hidden="true"
       />
 

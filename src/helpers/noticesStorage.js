@@ -1,6 +1,13 @@
 // Notices storage helper functions for localStorage operations
-const CATEGORIES_KEY = 'notices.categories'
-const ITEMS_KEY = 'notices.items'
+// TODO BACKEND: timestamps, categories, and images will come from API
+
+export const NOTICE_KEYS = {
+  items: 'bvi.notices.items',
+  categories: 'bvi.notices.categories',
+}
+
+const CATEGORIES_KEY = NOTICE_KEYS.categories
+const ITEMS_KEY = NOTICE_KEYS.items
 
 const defaultCategories = []
 
@@ -26,6 +33,29 @@ export function writeNotices(categories, items) {
     console.error('Error writing notices to localStorage:', error)
     return false
   }
+}
+
+export function getNoticeCategories() {
+  try {
+    const categories = JSON.parse(localStorage.getItem(CATEGORIES_KEY)) || []
+    return Array.isArray(categories) ? categories : []
+  } catch {
+    return []
+  }
+}
+
+export function setNoticeCategories(list) {
+  try {
+    const safe = Array.isArray(list) ? list : []
+    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(safe))
+  } catch {}
+}
+
+export function setNotices(list) {
+  try {
+    const safe = Array.isArray(list) ? list : []
+    localStorage.setItem(ITEMS_KEY, JSON.stringify(safe))
+  } catch {}
 }
 
 export function addCategory(name) {
@@ -149,41 +179,47 @@ export function deleteNotice(id) {
 }
 
 // Mock notices factory with recent timestamps for Dashboard integration
+export function getMockNoticeCategories() {
+  return [
+    { id: 'cat-1', name: 'Regulatory Updates' },
+    { id: 'cat-2', name: 'Industry News' },
+    { id: 'cat-3', name: 'Member Notices' },
+  ]
+}
+
 export function getMockNotices() {
+  // TODO BACKEND: images and timestamps will come from API
+  const mockImg = '/images/notices-mock.png'
   const now = Date.now()
-  const mk = (fileName, offsetMinutes, noticeType = 'general') => {
-    const ms = now - offsetMinutes * 60_000
+  const mk = (title, offsetMin, categoryId) => {
+    const ms = now - offsetMin * 60_000
     const d = new Date(ms)
-    
-    // Helper to get local date string (YYYY-MM-DD)
-    const getLocalDateString = () => {
-      const year = d.getFullYear()
-      const month = String(d.getMonth() + 1).padStart(2, '0')
-      const day = String(d.getDate()).padStart(2, '0')
-      return `${year}-${month}-${day}`
-    }
-    
+    const publishDate = d.toISOString().slice(0,10)
+    const id = (globalThis.crypto?.randomUUID?.() || `${ms}-${Math.random()}`)
     return {
-      id: crypto.randomUUID(),
-      fileName,
-      noticeType,
-      description: 'Seed notice description',
-      editorHtml: '<p>Seed notice description</p>',
-      imageFileName: 'seed-notice.jpg',
-      imagePreviewUrl: '',
-      linkUrl: 'https://example.com/seed-notice',
-      createdAt: getLocalDateString(),
+      id,
+      title,
+      categoryId,
+      publishDate,
       createdAtISO: d.toISOString(),
-      createdAtMs: ms
+      createdAtMs: ms,
+      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      imageUrl: mockImg,
+      attachments: [],
+      // legacy fields for compatibility with existing UI
+      fileName: title,
+      noticeType: categoryId,
+      createdAt: publishDate,
+      imagePreviewUrl: ''
     }
   }
-  
-  // Spread within last ~3 days for deterministic ordering
+
   return [
-    mk('Support Notice A', 30, 'general'),     // 30 minutes ago
-    mk('Support Notice B', 120, 'general'),    // 2 hours ago  
-    mk('Support Notice C', 1500, 'general'),   // ~1 day ago
-    mk('Support Notice D', 3000, 'general'),   // ~2 days ago
-    mk('Support Notice E', 4500, 'general'),   // ~3 days ago
+    mk('Policy Circular 2025-07', 30,   'cat-1'),
+    mk('Guidance Update Q3',      120,  'cat-1'),
+    mk('Market Snapshot',         300,  'cat-2'),
+    mk('FinTech Brief',           720,  'cat-2'),
+    mk('Member Bulletin A',       1440, 'cat-3'),
+    mk('Member Bulletin B',       2160, 'cat-3'),
   ]
 }

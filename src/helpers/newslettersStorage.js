@@ -1,4 +1,5 @@
 // Newsletters storage helper functions for localStorage operations
+import { makeRecentDate, fmtDateForCreatedAt } from './seedUtils'
 export const NL_KEYS = { items: 'bvi.newsletters.items' }
 const KEY = 'newsletters.storage.v1'
 const defaults = { items: [] }
@@ -57,7 +58,6 @@ export function deleteNewsletter(id) {
 
 // TODO BACKEND: replace localStorage with API calls
 export function getMockNewsletters() {
-  const { makeRecentDate, fmtDateForCreatedAt } = require('./seedUtils')
   
   const newsletterTemplates = [
     {

@@ -2,7 +2,7 @@
 @use 'sass:color';
 
 // Global modal form styles - needed for modals across all pages
-.form-group {
+.events-form .form-group {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -70,10 +70,6 @@
     outline: none;
     border-color: $vivid_blue;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-
-  .repeat-field {
-    position: relative;
   }
 
   .dropzone {
@@ -258,6 +254,13 @@
   margin-bottom: 10px;
 }
 
+// Scoped styles for confirm delete modal
+.events-container {
+  .confirm-delete-modal {
+    // Add any specific styles if needed
+  }
+}
+
 .events-page {
   padding: 30px;
   min-height: 100vh;
@@ -282,8 +285,14 @@
   position: relative;
 }
 
+// Marquee measurement class for temporary width calculation
+.marquee-measure {
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
 .event-title[data-marquee="1"]:hover .event-title__inner {
-  animation: event-title-slide var(--marquee-duration, 10s) linear infinite alternate;
+  animation: event-title-slide 10s linear infinite alternate;
   will-change: transform;
 }
 
@@ -293,7 +302,7 @@
   }
 
   100% {
-    transform: translateX(calc(-1 * var(--overflow-px, 0px)));
+    transform: translateX(-100px);
   }
 }
 
@@ -303,6 +312,17 @@
   }
 }
 
+
+// Line clamp detection test class
+.line-clamp-test {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+}
 
 .events-container {
   max-width: 1200px;
@@ -367,7 +387,9 @@
 .newsletters-header-title,
 .reports-header-title,
 .settings-header-title,
-.subscription-header-title, .legislation-header-title, .dashboard-header-title {
+.subscription-header-title,
+.legislation-header-title,
+.dashboard-header-title {
   height: 55px;
   display: flex;
   flex-direction: column;
@@ -392,7 +414,8 @@
 .add-notice-btn,
 .add-newsletter-btn,
 .add-report-btn,
-.subscription-info-modal__update-btn, .legislation-edit-btn {
+.subscription-info-modal__update-btn,
+.legislation-edit-btn {
   background-color: $vivid_red;
   position: relative;
   width: 135px;
@@ -1160,6 +1183,10 @@
 }
 
 // Custom Recurrence Popover Styles
+.events-modal .form-row .repeat-field {
+  position: relative;
+}
+
 .events-modal {
   .custom-recurrence-popover {
     position: absolute;
@@ -1170,7 +1197,7 @@
     padding: $spacing-md;
     border-radius: 12px;
     background: #fff;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     z-index: 1001;
     border: 1px solid #e5e7eb;
 
@@ -1273,6 +1300,7 @@
       }
     }
 
+
     .repeat-on {
       display: flex;
       flex-direction: column;
@@ -1282,46 +1310,47 @@
       label {
         font-size: 0.875rem;
         font-weight: 500;
-        color: #374151;
+        color: $vivid_blue;
       }
 
       .dow {
         display: flex;
+        justify-content: center;
         gap: 8px;
 
         .day {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 4px;
-
+          align-content: center;
+          
           input[type="checkbox"] {
             display: none;
           }
-
+          
           label {
+            padding-right: 0;
             width: 32px;
             height: 32px;
-            border: 1px solid #d1d5db;
             border-radius: 50%;
+            background: rgba(16, 67, 148, 0.05);
             display: flex;
             align-items: center;
+            text-align: center;
             justify-content: center;
             cursor: pointer;
             font-size: 0.75rem;
             font-weight: 500;
-            color: #6b7280;
             transition: all 0.2s;
 
             &:hover {
-              background-color: #f3f4f6;
+              background: rgba(16, 67, 148, 0.09);
             }
           }
 
-          input[type="checkbox"]:checked + label {
+          input[type="checkbox"]:checked+label {
             background-color: $vivid_blue;
             color: white;
-            border-color: $vivid_blue;
           }
         }
       }
@@ -1481,7 +1510,6 @@
 
           span {
             font-size: 0.875rem;
-            color: #6b7280;
             flex-shrink: 0;
           }
         }

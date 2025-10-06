@@ -8,6 +8,7 @@ import { useTitleMarquee } from '../../hooks/useTitleMarquee'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import RichTextEditor from '../../components/editor/RichTextEditor'
 import { CustomRecurrencePopover } from '../../components/events/CustomRecurrencePopover'
+import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
 import '../../styles/sections/Events.scss'
 
 export const Events = () => {
@@ -23,6 +24,8 @@ export const Events = () => {
   const [isDragOver, setIsDragOver] = useState(false)
   const [useFallback, setUseFallback] = useState(false)
   const [isCustomRecurrenceOpen, setIsCustomRecurrenceOpen] = useState(false)
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
+  const [eventToDelete, setEventToDelete] = useState(null)
 
   const eventForm = useEventForm()
 
@@ -51,17 +54,18 @@ export const Events = () => {
 
   const titleMarquee = useTitleMarquee()
 
-  useBodyScrollLock(isModalOpen || isRegisterModalOpen)
+  useBodyScrollLock(isModalOpen || isRegisterModalOpen || isConfirmDeleteOpen)
 
   useEffect(() => {
     const testElement = document.createElement('div')
-    testElement.style.display = '-webkit-box'
-    testElement.style.webkitLineClamp = '2'
-    testElement.style.webkitBoxOrient = 'vertical'
-    testElement.style.overflow = 'hidden'
-
-    const supportsLineClamp = testElement.style.webkitLineClamp === '2'
+    testElement.className = 'line-clamp-test'
+    document.body.appendChild(testElement)
+    
+    const computedStyle = window.getComputedStyle(testElement)
+    const supportsLineClamp = computedStyle.webkitLineClamp === '2'
     setUseFallback(!supportsLineClamp)
+    
+    document.body.removeChild(testElement)
   }, [])
 
   const truncateText = (text, maxLength = 110) => {
@@ -140,7 +144,7 @@ export const Events = () => {
         kind: value, // Use the selected repeat value as the kind
         interval: 1,
         unit: 'week',
-        daysOfWeek: ['MO','TU','WE','TH','FR','SA','SU'],
+        daysOfWeek: [],
         ends: { mode: 'NEVER', date: '', count: null }
       })
     }
@@ -325,9 +329,25 @@ export const Events = () => {
 
   const handleDelete = (eventId) => {
     try {
-      deleteEvent(eventId)
+      const event = events.find(e => e.id === eventId)
+      if (event && can(user, 'events:delete')) {
+        setEventToDelete(event)
+        setIsConfirmDeleteOpen(true)
+      }
     } catch (error) {
       console.error('Error in handleDelete:', error)
+      alert('An error occurred while deleting the event')
+    }
+  }
+
+  const handleConfirmDelete = () => {
+    try {
+      if (eventToDelete) {
+        deleteEvent(eventToDelete.id)
+        setEventToDelete(null)
+      }
+    } catch (error) {
+      console.error('Error in handleConfirmDelete:', error)
       alert('An error occurred while deleting the event')
     }
   }
@@ -725,6 +745,18 @@ export const Events = () => {
           </div>
         )}
       </div>
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={isConfirmDeleteOpen}
+        onClose={() => {
+          setIsConfirmDeleteOpen(false)
+          setEventToDelete(null)
+        }}
+        onConfirm={handleConfirmDelete}
+        entityLabel="Event"
+        itemName={eventToDelete?.title}
+      />
     </>
   )
 }

@@ -10,7 +10,7 @@ const TABS_ORDER = [
   "Membership Plans"
 ];
 
-export function useSubscriptionWizard(initialTab = 'General Details') {
+export function useSubscriptionWizard(initialTab = 'Important Info') {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [values, setValues] = useState({
     generalDetails: {},

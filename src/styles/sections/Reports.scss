@@ -106,6 +106,10 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.image-preview-hidden {
+  display: none !important;
+}
+
 .error-message {
   color: #e53935;
   font-size: 12px;
@@ -121,6 +125,10 @@
 .reports-container {
   padding: 30px;
   position: relative;
+
+  .confirm-delete-modal {
+    // Add any specific styles if needed
+  }
 
   .empty-state {
     display: flex;

@@ -1,36 +1,49 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { isValidUrl } from '../helpers/urlValidation';
 
-export function useReportForm() {
-  const [form, setForm] = useState({
-    fileName: '',
-    type: '',
-    fileUrl: '',
-    fileBlob: null
-  });
+const EMPTY_FORM = {
+  id: null,
+  title: '',
+  typeId: '',
+  linkUrl: '',
+  imagePreviewUrl: '',
+  fileName: '',
+  file: null
+};
 
+export function useReportForm(initialReport, isOpen, mode) {
+  const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
 
-  const loadFrom = useCallback((item) => {
-    if (item) {
-      setForm({
-        fileName: item.title || '',
-        type: item.type || '',
-        fileUrl: item.fileUrl || '',
-        fileBlob: null
+  // Initialize form only when modal opens or target report changes
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    if (mode === 'edit' && initialReport?.id) {
+      setForm({ 
+        ...EMPTY_FORM, 
+        ...initialReport,
+        title: initialReport.title || '',
+        typeId: initialReport.typeId || '',
+        linkUrl: initialReport.fileUrl || initialReport.linkUrl || '',
+        fileName: initialReport.title || ''
       });
     } else {
-      setForm({
-        fileName: '',
-        type: '',
-        fileUrl: '',
-        fileBlob: null
-      });
+      setForm(EMPTY_FORM);
     }
     setErrors({});
-  }, []);
+  }, [isOpen, initialReport?.id, mode]);
 
-  const onChange = useCallback((field, value) => {
+  // Clean up object URL when modal closes
+  useEffect(() => {
+    return () => {
+      if (form.imagePreviewUrl) {
+        URL.revokeObjectURL(form.imagePreviewUrl);
+      }
+    };
+  }, [isOpen]);
+
+  const setField = useCallback((field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     setErrors(prev => {
@@ -41,21 +54,33 @@ export function useReportForm() {
     });
   }, []);
 
+  const setFile = useCallback((file) => {
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setForm(prev => ({ 
+        ...prev, 
+        file, 
+        imagePreviewUrl: url, 
+        fileName: file.name 
+      }));
+    }
+  }, []);
+
   const validate = useCallback(() => {
     const newErrors = {};
 
-    if (!form.fileName.trim()) {
-      newErrors.fileName = 'File name is required';
+    if (!form.title.trim()) {
+      newErrors.title = 'Title is required';
     }
 
-    if (!form.type.trim()) {
-      newErrors.type = 'Type is required';
+    if (!form.typeId || typeof form.typeId !== 'string' || form.typeId.trim() === '') {
+      newErrors.typeId = 'Category is required';
     }
 
-    if (!form.fileUrl.trim()) {
-      newErrors.fileUrl = 'Link upload is required';
-    } else if (!isValidUrl(form.fileUrl)) {
-      newErrors.fileUrl = 'Please enter a valid URL';
+    if (!form.linkUrl.trim()) {
+      newErrors.linkUrl = 'Link is required';
+    } else if (!isValidUrl(form.linkUrl)) {
+      newErrors.linkUrl = 'Please enter a valid URL';
     }
 
     setErrors(newErrors);
@@ -65,30 +90,31 @@ export function useReportForm() {
   const toPayload = useCallback((id = null) => {
     return {
       id: id || Date.now().toString(),
-      title: form.fileName.trim(),
-      type: form.type,
-      fileUrl: form.fileUrl.trim(),
+      title: form.title.trim(),
+      // Note: type and typeName should be set by caller using categories context
+      fileUrl: form.linkUrl.trim(),
+      imagePreviewUrl: form.imagePreviewUrl,
+      fileName: form.fileName,
       publishedAt: new Date().toISOString()
+      // TODO BACKEND: Add file upload handling here
     };
   }, [form]);
 
-  const reset = useCallback(() => {
-    setForm({
-      fileName: '',
-      type: '',
-      fileUrl: '',
-      fileBlob: null
-    });
+  const resetForm = useCallback(() => {
+    if (form.imagePreviewUrl) {
+      URL.revokeObjectURL(form.imagePreviewUrl);
+    }
+    setForm(EMPTY_FORM);
     setErrors({});
-  }, []);
+  }, [form.imagePreviewUrl]);
 
   return {
     form,
     errors,
-    onChange,
+    setField,
+    setFile,
     validate,
-    loadFrom,
     toPayload,
-    reset
+    resetForm
   };
 }

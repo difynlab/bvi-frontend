@@ -237,7 +237,7 @@ const RichTextEditor = ({
             onChange={(e) => {
               editor?.chain().focus().setColor(e.target.value).run();
               // Update the background color using CSS custom property
-              e.target.style.setProperty('--current-color', e.target.value);
+              e.target.setAttribute('data-current-color', e.target.value);
               e.target.classList.add('rte__color-input--custom-color');
             }}
             aria-label="Text color"
@@ -250,7 +250,7 @@ const RichTextEditor = ({
               // Reset the background color to default
               const colorInput = document.querySelector('.rte__color-input--text');
               if (colorInput) {
-                colorInput.style.removeProperty('--current-color');
+                colorInput.removeAttribute('data-current-color');
                 colorInput.classList.remove('rte__color-input--custom-color');
               }
             }}

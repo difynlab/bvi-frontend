@@ -31,10 +31,10 @@ const MembershipLicenseOfficerForm = ({ values, errors, setOfficer, onSave }) =>
       if (button) {
         const originalText = button.textContent;
         button.textContent = 'Saved!';
-        button.style.backgroundColor = '#28a745';
+        button.classList.add('update-button--saved');
         setTimeout(() => {
           button.textContent = originalText;
-          button.style.backgroundColor = '';
+          button.classList.remove('update-button--saved');
         }, 2000);
       }
     } else {

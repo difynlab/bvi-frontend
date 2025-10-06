@@ -127,11 +127,11 @@ const Membership = () => {
                   </div>
                 </div>
                 <div className="status-actions">
-                  <button type="button" className="btn btn-renew">Renew Membership</button>
-                  <button type="button" className="btn btn-upgrade">Upgrade</button>
+                  <NavLink to="/subscription" className="btn btn-renew">Renew Membership</NavLink>
+                  <NavLink to="/subscription" className="btn btn-upgrade">Upgrade</NavLink>
                 </div>
                 <div className="status-links">
-                  <a href="#" className="subscription-link">Edit Membership Subscription</a>
+                  <NavLink to="/subscription" className="subscription-link">Edit Membership Subscription</NavLink>
                 </div>
               </div>
             </Card>

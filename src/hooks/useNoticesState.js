@@ -8,7 +8,10 @@ import {
   upsertNotice, 
   updateNotice, 
   deleteNotice,
-  getMockNotices
+  getMockNotices,
+  getMockNoticeCategories,
+  setNoticeCategories,
+  setNotices
 } from '../helpers/noticesStorage'
 
 export const useNoticesState = () => {
@@ -116,55 +119,33 @@ export const useNoticesState = () => {
     setNotices(updatedItems)
   }, [])
 
-  // Demo seeding with mock notices that have proper timestamps
-  const seedDemoNotices = useCallback(() => {
-    // Get mock notices with recent timestamps
-    const mockNotices = getMockNotices()
-    
-    // Create a general category if it doesn't exist
-    const generalCategory = {
-      id: 'general',
-      name: 'General',
-      slug: 'general'
-    }
-    
-    // Create new categories array (ensure General exists)
-    const newCategories = [...categories]
-    const existingGeneralCategory = newCategories.find(cat => cat.id === 'general')
-    if (!existingGeneralCategory) {
-      newCategories.push(generalCategory)
-    }
-    
-    // Create new notices groups array
-    const newNoticesGroups = [...notices]
-    
-    // Ensure general category has a group
-    const existingGeneralGroup = newNoticesGroups.find(group => group.categoryId === 'general')
-    if (!existingGeneralGroup) {
-      newNoticesGroups.push({ categoryId: 'general', items: [] })
-    }
-    
-    // Add mock notices to the general group (avoid duplicates)
-    const generalGroup = newNoticesGroups.find(g => g.categoryId === 'general')
-    if (generalGroup) {
-      mockNotices.forEach(mockNotice => {
-        const existingNotice = generalGroup.items.find(notice => notice.id === mockNotice.id)
-        if (!existingNotice) {
-          generalGroup.items.push(mockNotice)
-        }
-      })
-    }
-    
-    // Update state with new arrays
-    setCategories(newCategories)
-    setNotices(newNoticesGroups)
-    
-    // Persist to localStorage immediately
-    writeNotices(newCategories, newNoticesGroups)
-    
-    // Return the general category ID for UI activation
-    return 'general'
-  }, [categories, notices])
+  // Explicit seeding action: overwrite categories and items with mocks
+  const seedFromMocks = useCallback(() => {
+    const mockCategories = getMockNoticeCategories()
+    const mockItemsFlat = getMockNotices()
+
+    // Persist categories
+    setNoticeCategories(mockCategories)
+
+    // Group notices by categoryId for storage shape: [{ categoryId, items: [] }]
+    const grouped = mockCategories.map(cat => ({
+      categoryId: cat.id,
+      items: mockItemsFlat.filter(n => n.categoryId === cat.id)
+    }))
+
+    // Persist items
+    setNotices(grouped)
+
+    // Update state
+    setCategories(mockCategories)
+    setNotices(grouped)
+
+    // Also write with legacy helper to keep compatibility
+    writeNotices(mockCategories, grouped)
+
+    // Return first category id for activation
+    return mockCategories[0]?.id || ''
+  }, [])
 
   return {
     // State
@@ -191,7 +172,7 @@ export const useNoticesState = () => {
     setIsCategoryModalOpen,
     setConfirmModalOpen,
     setCategoryToDelete,
-    seedDemoNotices,
+    seedFromMocks,
     
     // Legacy compatibility
     getGroup

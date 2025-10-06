@@ -392,6 +392,20 @@
   }
 }
 
+// Scoped image styles for notice card image only
+.notices-container {
+  .notice-card {
+    .notice-card-image {
+      display: block;
+      width: 100%;
+      max-height: 250px;
+      border-radius: 8px;
+      margin: $spacing-sm 0;
+      object-fit: cover;
+    }
+  }
+}
+
 .notices-header {
   display: flex;
   justify-content: space-between;
@@ -639,7 +653,6 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 15px;
 }
 
 .notice-title {
@@ -662,6 +675,7 @@
   line-height: 1.5;
   margin: 0 0 20px 0;
   font-size: 0.9rem;
+  width: 75%;
 }
 
 .notice-actions {

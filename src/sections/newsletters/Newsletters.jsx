@@ -6,6 +6,7 @@ import { useNewsletterForm } from '../../hooks/useNewsletterForm'
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import RichTextEditor from '../../components/editor/RichTextEditor'
+import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
 import '../../styles/sections/Newsletters.scss'
 
 const Newsletters = () => {
@@ -21,6 +22,8 @@ const Newsletters = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingNewsletter, setEditingNewsletter] = useState(null)
   const [useFallback, setUseFallback] = useState(false)
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
+  const [newsletterToDelete, setNewsletterToDelete] = useState(null)
 
   const {
     form,
@@ -44,17 +47,17 @@ const Newsletters = () => {
     closeModal()
   })
 
-  useBodyScrollLock(isModalOpen)
+  useBodyScrollLock(isModalOpen || isConfirmDeleteOpen)
 
 
   useEffect(() => {
     const testElement = document.createElement('div')
-    testElement.style.display = '-webkit-box'
-    testElement.style.webkitLineClamp = '2'
-    testElement.style.webkitBoxOrient = 'vertical'
-    testElement.style.overflow = 'hidden'
-
-    const supportsLineClamp = testElement.style.webkitLineClamp === '2'
+    testElement.className = 'lineclamp-test'
+    document.body.appendChild(testElement)
+    const computed = window.getComputedStyle(testElement)
+    const lineClamp = computed.getPropertyValue('-webkit-line-clamp') || computed.webkitLineClamp
+    const supportsLineClamp = lineClamp === '2'
+    document.body.removeChild(testElement)
     setUseFallback(!supportsLineClamp)
   }, [])
 
@@ -104,7 +107,17 @@ const Newsletters = () => {
   }
 
   const handleDelete = (newsletter) => {
-    deleteNewsletter(newsletter.id)
+    if (can(user, 'newsletters:delete')) {
+      setNewsletterToDelete(newsletter)
+      setIsConfirmDeleteOpen(true)
+    }
+  }
+
+  const handleConfirmDelete = () => {
+    if (newsletterToDelete) {
+      deleteNewsletter(newsletterToDelete.id)
+      setNewsletterToDelete(null)
+    }
   }
 
   const handleEditorChange = ({ html, text }) => {
@@ -352,6 +365,18 @@ const Newsletters = () => {
         )}
 
       </div>
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={isConfirmDeleteOpen}
+        onClose={() => {
+          setIsConfirmDeleteOpen(false)
+          setNewsletterToDelete(null)
+        }}
+        onConfirm={handleConfirmDelete}
+        entityLabel="Newsletter"
+        itemName={newsletterToDelete?.fileName}
+      />
     </div>
   )
 }

@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/useAuth';
 import { can } from '../../auth/acl';
 import { useReportsState } from '../../hooks/useReportsState';
 import { useReportForm } from '../../hooks/useReportForm';
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal';
 import '../../styles/sections/Reports.scss';
 
 export default function Reports() {
@@ -35,28 +36,30 @@ export default function Reports() {
     setConfirmModalOpen
   } = useReportsState();
 
-  const reportForm = useReportForm();
+  // Memoize initialReport to prevent recreation on every render
+  const initialReport = useMemo(() => editingReport || null, [editingReport?.id]);
+
+  const reportForm = useReportForm(initialReport, isReportModalOpen, editingReport ? 'edit' : 'add');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [categoryError, setCategoryError] = useState('');
+  const [isReportDeleteConfirmOpen, setIsReportDeleteConfirmOpen] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState(null);
 
   const categoryModalBackdropClose = useModalBackdropClose(() => setIsCategoryModalOpen(false));
-  const reportModalBackdropClose = useModalBackdropClose(() => closeReportModal());
+  const reportModalBackdropClose = useModalBackdropClose(() => closeReportModalWithReset());
   const confirmModalBackdropClose = useModalBackdropClose(() => setConfirmModalOpen(false));
 
-  useBodyScrollLock(isCategoryModalOpen || isReportModalOpen || confirmModalOpen);
-
-  useEffect(() => {
-    if (isReportModalOpen && editingReport) {
-      reportForm.loadFrom(editingReport);
-    } else if (isReportModalOpen && !editingReport) {
-      reportForm.reset();
-    }
-  }, [isReportModalOpen, editingReport, reportForm]);
+  useBodyScrollLock(isCategoryModalOpen || isReportModalOpen || confirmModalOpen || isReportDeleteConfirmOpen);
 
   const closeCategoryModal = () => {
     setNewCategoryName('');
     setCategoryError('');
     setIsCategoryModalOpen(false);
+  };
+
+  const closeReportModalWithReset = () => {
+    reportForm.resetForm();
+    closeReportModal();
   };
 
   const handleAddCategorySubmit = () => {
@@ -76,15 +79,52 @@ export default function Reports() {
   const handleReportSubmit = (e) => {
     e.preventDefault();
     if (reportForm.validate()) {
-      const payload = reportForm.toPayload(editingReport?.id);
+      // Enforce valid existing category
+      const trimmedCats = categories
+        .map(name => (typeof name === 'string' ? name.trim() : ''))
+        .filter(Boolean);
+
+      // Resolve legacy name to id by using the name string itself as id in storage
+      // Since categories are stored as string names, we use the name as both id and name
+      const currentId = reportForm.form.typeId && trimmedCats.includes(reportForm.form.typeId)
+        ? reportForm.form.typeId
+        : '';
+
+      if (!currentId) {
+        // If form had legacy typeName equal to active name, try fallback
+        const byName = trimmedCats.find(n => n.toLowerCase() === (reportForm.form.typeId || '').trim().toLowerCase());
+        if (!byName) {
+          // show error and stop
+          reportForm.setField('typeId', '');
+          return;
+        }
+      }
+
+      const catName = reportForm.form.typeId;
+
+      const payload = {
+        ...reportForm.toPayload(editingReport?.id),
+        typeId: reportForm.form.typeId,
+        typeName: catName
+      };
       createOrUpdateReport(payload);
     }
   };
 
-  const handleSeedReports = () => {
-    const firstCategory = seedDemoReports();
-    setActiveCategory(firstCategory);
-  };
+  const handleDeleteReport = (reportId) => {
+    const report = visibleItems.find(r => r.id === reportId)
+    if (report && can(user, 'reports:delete')) {
+      setReportToDelete(report)
+      setIsReportDeleteConfirmOpen(true)
+    }
+  }
+
+  const handleConfirmDeleteReport = () => {
+    if (reportToDelete) {
+      onDeleteReport(reportToDelete.id)
+      setReportToDelete(null)
+    }
+  }
 
   if (!isInitialized) {
     return (
@@ -194,7 +234,7 @@ export default function Reports() {
                   <button type="button" className="btn-download" onClick={() => downloadReport(r)} aria-label={`Download ${r.title}`}>
                     Download PDF
                   </button>
-                  <button type="button" className="btn-delete" onClick={() => onDeleteReport(r.id)} aria-label={`Delete ${r.title}`}>
+                  <button type="button" className="btn-delete" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.title}`}>
                     Delete
                   </button>
                 </div>
@@ -285,7 +325,7 @@ export default function Reports() {
               <p>Please upload the reports you'd like to store or manage in your account</p>
               <button
                 className="close-btn"
-                onClick={closeReportModal}
+                onClick={closeReportModalWithReset}
               >
                 <i className="bi bi-x-lg"></i>
               </button>
@@ -293,53 +333,59 @@ export default function Reports() {
 
             <form onSubmit={handleReportSubmit}>
               <div className="form-group">
-                <label htmlFor="fileName">File Name<span className="req-star" aria-hidden="true">*</span></label>
+                <label htmlFor="title">Title<span className="req-star" aria-hidden="true">*</span></label>
                 <input
                   type="text"
-                  id="fileName"
-                  name="fileName"
-                  value={reportForm.form.fileName}
-                  onChange={(e) => reportForm.onChange('fileName', e.target.value)}
+                  id="title"
+                  name="title"
+                  value={reportForm.form.title}
+                  onChange={(e) => reportForm.setField('title', e.target.value)}
                   placeholder="Please mention how do you want to save the document name"
                   required
                 />
-                {reportForm.errors.fileName && (
-                  <div className="error-message">{reportForm.errors.fileName}</div>
+                {reportForm.errors.title && (
+                  <div className="error-message">{reportForm.errors.title}</div>
                 )}
               </div>
 
               <div className="form-group">
-                <label htmlFor="type">Type<span className="req-star" aria-hidden="true">*</span></label>
+                <label htmlFor="typeId">Report Type<span className="req-star" aria-hidden="true">*</span></label>
                 <select
-                  id="type"
-                  name="type"
-                  value={reportForm.form.type}
-                  onChange={(e) => reportForm.onChange('type', e.target.value)}
+                  id="typeId"
+                  name="typeId"
+                  value={reportForm.form.typeId || ''}
+                  onChange={(e) => reportForm.setField('typeId', e.target.value)}
                   required
                 >
-                  <option value="">Select a type</option>
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
+                  <option value="" disabled>Select type</option>
+                  {categories
+                    .map(name => (typeof name === 'string' ? name.trim() : ''))
+                    .filter(Boolean)
+                    .map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
                 </select>
-                {reportForm.errors.type && (
-                  <div className="error-message">{reportForm.errors.type}</div>
+                {reportForm.errors.typeId && (
+                  <div className="error-message">{reportForm.errors.typeId}</div>
+                )}
+                {reportForm.form.typeId && !categories.includes(reportForm.form.typeId) && (
+                  <p className="report-type-helper">Previously selected category was removed. Please choose another.</p>
                 )}
               </div>
 
               <div className="form-group">
-                <label htmlFor="fileUrl">Link Upload<span className="req-star" aria-hidden="true">*</span></label>
+                <label htmlFor="linkUrl">Link<span className="req-star" aria-hidden="true">*</span></label>
                 <input
                   type="url"
-                  id="fileUrl"
-                  name="fileUrl"
-                  value={reportForm.form.fileUrl}
-                  onChange={(e) => reportForm.onChange('fileUrl', e.target.value)}
+                  id="linkUrl"
+                  name="linkUrl"
+                  value={reportForm.form.linkUrl}
+                  onChange={(e) => reportForm.setField('linkUrl', e.target.value)}
                   placeholder="https://example.com/report.pdf"
                   required
                 />
-                {reportForm.errors.fileUrl && (
-                  <div className="error-message">{reportForm.errors.fileUrl}</div>
+                {reportForm.errors.linkUrl && (
+                  <div className="error-message">{reportForm.errors.linkUrl}</div>
                 )}
               </div>
 
@@ -350,16 +396,27 @@ export default function Reports() {
                     type="file"
                     id="file"
                     name="file"
-                    accept="image/*"
-                    onChange={(e) => reportForm.onChange('fileBlob', e.target.files?.[0])}
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={(e) => reportForm.setFile(e.target.files?.[0])}
                     className="hidden-file-input"
                   />
                   <label htmlFor="file" className="file-input-label">
                     Choose file
                   </label>
                   <p className="file-status">
-                    {reportForm.form.fileBlob?.name || 'No file chosen'}
+                    {reportForm.form.fileName || 'No file chosen'}
                   </p>
+                  {reportForm.form.imagePreviewUrl && (
+                    <div className="image-preview">
+                      <img 
+                        src={reportForm.form.imagePreviewUrl} 
+                        alt="Preview" 
+                        onError={(e) => {
+                          e.target.classList.add('image-preview-hidden');
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -411,6 +468,18 @@ export default function Reports() {
           </div>
         </div>
       )}
+
+      {/* Confirm Delete Report Modal */}
+      <ConfirmDeleteModal
+        isOpen={isReportDeleteConfirmOpen}
+        onClose={() => {
+          setIsReportDeleteConfirmOpen(false)
+          setReportToDelete(null)
+        }}
+        onConfirm={handleConfirmDeleteReport}
+        entityLabel="Report"
+        itemName={reportToDelete?.title}
+      />
     </div>
   );
 }

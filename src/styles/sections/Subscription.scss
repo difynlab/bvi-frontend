@@ -825,6 +825,10 @@
         &:hover {
           background: color.adjust($vivid_red, $lightness: -10%);
         }
+
+        &--saved {
+          background: #28a745 !important;
+        }
       }
     }
 
@@ -845,4 +849,9 @@
       display: block;
     }
   }
+}
+
+/* Utility: hide native file input used by dropzones (scoped to subscription) */
+.subscription-container .hidden-file-input {
+  display: none;
 }

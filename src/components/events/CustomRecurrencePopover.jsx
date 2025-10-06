@@ -32,7 +32,7 @@ export const CustomRecurrencePopover = ({
     kind: 'CUSTOM',
     interval: 1,
     unit: 'week',
-    daysOfWeek: ['MO','TU','WE','TH','FR','SA','SU'],
+    daysOfWeek: [],
     ends: { mode: 'NEVER', date: '', count: null }
   })
 
@@ -196,10 +196,25 @@ export const CustomRecurrencePopover = ({
           </div>
           <select
             value={recurrence.unit}
-            onChange={(e) => setRecurrence(prev => ({ 
-              ...prev, 
-              unit: e.target.value 
-            }))}
+            onChange={(e) => {
+              const newUnit = e.target.value
+              setRecurrence(prev => {
+                // If switching to week and no existing custom weekly recurrence, clear days
+                if (newUnit === 'week' && !initialRecurrence?.daysOfWeek?.length) {
+                  return { 
+                    ...prev, 
+                    unit: newUnit,
+                    daysOfWeek: []
+                  }
+                }
+                // Otherwise keep existing days or clear if switching away from week
+                return { 
+                  ...prev, 
+                  unit: newUnit,
+                  daysOfWeek: newUnit === 'week' ? prev.daysOfWeek : []
+                }
+              })
+            }}
           >
             {UNIT_OPTIONS.map(option => (
               <option key={option.value} value={option.value}>

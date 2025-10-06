@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { readNewsletters, setNewsletters, getMockNewsletters, upsertNewsletter, deleteNewsletter } from '../helpers/newslettersStorage'
+import { readNewsletters, setNewsletters as persistNewsletters, getMockNewsletters, upsertNewsletter, deleteNewsletter } from '../helpers/newslettersStorage'
 
 // Generate Newsletter seeds with recent dates (≤7 days old)
 const generateNewsletterSeeds = () => {
@@ -111,7 +111,7 @@ export const useNewslettersState = () => {
     setNewsletters(mockNewsletters)
     
     // Persist to storage
-    setNewsletters(mockNewsletters)
+    persistNewsletters(mockNewsletters)
   }, [])
 
   return {

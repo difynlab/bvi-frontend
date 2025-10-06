@@ -41,7 +41,7 @@ const fromItem = (item) => {
     kind: 'NONE',
     interval: 1,
     unit: 'week',
-    daysOfWeek: ['MO','TU','WE','TH','FR','SA','SU'],
+    daysOfWeek: [],
     ends: { mode: 'NEVER', date: '', count: null }
   }
   
@@ -124,7 +124,7 @@ export const useEventForm = () => {
       kind: 'NONE',
       interval: 1,
       unit: 'week',
-      daysOfWeek: ['MO','TU','WE','TH','FR','SA','SU'],
+      daysOfWeek: [],
       ends: { mode: 'NEVER', date: '', count: null }
     }
   }

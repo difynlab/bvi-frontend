@@ -3,12 +3,15 @@ import { useLegislationState } from '../../hooks/useLegislationState';
 import { useAuth } from '../../context/useAuth';
 import { can } from '../../auth/acl';
 import LegislationEditModal from '../../components/modals/LegislationEditModal';
+import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal';
 import '../../styles/sections/Legislation.scss';
 
 const Legislation = () => {
   const { legislation, attachments, addAttachment, removeAttachment } = useLegislationState();
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [attachmentToDelete, setAttachmentToDelete] = useState(null);
 
   const handleEditClick = () => {
     if (can(user, 'legislation:update')) {
@@ -33,9 +36,20 @@ const Legislation = () => {
 
   const handleDeleteAttachment = (attachmentId) => {
     if (can(user, 'legislation:delete')) {
-      removeAttachment(attachmentId);
+      const attachment = attachments.find(att => att.id === attachmentId)
+      if (attachment) {
+        setAttachmentToDelete(attachment)
+        setIsConfirmDeleteOpen(true)
+      }
     }
-  };
+  }
+
+  const handleConfirmDeleteAttachment = () => {
+    if (attachmentToDelete) {
+      removeAttachment(attachmentToDelete.id)
+      setAttachmentToDelete(null)
+    }
+  }
 
   if (!legislation) {
     return (
@@ -176,6 +190,18 @@ const Legislation = () => {
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSave={handleSaveAttachment}
+      />
+
+      {/* Confirm Delete Attachment Modal */}
+      <ConfirmDeleteModal
+        isOpen={isConfirmDeleteOpen}
+        onClose={() => {
+          setIsConfirmDeleteOpen(false)
+          setAttachmentToDelete(null)
+        }}
+        onConfirm={handleConfirmDeleteAttachment}
+        entityLabel="Attachment"
+        itemName={attachmentToDelete?.title}
       />
     </div>
   );
