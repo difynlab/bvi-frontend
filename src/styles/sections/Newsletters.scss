@@ -251,6 +251,16 @@
   }
 }
 
+// Dropzone empty-state background (scoped)
+.newsletters-container, .newsletters-modal {
+  .dropzone-surface[data-has-file="false"] {
+    background-image: url('/dropzone.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+  }
+}
+
 .newsletters-header {
   display: flex;
   justify-content: space-between;

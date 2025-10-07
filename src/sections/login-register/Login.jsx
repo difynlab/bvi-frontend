@@ -113,11 +113,13 @@ export const Login = () => {
     handleFormSubmit()
   }
 
-  const handleGoogleSuccess = async () => {
+  const handleGoogleSuccess = async (credentialResponse) => {
+    const credential = credentialResponse?.credential || ''
+    if (!credential) return handleGoogleError?.()
     console.log('Google login success')
     setIsSubmitting(true)
     try {
-      const success = await loginWithGoogle()
+      const success = await loginWithGoogle(credential)
       if (success) {
         navigate('/dashboard')
       }

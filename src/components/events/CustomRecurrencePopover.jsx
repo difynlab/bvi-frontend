@@ -16,9 +16,38 @@ const UNIT_OPTIONS = [
   { label: 'years', value: 'year' }
 ]
 
+const getTomorrowDate = () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+const getDateLabel = (dateValue) => {
+  if (!dateValue) {
+    return getTomorrowDate();
+  }
+  // Parse the date string as local date to avoid timezone issues
+  const [year, month, day] = dateValue.split('-').map(Number);
+  const localDate = new Date(year, month - 1, day);
+  return localDate.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+const getOccurrencesLabel = (count) => {
+  const value = count || 1;
+  return `${value} Occurrences`;
+}
+
 const ENDS_MODES = [
   { label: 'Never', value: 'NEVER' },
-  { label: 'Specific date:', value: 'ON_DATE' },
+  { label: 'ON_DATE', value: 'ON_DATE' }, // This will be dynamic
   { label: 'Occurrences:', value: 'AFTER_OCCURRENCES' }
 ]
 
@@ -52,9 +81,21 @@ export const CustomRecurrencePopover = ({
       }
     }
 
+    const handleKeyDown = (event) => {
+      // Prevent Enter key from propagating to parent forms when popover is open
+      if (event.key === 'Enter') {
+        event.stopPropagation()
+        event.preventDefault()
+      }
+    }
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleKeyDown)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+        document.removeEventListener('keydown', handleKeyDown)
+      }
     }
   }, [isOpen, onClose])
 
@@ -253,7 +294,14 @@ export const CustomRecurrencePopover = ({
       <fieldset className="ends">
         <legend>Ends:</legend>
         {ENDS_MODES.map(mode => (
-          <div key={mode.value} className="ends-option">
+          <div 
+            key={mode.value} 
+            className="ends-option"
+            onClick={() => setRecurrence(prev => ({
+              ...prev,
+              ends: { ...prev.ends, mode: mode.value }
+            }))}
+          >
             <input
               type="radio"
               id={`ends-${mode.value}`}
@@ -265,7 +313,11 @@ export const CustomRecurrencePopover = ({
                 ends: { ...prev.ends, mode: e.target.value }
               }))}
             />
-            <label htmlFor={`ends-${mode.value}`}>{mode.label}</label>
+            <label htmlFor={`ends-${mode.value}`}>
+              {mode.value === 'ON_DATE' ? getDateLabel(recurrence.ends.date) : 
+               mode.value === 'AFTER_OCCURRENCES' ? getOccurrencesLabel(recurrence.ends.count) : 
+               mode.label}
+            </label>
             
             {mode.value === 'ON_DATE' && (
               <input
@@ -283,17 +335,6 @@ export const CustomRecurrencePopover = ({
             
             {mode.value === 'AFTER_OCCURRENCES' && (
               <div className="occurrences-controls">
-                <input
-                  type="number"
-                  min="1"
-                  value={recurrence.ends.count || ''}
-                  onChange={(e) => setRecurrence(prev => ({
-                    ...prev,
-                    ends: { ...prev.ends, count: parseInt(e.target.value) || null }
-                  }))}
-                  disabled={recurrence.ends.mode !== 'AFTER_OCCURRENCES'}
-                  aria-invalid={errors.endsCount ? 'true' : 'false'}
-                />
                 <div className="stepper">
                   <button
                     type="button"

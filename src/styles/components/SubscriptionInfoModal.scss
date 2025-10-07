@@ -1,4 +1,4 @@
-// Subscription Info Modal Styles
+
 .subscription-info-modal-overlay {
   position: fixed;
   top: 0;
@@ -19,10 +19,17 @@
   border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   width: calc(100dvw - 350px);
-  min-height: 90vh;
-  overflow: hidden;
+  height: 90vh;
+  overflow: auto;
   position: relative;
   padding: 40px;
+  
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .subscription-info-modal__close {
@@ -108,12 +115,10 @@
 .subscription-info-modal__image {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   border-radius: 8px;
-  max-height: 60vh;
-  object-fit: contain;
+  object-fit: cover;
   background-color: #f5f5f5;
-  border: 1px solid #e0e0e0;
   min-height: 200px;
 }
 

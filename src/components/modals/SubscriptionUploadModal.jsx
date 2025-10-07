@@ -118,7 +118,8 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm }) => {
             </div>
           ) : (
             <div
-              className={`subscription-upload-modal__dropzone ${dragActive ? 'active' : ''}`}
+              className={`subscription-upload-modal__dropzone dropzone-surface ${dragActive ? 'active' : ''}`}
+              data-has-file={Boolean(previewDataUrl)}
               onDragEnter={handleDragIn}
               onDragLeave={handleDragOut}
               onDragOver={handleDrag}

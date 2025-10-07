@@ -699,6 +699,16 @@
   text-decoration: none;
 }
 
+// Dropzone empty-state background (scoped)
+.subscription-container, .subscription-upload-modal {
+  .dropzone-surface[data-has-file="false"] {
+    background-image: none;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+  }
+}
+
 .subscription-edit-btn {
   background: #262626;
   color: #fff;

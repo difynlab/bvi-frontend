@@ -156,7 +156,7 @@ export default function Reports() {
 
         <button
           className="reports-seed-btn"
-          onClick={handleSeedReports}
+          onClick={seedDemoReports}
         >
           Seed Reports
         </button>

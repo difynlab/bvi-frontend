@@ -10,17 +10,17 @@ const MAP = {
   eligibility: {
     title: 'Membership Eligibility',
     subtitle: 'Eligibility to membership of BVI Finance shall be limited to the companies, firms, entities, bodies and associations',
-    img: '/modal-info.png'
+    img: '/images/membership-elegibility.png'
   },
   benefits: {
     title: 'Membership Benefits',
     subtitle: 'BVI Finance provides three membership benefit packages tailored to the specific needs of its various member categories.',
-    img: '/modal-info.png'
+    img: '/images/membership-benefits.png'
   },
   payment: {
     title: 'Payment Details',
     subtitle: 'View essential payment information, including account name, and required proof of payment to be uploaded when submitting payments.',
-    img: '/modal-info.png'
+    img: '/images/payment-details.png'
   }
 };
 

@@ -108,6 +108,8 @@ const Dashboard = () => {
     .sort((a, b) => b.publishedMs - a.publishedMs) // Sort descending by publishedMs
     .slice(0, 2) // Take first 2 items
 
+  const hasNotices = latestNotices.length > 0
+
   const latestNewsletters = newsletters.slice(0, 2)
 
   return (
@@ -117,6 +119,13 @@ const Dashboard = () => {
           <h1>Welcome back, {displayName}!</h1>
           <p>Here's what's happening with your membership.</p>
         </div>
+        <div className="dashboard-header-decor" aria-hidden="true">
+          <span className="tri tri-1" />
+          <span className="tri tri-2" />
+          <span className="tri tri-3" />
+          <span className="tri tri-4" />
+        </div>
+        <img src="/images/bvi_speakers.png" alt="Dashboard Header" />
       </div>
 
       <div className="dashboard-cards">
@@ -146,9 +155,9 @@ const Dashboard = () => {
 
         <div className="dashboard-card notices-card">
           <h3 className="card-title">Latest Notices<span className="card-notices-icon"><i className="bi bi-calendar"></i></span></h3>
-          <div className="list">
-            {latestNotices.length > 0 ? (
-              latestNotices.map((notice, index) => (
+          {hasNotices ? (
+            <div className="list">
+              {latestNotices.map((notice, index) => (
                 <div key={notice.id} className="list-item">
                   <div className="item-meta">
                     <span className={index === 0 ? 'item-meta-urgent' : 'item-meta-new'}>{index === 0 ? 'Urgent' : 'New'}</span>
@@ -157,11 +166,11 @@ const Dashboard = () => {
                   <div className="item-title">{notice.fileName}</div>
                   <div className="item-description">{notice.description}</div>
                 </div>
-              ))
-            ) : (
-              <div className="list-item">No items yet</div>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="notices-empty">No notices yet</div>
+          )}
           <div className="card-footer">
             <NavLink to="/notices">View All Notices</NavLink>
           </div>
@@ -183,7 +192,7 @@ const Dashboard = () => {
             )}
           </div>
           <div className="card-footer">
-            <NavLink to="/newsletter">View All News Letters</NavLink>
+            <NavLink to="/newsletters">View All News Letters</NavLink>
           </div>
         </div>
 

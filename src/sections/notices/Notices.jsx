@@ -467,7 +467,8 @@ export const Notices = () => {
                 <div className="form-group">
                   <label htmlFor="file">Upload File<span className="req-star" aria-hidden="true">*</span></label>
                   <div
-                    className="file-upload-area"
+                    className="file-upload-area dropzone-surface"
+                    data-has-file={Boolean(noticeForm.form.imagePreviewUrl)}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}

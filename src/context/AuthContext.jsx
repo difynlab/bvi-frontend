@@ -129,36 +129,50 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const loginWithGoogle = async () => {
+  // helper: decode JWT payload without extra deps
+  const parseJwt = (jwt) => {
+    try {
+      const base64 = jwt.split('.')[1]?.replace(/-/g, '+').replace(/_/g, '/')
+      const json = decodeURIComponent(atob(base64).split('').map(c =>
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      ).join(''))
+      return JSON.parse(json)
+    } catch { return null }
+  }
+
+  const loginWithGoogle = async (credential) => {
     setLoading(true)
     setError(null)
 
     try {
-      // TODO BACKEND: POST /api/auth/google { credential }
-      // MOCK: email "googleuser@user.com" → resolve role; set session
-      const mockEmail = 'googleuser@user.com'
-      const role = deriveRoleFromEmail(mockEmail)
+      // TODO BACKEND: POST /api/auth/google { credential } and verify on server
+      const payload = parseJwt(credential)
+      if (!payload?.email) throw new Error('Invalid Google token')
+
+      const role = deriveRoleFromEmail(payload.email)
       const permissions = getPermissions(role)
-      
+
       const sessionUser = {
-        id: Date.now().toString(),
-        firstName: 'Google',
-        lastName: 'User',
-        email: mockEmail,
+        id: payload.sub || Date.now().toString(),
+        firstName: payload.given_name || 'Google',
+        lastName: payload.family_name || 'User',
+        email: payload.email,
         phoneNumber: '',
         role,
-        permissions
+        permissions,
+        oauthProvider: 'google'
+        // do NOT persist raw credential in production
       }
 
-      saveSession(sessionUser)
+      saveSession(sessionUser)     // localStorage mock // TODO BACKEND
       setUser(sessionUser)
       setIsAuthenticated(true)
       
-      console.log('Mock Google login successful:', sessionUser)
+      console.log('Google login successful:', sessionUser)
       return true
     } catch (err) {
+      console.error('Google login failed', err)
       setError('Google login failed')
-      console.error('Google login error:', err)
       return false
     } finally {
       setLoading(false)

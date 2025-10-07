@@ -135,6 +135,16 @@ select.settings-input {
   margin-top: 24px; 
 }
 
+// Dropzone empty-state background (scoped)
+.settings-container {
+  .dropzone-surface[data-has-file="false"] {
+    background-image: url('/dropzone.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+  }
+}
+
 .settings-save-btn { 
   background: #262626; 
   color: #fff; 

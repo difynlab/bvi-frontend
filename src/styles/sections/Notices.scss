@@ -392,6 +392,16 @@
   }
 }
 
+// Dropzone empty-state background (scoped)
+.notices-container, .notices-modal {
+  .dropzone-surface[data-has-file="false"] {
+    background-image: url('/dropzone.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+  }
+}
+
 // Scoped image styles for notice card image only
 .notices-container {
   .notice-card {

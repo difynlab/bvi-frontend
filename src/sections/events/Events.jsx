@@ -640,7 +640,8 @@ export const Events = () => {
                 <div className="form-group">
                   <label>File Upload<span className="req-star" aria-hidden="true">*</span></label>
                   <div
-                    className={`dropzone ${isDragOver ? 'drag-over' : ''}`}
+                    className={`dropzone dropzone-surface ${isDragOver ? 'drag-over' : ''}`}
+                    data-has-file={Boolean(eventForm.form.imagePreviewUrl)}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}

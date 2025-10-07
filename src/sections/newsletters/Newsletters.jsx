@@ -326,7 +326,8 @@ const Newsletters = () => {
                 <div className="form-group">
                   <label htmlFor="file">Upload File<span className="req-star" aria-hidden="true">*</span></label>
                   <div
-                    className="file-upload-area"
+                    className="file-upload-area dropzone-surface"
+                    data-has-file={Boolean(form.imagePreviewUrl)}
                     onDragOver={handleFileDragOver}
                     onDragLeave={(e) => e.preventDefault()}
                     onDrop={handleFileDrop}

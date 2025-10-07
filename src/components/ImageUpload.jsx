@@ -79,7 +79,8 @@ export default function ImageUpload({
       </div>
 
       <div 
-        className={`image-upload-dropzone ${isDragOver ? 'image-upload-dropzone--dragover' : ''}`}
+        className={`image-upload-dropzone dropzone-surface ${isDragOver ? 'image-upload-dropzone--dragover' : ''}`}
+        data-has-file={Boolean(preview)}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}

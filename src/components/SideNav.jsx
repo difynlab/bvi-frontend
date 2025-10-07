@@ -36,7 +36,7 @@ const SideNav = () => {
     <nav className="side-nav">
       <div className="nav-header">
         <div className="logo-section">
-          <img src="/logo.png" alt="BVI Finance Logo"></img>
+          <img src="/logo-sidenav.png" alt="BVI Finance Logo"></img>
         </div>
         <div className="notification-icon">
           <i className="bi bi-bell"></i>

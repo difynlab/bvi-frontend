@@ -169,7 +169,8 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
         <label id="membership-signatureFile-label">Signature <span className="req-star">*</span></label>
         <div
           id="membership-signatureFile"
-          className={`dropzone ${dragActive ? 'active' : ''}`}
+          className={`dropzone dropzone-surface ${dragActive ? 'active' : ''}`}
+          data-has-file={Boolean(membershipValues.signatureFile)}
           onDragEnter={handleDragIn}
           onDragLeave={handleDragOut}
           onDragOver={handleDrag}
