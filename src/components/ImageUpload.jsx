@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { fileToCompressedDataUrl } from '../utils/imageCompression';
 import '../styles/components/ImageUpload.scss';
 
 export default function ImageUpload({ 
@@ -12,10 +13,28 @@ export default function ImageUpload({
   const [fileName, setFileName] = useState('');
   const fileInputRef = useRef(null);
 
-  const handleFile = useCallback((file) => {
+  const handleFile = useCallback(async (file) => {
     if (file && file.type.startsWith('image/')) {
       setFileName(file.name);
-      onFileSelect(file);
+      
+      try {
+        // Compress the image automatically
+        const compressedDataUrl = await fileToCompressedDataUrl(file);
+        
+        // Create a blob from the compressed data URL
+        const response = await fetch(compressedDataUrl);
+        const blob = await response.blob();
+        const compressedFile = new File([blob], file.name, {
+          type: 'image/jpeg',
+          lastModified: Date.now()
+        });
+        
+        onFileSelect(compressedFile);
+      } catch (error) {
+        console.error('Error compressing image:', error);
+        // Fallback to original file if compression fails
+        onFileSelect(file);
+      }
     }
   }, [onFileSelect]);
 
@@ -72,15 +91,13 @@ export default function ImageUpload({
           >
             Choose File
           </button>
-          <div className="image-upload-status">
-            {fileName || 'No File Chosen'}
-          </div>
         </div>
       </div>
 
       <div 
         className={`image-upload-dropzone dropzone-surface ${isDragOver ? 'image-upload-dropzone--dragover' : ''}`}
         data-has-file={Boolean(preview)}
+        title={fileName || undefined}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -109,6 +126,12 @@ export default function ImageUpload({
           </div>
         )}
       </div>
+      <div 
+            className="image-upload-status"
+            title={fileName || undefined}
+          >
+            {fileName || 'No File Chosen'}
+          </div>
 
       <input
         ref={fileInputRef}

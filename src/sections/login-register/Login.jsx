@@ -155,8 +155,6 @@ export const Login = () => {
             Log in with your data that you entered during your registration
           </p>
           
-          
-
           <form onSubmit={handleSubmit} noValidate className="auth-form">
             <div className="field">
               <label htmlFor="username">User Name</label>
@@ -167,6 +165,7 @@ export const Login = () => {
                 placeholder="john@gmail.com"
                 value={email}
                 onChange={handleEmailChange}
+                className="auth-input"
               />
               {emailError && <div className="form-error"><span className="error">{emailError}</span></div>}
             </div>
@@ -183,6 +182,7 @@ export const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   aria-invalid={Boolean(passwordError)}
                   aria-describedby={passwordError ? 'password-errors' : undefined}
+                  className="auth-input"
                 />
                 <button
                   type="button"
@@ -219,14 +219,13 @@ export const Login = () => {
               <button type="submit" className="auth-footer-cta" disabled={isSubmitting}>
                 {isSubmitting ? 'Logging in...' : 'Login Now'}
               </button>
-              <div className="google-login-container">
+              <div className="auth-google google-login-container">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
                   theme="outline"
                   size="large"
                   text="continue_with"
-                  width="100%"
                 />
               </div>
               <p className='auth-footer-already'>

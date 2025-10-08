@@ -117,6 +117,8 @@ export function ensureUserDefaults(u = {}) {
     countryCode: u.countryCode ?? '+54',
     phoneNumber: u.phoneNumber ?? '',
     profilePicture: u.profilePicture ?? '',
+    profilePictureUrl: u.profilePictureUrl ?? '',
+    profilePictureSync: u.profilePictureSync ?? '',
     dateFormat: u.dateFormat || 'MM/DD/YYYY',
     timeZone: u.timeZone || 'EST',
     country: u.country || 'Argentina',

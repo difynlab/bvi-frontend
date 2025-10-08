@@ -70,16 +70,19 @@ export function useSettingsForm() {
   const onSelectFile = useCallback((file) => {
     setSelectedFile(file);
     if (!file) {
-      setProfilePreview(baseUser.profilePicture || '');
+      // When clearing, set to empty string to show default placeholder
+      setProfilePreview('');
+      setDirty(true);
       return;
     }
     const r = new FileReader();
     r.onload = () => { 
-      setProfilePreview(String(r.result || '')); 
+      const imageDataUrl = String(r.result || '');
+      setProfilePreview(imageDataUrl); 
       setDirty(true); 
     };
     r.readAsDataURL(file);
-  }, [baseUser.profilePicture]);
+  }, []);
 
   const resetAfterSave = useCallback((updatedProfile) => {
     setForm(updatedProfile);
@@ -135,6 +138,7 @@ export function useSettingsForm() {
     const imagePreviewUrl = profilePreview || ''
     const imageFileName = selectedFile?.name || ''
     if (imagePreviewUrl !== baseUser.profilePicture) {
+      // Save the actual image data for display, but handle storage carefully
       partial.profilePicture = imagePreviewUrl
       partial.profilePictureFileName = imageFileName
     }
@@ -147,7 +151,7 @@ export function useSettingsForm() {
     // Also save to profile storage for additional settings
     const updatedProfile = {
       ...form,
-      profilePicture: profilePreview || form.profilePicture || baseUser.profilePicture,
+      profilePicture: profilePreview || '',
     };
     setProfile(currentUser, updatedProfile);
     

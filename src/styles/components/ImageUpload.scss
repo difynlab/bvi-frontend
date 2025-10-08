@@ -46,13 +46,17 @@
 
 .image-upload-status {
   background: #f9fafb;
-  border: 1px solid #e5e7eb;
   border-radius: 6px;
   padding: 8px 16px;
   font-size: 14px;
   color: #6b7280;
   min-width: 120px;
+  max-width: 200px;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: help;
 }
 
 .image-upload-dropzone {
@@ -76,6 +80,10 @@
   border-color: #3b82f6;
   background: #eff6ff;
   border-style: solid;
+}
+
+.image-upload-dropzone[data-has-file="true"] {
+  cursor: help;
 }
 
 .image-upload-placeholder {

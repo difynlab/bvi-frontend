@@ -3,6 +3,7 @@
 @use 'layout/MainLayout.scss';
 
 @use 'auth/RouteGuard.scss';
+@use 'auth/AuthResponsive.scss';
 
 @use 'pages/ResetPassword.scss';
 @use 'pages/Forbidden.scss';

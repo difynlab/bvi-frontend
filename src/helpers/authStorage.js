@@ -88,6 +88,28 @@ export function clearSession() {
 }
 
 /**
+ * Clear all auth-related data from localStorage
+ * @returns {boolean} True if successful
+ */
+export function clearAllAuthData() {
+  try {
+    localStorage.removeItem(SESSION_KEY)
+    localStorage.removeItem(USERS_KEY)
+    // Clear any profile data
+    const keys = Object.keys(localStorage)
+    keys.forEach(key => {
+      if (key.startsWith('bvi.profile.')) {
+        localStorage.removeItem(key)
+      }
+    })
+    return true
+  } catch (error) {
+    console.error('Error clearing all auth data:', error)
+    return false
+  }
+}
+
+/**
  * Safely reads current user data from localStorage (legacy compatibility)
  * Tries common keys and shapes used in the app's localStorage
  * Returns null-safe fallbacks without throwing errors

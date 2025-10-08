@@ -102,6 +102,7 @@ export const ForgetPassword = () => {
                 value={email}
                 onChange={handleEmailChange}
                 disabled={isLoading}
+                className="auth-input"
               />
               {error && <span className="error-message">{error}</span>}
             </div>

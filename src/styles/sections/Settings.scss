@@ -23,8 +23,69 @@
   font-size: 16px;
 }
 
+.image-inputs-row {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  .settings-card-title {
+    margin-bottom: 17px;
+  }
+  .settings-preferences {
+    width: 80%;
+    height: 100%;
+  }
+}
 .settings-field { 
   margin-bottom: 16px; 
+  .image-upload {
+    width: 350px;
+    &-header {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+    &-buttons {
+      gap: 10px;
+    }
+    &-label {
+      width: 100%;
+      font-size: 16px;
+      text-wrap: nowrap;
+    }
+    &-choose-btn {
+      display: none;
+    }
+
+    &-status {
+      max-width: 350px;
+      overflow: hidden;
+      font-size: 12px;
+      padding: 5px 10px;
+      text-wrap: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    
+    &-placeholder {
+      width: 100%;
+    }
+    &-dropzone {
+      width: 100%;
+    }
+    &-preview {
+      padding: 20px 0;
+      &-img {
+        max-width: 300px;
+        max-height: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
 }
 
 .settings-label { 

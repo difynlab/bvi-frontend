@@ -167,6 +167,7 @@ export const Register = () => {
                   placeholder="John"
                   value={formValues.firstName}
                   onChange={handleChange}
+                  className="auth-input"
                 />
                 {formErrors.firstName && <div className="register-error"><span className="error">{formErrors.firstName}</span></div>}
               </div>
@@ -179,6 +180,7 @@ export const Register = () => {
                   placeholder="Peries"
                   value={formValues.lastName}
                   onChange={handleChange}
+                  className="auth-input"
                 />
                 {formErrors.lastName && <div className="register-error"><span className="error">{formErrors.lastName}</span></div>}
               </div>
@@ -194,6 +196,7 @@ export const Register = () => {
                   placeholder="john@gmail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="auth-input"
                 />
                 {formErrors.email && <div className="register-error"><span className="error">{formErrors.email}</span></div>}
               </div>
@@ -206,6 +209,7 @@ export const Register = () => {
                   placeholder="00 00 000 0000"
                   value={formValues.phoneNumber}
                   onChange={handleChange}
+                  className="auth-input"
                 />
                 {formErrors.phoneNumber && <div className="register-error"><span className="error">{formErrors.phoneNumber}</span></div>}
               </div>
@@ -224,6 +228,7 @@ export const Register = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     aria-invalid={Boolean(formErrors.password)}
                     aria-describedby={formErrors.password ? 'password-errors' : undefined}
+                    className="auth-input"
                   />
                   <button
                     type="button"
@@ -253,6 +258,7 @@ export const Register = () => {
                     placeholder="********"
                     value={formValues.confirmPassword}
                     onChange={handleChange}
+                    className="auth-input"
                   />
                   <button
                     type="button"
