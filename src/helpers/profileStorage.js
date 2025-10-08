@@ -1,62 +1,71 @@
 // Profile storage helper functions for localStorage operations
 
-import { getSession } from './authStorage'
-
 const PROFILE_KEY_PREFIX = 'bvi.profile.'
 
+// Keying strategy: prefer user.id; fallback to email lowercased
+const keyFor = (user) => user?.id ? `bvi.profile.${user.id}` : (user?.email ? `bvi.profile.${user.email.toLowerCase()}` : null);
+
 /**
- * Get user profile data by user ID with defaults from registration
- * @param {string} userId - User ID
- * @returns {Object} Profile data with registration defaults
+ * Get profile data by storage key
+ * @param {string} key - Storage key
+ * @returns {Object|null} Profile data or null
  */
-export function getProfile(userId) {
-  if (!userId) return {}
-  
-  try {
-    const profileKey = `${PROFILE_KEY_PREFIX}${userId}`
-    const profile = localStorage.getItem(profileKey)
-    const storedProfile = profile ? JSON.parse(profile) : {}
-    
-    // Get user data from session for defaults
-    const session = getSession()
-    const userData = session?.user || {}
-    
-    // Return profile with registration data as defaults
-    return {
-      name: storedProfile.name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || '',
-      email: storedProfile.email || userData.email || '',
-      countryCode: storedProfile.countryCode || '+54',
-      phoneNumber: storedProfile.phoneNumber || userData.phoneNumber || '',
-      dateFormat: storedProfile.dateFormat || 'MM/DD/YYYY',
-      timeZone: storedProfile.timeZone || 'EST',
-      country: storedProfile.country || 'Argentina',
-      language: storedProfile.language || 'English (Default)',
-      profilePicture: storedProfile.profilePicture || ''
-    }
-  } catch (error) {
-    console.error('Error reading profile from storage:', error)
-    return {}
+export function getProfileByKey(key) {
+  if (!key) return null;
+  try { 
+    return JSON.parse(localStorage.getItem(key) || 'null'); 
+  } catch { 
+    return null; 
   }
 }
 
 /**
- * Set user profile data by user ID
- * @param {string} userId - User ID
+ * Get user profile data by user object (id or email)
+ * @param {Object} user - User object with id or email
+ * @returns {Object|null} Profile data or null
+ */
+export function getProfile(user) {
+  return getProfileByKey(keyFor(user));
+}
+
+/**
+ * Set user profile data by user object
+ * @param {Object} user - User object with id or email
  * @param {Object} partial - Partial profile data to update
  * @returns {boolean} True if successful
  */
-export function setProfile(userId, partial) {
-  if (!userId || !partial) return false
-  
+export function setProfile(user, partial) {
+  const k = keyFor(user); 
+  if (!k) return false;
+  const prev = getProfileByKey(k) || {};
   try {
-    const key = `bvi.profile.${userId}`;          // TODO BACKEND
-    const prev = JSON.parse(localStorage.getItem(key) || '{}');
-    localStorage.setItem(key, JSON.stringify({ ...prev, ...partial }));
-    return true
+    localStorage.setItem(k, JSON.stringify({ ...prev, ...partial }));
+    return true;
   } catch (error) {
-    console.error('Error writing profile to storage:', error)
-    return false
+    console.error('Error writing profile to storage:', error);
+    return false;
   }
+}
+
+/**
+ * Ensure a profile record exists on first login
+ * @param {Object} user - User object with id or email
+ * @param {Object} seed - Default profile data
+ * @returns {boolean} True if successful
+ */
+export function ensureProfile(user, seed = {}) {
+  const k = keyFor(user); 
+  if (!k) return false;
+  if (!getProfileByKey(k)) {
+    try {
+      localStorage.setItem(k, JSON.stringify(seed));
+      return true;
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -69,7 +78,7 @@ export function readUserFromStorage() {
     const session = localStorage.getItem('bvi.auth.session');
     if (session) {
       const parsed = JSON.parse(session);
-      return parsed.user || null;
+      return parsed || null; // session is now the user object directly
     }
     return JSON.parse(localStorage.getItem('user')) || null; 
   } catch { 
@@ -86,9 +95,7 @@ export function writeUserToStorage(user) {
     // Update both session and user keys for consistency
     const session = localStorage.getItem('bvi.auth.session');
     if (session) {
-      const parsed = JSON.parse(session);
-      parsed.user = user;
-      localStorage.setItem('bvi.auth.session', JSON.stringify(parsed));
+      localStorage.setItem('bvi.auth.session', JSON.stringify(user));
     }
     localStorage.setItem('user', JSON.stringify(user)); 
   } catch (error) {

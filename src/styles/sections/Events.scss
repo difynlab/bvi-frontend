@@ -329,30 +329,27 @@
 
 
   .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     padding: 30px 20px;
-    text-align: center;
     color: #6b7280;
+    margin-top: 75px;
 
     img {
-      width: 350px;
-      height: 350px;
+      width: 300px;
+      height: 300px;
       opacity: 0.8;
       object-fit: cover;
       margin-bottom: 24px;
     }
 
     img.empty-state-user {
-      width: 300px;
-      height: 300px;
+      margin-bottom: 0;
+      width: 250px;
+      height: 250px;
     }
 
     h2 {
       font-size: 1.5rem;
-      font-weight: 600;
+      font-weight: 400;
       color: #374151;
       margin: 0 0 12px 0;
     }

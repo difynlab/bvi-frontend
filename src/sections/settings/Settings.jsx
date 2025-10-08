@@ -55,11 +55,12 @@ export default function Settings() {
               <div className="settings-contact-field">
                 <label className="settings-label">Email Address<span className="settings-req">*</span></label>
                 <input 
-                  className="settings-input" 
+                  className="settings-input settings-input--disabled" 
                   type="email" 
                   value={form.email} 
                   onChange={(e) => onChange('email', e.target.value)} 
                   placeholder="Email" 
+                  disabled
                 />
               </div>
               <div className="settings-contact-field settings-contact-field--phone-group">

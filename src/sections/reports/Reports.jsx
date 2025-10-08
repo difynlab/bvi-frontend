@@ -24,6 +24,7 @@ export default function Reports() {
     handleAddCategory,
     handleDeleteCategory,
     handleConfirmDelete,
+    deleteCategoryCascade,
     openCreateReportModal,
     openEditReportModal,
     closeReportModal,
@@ -125,6 +126,13 @@ export default function Reports() {
       setReportToDelete(null)
     }
   }
+
+  const onConfirmDeleteCategory = () => {
+    if (activeCategory) {
+      deleteCategoryCascade(activeCategory);
+      setConfirmModalOpen(false);
+    }
+  };
 
   if (!isInitialized) {
     return (
@@ -460,7 +468,7 @@ export default function Reports() {
                 <button type="button" onClick={() => setConfirmModalOpen(false)} className="cancel-button">
                   Cancel
                 </button>
-                <button type="button" onClick={handleConfirmDelete} className="delete-button">
+                <button type="button" onClick={onConfirmDeleteCategory} className="delete-button">
                   Delete
                 </button>
               </div>

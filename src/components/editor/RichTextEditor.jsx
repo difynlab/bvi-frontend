@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react'
+import React, { useCallback, useState, useEffect, useMemo } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -12,16 +12,17 @@ import TextAlign from '@tiptap/extension-text-align'
 import '../../styles/components/RichTextEditor.scss'
 
 const RichTextEditor = ({ 
-  initialHtml = '', 
+  docId, 
+  initialHTML = '', 
   onChange, 
   placeholder = 'Start writing...', 
   className = '',
-  initialAlignment = 'top',
-  contentKey = 'default'
+  initialAlignment = 'top'
 }) => {
   const [currentFont, setCurrentFont] = useState('')
   const [currentTextColor, setCurrentTextColor] = useState('#000000')
   
+  // Stable editor configuration - no dynamic dependencies
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -42,14 +43,11 @@ const RichTextEditor = ({
         types: ['heading', 'paragraph', 'image'],
       }),
     ],
-    content: initialHtml || '',
+    content: initialHTML || '',
+    autofocus: false,
     onUpdate: ({ editor }) => {
-      if (onChange) {
-        onChange({
-          html: editor.getHTML(),
-          text: editor.getText()
-        })
-      }
+      // DO NOT call setContent here - one-way flow
+      onChange?.(editor.getHTML())
     },
     editorProps: {
       attributes: {
@@ -57,7 +55,7 @@ const RichTextEditor = ({
         placeholder: placeholder,
       },
     },
-  })
+  }, []) // No dynamic dependencies
 
   const setLink = useCallback(() => {
     const previousUrl = editor.getAttributes('link').href
@@ -121,36 +119,45 @@ const RichTextEditor = ({
 
     const syncAttrs = () => {
       setCurrentFont(editor.getAttributes('textStyle')?.fontFamily || '')
-      setCurrentTextColor(editor.getAttributes('textStyle')?.color || '#000000')
+      
+      // Get the current text color from the editor
+      const textColor = editor.getAttributes('textStyle')?.color
+      const finalColor = textColor || '#000000'
+      
+      setCurrentTextColor(finalColor)
+      
+      // Update CSS custom property for visual feedback
+      const colorInput = document.querySelector('.rte__color-input--text')
+      if (colorInput) {
+        colorInput.style.setProperty('--current-color', finalColor)
+      }
     }
 
     editor.on('update', syncAttrs)
     editor.on('selectionUpdate', syncAttrs)
+    editor.on('transaction', syncAttrs)
+    editor.on('focus', syncAttrs)
+    editor.on('blur', syncAttrs)
     syncAttrs()
 
     return () => {
       editor.off('update', syncAttrs)
       editor.off('selectionUpdate', syncAttrs)
+      editor.off('transaction', syncAttrs)
+      editor.off('focus', syncAttrs)
+      editor.off('blur', syncAttrs)
     }
   }, [editor])
 
+  // Only update content when docId changes (new record opened)
   useEffect(() => {
-    if (editor) {
-      const currentHtml = editor.getHTML()
-      if (!initialHtml || initialHtml.trim() === '') {
-        if (currentHtml !== '<p></p>' && currentHtml !== '') {
-          editor.commands.clearContent(true)
-        }
-      } else if (currentHtml !== initialHtml) {
-        editor.commands.setContent(initialHtml, true)
-      }
-    }
-  }, [editor, initialHtml, contentKey])
+    if (!editor) return
+    editor.commands.setContent(initialHTML || '', false)
+  }, [editor, docId])
 
   if (!editor) {
     return null
   }
-
 
   return (
     <div className={`rte rte-v${initialAlignment} ${className}`}>
@@ -158,13 +165,31 @@ const RichTextEditor = ({
         <div className="rte__group">
           <select
             className="rte__select"
-            value={editor.getAttributes('heading').level || 'paragraph'}
+            value={editor.isActive('heading', { level: 1 }) ? '1' : editor.isActive('heading', { level: 2 }) ? '2' : 'paragraph'}
             onChange={(e) => {
               const level = e.target.value
+              const chain = editor.chain().focus()
+              
               if (level === 'paragraph') {
-                editor.chain().focus().setParagraph().run()
-              } else {
-                editor.chain().focus().toggleHeading({ level: parseInt(level) }).run()
+                // Remove any heading and convert to paragraph
+                if (editor.isActive('heading', { level: 1 })) {
+                  chain.toggleHeading({ level: 1 }).run()
+                } else if (editor.isActive('heading', { level: 2 })) {
+                  chain.toggleHeading({ level: 2 }).run()
+                }
+                // If already paragraph, do nothing
+              } else if (level === '1') {
+                // Convert to heading 1
+                if (editor.isActive('heading', { level: 2 })) {
+                  chain.toggleHeading({ level: 2 }).run()
+                }
+                chain.toggleHeading({ level: 1 }).run()
+              } else if (level === '2') {
+                // Convert to heading 2
+                if (editor.isActive('heading', { level: 1 })) {
+                  chain.toggleHeading({ level: 1 }).run()
+                }
+                chain.toggleHeading({ level: 2 }).run()
               }
             }}
           >
@@ -180,10 +205,11 @@ const RichTextEditor = ({
             value={currentFont}
             onChange={(e) => {
               const val = e.target.value
+              const chain = editor.chain().focus()
               if (!val) {
-                editor?.chain().focus().unsetMark('textStyle').run()
+                chain.unsetMark('textStyle').run()
               } else {
-                editor?.chain().focus().setMark('textStyle', { fontFamily: val }).run()
+                chain.setMark('textStyle', { fontFamily: val }).run()
               }
             }}
             aria-label="Font family"
@@ -198,34 +224,46 @@ const RichTextEditor = ({
           <button
             type="button"
             className={`rte__btn ${editor.isActive('bold') ? 'rte__btn--active' : ''}`}
-            onClick={() => editor.chain().focus().toggleBold().run()}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              editor.chain().focus().toggleBold().run()
+            }}
             title="Bold"
           >
-            <strong>B</strong>
+            <i className="bi bi-type-bold"></i>
           </button>
           <button
             type="button"
             className={`rte__btn ${editor.isActive('italic') ? 'rte__btn--active' : ''}`}
-            onClick={() => editor.chain().focus().toggleItalic().run()}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              editor.chain().focus().toggleItalic().run()
+            }}
             title="Italic"
           >
-            <em>I</em>
+            <i className="bi bi-type-italic"></i>
           </button>
           <button
             type="button"
             className={`rte__btn ${editor.isActive('underline') ? 'rte__btn--active' : ''}`}
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              editor.chain().focus().toggleUnderline().run()
+            }}
             title="Underline"
           >
-            <u>U</u>
+            <i className="bi bi-type-underline"></i>
           </button>
           <button
             type="button"
             className={`rte__btn ${editor.isActive('strike') ? 'rte__btn--active' : ''}`}
-            onClick={() => editor.chain().focus().toggleStrike().run()}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              editor.chain().focus().toggleStrike().run()
+            }}
             title="Strikethrough"
           >
-            <s>S</s>
+            <i className="bi bi-type-strikethrough"></i>
           </button>
         </div>
 
@@ -235,23 +273,24 @@ const RichTextEditor = ({
             className="rte__color-input rte__color-input--text"
             value={currentTextColor}
             onChange={(e) => {
-              editor?.chain().focus().setColor(e.target.value).run();
-              // Update the background color using CSS custom property
-              e.target.setAttribute('data-current-color', e.target.value);
-              e.target.classList.add('rte__color-input--custom-color');
+              const newColor = e.target.value
+              editor?.chain().focus().setColor(newColor).run()
+              setCurrentTextColor(newColor)
+              e.target.style.setProperty('--current-color', newColor)
             }}
+            onMouseDown={(e) => e.preventDefault()}
             aria-label="Text color"
           />
           <button
             type="button"
             className="rte__btn rte__btn--clear-text-color"
-            onClick={() => {
-              editor?.chain().focus().unsetColor().run();
-              // Reset the background color to default
-              const colorInput = document.querySelector('.rte__color-input--text');
+            onMouseDown={(e) => {
+              e.preventDefault()
+              editor?.chain().focus().unsetColor().run()
+              setCurrentTextColor('#000000')
+              const colorInput = document.querySelector('.rte__color-input--text')
               if (colorInput) {
-                colorInput.removeAttribute('data-current-color');
-                colorInput.classList.remove('rte__color-input--custom-color');
+                colorInput.style.setProperty('--current-color', '#000000')
               }
             }}
             aria-label="Clear text color"
@@ -264,26 +303,35 @@ const RichTextEditor = ({
           <button
             type="button"
             className={`rte__btn ${editor.isActive('bulletList') ? 'rte__btn--active' : ''}`}
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              editor.chain().focus().toggleBulletList().run()
+            }}
             title="Bullet List"
           >
-            •
+            <i className="bi bi-list-ul"></i>
           </button>
           <button
             type="button"
             className={`rte__btn ${editor.isActive('orderedList') ? 'rte__btn--active' : ''}`}
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              editor.chain().focus().toggleOrderedList().run()
+            }}
             title="Numbered List"
           >
-            1.
+            <i className="bi bi-list-ol"></i>
           </button>
           <button
             type="button"
             className={`rte__btn ${editor.isActive('taskList') ? 'rte__btn--active' : ''}`}
-            onClick={() => editor.chain().focus().toggleTaskList().run()}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              editor.chain().focus().toggleTaskList().run()
+            }}
             title="Task List"
           >
-            ☐
+            <i className="bi bi-list-check"></i>
           </button>
         </div>
 
@@ -291,18 +339,24 @@ const RichTextEditor = ({
           <button
             type="button"
             className={`rte__btn ${editor.isActive('link') ? 'rte__btn--active' : ''}`}
-            onClick={setLink}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              setLink()
+            }}
             title="Insert Link"
           >
-            🔗
+            <i className="bi bi-link-45deg"></i>
           </button>
           <button
             type="button"
             className="rte__btn"
-            onClick={setImage}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              setImage()
+            }}
             title="Insert Image"
           >
-            🖼️
+            <i className="bi bi-image"></i>
           </button>
         </div>
 
@@ -310,20 +364,26 @@ const RichTextEditor = ({
           <button
             type="button"
             className="rte__btn"
-            onClick={() => editor.chain().focus().undo().run()}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              editor.chain().focus().undo().run()
+            }}
             disabled={!editor.can().undo()}
             title="Undo"
           >
-            ↶
+            <i className="bi bi-arrow-counterclockwise"></i>
           </button>
           <button
             type="button"
             className="rte__btn"
-            onClick={() => editor.chain().focus().redo().run()}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              editor.chain().focus().redo().run()
+            }}
             disabled={!editor.can().redo()}
             title="Redo"
           >
-            ↷
+            <i className="bi bi-arrow-clockwise"></i>
           </button>
         </div>
 
@@ -331,34 +391,46 @@ const RichTextEditor = ({
           <button
             type="button"
             className={`rte__btn ${editor.isActive({ textAlign: 'left' }) ? 'rte__btn--active' : ''}`}
-            onClick={() => setTextAlign('left')}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              setTextAlign('left')
+            }}
             title="Align Left"
           >
-            ⬅
+            <i className="bi bi-text-left"></i>
           </button>
           <button
             type="button"
             className={`rte__btn ${editor.isActive({ textAlign: 'center' }) ? 'rte__btn--active' : ''}`}
-            onClick={() => setTextAlign('center')}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              setTextAlign('center')
+            }}
             title="Align Center"
           >
-            ↔
+            <i className="bi bi-text-center"></i>
           </button>
           <button
             type="button"
             className={`rte__btn ${editor.isActive({ textAlign: 'right' }) ? 'rte__btn--active' : ''}`}
-            onClick={() => setTextAlign('right')}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              setTextAlign('right')
+            }}
             title="Align Right"
           >
-            ➡
+            <i className="bi bi-text-right"></i>
           </button>
           <button
             type="button"
             className={`rte__btn ${editor.view.dom.querySelector('.rte__content')?.classList.contains('text-justify') ? 'rte__btn--active' : ''}`}
-            onClick={() => setTextAlign('justify')}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              setTextAlign('justify')
+            }}
             title="Justify"
           >
-            ⬌
+            <i className="bi bi-justify"></i>
           </button>
         </div>
       </div>
@@ -368,7 +440,7 @@ const RichTextEditor = ({
         onMouseDown={(e) => {
           if (!editor?.isFocused) {
             e.preventDefault()
-            editor?.commands.focus('end')
+            editor?.commands.focus()
           }
         }}
       >

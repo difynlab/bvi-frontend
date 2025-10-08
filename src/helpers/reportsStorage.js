@@ -1,5 +1,10 @@
 // Reports storage helper functions for localStorage operations
-const KEY = 'reports.storage.v1';
+
+export const REPORTS_KEYS = { 
+  items: 'bvi.reports.items', 
+  categories: 'bvi.reports.categories' 
+};
+
 const defaults = { 
   categories: ['Annual Report', 'Other Reports'], 
   items: [
@@ -18,10 +23,56 @@ const defaults = {
   ]
 };
 
+export function getReports() {
+  try {
+    const reports = localStorage.getItem(REPORTS_KEYS.items);
+    return reports ? JSON.parse(reports) : defaults.items;
+  } catch (error) {
+    console.error('Error reading reports from localStorage:', error);
+    return defaults.items;
+  }
+}
+
+export function setReports(list) {
+  try {
+    localStorage.setItem(REPORTS_KEYS.items, JSON.stringify(list)); // TODO BACKEND
+    return true;
+  } catch (error) {
+    console.error('Error writing reports to localStorage:', error);
+    return false;
+  }
+}
+
+export function getReportCategories() {
+  try {
+    const categories = localStorage.getItem(REPORTS_KEYS.categories);
+    return categories ? JSON.parse(categories) : defaults.categories;
+  } catch (error) {
+    console.error('Error reading categories from localStorage:', error);
+    return defaults.categories;
+  }
+}
+
+export function setReportCategories(list) {
+  try {
+    localStorage.setItem(REPORTS_KEYS.categories, JSON.stringify(list)); // TODO BACKEND
+    return true;
+  } catch (error) {
+    console.error('Error writing categories to localStorage:', error);
+    return false;
+  }
+}
+
+export function saveReportsAndCategories(reports, categories) {
+  setReports(reports);
+  setReportCategories(categories);
+}
+
 export function readReports() {
   try {
-    const o = JSON.parse(localStorage.getItem(KEY));
-    return { ...defaults, ...(o || {}) };
+    const categories = getReportCategories();
+    const items = getReports();
+    return { categories, items };
   } catch (error) {
     console.error('Error reading reports from localStorage:', error);
     return defaults;
@@ -30,7 +81,7 @@ export function readReports() {
 
 export function writeReports(data) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(data));
+    saveReportsAndCategories(data.items || [], data.categories || []);
     return true;
   } catch (error) {
     console.error('Error writing reports to localStorage:', error);
@@ -39,37 +90,46 @@ export function writeReports(data) {
 }
 
 export function addCategory(name) {
-  const d = readReports();
-  if (!d.categories.includes(name)) {
-    d.categories = [...d.categories, name];
+  const categories = getReportCategories();
+  if (!categories.includes(name)) {
+    const newCategories = [...categories, name];
+    setReportCategories(newCategories);
+    return { categories: newCategories, items: getReports() };
   }
-  writeReports(d);
-  return d;
+  return { categories, items: getReports() };
 }
 
 export function deleteCategory(name) {
-  const d = readReports();
-  d.categories = d.categories.filter(c => c !== name);
-  d.items = d.items.filter(it => it.type !== name);
-  writeReports(d);
-  return d;
+  const categories = getReportCategories();
+  const items = getReports();
+  
+  const newCategories = categories.filter(c => c !== name);
+  const newItems = items.filter(it => it.type !== name);
+  
+  saveReportsAndCategories(newItems, newCategories);
+  return { categories: newCategories, items: newItems };
 }
 
 export function upsertReport(item) {
-  const d = readReports();
-  const idx = d.items.findIndex(r => r.id === item.id);
+  const items = getReports();
+  const idx = items.findIndex(r => r.id === item.id);
+  
+  let newItems;
   if (idx >= 0) {
-    d.items[idx] = item;
+    newItems = [...items];
+    newItems[idx] = item;
   } else {
-    d.items = [...d.items, item];
+    newItems = [...items, item];
   }
-  writeReports(d);
-  return d;
+  
+  setReports(newItems);
+  return { categories: getReportCategories(), items: newItems };
 }
 
 export function deleteReport(id) {
-  const d = readReports();
-  d.items = d.items.filter(r => r.id !== id);
-  writeReports(d);
-  return d;
+  const items = getReports();
+  const newItems = items.filter(r => r.id !== id);
+  
+  setReports(newItems);
+  return { categories: getReportCategories(), items: newItems };
 }

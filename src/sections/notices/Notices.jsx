@@ -8,6 +8,7 @@ import { useTitleMarquee } from '../../hooks/useTitleMarquee'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import RichTextEditor from '../../components/editor/RichTextEditor'
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
+import EmptyPage from '../../components/EmptyPage'
 import '../../styles/sections/Notices.scss'
 
 export const Notices = () => {
@@ -120,8 +121,9 @@ export const Notices = () => {
     noticeForm.onChange(name, value)
   }
 
-  const handleEditorChange = ({ html, text }) => {
+  const handleEditorChange = (html) => {
     noticeForm.setEditorHtml(html)
+    const text = noticeForm.stripHtml(html)
     noticeForm.setEditorText(text)
     noticeForm.onChange('description', text)
   }
@@ -293,37 +295,17 @@ export const Notices = () => {
           </div>
 
           {categories.length === 0 ? (
-            <div className="empty-state">
-              {can(user, 'notices:create') ? (
-                <>
-                  <img src="/empty-state-admin.png" alt="" />
-                  <h2>No categories yet!</h2>
-                  <p>Create your first category to get started with notices.</p>
-                </>
-              ) : (
-                <>
-                  <img src="/empty-state-user.png" alt="" className="empty-state-user" />
-                  <h2>No categories available.</h2>
-                  <p>No notice categories have been created yet.</p>
-                </>
-              )}
-            </div>
+            <EmptyPage
+              isAdmin={can(user, 'notices:create')}
+              title={can(user,'notices:create') ? 'No categories yet!' : 'No categories available.'}
+              description={can(user,'notices:create') ? 'Create your first category to get started with notices.' : 'No notice categories have been created yet.'}
+            />
           ) : visibleItems.length === 0 ? (
-            <div className="empty-state">
-              {can(user, 'notices:create') ? (
-                <>
-                  <img src="/empty-state-admin.png" alt="" />
-                  <h2>No notices in this category!</h2>
-                  <p>This category is empty. Add your first notice to get started!</p>
-                </>
-              ) : (
-                <>
-                  <img src="/empty-state-user.png" alt="" className="empty-state-user" />
-                  <h2>No notices found.</h2>
-                  <p>This category doesn't have any notices yet.</p>
-                </>
-              )}
-            </div>
+            <EmptyPage
+              isAdmin={can(user, 'notices:create')}
+              title={can(user,'notices:create') ? 'No notices in this category!' : 'No notices found.'}
+              description={can(user,'notices:create') ? 'This category is empty. Add your first notice to get started!' : "This category doesn't have any notices yet."}
+            />
           ) : (
             <div className="notices-list">
               {visibleItems.map(notice => (
@@ -443,9 +425,8 @@ export const Notices = () => {
                 <div className="form-group">
                   <label htmlFor="description">Description<span className="req-star" aria-hidden="true">*</span></label>
                   <RichTextEditor
-                    key={`rte-${editingNotice ? editingNotice.id : 'new'}`}
-                    contentKey={editingNotice ? editingNotice.id : 'new'}
-                    initialHtml={noticeForm.editorHtml}
+                    docId={editingNotice ? editingNotice.id : 'new'}
+                    initialHTML={noticeForm.editorHtml}
                     onChange={handleEditorChange}
                     placeholder="Write a description..."
                   />

@@ -53,19 +53,7 @@ export function findUserByEmail(email) {
  */
 export function saveSession(user) {
   try {
-    const session = {
-      user: {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        role: user.role,
-        permissions: user.permissions
-      },
-      timestamp: Date.now()
-    }
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    localStorage.setItem(SESSION_KEY, JSON.stringify(user)); // TODO BACKEND
     return true
   } catch (error) {
     console.error('Error saving session:', error)
@@ -78,12 +66,10 @@ export function saveSession(user) {
  * @returns {Object|null} Session object or null
  */
 export function getSession() {
-  try {
-    const session = localStorage.getItem(SESSION_KEY)
-    return session ? JSON.parse(session) : null
-  } catch (error) {
-    console.error('Error reading session from storage:', error)
-    return null
+  try { 
+    return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); 
+  } catch { 
+    return null; 
   }
 }
 
@@ -111,11 +97,10 @@ export function getCurrentUserFromStorage() {
   try {
     // Try session first
     const session = getSession()
-    if (session?.user) {
-      const user = session.user
+    if (session) {
       return {
-        name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || '',
-        email: user.email || ''
+        name: `${session.firstName || ''} ${session.lastName || ''}`.trim() || '',
+        email: session.email || ''
       }
     }
     

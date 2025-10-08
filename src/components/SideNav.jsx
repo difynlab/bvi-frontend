@@ -101,15 +101,19 @@ const SideNav = () => {
           <span>Logout</span>
         </button>
 
-        <div className="user-profile">
-          <div className="profile-picture">
-            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" alt="Profile" />
+        <NavLink to="/settings" className="user-profile">
+          <div className="user-avatar" aria-hidden={false}>
+            {user?.profilePicture ? (
+              <img className="user-avatar-img" src={user.profilePicture} alt={`${user?.firstName || 'User'} profile`} />
+            ) : (
+              <i className="bi bi-person-fill user-avatar-icon" aria-label="profile icon" />
+            )}
           </div>
           <div className="profile-info">
             <h3 className="user-name">{displayName}</h3>
             <p className="user-role">{role === 'admin' ? 'Administrator' : 'User'}</p>
           </div>
-        </div>
+        </NavLink>
       </div>
 
       <ConfirmLogoutModal 

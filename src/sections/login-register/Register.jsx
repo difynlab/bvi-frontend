@@ -280,7 +280,7 @@ export const Register = () => {
               
               {/* TEMPORARY DEBUG AREA - REMOVE BEFORE PRODUCTION */}
               <div className="debug-panel">
-                <p className="debug-title">🛠️ Debug Panel (Temporary)</p>
+                <p className="debug-title"> Debug Panel (temporary)</p>
                 <button 
                   type="button" 
                   className="debug-button"

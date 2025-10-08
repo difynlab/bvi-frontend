@@ -8,13 +8,13 @@ export function useSettingsForm() {
   
   // Get current user data from session or context
   const currentUser = useMemo(() => {
-    return ctx?.user || getSession()?.user || {};
+    return ctx?.user || getSession() || {};
   }, [ctx?.user]);
   
   // Get profile data with defaults from registration
   const profileData = useMemo(() => {
-    return currentUser.id ? getProfile(currentUser.id) : {};
-  }, [currentUser.id]);
+    return currentUser.id ? getProfile(currentUser) || {} : {};
+  }, [currentUser]);
   
   // Merge user data with profile data, using registration data as defaults
   const baseUser = useMemo(() => ({
@@ -117,10 +117,10 @@ export function useSettingsForm() {
     // Extract firstName and lastName from name field
     const nameParts = (form.name || '').trim().split(' ')
     if (nameParts.length > 0) {
-      partial.firstName = nameParts[0]
+      partial.firstName = nameParts[0]?.trim() || ''
     }
     if (nameParts.length > 1) {
-      partial.lastName = nameParts.slice(1).join(' ')
+      partial.lastName = nameParts.slice(1).join(' ').trim() || ''
     }
     
     // Add other fields if they have values
@@ -129,6 +129,14 @@ export function useSettingsForm() {
     }
     if (form.phoneNumber) {
       partial.phoneNumber = form.phoneNumber.trim()
+    }
+    
+    // Add profile picture if it has changed
+    const imagePreviewUrl = profilePreview || ''
+    const imageFileName = selectedFile?.name || ''
+    if (imagePreviewUrl !== baseUser.profilePicture) {
+      partial.profilePicture = imagePreviewUrl
+      partial.profilePictureFileName = imageFileName
     }
     
     // Update AuthContext with partial - this will handle persistence
@@ -141,7 +149,7 @@ export function useSettingsForm() {
       ...form,
       profilePicture: profilePreview || form.profilePicture || baseUser.profilePicture,
     };
-    setProfile(currentUser.id, updatedProfile);
+    setProfile(currentUser, updatedProfile);
     
     resetAfterSave(updatedProfile);
   }, [canSave, currentUser.id, form, profilePreview, baseUser, ctx, resetAfterSave]);

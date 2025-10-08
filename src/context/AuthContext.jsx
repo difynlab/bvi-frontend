@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { deriveRoleFromEmail, getPermissions, hashPassword } from './authHelpers'
 import { AuthContext } from './AuthContext'
 import { getSession, saveSession, clearSession, getUsers, setUsers, findUserByEmail } from '../helpers/authStorage'
-import { setProfile } from '../helpers/profileStorage'
+import { setProfile, getProfile, ensureProfile } from '../helpers/profileStorage'
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -11,12 +11,18 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null)
   const [isInitialized, setIsInitialized] = useState(false)
 
+  // Compose session user by merging auth user with stored profile
+  const composeSessionUser = (authUser) => {
+    const stored = getProfile(authUser) || {}
+    return { ...authUser, ...stored } // profile overrides base defaults
+  }
+
   useEffect(() => {
     try {
       const session = getSession()
-      if (session?.user) {
+      if (session) {
         setIsAuthenticated(true)
-        setUser(session.user)
+        setUser(session)
       }
     } catch (error) {
       console.error('Error loading session from localStorage:', error)
@@ -62,7 +68,7 @@ export const AuthProvider = ({ children }) => {
       setUsers(users)
 
       // Create session
-      const sessionUser = {
+      const authUser = {
         id: newUser.id,
         firstName: newUser.firstName,
         lastName: newUser.lastName,
@@ -72,6 +78,12 @@ export const AuthProvider = ({ children }) => {
         permissions: newUser.permissions
       }
 
+      // Ensure profile exists for new user
+      ensureProfile(authUser, {})
+      
+      // Compose session user with stored profile
+      const sessionUser = composeSessionUser(authUser)
+      
       saveSession(sessionUser)
       setUser(sessionUser)
       setIsAuthenticated(true)
@@ -104,7 +116,7 @@ export const AuthProvider = ({ children }) => {
         return false
       }
 
-      const sessionUser = {
+      const authUser = {
         id: user.id,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -114,6 +126,9 @@ export const AuthProvider = ({ children }) => {
         permissions: user.permissions
       }
 
+      // Compose session user with stored profile
+      const sessionUser = composeSessionUser(authUser)
+      
       saveSession(sessionUser)
       setUser(sessionUser)
       setIsAuthenticated(true)
@@ -152,7 +167,7 @@ export const AuthProvider = ({ children }) => {
       const role = deriveRoleFromEmail(payload.email)
       const permissions = getPermissions(role)
 
-      const sessionUser = {
+      const authUser = {
         id: payload.sub || Date.now().toString(),
         firstName: payload.given_name || 'Google',
         lastName: payload.family_name || 'User',
@@ -164,6 +179,12 @@ export const AuthProvider = ({ children }) => {
         // do NOT persist raw credential in production
       }
 
+      // Ensure profile exists for Google user
+      ensureProfile(authUser, {})
+      
+      // Compose session user with stored profile
+      const sessionUser = composeSessionUser(authUser)
+      
       saveSession(sessionUser)     // localStorage mock // TODO BACKEND
       setUser(sessionUser)
       setIsAuthenticated(true)
@@ -180,10 +201,10 @@ export const AuthProvider = ({ children }) => {
   }
 
   const logout = () => {
+    clearSession()          // remove only session key
     setUser(null)
     setIsAuthenticated(false)
     setError(null)
-    clearSession()
     
     console.log('User logged out')
   }
@@ -228,19 +249,16 @@ export const AuthProvider = ({ children }) => {
     if (!user) return
 
     // Create new user object by shallow-merging partial into current user
-    const updatedUser = {
-      ...user,
-      ...partial
-    }
+    const next = { ...user, ...partial }
 
     // Persist to profile storage for this user id
-    setProfile(user.id, partial)
+    setProfile(user, partial)   // TODO BACKEND
     
     // Persist to session storage
-    saveSession(updatedUser)
+    saveSession(next)       // TODO BACKEND
     
     // Update state with new object
-    setUser(updatedUser)
+    setUser(next)
   }
 
   const value = useMemo(() => ({

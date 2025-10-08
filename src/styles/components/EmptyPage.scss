@@ -1,0 +1,8 @@
+/* Only the universal layout already common across sections; sizes remain per-section */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}

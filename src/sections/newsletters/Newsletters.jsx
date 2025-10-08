@@ -7,7 +7,15 @@ import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import RichTextEditor from '../../components/editor/RichTextEditor'
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
+import EmptyPage from '../../components/EmptyPage'
 import '../../styles/sections/Newsletters.scss'
+
+// Utility to strip HTML
+const stripHtml = (html = '') => {
+  const el = document.createElement('div')
+  el.innerHTML = html
+  return el.textContent || ''
+}
 
 const Newsletters = () => {
   const { user, toggleRole } = useAuth()
@@ -120,8 +128,9 @@ const Newsletters = () => {
     }
   }
 
-  const handleEditorChange = ({ html, text }) => {
+  const handleEditorChange = (html) => {
     setEditorHtml(html)
+    const text = stripHtml(html)
     setEditorText(text)
     onChange('description', text)
   }
@@ -192,21 +201,15 @@ const Newsletters = () => {
 
         {/* Newsletter List */}
         {newsletters.length === 0 ? (
-          <div className="empty-state">
-            {user?.role === 'admin' ? (
-              <>
-                <img src="/empty-state-admin.png" alt="" />
-                <h2>Oops nothing to see here yet!</h2>
-                <p>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</p>
-              </>
-            ) : (
-              <>
-                <img src="/empty-state-user.png" alt="" className="empty-state-user" />
-                <h2>Oops! No data found.</h2>
-                <p>Nothing's been added here yet, or there might be a hiccup.<br />Try again or check back later!</p>
-              </>
-            )}
-          </div>
+          <EmptyPage
+            isAdmin={user?.role === 'admin'}
+            title={user?.role === 'admin' ? 'Oops nothing to see here yet!' : 'Oops! No data found.'}
+            description={
+              user?.role === 'admin'
+                ? <>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</>
+                : <>Nothing's been added here yet, or there might be a hiccup.<br />Try again or check back later!</>
+            }
+          />
         ) : (
           <div className="newsletters-list">
             {newsletters.map((newsletter) => (
@@ -302,9 +305,8 @@ const Newsletters = () => {
                 <div className="form-group">
                   <label htmlFor="description">Description<span className="req-star" aria-hidden="true">*</span></label>
                   <RichTextEditor
-                    key={`rte-${editingNewsletter ? editingNewsletter.id : 'new'}`}
-                    contentKey={editingNewsletter ? editingNewsletter.id : 'new'}
-                    initialHtml={editorHtml}
+                    docId={editingNewsletter ? editingNewsletter.id : 'new'}
+                    initialHTML={editorHtml}
                     onChange={handleEditorChange}
                     placeholder="Write newsletter description..."
                   />

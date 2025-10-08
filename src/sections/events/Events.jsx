@@ -9,6 +9,7 @@ import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import RichTextEditor from '../../components/editor/RichTextEditor'
 import { CustomRecurrencePopover } from '../../components/events/CustomRecurrencePopover'
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
+import EmptyPage from '../../components/EmptyPage'
 import '../../styles/sections/Events.scss'
 
 export const Events = () => {
@@ -158,9 +159,10 @@ export const Events = () => {
     }
   }
 
-  // Rich Text Editor handler
-  const handleEditorChange = ({ html, text }) => {
+  // Rich Text Editor handler - one-way flow
+  const handleEditorChange = (html) => {
     eventForm.setEditorHtml(html)
+    const text = eventForm.stripHtml(html)
     eventForm.setEditorText(text)
     eventForm.onChange('description', text)
   }
@@ -409,23 +411,15 @@ export const Events = () => {
           </div>
 
           {events.length === 0 ? (
-            <div className="empty-state">
-              {can(user, 'events:create') ? (
-                // Admin empty state
-                <>
-                  <img src="/empty-state-admin.png" alt="" />
-                  <h2>Oops nothing to see here yet!</h2>
-                  <p>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</p>
-                </>
-              ) : (
-                // User empty state
-                <>
-                  <img src="/empty-state-user.png" alt="" className="empty-state-user" />
-                  <h2>Oops! No data found.</h2>
-                  <p>Nothing's been added here yet, or there might be a hiccup.<br />Try again or check back later!</p>
-                </>
-              )}
-            </div>
+            <EmptyPage
+              isAdmin={can(user, 'events:create')}
+              title={can(user,'events:create') ? 'Oops nothing to see here yet!' : 'Oops! No data found.'}
+              description={
+                can(user,'events:create')
+                  ? <>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</>
+                  : <>Nothing's been added here yet, or there might be a hiccup.<br />Try again or check back later!</>
+              }
+            />
           ) : (
             <div className="events-list">
               {events.map(event => (
@@ -618,9 +612,8 @@ export const Events = () => {
                 <div className="form-group">
                   <label htmlFor="description">Description<span className="req-star" aria-hidden="true">*</span></label>
                   <RichTextEditor
-                    key={`rte-${modalMode === 'edit' ? editingEventId : 'new'}`}
-                    contentKey={modalMode === 'edit' ? editingEventId : 'new'}
-                    initialHtml={eventForm.editorHtml}
+                    docId={modalMode === 'edit' ? editingEventId : 'new'}
+                    initialHTML={eventForm.editorHtml}
                     onChange={handleEditorChange}
                     placeholder="Write a description..."
                   />

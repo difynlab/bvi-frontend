@@ -7,6 +7,11 @@
   justify-content: center;
   align-items: center;
   margin-top: 80px;
+  position: relative;
+  // background-image: url('/images/bvi_speakers.png');
+  background-repeat: repeat;
+  background-size: 20%;
+  background-position:-20vw;
 }
 
 .auth-container {

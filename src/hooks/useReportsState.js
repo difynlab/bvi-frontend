@@ -1,11 +1,11 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { readReports, writeReports, addCategory, deleteCategory, upsertReport, deleteReport } from '../helpers/reportsStorage';
+import { readReports, writeReports, addCategory, deleteCategory, upsertReport, deleteReport, saveReportsAndCategories } from '../helpers/reportsStorage';
 
 export function useReportsState() {
   const [data, setData] = useState(() => readReports());
-  const [activeCategory, setActiveCategory] = useState(() => {
+  const [activeCategoryId, setActiveCategoryId] = useState(() => {
     const initialData = readReports();
-    return initialData.categories[0] || 'Annual Report';
+    return initialData.categories[0] || null;
   });
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -19,9 +19,47 @@ export function useReportsState() {
   }, [data]);
 
   const visibleItems = useMemo(() => 
-    data.items.filter(item => (item.typeId || item.type) === activeCategory),
-    [data.items, activeCategory]
+    data.items.filter(item => {
+      const byId = item.typeId && item.typeId === activeCategoryId;
+      const byName = item.typeName && item.typeName === activeCategoryId;
+      return byId || byName;
+    }),
+    [data.items, activeCategoryId]
   );
+
+  const deleteCategoryCascade = useCallback((categoryId) => {
+    setData(prev => {
+      const deleted = prev.categories.find(c => c === categoryId) || null;
+      const deletedName = (deleted || '').trim().toLowerCase();
+
+      const nextCategories = prev.categories.filter(c => c !== categoryId);
+
+      // Remove all reports belonging to the deleted category.
+      // Also catch legacy items that only stored typeName.
+      const nextReports = prev.items.filter(r => {
+        const byId = r.typeId && r.typeId !== categoryId;
+        const byName = (r.typeName || '').trim().toLowerCase() !== deletedName;
+        return byId && byName;
+      });
+
+      // Persist atomically
+      saveReportsAndCategories(nextReports, nextCategories);
+
+      // Fix active tab
+      const nextActive = nextCategories[0] || null;
+
+      return { ...prev, categories: nextCategories, items: nextReports, activeCategoryId: nextActive };
+    });
+    
+    // Update active category
+    setActiveCategoryId(prevActive => {
+      if (prevActive === categoryId) {
+        const nextCategories = data.categories.filter(c => c !== categoryId);
+        return nextCategories[0] || null;
+      }
+      return prevActive;
+    });
+  }, [data.categories]);
 
   const handleAddCategory = useCallback((name) => {
     const trimmedName = name.trim();
@@ -39,19 +77,11 @@ export function useReportsState() {
 
   const handleConfirmDelete = useCallback(() => {
     if (categoryToDelete) {
-      const updatedData = deleteCategory(categoryToDelete);
-      setData(updatedData);
-      // Switch to first available category if current one was deleted
-      setActiveCategory(prevActive => {
-        if (prevActive === categoryToDelete && updatedData.categories.length > 0) {
-          return updatedData.categories[0];
-        }
-        return prevActive;
-      });
+      deleteCategoryCascade(categoryToDelete);
       setConfirmModalOpen(false);
       setCategoryToDelete(null);
     }
-  }, [categoryToDelete]);
+  }, [categoryToDelete, deleteCategoryCascade]);
 
   const openCreateReportModal = useCallback(() => {
     setEditingReport(null);
@@ -133,7 +163,7 @@ export function useReportsState() {
     
     // Set first category as active
     if (demoData.categories.length > 0) {
-      setActiveCategory(demoData.categories[0]);
+      setActiveCategoryId(demoData.categories[0]);
     }
     
     return demoData.categories[0];
@@ -142,17 +172,18 @@ export function useReportsState() {
   return {
     categories: data.categories,
     items: data.items,
-    activeCategory,
+    activeCategory: activeCategoryId,
     visibleItems,
     isCategoryModalOpen,
     isReportModalOpen,
     editingReport,
     confirmModalOpen,
     categoryToDelete,
-    setActiveCategory,
+    setActiveCategory: setActiveCategoryId,
     handleAddCategory,
     handleDeleteCategory,
     handleConfirmDelete,
+    deleteCategoryCascade,
     openCreateReportModal,
     openEditReportModal,
     closeReportModal,
