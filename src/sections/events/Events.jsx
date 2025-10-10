@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/useAuth'
 import { can } from '../../auth/acl'
 import { useEventsState } from '../../hooks/useEventsState'
@@ -6,6 +6,7 @@ import { useEventForm } from '../../hooks/useEventForm'
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
 import { useTitleMarquee } from '../../hooks/useTitleMarquee'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
+import { useModalRegistration } from '../../hooks/useModalState.jsx'
 import RichTextEditor from '../../components/editor/RichTextEditor'
 import { CustomRecurrencePopover } from '../../components/events/CustomRecurrencePopover'
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
@@ -29,6 +30,47 @@ export const Events = () => {
   const [eventToDelete, setEventToDelete] = useState(null)
 
   const eventForm = useEventForm()
+
+  // Register modal states to disable SideNav gestures
+  const isAnyModalOpen = isModalOpen || isRegisterModalOpen || isConfirmDeleteOpen
+  useModalRegistration('events-modal', isModalOpen)
+  useModalRegistration('register-modal', isRegisterModalOpen)
+  useModalRegistration('confirm-delete-modal', isConfirmDeleteOpen)
+
+  // Validation logic
+  const REQUIRED = [
+    { key: 'title', label: 'Event Title', test: () => (eventForm?.form?.title || '').trim().length > 0 },
+    { key: 'date', label: 'Date', test: () => !!eventForm?.form?.date },
+    {
+      key: 'description', label: 'Description', test: () => {
+        const html = (eventForm?.editorHtml || eventForm?.form?.description || '');
+        const text = html.replace(/<[^>]+>/g, '').trim();
+        return text.length > 0;
+      }
+    },
+    { key: 'file', label: 'File Upload', test: () => !!(eventForm?.form?.imagePreviewUrl || eventForm?.form?.imageFileName) }
+  ];
+
+  const [missingRequired, setMissingRequired] = useState([]);
+  const bannerRef = useRef(null);
+
+  function validateRequired() {
+    const missing = REQUIRED.filter(r => !r.test()).map(r => r.label);
+    setMissingRequired(missing);
+    return missing.length === 0;
+  }
+
+  // clear/update banner reactively
+  useEffect(() => {
+    if (missingRequired.length) validateRequired();
+  }, [
+    eventForm?.form?.title,
+    eventForm?.form?.date,
+    eventForm?.editorHtml,
+    eventForm?.form?.description,
+    eventForm?.form?.imagePreviewUrl,
+    eventForm?.form?.imageFileName
+  ]);
 
   const handleCancel = () => {
     try {
@@ -61,11 +103,11 @@ export const Events = () => {
     const testElement = document.createElement('div')
     testElement.className = 'line-clamp-test'
     document.body.appendChild(testElement)
-    
+
     const computedStyle = window.getComputedStyle(testElement)
     const supportsLineClamp = computedStyle.webkitLineClamp === '2'
     setUseFallback(!supportsLineClamp)
-    
+
     document.body.removeChild(testElement)
   }, [])
 
@@ -134,7 +176,7 @@ export const Events = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target
     eventForm.onChange(name, value)
-    
+
     // Handle custom recurrence popover and clear custom recurrence when changing to non-custom
     if (name === 'repeat' && value === 'CUSTOM') {
       setIsCustomRecurrenceOpen(true)
@@ -189,7 +231,7 @@ export const Events = () => {
         setEditingEventId(eventId)
         eventForm.beginEdit(event)
         setIsModalOpen(true)
-        
+
         // Check if event has custom recurrence and set popover state accordingly
         // but don't auto-open it - let user click "Custom" to open
         if (event.recurrence && event.recurrence.kind === 'CUSTOM') {
@@ -303,7 +345,7 @@ export const Events = () => {
   const handleSubmit = (e) => {
     try {
       e.preventDefault()
-      if (!validateForm()) return
+      if (!validateRequired()) { bannerRef.current?.focus(); return; }
 
       if (modalMode === 'create') {
         const newEvent = eventForm.buildEventObject()
@@ -357,17 +399,17 @@ export const Events = () => {
   // Handle custom recurrence update
   const handleCustomRecurrenceUpdate = (recurrenceData) => {
     const normalizedRecurrence = eventForm.normalizeRecurrence(recurrenceData)
-    
+
     // Update the recurrence in form state
     eventForm.updateRecurrence(normalizedRecurrence)
-    
+
     // Update the repeat field based on normalization
     if (normalizedRecurrence.kind === 'WEEKLY') {
       eventForm.onChange('repeat', 'WEEKLY')
     } else {
       eventForm.onChange('repeat', 'CUSTOM')
     }
-    
+
     setIsCustomRecurrenceOpen(false)
   }
 
@@ -375,117 +417,121 @@ export const Events = () => {
     <>
       <div className="events-page">
         <div className="events-container">
-          <div className="events-header">
-            <div className="events-header-title">
-              <h1>Events</h1>
-              <p>Manage Events</p>
-            </div>
-            <div className="events-header-actions">
-              {/* TODO TEMPORARY: role toggle button for testing only. REMOVE before production. */}
-              <button
-                className={`temp-role-toggle-btn ${user?.role === 'admin' ? 'admin' : 'user'}`}
-                onClick={toggleRole}
-              >
-                {user?.role === 'admin' ? 'Switch to User View' : 'Switch to Admin View'}
-              </button>
-              {/* TODO TEMPORARY: button to show sample events. REMOVE before production. */}
-              <button
-                className="temp-load-sample-btn"
-                onClick={() => {
-                  localStorage.removeItem('events')
-                  seedIfEmpty()
-                }}
-              >
-                Load Sample Events
-              </button>
-
-              {can(user, 'events:create') && (
+          <section className="events-section">
+            <header className="events-header">
+              <div className="events-header-title">
+                <h1>Events</h1>
+                <p>Manage Events</p>
+              </div>
+              <div className="events-actions">
+                {/* TODO TEMPORARY: role toggle button for testing only. REMOVE before production. */}
                 <button
-                  className="add-event-btn"
-                  onClick={openCreateModal}
+                  className={`temp-role-toggle-btn ${user?.role === 'admin' ? 'admin' : 'user'}`}
+                  onClick={toggleRole}
                 >
-                  <i className="bi bi-plus"></i> Add New
+                  {user?.role === 'admin' ? 'Switch to User View' : 'Switch to Admin View'}
                 </button>
-              )}
-            </div>
-          </div>
+                {/* TODO TEMPORARY: button to show sample events. REMOVE before production. */}
+                <button
+                  className="temp-load-sample-btn"
+                  onClick={() => {
+                    localStorage.removeItem('events')
+                    seedIfEmpty()
+                  }}
+                >
+                  Load Sample Events
+                </button>
 
-          {events.length === 0 ? (
-            <EmptyPage
-              isAdmin={can(user, 'events:create')}
-              title={can(user,'events:create') ? 'Oops nothing to see here yet!' : 'Oops! No data found.'}
-              description={
-                can(user,'events:create')
-                  ? <>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</>
-                  : <>Nothing's been added here yet, or there might be a hiccup.<br />Try again or check back later!</>
-              }
-            />
-          ) : (
-            <div className="events-list">
-              {events.map(event => (
-                <div key={event.id} className="event-card">
-                  <div className="event-image">
-                    <img src={event.imagePreviewUrl} alt={event.title} />
-                  </div>
-                  <div className="event-content">
-                    <div className="event-header">
-                      <span className={`event-type ${event.eventType.toLowerCase()}`}>
-                        {event.eventType}
-                      </span>
-                      <span className="event-date">{formatDate(event.date)}</span>
+                {can(user, 'events:create') && (
+                  <button
+                    className="add-event-btn events-add-btn"
+                    onClick={openCreateModal}
+                    aria-label="Add new event"
+                  >
+                    <i className="bi bi-plus" aria-hidden="true"></i>
+                    <span className="btn-label">Add New</span>
+                  </button>
+                )}
+              </div>
+            </header>
+
+            {events.length === 0 ? (
+              <EmptyPage
+                isAdmin={can(user, 'events:create')}
+                title={can(user, 'events:create') ? 'Oops nothing to see here yet!' : 'Oops! No data found.'}
+                description={
+                  can(user, 'events:create')
+                    ? <>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</>
+                    : <>Nothing's been added here yet, or there might be a hiccup.<br />Try again or check back later!</>
+                }
+              />
+            ) : (
+              <div className="events-list">
+                {events.map(event => (
+                  <div key={event.id} className="event-card">
+                    <div className="event-image">
+                      <img src={event.imagePreviewUrl} alt={event.title} />
                     </div>
-                    <div
-                      className="event-title one-line-ellipsis"
-                      ref={titleMarquee.titleContainerRef}
-                      onMouseEnter={titleMarquee.onMouseEnter}
-                      onMouseLeave={titleMarquee.onMouseLeave}
-                    >
-                      <span className="event-title__inner" title={event.title}>{event.title}</span>
-                    </div>
-                    <p className="event-description">
-                      {useFallback ? truncateText(event.description) : event.description}
-                    </p>
-                    <div className="event-details">
-                      <div className="event-time">
-                        <span className="icon"><i className="bi bi-clock"></i></span>
-                        {formatTime(event.startTime)} - {formatTime(event.endTime)} {event.timeZone}
+                    <div className="event-content">
+                      <div className="event-header">
+                        <span className={`event-type ${event.eventType.toLowerCase()}`}>
+                          {event.eventType}
+                        </span>
+                        <span className="event-date">{formatDate(event.date)}</span>
                       </div>
-                      <div className="event-location">
-                        <span className="icon"><i className="bi bi-geo-alt"></i></span>
-                        {event.location}
+                      <div
+                        className="event-title one-line-ellipsis"
+                        ref={titleMarquee.titleContainerRef}
+                        onMouseEnter={titleMarquee.onMouseEnter}
+                        onMouseLeave={titleMarquee.onMouseLeave}
+                      >
+                        <span className="event-title__inner" title={event.title}>{event.title}</span>
+                      </div>
+                      <p className="event-description">
+                        {useFallback ? truncateText(event.description) : event.description}
+                      </p>
+                      <div className="event-details">
+                        <div className="event-time">
+                          <span className="icon"><i className="bi bi-clock"></i></span>
+                          {formatTime(event.startTime)} - {formatTime(event.endTime)} {event.timeZone}
+                        </div>
+                        <div className="event-location">
+                          <span className="icon"><i className="bi bi-geo-alt"></i></span>
+                          {event.location}
+                        </div>
+                      </div>
+                      <div className="event-actions">
+                        {can(user, 'events:update') && (
+                          <button
+                            className="edit-btn"
+                            onClick={() => handleEdit(event.id)}
+                          >
+                            Edit Details
+                          </button>
+                        )}
+                        {can(user, 'events:delete') && (
+                          <button
+                            className="delete-btn"
+                            onClick={() => handleDelete(event.id)}
+                          >
+                            Delete
+                          </button>
+                        )}
+                        {!can(user, 'events:create') && (
+                          <button
+                            className="register-btn"
+                            onClick={() => openRegisterModal(event)}
+                          >
+                            Register Now
+                          </button>
+                        )}
                       </div>
                     </div>
-                    <div className="event-actions">
-                      {can(user, 'events:update') && (
-                        <button
-                          className="edit-btn"
-                          onClick={() => handleEdit(event.id)}
-                        >
-                          Edit Details
-                        </button>
-                      )}
-                      {can(user, 'events:delete') && (
-                        <button
-                          className="delete-btn"
-                          onClick={() => handleDelete(event.id)}
-                        >
-                          Delete
-                        </button>
-                      )}
-                      {!can(user, 'events:create') && (
-                        <button
-                          className="register-btn"
-                          onClick={() => openRegisterModal(event)}
-                        >
-                          Register Now
-                        </button>
-                      )}
-                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </section>
         </div>
 
         {isModalOpen && (
@@ -500,12 +546,12 @@ export const Events = () => {
               onPointerDown={modalBackdropClose.stopInsidePointer}
               onClick={modalBackdropClose.stopInsidePointer}
             >
-                <button
-                  className="close-btn"
-                  onClick={handleCancel}
-                >
-                  <i className="bi bi-x"></i>
-                </button>
+              <button
+                className="close-btn"
+                onClick={handleCancel}
+              >
+                <i className="bi bi-x"></i>
+              </button>
               <div className="events-modal-header">
                 <h2>Event details</h2>
                 <p>Please fill in the details to create/update new event you'd like to store or manage in your account.</p>
@@ -538,7 +584,6 @@ export const Events = () => {
                     />
                   </div>
                   <div className="form-time">
-
                     <div className="form-group">
                       <input
                         type="time"
@@ -546,6 +591,7 @@ export const Events = () => {
                         name="startTime"
                         value={eventForm.form.startTime}
                         onChange={handleInputChange}
+                        placeholder="09:00"
                       />
                     </div>
                     <i className="bi bi-dash"></i>
@@ -555,8 +601,8 @@ export const Events = () => {
                         id="endTime"
                         name="endTime"
                         value={eventForm.form.endTime}
-                        min={eventForm.form.startTime || '00:00'}
                         onChange={handleInputChange}
+                        placeholder="17:00"
                       />
                     </div>
                   </div>
@@ -660,16 +706,19 @@ export const Events = () => {
                   </div>
                 </div>
 
-                {eventForm.errorMessage && (
-                  <div className="error-message">
-                    {eventForm.errorMessage}
-                  </div>
-                )}
-
                 <div className="form-actions">
-                  <button type="submit" className="upload-now-btn">
-                    Upload Now
-                  </button>
+                  {missingRequired.length > 0 && (
+                    <div
+                      className="app-form__error-banner"
+                      role="alert"
+                      aria-live="assertive"
+                      tabIndex={-1}
+                      ref={bannerRef}
+                    >
+                      <strong>Please fill all required fields:</strong> {missingRequired.join(', ')}
+                    </div>
+                  )}
+                  <button type="submit" className="upload-now-btn">Upload Now</button>
                 </div>
               </form>
             </div>
@@ -701,6 +750,8 @@ export const Events = () => {
                       <span className={`event-type ${registeringEvent.eventType.toLowerCase()}`}>
                         {registeringEvent.eventType}
                       </span>
+                      <h2>{registeringEvent.title}</h2>
+
                     </div>
 
                     <div className="register-event-info">
@@ -720,7 +771,6 @@ export const Events = () => {
                   </div>
 
                   <div className="register-event-description">
-                    <h2>{registeringEvent.title}</h2>
                     <h3>About this event</h3>
                     <p>{registeringEvent.description}</p>
                   </div>

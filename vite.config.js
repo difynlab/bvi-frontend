@@ -7,6 +7,9 @@ export default defineConfig({
   server: {
     fs: {
       allow: ['..']
+    },
+    headers: {
+      'Cross-Origin-Opener-Policy': 'unsafe-none'
     }
   }
 })

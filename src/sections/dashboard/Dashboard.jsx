@@ -169,7 +169,7 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <div className="notices-empty">No notices yet</div>
+            <div className="notices-empty">No notices yet...</div>
           )}
           <div className="card-footer">
             <NavLink to="/notices">View All Notices</NavLink>
@@ -188,7 +188,7 @@ const Dashboard = () => {
                 </div>
               ))
             ) : (
-              <div className="list-item">No items yet</div>
+              <div className="list-item empty-newsletters">No newsletters yet...</div>
             )}
           </div>
           <div className="card-footer">

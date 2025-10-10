@@ -448,7 +448,7 @@
 
 .newsletters-modal-overlay {
   position: fixed;
-  z-index: 1050;
+  z-index: 1100;
   top: 0;
   left: 0;
   right: 0;
@@ -463,7 +463,7 @@
 }
 
 .newsletters-modal {
-  z-index: 1051;
+    z-index: 1101;
   background: white;
   position: relative;
   border-radius: 12px;

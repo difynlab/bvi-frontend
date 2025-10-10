@@ -17,6 +17,7 @@ import Forbidden from './pages/Forbidden'
 import ResetPassword from './pages/ResetPassword'
 import SideNav from './components/SideNav'
 import { AuthProvider } from './context/AuthContext.jsx'
+import { ModalStateProvider } from './hooks/useModalState.jsx'
 
 const MainLayout = ({ children }) => {
   return (
@@ -38,8 +39,9 @@ function App() {
 
   return (
     <AuthProvider>
-      <BrowserRouter>
-      <Routes>
+      <ModalStateProvider>
+        <BrowserRouter>
+        <Routes>
         <Route path='/' element={<Navigate to="/register" replace />}></Route>
         <Route path='/register' element={<Register />}></Route>
         <Route path='/login' element={<Login />}></Route>
@@ -129,8 +131,9 @@ function App() {
             </MainLayout>
           </RouteGuard>
         }></Route>
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+        </BrowserRouter>
+      </ModalStateProvider>
     </AuthProvider>
   )
 }

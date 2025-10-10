@@ -110,8 +110,8 @@ export const useEventForm = () => {
   const emptyForm = {
     title: '',
     date: '',
-    startTime: '',
-    endTime: '',
+    startTime: '09:00',
+    endTime: '17:00',
     timeZone: 'UTC',
     eventType: 'Conference',
     repeat: 'NONE',
@@ -173,19 +173,11 @@ export const useEventForm = () => {
   const onChange = (key, value) => {
     // Handle time clamping logic
     if (key === 'startTime') {
-      // If startTime changes and endTime is set and endTime < startTime, adjust endTime
-      if (form.endTime && value && form.endTime < value) {
-        setForm(prev => ({ ...prev, [key]: value, endTime: value }))
-      } else {
-        setForm(prev => ({ ...prev, [key]: value }))
-      }
+      // Only update startTime, don't automatically change endTime
+      setForm(prev => ({ ...prev, [key]: value }))
     } else if (key === 'endTime') {
-      // If endTime is set and it's less than startTime, clamp it to startTime
-      if (value && form.startTime && value < form.startTime) {
-        setForm(prev => ({ ...prev, [key]: form.startTime }))
-      } else {
-        setForm(prev => ({ ...prev, [key]: value }))
-      }
+      // Only update endTime, validation will happen on submit
+      setForm(prev => ({ ...prev, [key]: value }))
     } else {
       setForm(prev => ({ ...prev, [key]: value }))
     }
@@ -232,7 +224,7 @@ export const useEventForm = () => {
       errors.push('Please complete all required fields.')
     } else if (!form.eventType) {
       errors.push('Please complete all required fields.')
-    } else if (!form.description.trim()) {
+    } else if (!form.description.trim() && !editorText.trim()) {
       errors.push('Please complete all required fields.')
     } else if (!form.location.trim()) {
       errors.push('Please complete all required fields.')
@@ -329,6 +321,7 @@ export const useEventForm = () => {
     initializeCreate,
     updateRecurrence,
     normalizeRecurrence,
+    stripHtml,
     TIME_ZONES,
     EVENT_TYPES,
     REPEAT_OPTIONS

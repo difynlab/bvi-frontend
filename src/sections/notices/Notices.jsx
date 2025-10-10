@@ -83,6 +83,30 @@ export const Notices = () => {
   }
 
   const [useFallback, setUseFallback] = useState(false)
+  const [editorKey, setEditorKey] = useState(0)
+  const [missingRequired, setMissingRequired] = useState([])
+  const bannerRef = useRef(null)
+
+  // Required fields validation
+  const REQUIRED = [
+    { key: 'fileName', label: 'File Name', test: () => (noticeForm?.form?.fileName || '').trim().length > 0 },
+    { key: 'noticeType', label: 'Notice Type', test: () => !!noticeForm?.form?.noticeType },
+    { key: 'description', label: 'Description', test: () => {
+        const html = (noticeForm?.editorHtml || noticeForm?.form?.description || '');
+        const text = html.replace(/<[^>]+>/g, '').trim();
+        return text.length > 0;
+      }
+    },
+    { key: 'linkUrl', label: 'Upload Link', test: () => (noticeForm?.form?.linkUrl || '').trim().length > 0 },
+    { key: 'file', label: 'File Upload', test: () => !!(noticeForm?.form?.imagePreviewUrl || noticeForm?.form?.imageFileName) }
+  ];
+
+  // Validation function
+  function validateRequired() {
+    const missing = REQUIRED.filter(r => !r.test()).map(r => r.label);
+    setMissingRequired(missing);
+    return missing.length === 0;
+  }
 
   useEffect(() => {
     const testElement = document.createElement('div')
@@ -97,11 +121,32 @@ export const Notices = () => {
 
   useEffect(() => {
     if (isNoticeModalOpen && editingNotice) {
-      noticeForm.loadFrom(editingNotice)
+      // Small delay to ensure modal is fully open before loading data
+      setTimeout(() => {
+        noticeForm.loadFrom(editingNotice)
+        setEditorKey(prev => prev + 1) // Force editor re-initialization
+      }, 10)
     } else if (isNoticeModalOpen && !editingNotice) {
-      noticeForm.reset()
+      // Small delay to ensure modal is fully open before initializing
+      setTimeout(() => {
+        noticeForm.initializeCreate()
+        setEditorKey(prev => prev + 1) // Force editor re-initialization
+      }, 10)
     }
   }, [isNoticeModalOpen, editingNotice])
+
+  // Reactive validation
+  useEffect(() => {
+    if (missingRequired.length) validateRequired();
+  }, [
+    noticeForm?.form?.fileName,
+    noticeForm?.form?.noticeType,
+    noticeForm?.editorHtml,
+    noticeForm?.form?.description,
+    noticeForm?.form?.linkUrl,
+    noticeForm?.form?.imagePreviewUrl,
+    noticeForm?.form?.imageFileName
+  ]);
 
   if (!isInitialized) {
     return (
@@ -158,22 +203,25 @@ export const Notices = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (noticeForm.validate(categories)) {
-      const payload = noticeForm.toPayload(editingNotice?.id)
-      
-      // Preserve creation timestamps when editing
-      if (editingNotice) {
-        // Preserve existing creation timestamps if they exist
-        if (editingNotice.createdAtISO) {
-          payload.createdAtISO = editingNotice.createdAtISO
-        }
-        if (editingNotice.createdAtMs) {
-          payload.createdAtMs = editingNotice.createdAtMs
-        }
-      }
-      
-      handleUpsertNotice(payload)
+    if (!validateRequired()) { 
+      bannerRef.current?.focus(); 
+      return; 
     }
+    
+    const payload = noticeForm.toPayload(editingNotice?.id)
+
+    // Preserve creation timestamps when editing
+    if (editingNotice) {
+      // Preserve existing creation timestamps if they exist
+      if (editingNotice.createdAtISO) {
+        payload.createdAtISO = editingNotice.createdAtISO
+      }
+      if (editingNotice.createdAtMs) {
+        payload.createdAtMs = editingNotice.createdAtMs
+      }
+    }
+
+    handleUpsertNotice(payload)
   }
 
   const handleAddCategorySubmit = () => {
@@ -297,14 +345,14 @@ export const Notices = () => {
           {categories.length === 0 ? (
             <EmptyPage
               isAdmin={can(user, 'notices:create')}
-              title={can(user,'notices:create') ? 'No categories yet!' : 'No categories available.'}
-              description={can(user,'notices:create') ? 'Create your first category to get started with notices.' : 'No notice categories have been created yet.'}
+              title={can(user, 'notices:create') ? 'No categories yet!' : 'No categories available.'}
+              description={can(user, 'notices:create') ? 'Create your first category to get started with notices.' : 'No notice categories have been created yet.'}
             />
           ) : visibleItems.length === 0 ? (
             <EmptyPage
               isAdmin={can(user, 'notices:create')}
-              title={can(user,'notices:create') ? 'No notices in this category!' : 'No notices found.'}
-              description={can(user,'notices:create') ? 'This category is empty. Add your first notice to get started!' : "This category doesn't have any notices yet."}
+              title={can(user, 'notices:create') ? 'No notices in this category!' : 'No notices found.'}
+              description={can(user, 'notices:create') ? 'This category is empty. Add your first notice to get started!' : "This category doesn't have any notices yet."}
             />
           ) : (
             <div className="notices-list">
@@ -321,6 +369,7 @@ export const Notices = () => {
                         >
                           <span className="notice-title__inner" title={notice.fileName}>{notice.fileName}</span>
                         </h3>
+                        <p className="notice-description">{getNoticeDescriptionText(notice)}</p>
                       </div>
                       <div className="notice-actions">
                         {can(user, 'notices:delete') && (
@@ -347,7 +396,6 @@ export const Notices = () => {
                         </button>
                       </div>
                     </div>
-                    <p className="notice-description">{getNoticeDescriptionText(notice)}</p>
                     <img
                       className="notice-card-image"
                       src={getNoticeImage(notice)}
@@ -356,6 +404,32 @@ export const Notices = () => {
                       onError={() => onImgError(notice)}
                     />
                     <span className="notice-date">Published: {formatDate(notice.createdAt || notice.publishDate)}</span>
+                    
+                    {/* Mobile actions - shown only on mobile */}
+                    <div className="notice-actions-mobile">
+                      {can(user, 'notices:delete') && (
+                        <button
+                          className="notice-card__delete-btn"
+                          onClick={() => handleDeleteNoticeLocal(notice.id)}
+                        >
+                          <i className="bi bi-trash"></i>
+                        </button>
+                      )}
+                      {can(user, 'notices:update') && (
+                        <button
+                          className="edit-btn"
+                          onClick={() => openEditNotice(notice)}
+                        >
+                          Edit
+                        </button>
+                      )}
+                      <button
+                        className="download-btn"
+                        onClick={() => window.open(notice.linkUrl, '_blank')}
+                      >
+                        Download Notice
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -425,6 +499,7 @@ export const Notices = () => {
                 <div className="form-group">
                   <label htmlFor="description">Description<span className="req-star" aria-hidden="true">*</span></label>
                   <RichTextEditor
+                    key={`${editingNotice ? `edit-${editingNotice.id}` : 'new'}-${editorKey}`}
                     docId={editingNotice ? editingNotice.id : 'new'}
                     initialHTML={noticeForm.editorHtml}
                     onChange={handleEditorChange}
@@ -476,13 +551,18 @@ export const Notices = () => {
                   </div>
                 </div>
 
-                {noticeForm.errorMessage && (
-                  <div className="error-message">
-                    {noticeForm.errorMessage}
-                  </div>
-                )}
-
                 <div className="form-actions">
+                  {missingRequired.length > 0 && (
+                    <div
+                      className="app-form__error-banner"
+                      role="alert"
+                      aria-live="assertive"
+                      tabIndex={-1}
+                      ref={bannerRef}
+                    >
+                      <strong>Please fill all required fields:</strong> {missingRequired.join(', ')}
+                    </div>
+                  )}
                   <button type="submit" className="upload-now-btn">
                     Upload Now
                   </button>

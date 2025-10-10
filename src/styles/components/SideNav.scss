@@ -246,15 +246,13 @@
 }
 
 @media (max-width: 768px) {
-  /* Narrow invisible strip at left edge to catch swipes */
   .side-nav-gesture-zone {
     position: fixed;
     left: 0; 
     top: 0;
-    width: 20px;              /* small edge width */
+    width: 20px;           
     height: 100dvh;
     z-index: 1000;
-    /* invisible but interactive */
     background: transparent;
     pointer-events: auto;
   }
@@ -267,7 +265,7 @@
     width: 170px;
     margin: 0;
     height: fit-content;
-    padding: 20px 0;
+    padding: 10px 0;
     position: fixed;
     top: 50%;
     transform: translateY(-50%);
@@ -360,11 +358,11 @@
       align-items: center;
       justify-content: space-between;
       padding: 10px;
-      padding-right: 10px;
+      padding-right: 11px;
       gap: 10px;
       .user-avatar {
-        width: 34px;
-        height: 34px;
+        width: 30px;
+        height: 30px;
       }
       .user-avatar-img {
         width: 40px;

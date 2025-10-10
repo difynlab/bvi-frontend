@@ -315,11 +315,13 @@ select.settings-input {
 @media (max-width: 480px) {
   .settings-header-title {
     h1 {
-      font-size: 1.75rem;
+      font-size: 24px;
+      line-height: 32px;
     }
 
     p {
-      font-size: 0.9rem;
+      font-size: 16px;
+      line-height: 24px;
     }
   }
 

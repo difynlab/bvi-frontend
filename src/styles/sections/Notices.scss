@@ -162,7 +162,9 @@
 
 .confirm-modal-content {
   padding: 20px;
-
+  p {
+    text-align: center;
+  }
   .form-actions {
 
     .cancel-button {
@@ -620,15 +622,11 @@
   transition: box-shadow 0.2s;
 }
 
-.notice-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-}
 
 .notice-info {
   flex: 1 1 auto;
   min-width: 0;
+  height: 100%;
 }
 
 .notice-actions {
@@ -659,16 +657,21 @@
 .notice-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .notice-title {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 18px;
   color: #333;
   margin: 0;
   flex: 1;
-  margin-right: 15px;
+  margin-right: 15px; 
+  &__inner{
+    font-size: 20px;
+    font-weight: 400;
+    color: #333;
+    height: 100%;
+  }
 }
 
 .notice-date {
@@ -680,7 +683,7 @@
 .notice-description {
   color: #666;
   line-height: 1.5;
-  margin: 0 0 20px 0;
+  margin: 0;
   font-size: 0.9rem;
   width: 75%;
 }
@@ -761,7 +764,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1100;
   padding: 20px;
 }
 
@@ -774,6 +777,18 @@
   max-height: 90vh;
   overflow-y: auto;
   padding: 40px;
+  
+  .app-form__error-banner {
+    margin: 0 0 10px 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgb(233, 49, 37, 0.1);
+    border: 1px solid rgb(233, 49, 37, 0.2);
+    color: $vivid_red;
+    font-size: 14px;
+    line-height: 1.3;
+    width: 100%;
+  }
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
   .close-btn {
@@ -836,6 +851,7 @@
 
   .form-actions {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 10px;
@@ -915,6 +931,7 @@
   justify-content: center;
   align-items: center;
   padding: 25px 0 30px 0;
+  padding-bottom: 0;
   gap: 10px;
 }
 
@@ -1044,17 +1061,38 @@
 
 @media (max-width: 768px) {
   .notices-page {
-    padding: 10px;
+    padding: 20px;
+    margin-bottom: 80px;
   }
 
   .notices-header {
     flex-direction: column;
     gap: 15px;
     align-items: stretch;
+    margin-bottom: 0;
   }
 
   .notices-header-actions {
+    .temp-role-toggle-btn, .notices-seed-btn {
+      display: none;
+    }
     justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+
+    /* keep buttons readable and not hidden behind cards */
+    position: sticky;
+    /* stays visible while scrolling */
+    top: 20px;
+    /* same vertical rhythm */
+    z-index: 2;
+
+    /* prevent overlap clipping in tight layouts */
+    background: transparent;
+    /* do not change visuals */
+    /* buttons keep their existing classes; no visual token changes */
   }
 
   .tabs-container {
@@ -1065,18 +1103,139 @@
     flex-direction: column;
     gap: 10px;
     align-items: flex-start;
+    justify-content: flex-start;
   }
 
-  .notice-actions {
-    flex-direction: column;
-  }
 
   .notices-modal {
     margin: 10px;
     max-height: calc(100vh - 20px);
+    min-width: 95%;
+    padding: 20px;
+    .close-btn {
+      top: 20px;
+      right: 20px;
+    }
+    .confirm-modal-content {
+      padding: 0;
+      p {
+        text-align: center;
+        padding-top: 10px;
+      }
+    }
+
   }
 
   .form-actions {
     flex-direction: column;
+  }
+  
+  .notices-modal {
+    .app-form__error-banner {
+      margin-bottom: 0;
+      font-size: 12px;
+    }
+  }
+
+  .notices-list {
+    .notice-card {
+      .notice-content {
+        display: flex;
+        flex-direction: column;
+        
+        .notice-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 12px;
+          
+          .notice-info {
+            width: 100%;
+          }
+          
+          .notice-actions {
+            display: none; // Hide original actions
+          }
+        }
+        
+        .notice-card-image {
+          order: 1; // Image comes first
+          margin: 12px 0;
+        }
+        
+        .notice-date {
+          order: 2; // Date comes second
+          margin-bottom: 12px;
+        }
+        
+        // Add new actions at the bottom
+        .notice-actions-mobile {
+          order: 3; // Actions come last
+          display: flex;
+          flex-direction: row;
+          gap: 8px;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: auto;
+          .edit-btn {
+            width: 60%;
+          }
+          .download-btn {
+            width: 100%;
+            text-wrap: nowrap;
+            
+          }
+        }
+      }
+    }
+  }
+
+  /* Mobile FAB styling - SOLO MÓVIL para Notices */
+  .notices-header-actions {
+    .add-notice-btn {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      min-width: 0;
+      /* Mantener colores originales */
+      background-color: $vivid_red;
+      color: white;
+      border: none;
+
+      /* Hide text, show only icon */
+      font-size: 0;
+      
+      i {
+        font-size: 30px;
+        margin: 0;
+        opacity: 1;
+      }
+    }
+  }
+}
+
+// Hide mobile actions on desktop
+@media (min-width: 769px) {
+  .notices-list {
+    .notice-card {
+      .notice-content {
+        .notice-actions-mobile {
+          display: none;
+        }
+        
+        .notice-header {
+          .notice-actions {
+            display: flex; // Show original actions on desktop
+          }
+        }
+      }
+    }
   }
 }

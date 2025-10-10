@@ -1,0 +1,68 @@
+/* Mobile-first override for typography only. Desktop untouched. */
+@media (max-width: 768px) {
+  /* HERO (Top-most hero headings) */
+  /* Apply to common hero/title wrappers found across the app */
+  .dashboard-header-title h1,
+  .legislation-header-title,
+  .page-hero h1,
+  .hero h1,
+  .hero-title {
+    font-size: 32px;      /* 32–34 px allowed; choose 32 for consistency */
+    line-height: 40px;
+  }
+
+  /* H1 */
+  h1,
+  .h1,
+  [data-typography='h1'] {
+    font-size: 24px;
+    line-height: 32px;
+  }
+
+  /* H2 */
+  h2,
+  .h2,
+  [data-typography='h2'] {
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  /* Body / Paragraph */
+  p,
+  .body,
+  .text-body,
+  [data-typography='body'] {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  /* Secondary / Caption */
+  small,
+  .caption,
+  .text-caption,
+  [data-typography='caption'] {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  /* Footnote / Helper (notes, disclaimers, tooltips) */
+  .footnote,
+  .helper-text,
+  .form-helper,
+  .tooltip-text,
+  [data-typography='footnote'] {
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  /* Buttons / CTA */
+  .btn,
+  button,
+  .cta,
+  .btn-primary,
+  .btn-secondary {
+    font-size: 16px;
+    line-height: 20px;      /* allowed 20–24px; use 20 for compact controls */
+    font-weight: 600;       /* Medium / SemiBold */
+  }
+}

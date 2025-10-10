@@ -72,8 +72,18 @@ export const useNoticeForm = () => {
     if (item) {
       originalRef.current = deepClone(item)
       const formData = fromItem(originalRef.current)
-      const initialHtml = originalRef.current.editorHtml || htmlFromPlain(originalRef.current.description || '')
-      const description = originalRef.current.description || stripHtml(originalRef.current.editorHtml || '')
+      
+      // Prioritize editorHtml if it exists, otherwise use description
+      let initialHtml = ''
+      let description = ''
+      
+      if (originalRef.current.editorHtml) {
+        initialHtml = originalRef.current.editorHtml
+        description = stripHtml(originalRef.current.editorHtml)
+      } else if (originalRef.current.description) {
+        description = originalRef.current.description
+        initialHtml = htmlFromPlain(originalRef.current.description)
+      }
       
       setForm(formData)
       setEditorHtml(initialHtml)
@@ -92,8 +102,18 @@ export const useNoticeForm = () => {
     if (!originalRef.current) return
     
     const formData = fromItem(originalRef.current)
-    const initialHtml = originalRef.current.editorHtml || htmlFromPlain(originalRef.current.description || '')
-    const description = originalRef.current.description || stripHtml(originalRef.current.editorHtml || '')
+    
+    // Prioritize editorHtml if it exists, otherwise use description
+    let initialHtml = ''
+    let description = ''
+    
+    if (originalRef.current.editorHtml) {
+      initialHtml = originalRef.current.editorHtml
+      description = stripHtml(originalRef.current.editorHtml)
+    } else if (originalRef.current.description) {
+      description = originalRef.current.description
+      initialHtml = htmlFromPlain(originalRef.current.description)
+    }
     
     setForm(formData)
     setEditorHtml(initialHtml)
@@ -236,6 +256,7 @@ export const useNoticeForm = () => {
     rollbackEdit,
     initializeCreate,
     reset,
+    stripHtml,
     
     // Legacy compatibility
     setForm,

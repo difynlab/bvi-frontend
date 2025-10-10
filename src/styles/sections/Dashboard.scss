@@ -76,7 +76,7 @@
       .tri-4 {
         border-left-width: 10px;
         border-right-width: 10px;
-        border-bottom-width: 16px;  
+        border-bottom-width: 16px;
         border-bottom-color: $vivid_red;
         top: 52%;
         right: 20%;
@@ -284,6 +284,7 @@
 
       &.notices-card {
         justify-content: space-between;
+
         .list {
           display: flex;
           flex-direction: column;
@@ -500,11 +501,55 @@
 // Responsive adjustments
 @media (max-width: 768px) {
   .dashboard-container {
-    padding: 1rem;
+    padding: 20px;
 
     .dashboard-cards {
       grid-template-columns: 1fr;
       gap: 20px;
+
+      .dashboard-card {
+        &.events-card {
+          min-height: fit-content;
+          h3.empty-title {
+            height: 100px;
+          }
+        }
+
+        .list {
+          .list-item {
+            &.empty-newsletters {
+              min-height: 100px;
+              background-color: white;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              opacity: 0.8;
+              color: #666;
+            }
+          }
+        }
+
+      }
+    }
+
+    .dashboard-header {
+      padding: 20px;
+
+      &-title {
+        height: fit-content;
+
+        h1 {
+          font-size: 24px;
+        }
+      }
+
+      &-decor {
+        display: none;
+      }
+
+      img {
+        display: none;
+      }
     }
   }
 }
