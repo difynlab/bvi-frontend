@@ -262,17 +262,19 @@
   }
   .side-nav {
     flex: 0;
+    background: #262626;
     width: 170px;
     margin: 0;
-    height: fit-content;
+    height: 100dvh;
     padding: 10px 0;
     position: fixed;
     top: 50%;
     transform: translateY(-50%);
-    border-radius: 0 10px 10px 0;
+    border-radius: 0;
     transition: left .3s; /* keep same motion */
     overflow: hidden; /* prevent items protruding */
     z-index: 1001;            /* above gesture zone */
+    justify-content: center;
 
     /* STATE: collapsed vs expanded (no :hover navigation side-effects) */
     &.is-collapsed { left: -120px; }
@@ -368,5 +370,13 @@
         width: 40px;
       }
     }
+  }
+
+  // CSS safety: disable gesture hit-area when modal is open
+  .has-modal-open .side-nav-gesture-zone { 
+    pointer-events: none; 
+  }
+  .has-modal-open .side-nav { 
+    touch-action: none; 
   }
 }

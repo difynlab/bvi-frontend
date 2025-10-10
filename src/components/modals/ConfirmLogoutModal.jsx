@@ -1,6 +1,7 @@
 import React from 'react';
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import ModalLifecycleLock from './ModalLifecycleLock';
 import '../../styles/components/ConfirmLogoutModal.scss';
 
 export default function ConfirmLogoutModal({ isOpen, onClose, onConfirm }) {
@@ -17,6 +18,7 @@ export default function ConfirmLogoutModal({ isOpen, onClose, onConfirm }) {
       onPointerUp={modalBackdropClose.onBackdropPointerUp}
       onPointerCancel={modalBackdropClose.onBackdropPointerCancel}
     >
+      <ModalLifecycleLock />
       <div
         className="logout-modal"
         onPointerDown={modalBackdropClose.stopInsidePointer}

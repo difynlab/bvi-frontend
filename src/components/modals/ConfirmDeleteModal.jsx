@@ -1,12 +1,11 @@
 import React, { useEffect, useRef } from 'react'
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
+import ModalLifecycleLock from './ModalLifecycleLock'
 
 export const ConfirmDeleteModal = ({
   isOpen,
   onClose,
-  onConfirm,
-  entityLabel,
-  itemName
+  onConfirm
 }) => {
   const modalBackdropClose = useModalBackdropClose(onClose)
   const deleteButtonRef = useRef(null)
@@ -39,34 +38,36 @@ export const ConfirmDeleteModal = ({
 
   return (
     <div
-      className="notices-modal-overlay"
+      className="confirm-delete-overlay"
       onPointerDown={modalBackdropClose.onBackdropPointerDown}
       onPointerUp={modalBackdropClose.onBackdropPointerUp}
       onPointerCancel={modalBackdropClose.onBackdropPointerCancel}
     >
+      <ModalLifecycleLock />
       <div
-        className="notices-modal confirm-delete-modal"
+        className="confirm-delete-modal"
         onPointerDown={modalBackdropClose.stopInsidePointer}
         onClick={modalBackdropClose.stopInsidePointer}
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-delete-title"
       >
-        <div className="notices-modal-header">
-          <h2 id="confirm-delete-title">Confirm Deletion</h2>
-          <button
-            className="close-btn"
-            onClick={onClose}
-            aria-label="Close modal"
-          >
-            <i className="bi bi-x"></i>
-          </button>
+        <button
+          className="close-btn"
+          onClick={onClose}
+          aria-label="Close modal"
+        >
+          <i className="bi bi-x"></i>
+        </button>
+        <div className="confirm-delete-modal-header">
+          <i className="bi bi-exclamation-triangle"></i>
+          <h2 id="confirm-delete-title">Are you sure?</h2>
+
         </div>
 
         <div className="confirm-modal-content">
           <p>
-            Are you sure you want to delete this {entityLabel}
-            {itemName ? ` "${itemName}"` : ''}?
+            Deleting this file record will erase all the data from the system permanently. This action cannot be reversed.
           </p>
 
           <div className="form-actions">
@@ -83,7 +84,7 @@ export const ConfirmDeleteModal = ({
               className="delete-button"
               ref={deleteButtonRef}
             >
-              Delete
+              <i className="bi bi-trash"></i>Confirm Deletion
             </button>
           </div>
         </div>

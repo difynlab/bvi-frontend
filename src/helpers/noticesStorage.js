@@ -223,3 +223,26 @@ export function getMockNotices() {
     mk('Member Bulletin B',       2160, 'cat-3'),
   ]
 }
+
+// Active tab persistence helpers
+const ACTIVE_KEY = 'bvi.notices.activeTab'
+
+export function loadActiveTabId() {
+  try {
+    return localStorage.getItem(ACTIVE_KEY)
+  } catch {
+    return null
+  }
+}
+
+export function saveActiveTabId(id) {
+  try {
+    if (id) {
+      localStorage.setItem(ACTIVE_KEY, id)
+    } else {
+      localStorage.removeItem(ACTIVE_KEY)
+    }
+  } catch {
+    // Silently fail if localStorage is not available
+  }
+}

@@ -119,12 +119,6 @@
   border-left: 4px solid $vivid_red;
 }
 
-// Scoped styles for confirm delete modal
-.newsletters-container {
-  .confirm-delete-modal {
-    // Add any specific styles if needed
-  }
-}
 
 .newsletters-page {
   padding: 30px;
@@ -248,6 +242,34 @@
       color: #6c757d;
       margin: 0 0 24px 0;
       font-size: 16px;
+    }
+  }
+
+  // Mobile-only empty-state responsive styles
+  @media (max-width: 768px) {
+    .empty-state {
+      padding: 16px;
+
+      img,
+      img.empty-state-user {
+        display: block;
+        max-width: 250px;
+        width: 100%;
+        height: auto;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 16px;
+      }
+
+      h2 {
+        font-size: 20px;
+        line-height: 28px;
+      }
+
+      p {
+        font-size: 16px;
+        line-height: 24px;
+      }
     }
   }
 }
@@ -668,5 +690,104 @@
   .modal-content {
     margin: 16px;
     max-height: calc(100vh - 32px);
+  }
+}
+
+/* Mobile responsive styles for Newsletters */
+@media (max-width: 768px) {
+  .newsletters-page {
+    padding: 20px;            /* align with responsive context */
+    margin-bottom: 80px;      /* space for FAB */
+    box-sizing: border-box;
+  }
+
+  .newsletters-header {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;   /* stack title + actions */
+    gap: 16px;
+    align-items: stretch;
+
+    h1 {
+      text-align: center;
+      font-size: 2rem;        /* mobile title size per context */
+      margin: 0;
+    }
+
+    .newsletters-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+
+      /* keep other header buttons visible and tappable */
+      position: sticky;
+      top: 12px;
+      z-index: 2;
+      background: transparent;  /* do not change visuals */
+    }
+  }
+
+  /* Cards: single column, full width */
+  .newsletters-list {
+    display: grid;                    /* adapt like Events */
+    grid-template-columns: 1fr;
+    gap: 20px;
+    overflow-x: hidden;
+  }
+
+  .newsletter-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+
+    img, .card-image, .newsletter-cover {
+      width: 100%;
+      height: auto;
+      max-width: 100%;
+      display: block;
+    }
+  }
+
+  /* FAB: icon-only round Add button fixed at bottom-right */
+  .newsletters-add-btn {
+    position: fixed;
+    right: clamp(12px, 4vw, 20px);
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;                    /* above cards/actions */
+    min-width: 0;
+
+    .btn-label { display: none; }  /* hide text on mobile */
+    i { font-size: 20px; line-height: 1; }
+  }
+
+  /* Empty state: match shared mobile rules */
+  .empty-state {
+    padding: 16px;
+
+    img, img.empty-state-user {
+      display: block;
+      max-width: 250px;
+      width: 100%;
+      height: auto;
+      margin: 0 auto 16px;
+    }
+    h2 { font-size: 20px; line-height: 28px; }
+    p  { font-size: 16px; line-height: 24px; }
+  }
+
+  /* Form actions within modals triggered from Newsletters: vertical stack on mobile */
+  .form-actions {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
   }
 }

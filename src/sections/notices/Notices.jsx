@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useAuth } from '../../context/useAuth'
 import { can } from '../../auth/acl'
 import { useNoticesState } from '../../hooks/useNoticesState'
@@ -8,13 +8,22 @@ import { useTitleMarquee } from '../../hooks/useTitleMarquee'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import RichTextEditor from '../../components/editor/RichTextEditor'
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
+import NoticesTabPicker from '../../components/modals/NoticesTabPicker'
+import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock'
 import EmptyPage from '../../components/EmptyPage'
+import { loadActiveTabId, saveActiveTabId } from '../../helpers/noticesStorage'
 import '../../styles/sections/Notices.scss'
 
 export const Notices = () => {
   const NOTICE_PLACEHOLDER = '/images/notices-mock.png'
+  const MOBILE_Q = '(max-width: 768px)'
   const failedImageIdsRef = useRef(new Set())
   const [fallbackTick, setFallbackTick] = useState(0)
+
+  // Mobile state management
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia(MOBILE_Q).matches)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [activeTabId, setActiveTabId] = useState(() => loadActiveTabId() || null)
   const getNoticeImage = (n) => {
     if (!n) return NOTICE_PLACEHOLDER
     if (failedImageIdsRef.current.has(n.id)) return NOTICE_PLACEHOLDER
@@ -53,6 +62,65 @@ export const Notices = () => {
     seedFromMocks
   } = useNoticesState()
 
+  // Mobile responsive effect
+  useEffect(() => {
+    const mql = window.matchMedia(MOBILE_Q)
+    const onChange = () => setIsMobile(mql.matches)
+    mql.addEventListener?.('change', onChange)
+    return () => mql.removeEventListener?.('change', onChange)
+  }, [])
+
+  // Active tab management effect
+  useEffect(() => {
+    if (!categories.length) {
+      setActiveTabId(null)
+      saveActiveTabId(null)
+      return
+    }
+    if (!activeTabId || !categories.some(c => c.id === activeTabId)) {
+      const next = categories[0].id
+      setActiveTabId(next)
+      saveActiveTabId(next)
+    }
+  }, [categories, activeTabId])
+
+  // Sync mobile activeTabId with desktop activeCategory when in mobile mode
+  useEffect(() => {
+    if (isMobile && activeCategory && activeCategory !== activeTabId) {
+      setActiveTabId(activeCategory)
+      saveActiveTabId(activeCategory)
+    }
+  }, [isMobile, activeCategory, activeTabId])
+
+  // Mobile handlers
+  const onSelectCategory = (id) => {
+    setActiveTabId(id)
+    saveActiveTabId(id)
+    if (isMobile) {
+      setActiveCategory(id)
+    }
+  }
+
+  const onAddCategory = () => {
+    setIsCategoryModalOpen(true)
+  }
+
+  const onDeleteCategory = (id) => {
+    handleDeleteCategory(id)
+    if (id === activeTabId) {
+      const remaining = categories.filter(c => c.id !== id)
+      const next = remaining[0]?.id || null
+      setActiveTabId(next)
+      saveActiveTabId(next)
+    }
+  }
+
+  // Get active category for mobile display
+  const activeCategoryData = useMemo(
+    () => categories.find(c => c.id === activeTabId) || null,
+    [categories, activeTabId]
+  )
+
   const noticeForm = useNoticeForm()
 
   const [newCategoryName, setNewCategoryName] = useState('')
@@ -73,7 +141,7 @@ export const Notices = () => {
 
   const titleMarquee = useTitleMarquee()
 
-  useBodyScrollLock(isNoticeModalOpen || isCategoryModalOpen || confirmModalOpen || isNoticeDeleteConfirmOpen)
+  useBodyScrollLock(isNoticeModalOpen || isCategoryModalOpen || confirmModalOpen || isNoticeDeleteConfirmOpen || pickerOpen)
 
   const truncateText = (text, maxLength = 110) => {
     if (!text || text.length <= maxLength) return text
@@ -91,7 +159,8 @@ export const Notices = () => {
   const REQUIRED = [
     { key: 'fileName', label: 'File Name', test: () => (noticeForm?.form?.fileName || '').trim().length > 0 },
     { key: 'noticeType', label: 'Notice Type', test: () => !!noticeForm?.form?.noticeType },
-    { key: 'description', label: 'Description', test: () => {
+    {
+      key: 'description', label: 'Description', test: () => {
         const html = (noticeForm?.editorHtml || noticeForm?.form?.description || '');
         const text = html.replace(/<[^>]+>/g, '').trim();
         return text.length > 0;
@@ -203,11 +272,11 @@ export const Notices = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!validateRequired()) { 
-      bannerRef.current?.focus(); 
-      return; 
+    if (!validateRequired()) {
+      bannerRef.current?.focus();
+      return;
     }
-    
+
     const payload = noticeForm.toPayload(editingNotice?.id)
 
     // Preserve creation timestamps when editing
@@ -306,41 +375,76 @@ export const Notices = () => {
             </div>
           </div>
 
-          <div className="category-tabs">
-            <div className="tabs-container">
-              {categories.map(category => (
-                <div key={category.id} className="tab-group">
+          {/* Header area */}
+          {isMobile ? (
+            <div className="notices-mobile-header" role="region" aria-label="Notice categories">
+              <div className="category-title">
+                {categories.length > 1 && (
                   <button
-                    className={`category-tab ${activeCategory === category.id ? 'active' : ''}`}
-                    onClick={() => setActiveCategory(category.id)}
-                  >
-                    <span>{category.name}</span>
+                    type="button"
+                    className="category-picker-btn"
+                    onClick={() => setPickerOpen(true)}
+                    aria-haspopup="dialog"
+                    aria-controls="noticesTabPicker">
+                    <h2>
+                      {activeCategoryData?.name || 'Notices'}
+                    </h2>
+                    <i className="bi bi-chevron-down" aria-hidden="true"></i>
                   </button>
-                  {can(user, 'notices:delete') && (
-                    <button
-                      className="category-tab__delete"
-                      onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id); }}
-                      aria-label="Delete category"
-                    >
-                      <i className="bi bi-x-lg"></i>
-                    </button>
-                  )}
-                </div>
-              ))}
-
+                )}
+              </div>
               {can(user, 'notices:create') && (
                 <button
-                  className="add-category-btn"
-                  onClick={() => setIsCategoryModalOpen(true)}
+                  type="button"
+                  className="add-tab-btn"
+                  onClick={onAddCategory}
+                  aria-label="Add category"
+                  title="Add category"
                 >
-                  <i className="bi bi-plus"></i>
+                  <i className="bi bi-plus" aria-hidden="true"></i>
                 </button>
               )}
             </div>
-            {categoryError && (
-              <div className="category-error">{categoryError}</div>
-            )}
-          </div>
+          ) : (
+            /* existing desktop tabs header stays as-is */
+            <div className="notices-tabs-desktop" role="tablist" aria-orientation="horizontal">
+              <div className="category-tabs">
+                <div className="tabs-container">
+                  {categories.map(category => (
+                    <div key={category.id} className="tab-group">
+                      <button
+                        className={`category-tab ${activeCategory === category.id ? 'active' : ''}`}
+                        onClick={() => setActiveCategory(category.id)}
+                      >
+                        <span>{category.name}</span>
+                      </button>
+                      {can(user, 'notices:delete') && (
+                        <button
+                          className="category-tab__delete"
+                          onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id); }}
+                          aria-label="Delete category"
+                        >
+                          <i className="bi bi-x-lg"></i>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                  {can(user, 'notices:create') && (
+                    <button
+                      className="add-category-btn"
+                      onClick={() => setIsCategoryModalOpen(true)}
+                    >
+                      <i className="bi bi-plus"></i>
+                    </button>
+                  )}
+                </div>
+                {categoryError && (
+                  <div className="category-error">{categoryError}</div>
+                )}
+              </div>
+            </div>
+          )}
 
           {categories.length === 0 ? (
             <EmptyPage
@@ -404,7 +508,7 @@ export const Notices = () => {
                       onError={() => onImgError(notice)}
                     />
                     <span className="notice-date">Published: {formatDate(notice.createdAt || notice.publishDate)}</span>
-                    
+
                     {/* Mobile actions - shown only on mobile */}
                     <div className="notice-actions-mobile">
                       {can(user, 'notices:delete') && (
@@ -445,27 +549,28 @@ export const Notices = () => {
             onPointerUp={modalBackdropClose.onBackdropPointerUp}
             onPointerCancel={modalBackdropClose.onBackdropPointerCancel}
           >
+            <ModalLifecycleLock />
             <div
               className="notices-modal"
               onPointerDown={modalBackdropClose.stopInsidePointer}
               onClick={modalBackdropClose.stopInsidePointer}
             >
+              <button
+                className="close-btn"
+                onClick={() => {
+                  if (editingNotice) {
+                    noticeForm.rollbackEdit()
+                  } else {
+                    noticeForm.reset()
+                  }
+                  closeNoticeModal()
+                }}
+              >
+                <i className="bi bi-x"></i>
+              </button>
               <div className="notices-modal-header">
                 <h2>Upload Notices</h2>
                 <p>Please review the information before saving.</p>
-                <button
-                  className="close-btn"
-                  onClick={() => {
-                    if (editingNotice) {
-                      noticeForm.rollbackEdit()
-                    } else {
-                      noticeForm.reset()
-                    }
-                    closeNoticeModal()
-                  }}
-                >
-                  <i className="bi bi-x"></i>
-                </button>
               </div>
 
               <form onSubmit={handleSubmit}>
@@ -581,6 +686,7 @@ export const Notices = () => {
           onPointerUp={addCategoryModalBackdropClose.onBackdropPointerUp}
           onPointerCancel={addCategoryModalBackdropClose.onBackdropPointerCancel}
         >
+          <ModalLifecycleLock />
           <div
             className="notices-modal notices-addcat-modal"
             onPointerDown={addCategoryModalBackdropClose.stopInsidePointer}
@@ -646,19 +752,21 @@ export const Notices = () => {
           onPointerUp={confirmModalBackdropClose.onBackdropPointerUp}
           onPointerCancel={confirmModalBackdropClose.onBackdropPointerCancel}
         >
+          <ModalLifecycleLock />
           <div
-            className="notices-modal"
+            className="notices-deleteCategory-modal"
             onPointerDown={confirmModalBackdropClose.stopInsidePointer}
             onClick={confirmModalBackdropClose.stopInsidePointer}
           >
-            <div className="notices-modal-header">
+            <button
+              className="close-btn"
+              onClick={() => setConfirmModalOpen(false)}
+            >
+              <i className="bi bi-x"></i>
+            </button>
+            <div className="notices-deleteModal-header">
+              <i className="bi bi-trah"></i>
               <h2>Delete category?</h2>
-              <button
-                className="close-btn"
-                onClick={() => setConfirmModalOpen(false)}
-              >
-                <i className="bi bi-x"></i>
-              </button>
             </div>
 
             <div className="confirm-modal-content">
@@ -685,8 +793,18 @@ export const Notices = () => {
           setNoticeToDelete(null)
         }}
         onConfirm={handleConfirmDeleteNotice}
-        entityLabel="Notice"
-        itemName={noticeToDelete?.fileName}
+      />
+
+      {/* Mobile Category Picker Modal */}
+      <NoticesTabPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        categories={categories}
+        activeTabId={activeTabId}
+        onSelect={onSelectCategory}
+        canManage={can(user, 'notices:create')}
+        onAddCategory={onAddCategory}
+        onDeleteCategory={onDeleteCategory}
       />
     </>
   )

@@ -10,6 +10,7 @@ import { useModalRegistration } from '../../hooks/useModalState.jsx'
 import RichTextEditor from '../../components/editor/RichTextEditor'
 import { CustomRecurrencePopover } from '../../components/events/CustomRecurrencePopover'
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
+import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock'
 import EmptyPage from '../../components/EmptyPage'
 import '../../styles/sections/Events.scss'
 
@@ -541,6 +542,7 @@ export const Events = () => {
             onPointerUp={modalBackdropClose.onBackdropPointerUp}
             onPointerCancel={modalBackdropClose.onBackdropPointerCancel}
           >
+            <ModalLifecycleLock />
             <div
               className="events-modal"
               onPointerDown={modalBackdropClose.stopInsidePointer}
@@ -733,6 +735,7 @@ export const Events = () => {
             onPointerUp={registerModalBackdropClose.onBackdropPointerUp}
             onPointerCancel={registerModalBackdropClose.onBackdropPointerCancel}
           >
+            <ModalLifecycleLock />
             <div
               className="register-modal"
               onPointerDown={registerModalBackdropClose.stopInsidePointer}
@@ -798,8 +801,6 @@ export const Events = () => {
           setEventToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
-        entityLabel="Event"
-        itemName={eventToDelete?.title}
       />
     </>
   )

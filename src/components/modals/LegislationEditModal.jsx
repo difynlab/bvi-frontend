@@ -3,6 +3,7 @@ import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import RichTextEditor from '../editor/RichTextEditor';
 import { isValidUrl } from '../../helpers/urlValidation';
+import ModalLifecycleLock from './ModalLifecycleLock';
 import '../../styles/components/LegislationEditModal.scss';
 
 const LegislationEditModal = ({ isOpen, onClose, onSave }) => {
@@ -157,6 +158,7 @@ const LegislationEditModal = ({ isOpen, onClose, onSave }) => {
       onPointerUp={modalBackdropClose.onBackdropPointerUp}
       onPointerCancel={modalBackdropClose.onBackdropPointerCancel}
     >
+      <ModalLifecycleLock />
       <div
         className="legislation-edit-modal"
         role="dialog"

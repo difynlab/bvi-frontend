@@ -1,0 +1,169 @@
+/* src/styles/components/ConfirmDeleteModal.scss */
+@use '../vars' as *;
+
+/* Overlay: apply only when it's the ConfirmDelete modal */
+.confirm-delete-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100dvw;
+    height: 100dvh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1300;
+    /* above any pickers or sheets */
+}
+
+/* Container */
+.confirm-delete-modal,
+.notices-deleteCategory-modal {
+    background: #fff;
+    position: relative;
+    width: 50%;
+    max-height: 90vh;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.notices-deleteCategory-modal {
+    padding: 20px;
+
+    h2 {
+        text-align: center;
+        font-weight: 400;
+    }
+}
+
+/* Header */
+.confirm-delete-modal-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding: 20px;
+    padding-bottom: 0;
+    gap: 0;
+
+    h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 400;
+        color: #262626;
+    }
+}
+
+/* Close button */
+.close-btn {
+    position: absolute;
+    right: 20px;
+    top: 16px;
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    color: #666;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background-color .2s, color .2s;
+    z-index: 100;
+}
+
+/* Body */
+.confirm-modal-content {
+    padding: 20px 0;
+
+    p {
+        margin: 0 0 20px 0;
+        text-align: center;
+        color: #262626;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 20px;
+
+        button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: transform .02s ease, box-shadow .2s ease;
+
+            &:active {
+                transform: translateY(1px);
+            }
+        }
+
+        .cancel-button {
+            background: #fff;
+            border: 1px solid #262626;
+            color: #262626;
+        }
+
+        .delete-button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background-color: $vivid_red;
+            color: #fff;
+
+            &:hover {
+                background-color: #c82314;
+            }
+        }
+    }
+
+}
+
+
+/* Mobile */
+@media (max-width: 768px) {
+    .confirm-delete-modal {
+        min-width: 90%;
+        max-height: calc(100vh - 20px);
+        padding: 10px
+    }
+
+    .confirm-modal-content {
+        padding: 10px 0;
+
+        p {
+            font-size: 14px;
+            line-height: 20px;
+            padding: 0 10px;
+        }
+        .form-actions {
+            flex-direction: row;
+        }
+    }
+
+    .confirm-delete-modal-header {
+        padding: 10px;
+        padding-bottom: 0;
+
+        i {
+            font-size: 25px;
+            color: $vivid_red;
+
+        }
+
+        h2 {
+            font-size: 20px;
+            line-height: 28px;
+        }
+
+        .close-btn {
+            right: 14px;
+            top: 12px;
+        }
+    }
+}

@@ -200,8 +200,6 @@ const Legislation = () => {
           setAttachmentToDelete(null)
         }}
         onConfirm={handleConfirmDeleteAttachment}
-        entityLabel="Attachment"
-        itemName={attachmentToDelete?.title}
       />
     </div>
   );

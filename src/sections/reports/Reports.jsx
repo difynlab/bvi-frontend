@@ -6,6 +6,7 @@ import { useReportForm } from '../../hooks/useReportForm';
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal';
+import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock';
 import '../../styles/sections/Reports.scss';
 
 export default function Reports() {
@@ -260,6 +261,7 @@ export default function Reports() {
           onPointerUp={categoryModalBackdropClose.onBackdropPointerUp}
           onPointerCancel={categoryModalBackdropClose.onBackdropPointerCancel}
         >
+          <ModalLifecycleLock />
           <div
             className="reports-modal reports-addcat-modal"
             onPointerDown={categoryModalBackdropClose.stopInsidePointer}
@@ -323,6 +325,7 @@ export default function Reports() {
           onPointerUp={reportModalBackdropClose.onBackdropPointerUp}
           onPointerCancel={reportModalBackdropClose.onBackdropPointerCancel}
         >
+          <ModalLifecycleLock />
           <div
             className="reports-modal"
             onPointerDown={reportModalBackdropClose.stopInsidePointer}
@@ -446,6 +449,7 @@ export default function Reports() {
           onPointerUp={confirmModalBackdropClose.onBackdropPointerUp}
           onPointerCancel={confirmModalBackdropClose.onBackdropPointerCancel}
         >
+          <ModalLifecycleLock />
           <div
             className="reports-modal"
             onPointerDown={confirmModalBackdropClose.stopInsidePointer}
@@ -485,8 +489,6 @@ export default function Reports() {
           setReportToDelete(null)
         }}
         onConfirm={handleConfirmDeleteReport}
-        entityLabel="Report"
-        itemName={reportToDelete?.title}
       />
     </div>
   );

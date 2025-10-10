@@ -7,6 +7,7 @@ import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import RichTextEditor from '../../components/editor/RichTextEditor'
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
+import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock'
 import EmptyPage from '../../components/EmptyPage'
 import '../../styles/sections/Newsletters.scss'
 
@@ -164,13 +165,13 @@ const Newsletters = () => {
     <div className="newsletters-page">
       <div className="newsletters-container">
         {/* Header */}
-        <div className="newsletters-header">
+        <header className="newsletters-header">
           <div className="notices-header-title">
             <h1>Newsletters</h1>
             <p>Manage Newsletters</p>
           </div>
 
-          <div className="newsletters-toolbar">
+          <div className="newsletters-actions">
             {/* TODO TEMPORARY: button to switch between admin and user view. REMOVE before production. */}
             <button
               className="temp-role-toggle-btn"
@@ -190,14 +191,18 @@ const Newsletters = () => {
 
             {user?.role === 'admin' && (
               <button
-                className="add-newsletter-btn"
+                type="button"
+                className="btn btn-primary newsletters-add-btn"
                 onClick={() => openModal()}
+                aria-label="Add newsletter"
+                title="Add Newsletter"
               >
-                <i className="bi bi-plus"></i> Add New
+                <i className="bi bi-plus-lg" aria-hidden="true"></i>
+                <span className="btn-label">Add Newsletter</span>
               </button>
             )}
           </div>
-        </div>
+        </header>
 
         {/* Newsletter List */}
         {newsletters.length === 0 ? (
@@ -267,6 +272,7 @@ const Newsletters = () => {
             onPointerUp={modalBackdropClose.onBackdropPointerUp}
             onPointerCancel={modalBackdropClose.onBackdropPointerCancel}
           >
+            <ModalLifecycleLock />
             <div
               className="newsletters-modal"
               onPointerDown={modalBackdropClose.stopInsidePointer}
@@ -377,8 +383,6 @@ const Newsletters = () => {
           setNewsletterToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
-        entityLabel="Newsletter"
-        itemName={newsletterToDelete?.fileName}
       />
     </div>
   )

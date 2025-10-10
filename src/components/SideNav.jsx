@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
-import { useModalState } from '../hooks/useModalState.jsx'
+import { isAnyModalOpen } from '../helpers/modalLock'
 import ConfirmLogoutModal from './modals/ConfirmLogoutModal'
 import '../styles/components/SideNav.scss'
 
@@ -23,7 +23,6 @@ const SideNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const { isAnyModalOpen } = useModalState();
   const navRef = useRef(null);
   const dragging = useRef({ active: false, startX: 0, startY: 0, moved: false });
 
@@ -74,7 +73,7 @@ const SideNav = () => {
 
     const handleTouchStart = (e) => {
       // Don't handle touch gestures if any modal is open
-      if (isAnyModalOpen) return;
+      if (isAnyModalOpen()) return;
       
       const t = e.touches?.[0]; 
       if (!t) return;
@@ -83,7 +82,7 @@ const SideNav = () => {
 
     const handleTouchMove = (e) => {
       // Don't handle touch gestures if any modal is open
-      if (isAnyModalOpen) return;
+      if (isAnyModalOpen()) return;
       
       if (!dragging.current.active) return;
       const t = e.touches?.[0]; 
@@ -122,13 +121,13 @@ const SideNav = () => {
     } catch (error) {
       console.warn('Touch events not supported:', error);
     }
-  }, [isMobile, mobileExpanded, isAnyModalOpen]);
+  }, [isMobile, mobileExpanded]);
 
   // Prevent "ghost click" right after a drag
   const onClickCapture = (e) => {
     if (!isMobile) return;
     // Don't handle clicks if any modal is open
-    if (isAnyModalOpen) return;
+    if (isAnyModalOpen()) return;
     if (!mobileExpanded) return blockWhenCollapsed(e);
     if (dragging.current.moved) { 
       e.preventDefault(); 
@@ -139,7 +138,7 @@ const SideNav = () => {
   // First tap expands; block navigation while collapsed
   const blockWhenCollapsed = (e) => {
     // Don't handle clicks if any modal is open
-    if (isAnyModalOpen) return;
+    if (isAnyModalOpen()) return;
     if (isMobile && !mobileExpanded) {
       e.preventDefault();
       e.stopPropagation();
@@ -150,7 +149,7 @@ const SideNav = () => {
   // Handle clicks on individual nav items
   const handleNavItemClick = (e) => {
     // Don't handle clicks if any modal is open
-    if (isAnyModalOpen) return;
+    if (isAnyModalOpen()) return;
     if (isMobile && !mobileExpanded) {
       e.preventDefault();
       e.stopPropagation();
