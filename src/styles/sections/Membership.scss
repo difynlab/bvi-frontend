@@ -84,10 +84,12 @@
 
 .profile-section {
   height: 160px;
+
   .card-content {
     height: 130px;
     padding-bottom: 0;
   }
+
   .profile-info {
     margin-bottom: 24px;
   }
@@ -171,6 +173,7 @@
 
 .status-pending {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 8px;
 }
@@ -214,7 +217,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: $vivid_blue;
+  color: $vivid_red;
   font-weight: 500;
   font-size: 0.875rem;
 
@@ -228,6 +231,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -239,6 +243,9 @@
     display: flex;
     gap: 20px;
     align-items: center;
+    height: 80px;
+    margin-bottom: 10px;
+
     .card-title {
       font-size: 14px;
       font-weight: 500;
@@ -246,6 +253,7 @@
       margin: 0;
       padding: 0;
     }
+
     .valid-until {
       font-size: 12px;
       font-weight: 400;
@@ -257,9 +265,15 @@
 
   .plan-image {
     width: 160px;
+    height: 100%;
+    border-radius: 20px;
+    overflow: hidden;
+    
     img {
+      border-radius: 20px;
       width: 100%;
       height: 100%;
+      object-fit: cover;
     }
   }
 
@@ -296,7 +310,7 @@
     gap: 12px;
   }
 
-  
+
 
   .status-badge {
     display: inline-block;
@@ -321,7 +335,7 @@
 
   .status-actions {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     justify-content: center;
     margin-bottom: 20px;
   }
@@ -337,7 +351,7 @@
     text-decoration: none;
     display: inline-block;
     text-align: center;
-    
+
     &.btn-renew {
       width: 100%;
       background-color: #f3f4f6;
@@ -412,6 +426,7 @@
 
 .membership-events-section {
   margin-top: 30px;
+
   .membership-events-list {
     list-style: none;
     padding: 0;
@@ -476,28 +491,78 @@
 
 @media (max-width: 768px) {
 
-  .card-title {
-    font-size: 20px;
-    line-height: 28px;
-    padding: 16px;
-  }
+  .membership-page {
+    padding: 20px;
+    width: 100%;
 
-  .card-content {
-    padding: 16px;
-  }
-
-  .data-table {
-    font-size: 0.8rem;
-
-    th,
-    td {
-      padding: 8px;
+    .card {
+      width: 100%;
     }
   }
 
+  .membership-right {
+    order: 1;
+  }
+
+  .membership-left {
+    order: 2;
+  }
+
+  .card-title {
+    font-size: 20px;
+    line-height: 28px;
+    padding: 15px 0;
+  }
+
+  .card-content {
+    padding: 15px;
+  }
+
+  .table-container {
+    overflow-x: hidden; /* No horizontal scroll needed */
+    width: 100%;
+  }
+
+  .data-table {
+    font-size: 0.75rem;
+    width: 100%;
+    table-layout: fixed; /* Force equal column distribution */
+
+    th {
+      padding: 8px 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-align: center;
+      word-wrap: break-word;
+      white-space: normal;
+      overflow: hidden;
+    }
+
+    td {
+      padding: 8px 4px;
+      text-align: center;
+      word-wrap: break-word;
+      white-space: normal;
+      overflow: hidden;
+      font-size: 0.7rem;
+    }
+
+    /* Specific column widths for better mobile layout */
+    th:nth-child(1), td:nth-child(1) { width: 30%; } /* Date/ID */
+    th:nth-child(2), td:nth-child(2) { width: 20%; } /* Amount/Name */
+    th:nth-child(3), td:nth-child(3) { width: 30%; } /* Status/Type - More space for "Pending" */
+    th:nth-child(4), td:nth-child(4) { width: 20%; } /* Receipt */
+
+    td.status-pending {
+      width: 100%;
+    }
+  }
+
+  .profile-section {
+    min-height: fit-content;
+  }
+
   .profile-field {
-    flex-direction: column;
-    align-items: flex-start;
     gap: 4px;
 
     label {
@@ -509,29 +574,88 @@
     }
   }
 
-  .status-actions {
-    flex-direction: column;
-    align-items: stretch;
 
-    .btn {
-      width: 100%;
+  .payment-section,
+  .member-details-section {
+    .card-content {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .processing-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      
+      i {
+        animation: none;
+        font-size: 12px;
+      }
+      .bi-arrow-repeat {
+        display: none;
+      }
+    }
+
+    .receipt-link,
+    .download-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      padding: 4px;
+      
+      i {
+        font-size: 14px;
+      }
     }
   }
-}
 
-@media (max-width: 480px) {
+  .status-section {
+    width: 100%;
 
-  .membership-left,
-  .membership-right {
-    gap: 16px;
-  }
+    .status-banner .status-header .plan-image {
+      width: 100%;
+      height: 120px; 
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
 
-  .card-title {
-    font-size: 1rem;
-    padding: 8px 16px;
-  }
+    .status-header {
+      flex-direction: column;
+      justify-content: center;
+      gap: 15px;
+      height: auto;
+      min-height: 90px;
 
-  .card-content {
-    padding: 8px 16px;
+      &-info {
+        width: 100%;
+        .status-title-row {
+          width: 100%;
+          justify-content: space-between;
+          h2 {
+            font-size: 20px;
+          }
+          .status-badge {
+            font-size: 16px;
+          }
+        }
+        .valid-until {
+          font-size: 16px;
+        }
+      }
+    }
+
+    .status-actions {
+      flex-direction: column;
+      align-items: stretch;
+
+      .btn {
+        width: 100%;
+      }
+    }
   }
 }

@@ -1140,7 +1140,6 @@
 
       h1 {
         text-align: center;
-        font-size: 2rem;
       }
     }
 
@@ -1282,7 +1281,7 @@
     .form-group select {
       font-size: 16px; // Prevent zoom on iOS
       padding: 14px 12px;
-      min-height: 48px; // Better touch target
+      min-height: 48px;
     }
 
     // Remove default time input icons

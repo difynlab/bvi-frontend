@@ -34,6 +34,9 @@ const Newsletters = () => {
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
   const [newsletterToDelete, setNewsletterToDelete] = useState(null)
 
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false)
+
   const {
     form,
     onChange,
@@ -70,6 +73,17 @@ const Newsletters = () => {
     setUseFallback(!supportsLineClamp)
   }, [])
 
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   if (!user) {
     return (
       <div className="newsletters-page">
@@ -84,7 +98,7 @@ const Newsletters = () => {
     setEditingNewsletter(newsletter)
     setIsModalOpen(true)
     setErrorMessage('')
-    
+
     if (newsletter) {
       initializeEdit(newsletter)
     } else {
@@ -166,7 +180,7 @@ const Newsletters = () => {
       <div className="newsletters-container">
         {/* Header */}
         <header className="newsletters-header">
-          <div className="notices-header-title">
+          <div className="newsletters-header-title">
             <h1>Newsletters</h1>
             <p>Manage Newsletters</p>
           </div>
@@ -192,12 +206,12 @@ const Newsletters = () => {
             {user?.role === 'admin' && (
               <button
                 type="button"
-                className="btn btn-primary newsletters-add-btn"
+                className="add-newsletter-btn"
                 onClick={() => openModal()}
                 aria-label="Add newsletter"
                 title="Add Newsletter"
               >
-                <i className="bi bi-plus-lg" aria-hidden="true"></i>
+                <i className="bi bi-plus" aria-hidden="true"></i>
                 <span className="btn-label">Add Newsletter</span>
               </button>
             )}
@@ -235,28 +249,39 @@ const Newsletters = () => {
                   </div>
 
                   <div className="newsletter-actions">
-                    {user?.role === 'admin' && (
+                    <div className="newsletter-actions-mobile">
+                      {user?.role === 'admin' && (
+                        <button
+                          className="newsletter-card__delete-btn"
+                          onClick={() => handleDelete(newsletter)}
+                        >
+                          <i className="bi bi-trash"></i>
+                        </button>
+                      )}
+                      {user?.role === 'admin' && (
+                        <button
+                          className="edit-btn"
+                          onClick={() => openModal(newsletter)}
+                        >
+                          Edit Newsletter
+                        </button>
+                      )}
+                    </div>
+                    {isMobile && user?.role === 'admin' ? (
                       <button
-                        className="newsletter-card__delete-btn"
-                        onClick={() => handleDelete(newsletter)}
+                        className="download-btn-mobileAdmin"
+                        onClick={() => {/* TODO: Implement download functionality */ }}
                       >
-                        <i className="bi bi-trash"></i>
+                        <i className="bi bi-download"></i>
+                      </button>
+                    ) : (
+                      <button
+                        className="download-btn"
+                        onClick={() => {/* TODO: Implement download functionality */ }}
+                      >
+                        Download PDF
                       </button>
                     )}
-                    {user?.role === 'admin' && (
-                      <button
-                        className="edit-btn"
-                        onClick={() => openModal(newsletter)}
-                      >
-                        Edit Newsletter
-                      </button>
-                    )}
-                    <button
-                      className="download-btn"
-                      onClick={() => {/* TODO: Implement download functionality */ }}
-                    >
-                      Download PDF
-                    </button>
                   </div>
                 </div>
               </div>
@@ -264,7 +289,6 @@ const Newsletters = () => {
           </div>
         )}
 
-        {/* Add/Edit Modal */}
         {isModalOpen && (
           <div
             className="newsletters-modal-overlay"
@@ -278,15 +302,16 @@ const Newsletters = () => {
               onPointerDown={modalBackdropClose.stopInsidePointer}
               onClick={modalBackdropClose.stopInsidePointer}
             >
+              <button
+                className="close-btn"
+                onClick={closeModal}
+              >
+                <i className="bi bi-x"></i>
+              </button>
               <div className="newsletters-modal-header">
                 <h2>Upload Newsletters</h2>
                 <p>Please review the information before saving.</p>
-                <button
-                  className="close-btn"
-                  onClick={closeModal}
-                >
-                  <i className="bi bi-x"></i>
-                </button>
+
               </div>
 
               <form onSubmit={handleSubmit}>
@@ -375,7 +400,6 @@ const Newsletters = () => {
 
       </div>
 
-      {/* Confirm Delete Modal */}
       <ConfirmDeleteModal
         isOpen={isConfirmDeleteOpen}
         onClose={() => {

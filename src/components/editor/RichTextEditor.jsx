@@ -11,17 +11,17 @@ import Color from '@tiptap/extension-color'
 import TextAlign from '@tiptap/extension-text-align'
 import '../../styles/components/RichTextEditor.scss'
 
-const RichTextEditor = ({ 
-  docId, 
-  initialHTML = '', 
-  onChange, 
-  placeholder = 'Start writing...', 
+const RichTextEditor = ({
+  docId,
+  initialHTML = '',
+  onChange,
+  placeholder = 'Start writing...',
   className = '',
   initialAlignment = 'top'
 }) => {
   const [currentFont, setCurrentFont] = useState('')
   const [currentTextColor, setCurrentTextColor] = useState('#000000')
-  
+
   // Stable editor configuration - no dynamic dependencies
   const editor = useEditor({
     extensions: [
@@ -119,13 +119,13 @@ const RichTextEditor = ({
 
     const syncAttrs = () => {
       setCurrentFont(editor.getAttributes('textStyle')?.fontFamily || '')
-      
+
       // Get the current text color from the editor
       const textColor = editor.getAttributes('textStyle')?.color
       const finalColor = textColor || '#000000'
-      
+
       setCurrentTextColor(finalColor)
-      
+
       // Update CSS custom property for visual feedback
       const colorInput = document.querySelector('.rte__color-input--text')
       if (colorInput) {
@@ -162,64 +162,65 @@ const RichTextEditor = ({
   return (
     <div className={`rte rte-v${initialAlignment} ${className}`}>
       <div className="rte__toolbar">
-        <div className="rte__group">
-          <select
-            className="rte__select"
-            value={editor.isActive('heading', { level: 1 }) ? '1' : editor.isActive('heading', { level: 2 }) ? '2' : 'paragraph'}
-            onChange={(e) => {
-              const level = e.target.value
-              const chain = editor.chain().focus()
-              
-              if (level === 'paragraph') {
-                // Remove any heading and convert to paragraph
-                if (editor.isActive('heading', { level: 1 })) {
+        <div className="rte__toolbar-mobile">
+          <div className="rte__group">
+            <select
+              className="rte__select"
+              value={editor.isActive('heading', { level: 1 }) ? '1' : editor.isActive('heading', { level: 2 }) ? '2' : 'paragraph'}
+              onChange={(e) => {
+                const level = e.target.value
+                const chain = editor.chain().focus()
+
+                if (level === 'paragraph') {
+                  // Remove any heading and convert to paragraph
+                  if (editor.isActive('heading', { level: 1 })) {
+                    chain.toggleHeading({ level: 1 }).run()
+                  } else if (editor.isActive('heading', { level: 2 })) {
+                    chain.toggleHeading({ level: 2 }).run()
+                  }
+                  // If already paragraph, do nothing
+                } else if (level === '1') {
+                  // Convert to heading 1
+                  if (editor.isActive('heading', { level: 2 })) {
+                    chain.toggleHeading({ level: 2 }).run()
+                  }
                   chain.toggleHeading({ level: 1 }).run()
-                } else if (editor.isActive('heading', { level: 2 })) {
+                } else if (level === '2') {
+                  // Convert to heading 2
+                  if (editor.isActive('heading', { level: 1 })) {
+                    chain.toggleHeading({ level: 1 }).run()
+                  }
                   chain.toggleHeading({ level: 2 }).run()
                 }
-                // If already paragraph, do nothing
-              } else if (level === '1') {
-                // Convert to heading 1
-                if (editor.isActive('heading', { level: 2 })) {
-                  chain.toggleHeading({ level: 2 }).run()
-                }
-                chain.toggleHeading({ level: 1 }).run()
-              } else if (level === '2') {
-                // Convert to heading 2
-                if (editor.isActive('heading', { level: 1 })) {
-                  chain.toggleHeading({ level: 1 }).run()
-                }
-                chain.toggleHeading({ level: 2 }).run()
-              }
-            }}
-          >
-            <option value="paragraph">Paragraph</option>
-            <option value="1">Heading 1</option>
-            <option value="2">Heading 2</option>
-          </select>
-        </div>
+              }}
+            >
+              <option value="paragraph">Paragraph</option>
+              <option value="1">Heading 1</option>
+              <option value="2">Heading 2</option>
+            </select>
+          </div>
 
-        <div className="rte__group">
-          <select
-            className="rte__select rte__select--font"
-            value={currentFont}
-            onChange={(e) => {
-              const val = e.target.value
-              const chain = editor.chain().focus()
-              if (!val) {
-                chain.unsetMark('textStyle').run()
-              } else {
-                chain.setMark('textStyle', { fontFamily: val }).run()
-              }
-            }}
-            aria-label="Font family"
-          >
-            <option value="Arial">Arial</option>
-            <option value="'Public Sans'">Public Sans</option>
-            <option value="'Times New Roman'">Times New Roman</option>
-          </select>
+          <div className="rte__group">
+            <select
+              className="rte__select rte__select--font"
+              value={currentFont}
+              onChange={(e) => {
+                const val = e.target.value
+                const chain = editor.chain().focus()
+                if (!val) {
+                  chain.unsetMark('textStyle').run()
+                } else {
+                  chain.setMark('textStyle', { fontFamily: val }).run()
+                }
+              }}
+              aria-label="Font family"
+            >
+              <option value="Arial">Arial</option>
+              <option value="'Public Sans'">Public Sans</option>
+              <option value="'Times New Roman'">Times New Roman</option>
+            </select>
+          </div>
         </div>
-
         <div className="rte__group">
           <button
             type="button"
@@ -267,7 +268,7 @@ const RichTextEditor = ({
           </button>
         </div>
 
-        <div className="rte__group">
+        <div className="rte__group rte__color">
           <input
             type="color"
             className="rte__color-input rte__color-input--text"
@@ -435,7 +436,7 @@ const RichTextEditor = ({
         </div>
       </div>
 
-      <div 
+      <div
         className="rte__content-wrapper"
         onMouseDown={(e) => {
           if (!editor?.isFocused) {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../../components/Card';
 import '../../styles/sections/Membership.scss';
 import { NavLink } from 'react-router-dom';
@@ -13,6 +13,20 @@ const Membership = () => {
   const { paymentHistory, memberDetails, upcomingEvents, loading } = useMembershipData();
   const safeName = name && name.trim() ? name : '—';
   const safeEmail = email && email.trim() ? email : '—';
+  
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   return (
     <div className="membership-page">
       <div className="membership-container">
@@ -71,11 +85,21 @@ const Membership = () => {
                         <td>
                           {payment.status === 'Pending' ? (
                             <span className="processing-status">
+                              {isMobile ? (
+                                <i className="bi bi-hourglass-split"></i>
+                              ) : (
+                                <span>Processing</span>
+                              )}
                               <i className="bi bi-arrow-repeat"></i>
-                              <span>Processing</span>
                             </span>
                           ) : (
-                            <a href={payment.receiptUrl} className="receipt-link">Download</a>
+                            <a href={payment.receiptUrl} className="receipt-link">
+                              {isMobile ? (
+                                <i className="bi bi-download"></i>
+                              ) : (
+                                'Download'
+                              )}
+                            </a>
                           )}
                         </td>
                       </tr>
@@ -90,10 +114,10 @@ const Membership = () => {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th scope="col">Member ID</th>
+                      <th scope="col">ID</th>
                       <th scope="col">Name</th>
-                      <th scope="col">Membership Type</th>
-                      <th scope="col">Payment Receipt</th>
+                      <th scope="col">Type</th>
+                      <th scope="col">Receipt</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -102,7 +126,15 @@ const Membership = () => {
                         <td>{member.id}</td>
                         <td>{member.name}</td>
                         <td>{member.membershipType}</td>
-                        <td><a href={member.receiptUrl} className="download-link">Download</a></td>
+                        <td>
+                          <a href={member.receiptUrl} className="download-link">
+                            {isMobile ? (
+                              <i className="bi bi-download"></i>
+                            ) : (
+                              'Download'
+                            )}
+                          </a>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
