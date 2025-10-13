@@ -75,7 +75,7 @@ const Legislation = () => {
         </div>
         {can(user, 'legislation:update') && (
           <button 
-            className="btn btn-primary legislation-edit-btn"
+            className="legislation-edit-btn legislation-edit-btn--desktop"
             onClick={handleEditClick}
             aria-label="Edit legislation"
           >
@@ -190,6 +190,7 @@ const Legislation = () => {
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSave={handleSaveAttachment}
+        existingAttachments={attachments}
       />
 
       {/* Confirm Delete Attachment Modal */}
@@ -201,6 +202,18 @@ const Legislation = () => {
         }}
         onConfirm={handleConfirmDeleteAttachment}
       />
+
+      {/* Mobile FAB */}
+      {can(user, 'legislation:update') && (
+        <button 
+          className="legislation-edit-btn legislation-edit-btn--mobile"
+          onClick={handleEditClick}
+          aria-label="Edit legislation"
+        >
+          <i className="bi bi-pencil-square" aria-hidden="true"></i>
+          <span className="btn-text">Edit Legislation</span>
+        </button>
+      )}
     </div>
   );
 };

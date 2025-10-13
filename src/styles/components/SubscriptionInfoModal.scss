@@ -11,7 +11,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1100;
+  z-index: 10001;
+  pointer-events: auto;
+  touch-action: none;
 }
 
 .subscription-info-modal {
@@ -53,16 +55,11 @@
 .subscription-info-modal__header {
   display: flex;
   align-items: start;
-  justify-content: space-between;
+  justify-content: center;
   gap: 16px;
   margin-bottom: 20px;
-}
-
-.subscription-info-modal__header.user {
   text-align: center;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
 }
 
 .subscription-info-modal__titles {
@@ -87,7 +84,9 @@
 .subscription-info-modal__actions {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
+  margin-top: 20px;
 }
 
 .subscription-info-modal__update-btn {
@@ -128,6 +127,8 @@
     width: 95%;
     margin: 20px;
     padding: 15px;
+    padding-top: 30px;
+    max-height: fit-content;
   }
   
   .subscription-info-modal__header {
@@ -147,7 +148,25 @@
   }
   
   .subscription-info-modal__update-btn {
-    width: 100%;
+    width: fit-content;
     justify-content: center;
+    padding-left: 50px;
+    gap: 10px;
+    i {
+      opacity: 1;
+    }
+  }
+  .subscription-info-modal__image {
+    min-height: 0;
+  }
+  .subscription-info-modal-overlay .subscription-upload-modal-overlay .subscription-upload-modal {
+    flex: 0;
+    display: flex;
+    min-width: 90%;
+    min-height: fit-content;
+    padding-top: 30px;
+  }
+  .subscription-upload-modal__close {
+    font-size: 30px;
   }
 }

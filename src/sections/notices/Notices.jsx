@@ -379,19 +379,29 @@ export const Notices = () => {
           {isMobile ? (
             <div className="notices-mobile-header" role="region" aria-label="Notice categories">
               <div className="category-title">
-                {categories.length > 1 && (
-                  <button
-                    type="button"
-                    className="category-picker-btn"
-                    onClick={() => setPickerOpen(true)}
-                    aria-haspopup="dialog"
-                    aria-controls="noticesTabPicker">
-                    <h2>
-                      {activeCategoryData?.name || 'Notices'}
-                    </h2>
-                    <i className="bi bi-chevron-down" aria-hidden="true"></i>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="category-picker-btn"
+                  onClick={() => setPickerOpen(true)}
+                  aria-haspopup="dialog"
+                  aria-controls="noticesTabPicker">
+                  <h2>
+                    {activeCategoryData?.name || 'Notices'}
+                  </h2>
+                  <i className="bi bi-chevron-down" aria-hidden="true"></i>
+                </button>
+                
+                {/* Notices Tab Picker Dropdown */}
+                <NoticesTabPicker
+                  open={pickerOpen}
+                  onClose={() => setPickerOpen(false)}
+                  categories={categories}
+                  activeTabId={activeTabId}
+                  onSelect={onSelectCategory}
+                  canManage={can(user, 'notices:create')}
+                  onAddCategory={onAddCategory}
+                  onDeleteCategory={onDeleteCategory}
+                />
               </div>
               {can(user, 'notices:create') && (
                 <button
@@ -444,6 +454,14 @@ export const Notices = () => {
                 )}
               </div>
             </div>
+          )}
+
+          {/* Dropdown Overlay */}
+          {pickerOpen && (
+            <div 
+              className="notices-dropdown-overlay" 
+              onClick={() => setPickerOpen(false)}
+            />
           )}
 
           {categories.length === 0 ? (
@@ -795,17 +813,6 @@ export const Notices = () => {
         onConfirm={handleConfirmDeleteNotice}
       />
 
-      {/* Mobile Category Picker Modal */}
-      <NoticesTabPicker
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        categories={categories}
-        activeTabId={activeTabId}
-        onSelect={onSelectCategory}
-        canManage={can(user, 'notices:create')}
-        onAddCategory={onAddCategory}
-        onDeleteCategory={onDeleteCategory}
-      />
     </>
   )
 }

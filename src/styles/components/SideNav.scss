@@ -1,3 +1,5 @@
+@use '../vars' as *;
+
 .side-nav {
   position: sticky;
   margin: 30px 0 30px 30px;
@@ -20,10 +22,12 @@
       display: flex;
       align-items: center;
       gap: 12px;
+
       img {
         width: 100%;
         height: 40px;
       }
+
       .brand-info {
         .brand-name {
           font-size: 18px;
@@ -69,6 +73,7 @@
 
   .nav-links {
     flex: 1;
+
     .nav-item {
       display: flex;
       align-items: center;
@@ -91,7 +96,8 @@
         color: white;
       }
 
-      svg, i {
+      svg,
+      i {
         flex-shrink: 0;
         font-size: 16px;
         width: 16px;
@@ -111,7 +117,7 @@
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     margin-top: 10px;
     padding-top: 10px;
-    
+
     .nav-item {
       display: flex;
       align-items: center;
@@ -136,8 +142,9 @@
         text-align: left;
         cursor: pointer;
         font-family: inherit;
+
         &:hover {
-        background-color: #e93125;
+          background-color: #e93125;
         }
       }
 
@@ -146,7 +153,8 @@
         color: white;
       }
 
-      svg, i {
+      svg,
+      i {
         flex-shrink: 0;
         font-size: 16px;
         width: 16px;
@@ -179,6 +187,7 @@
       background-color: rgba(255, 255, 255, 0.05);
       color: white;
     }
+
     .user-avatar {
       width: 40px;
       height: 40px;
@@ -189,12 +198,14 @@
       justify-content: center;
       border: 2px solid rgba(255, 0, 0);
     }
+
     .user-avatar-img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
+
     .user-avatar-icon {
       width: 100%;
       height: 100%;
@@ -208,7 +219,8 @@
     .profile-info {
       display: flex;
       flex-direction: column;
-      width: 70px;
+      width: fit-content;
+
       .user-name {
         font-size: 14px;
         font-weight: 600;
@@ -248,9 +260,9 @@
 @media (max-width: 768px) {
   .side-nav-gesture-zone {
     position: fixed;
-    left: 0; 
+    left: 0;
     top: 0;
-    width: 20px;           
+    width: 20px;
     height: 100dvh;
     z-index: 1000;
     background: transparent;
@@ -260,6 +272,7 @@
   .main-layout {
     margin-left: 50px;
   }
+
   .side-nav {
     flex: 0;
     background: #262626;
@@ -271,38 +284,34 @@
     top: 50%;
     transform: translateY(-50%);
     border-radius: 0;
-    transition: left .3s; /* keep same motion */
-    overflow: hidden; /* prevent items protruding */
-    z-index: 1001;            /* above gesture zone */
+    transition: left .3s;
+    /* keep same motion */
+    overflow: hidden;
+    /* prevent items protruding */
+    z-index: 1001;
+    /* above gesture zone */
     justify-content: center;
 
-    /* STATE: collapsed vs expanded (no :hover navigation side-effects) */
-    &.is-collapsed { left: -120px; }
-    &.is-expanded  { left: 0; }
 
-    /* while collapsed, block interaction on links/buttons */
-    &.is-collapsed {
-      .nav-links, .nav-footer {
-        .nav-item,
-        .user-profile {
-          pointer-events: none; /* blocks clicks until expanded */
-        }
-      }
-    }
+
+
     .nav-header {
       flex-direction: row;
       align-items: center;
       gap: 12px;
-      padding: 10px;
-      padding-right: 18px;
+      padding: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
       .logo-section {
         width: 100px;
+
         img {
           width: 100%;
           height: 100%;
           object-fit: cover;
         }
       }
+
       .notification-icon {
         padding: 8px 0px;
       }
@@ -315,37 +324,51 @@
       padding: 0;
       width: 100%;
       flex: 0;
+
       .nav-item {
         flex-direction: row-reverse;
         width: 100%;
         white-space: nowrap;
         justify-content: center;
-        padding: 15px 10px;
+        padding: 15px 30px;
         padding-right: 18px;
         width: 100%;
         font-size: 14px;
+        transition: all 0.3s;
+
         i {
           font-size: 14px;
+          transition: all 0.3s;
         }
       }
+
       .active {
         display: flex;
         justify-content: center;
         width: 100%;
       }
     }
-    .nav-footer {
+
+
+    .nav-footer-desktop {
+      display: none;
+    }
+
+    .nav-footer-mobile {
       flex: 0;
+      display: flex;
       flex-direction: column;
       align-items: center;
+
       .nav-item {
         display: flex;
         flex-direction: row-reverse;
-        padding: 15px 10px;
+        padding: 15px 30px;
         justify-content: center;
         width: 100%;
         font-size: 14px;
         padding-right: 18px;
+
         i {
           font-size: 14px;
         }
@@ -359,24 +382,90 @@
       flex-direction: row-reverse;
       align-items: center;
       justify-content: space-between;
-      padding: 10px;
-      padding-right: 11px;
+      padding: 15px;
+      padding-right: 10px;
       gap: 10px;
+      transition: all 0.3s;
+      
       .user-avatar {
         width: 30px;
         height: 30px;
+        padding: 0 auto;
+        transition: all 0.3s;
       }
+      .profile-info {
+        transition: all 0.3s;
+      }
+
       .user-avatar-img {
         width: 40px;
       }
     }
+
+    &.is-collapsed {
+      left: -120px;
+    }
+
+    &.is-expanded {
+      left: 0;
+
+      .nav-item {
+        padding-right: 30px;
+      }
+
+      .user-profile {
+        background-color: #2f2f2f;
+      }
+
+    }
+
+    /* while collapsed, block interaction on links/buttons */
+    &.is-collapsed {
+
+      .nav-links,
+      .nav-footer {
+
+        .nav-item,
+        .user-profile {
+          .profile-info {
+            opacity: 0;
+          }
+        }
+      }
+    }
+
+
   }
 
   // CSS safety: disable gesture hit-area when modal is open
-  .has-modal-open .side-nav-gesture-zone { 
-    pointer-events: none; 
+  .has-modal-open .side-nav-gesture-zone {
+    pointer-events: none;
   }
-  .has-modal-open .side-nav { 
-    touch-action: none; 
+            .user-name {
+              font-size: 14px;
+              font-weight: 600;
+              color: white;
+              margin: 0;
+              line-height: 1.2;
+            }
+            .user-role {
+              font-size: 12px;
+              color: rgba(255, 255, 255, 0.7);
+              margin: 2px 0 0 0;
+              line-height: 1.2;
+            }
+
+  .has-modal-open .side-nav {
+    touch-action: none;
   }
+}
+
+/* Nav Footer Responsive Order */
+.nav-footer-desktop {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-footer-mobile {
+  display: none;
 }

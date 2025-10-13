@@ -247,39 +247,79 @@ const SideNav = () => {
       </div>
 
       <div className="nav-footer" onClick={blockWhenCollapsed}>
-        <NavLink to="/settings" className="nav-item" {...navItemGuard}>
-          <i className="bi bi-gear"></i>
-          <span className="nav-label">Settings</span>
-        </NavLink>
+        {/* Desktop order */}
+        <div className="nav-footer-desktop">
+          <NavLink to="/settings" className="nav-item" {...navItemGuard}>
+            <i className="bi bi-gear"></i>
+            <span className="nav-label">Settings</span>
+          </NavLink>
+      
+          <button 
+            type="button"
+            className="nav-item nav-item--button"
+            onClick={(e) => {
+              if (isMobile && !mobileExpanded) return blockWhenCollapsed(e);
+              openLogoutModal();
+            }}
+          >
+            <i className="bi bi-power"></i>
+            <span className="nav-label">Logout</span>
+          </button>
 
-        <button 
-          type="button"
-          className="nav-item nav-item--button"
-          onClick={(e) => {
-            if (isMobile && !mobileExpanded) return blockWhenCollapsed(e);
-            openLogoutModal();
-          }}
-        >
-          <i className="bi bi-power"></i>
-          <span className="nav-label">Logout</span>
-        </button>
+          <NavLink to="/settings" className="user-profile" {...navItemGuard}>
+            <div className="user-avatar" aria-hidden={false}>
+              {(() => {
+                const avatarSrc = user?.profilePictureUrl || user?.profilePicture || '';
+                return avatarSrc ? (
+                  <img className="user-avatar-img" src={avatarSrc} alt={`${user?.firstName || 'User'} profile`} />
+                ) : (
+                  <i className="bi bi-person-fill user-avatar-icon" aria-label="profile icon" />
+                );
+              })()}
+            </div>
+            <div className="profile-info">
+              <h3 className="user-name">{displayName}</h3>
+              <p className="user-role">{role === 'admin' ? 'Administrator' : 'User'}</p>
+            </div>
+          </NavLink>
+        </div>
 
-        <NavLink to="/settings" className="user-profile" {...navItemGuard}>
-          <div className="user-avatar" aria-hidden={false}>
-            {(() => {
-              const avatarSrc = user?.profilePictureUrl || user?.profilePicture || '';
-              return avatarSrc ? (
-                <img className="user-avatar-img" src={avatarSrc} alt={`${user?.firstName || 'User'} profile`} />
-              ) : (
-                <i className="bi bi-person-fill user-avatar-icon" aria-label="profile icon" />
-              );
-            })()}
-          </div>
-          <div className="profile-info">
-            <h3 className="user-name">{displayName}</h3>
-            <p className="user-role">{role === 'admin' ? 'Administrator' : 'User'}</p>
-          </div>
-        </NavLink>
+        {/* Mobile order */}
+        <div className="nav-footer-mobile">
+          <NavLink to="/settings" className="user-profile" {...navItemGuard}>
+            <div className="user-avatar" aria-hidden={false}>
+              {(() => {
+                const avatarSrc = user?.profilePictureUrl || user?.profilePicture || '';
+                return avatarSrc ? (
+                  <img className="user-avatar-img" src={avatarSrc} alt={`${user?.firstName || 'User'} profile`} />
+                ) : (
+                  <i className="bi bi-person-fill user-avatar-icon" aria-label="profile icon" />
+                );
+              })()}
+            </div>
+            <div className="profile-info">
+              <h3 className="user-name">{displayName}</h3>
+              <p className="user-role">{role === 'admin' ? 'Administrator' : 'User'}</p>
+            </div>
+          </NavLink>
+
+          <NavLink to="/settings" className="nav-item" {...navItemGuard}>
+            <i className="bi bi-gear"></i>
+            <span className="nav-label">Settings</span>
+          </NavLink>
+      
+          <button 
+            type="button"
+            className="nav-item nav-item--button"
+            onClick={(e) => {
+              if (isMobile && !mobileExpanded) return blockWhenCollapsed(e);
+              openLogoutModal();
+            }}
+          >
+            <i className="bi bi-power"></i>
+            <span className="nav-label">Logout</span>
+          </button>
+        </div>
       </div>
 
       </nav>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import '../../styles/sections/Subscription.scss';
 import SubscriptionInfoModal from '../../components/modals/SubscriptionInfoModal';
+import SubscriptionTabPicker from '../../components/modals/SubscriptionTabPicker';
 import { useSubscriptionWizard } from '../../hooks/useSubscriptionWizard';
 import GeneralDetailsForm from './GeneralDetailsForm';
 import MembershipDetailsForm from './MembershipDetailsForm';
@@ -11,11 +12,23 @@ import ContactPersonDetails from './ContactPersonDetails';
 
 const Subscription = () => {
   const [openInfo, setOpenInfo] = useState(null); // 'eligibility' | 'benefits' | 'payment' | null
+  const [pickerOpen, setPickerOpen] = useState(false);
   
   const handleOpen = (key) => setOpenInfo(key);
   const handleClose = () => setOpenInfo(null);
 
   const { activeTab, values, errors, setField, setOfficer, toggleArray, goNext, setTab } = useSubscriptionWizard();
+
+  // Define the subscription tabs (static list)
+  const subscriptionTabs = [
+    'Important Info',
+    'General Details', 
+    'Membership Details',
+    'Company Details',
+    'Contact Person Details',
+    'Membership License Officer',
+    'Membership Plans'
+  ];
 
   return (
     <div className="subscription-container">
@@ -25,8 +38,42 @@ const Subscription = () => {
         <p>Manage membership Subscription</p>
       </div>
 
+      {/* Mobile Header */}
+      <div className="subscription-mobile-header" role="region" aria-label="Subscription steps">
+        <div className="subscription-tab-title">
+          <button
+            type="button"
+            className="subscription-tab-picker-btn"
+            onClick={() => setPickerOpen(true)}
+            aria-haspopup="dialog"
+            aria-controls="subscriptionTabPicker">
+            <h2>
+              {activeTab}
+            </h2>
+            <i className="bi bi-chevron-down" aria-hidden="true"></i>
+          </button>
+          
+          {/* Subscription Tab Picker Dropdown */}
+          <SubscriptionTabPicker
+            open={pickerOpen}
+            onClose={() => setPickerOpen(false)}
+            tabs={subscriptionTabs}
+            activeTab={activeTab}
+            onSelect={setTab}
+          />
+        </div>
+      </div>
+
+      {/* Dropdown Overlay */}
+      {pickerOpen && (
+        <div 
+          className="subscription-dropdown-overlay" 
+          onClick={() => setPickerOpen(false)}
+        />
+      )}
+
       {/* Tabs Strip */}
-      <div className="subscription-tabs" role="tablist">
+      <div className="subscription-tabs subscription-tabs-desktop" role="tablist">
         <button 
           className={`subscription-tab ${activeTab === 'Important Info' ? 'active' : ''}`}
           onClick={() => setTab('Important Info')}

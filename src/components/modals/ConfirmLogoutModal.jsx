@@ -28,6 +28,7 @@ export default function ConfirmLogoutModal({ isOpen, onClose, onConfirm }) {
         aria-labelledby="logout-modal-title"
       >
         <div className="logout-modal-header">
+          <i className="bi bi-power"></i>
           <h2 id="logout-modal-title">Confirm Logout</h2>
           <button
             className="close-btn"

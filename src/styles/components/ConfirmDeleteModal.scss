@@ -55,6 +55,11 @@
         font-weight: 400;
         color: #262626;
     }
+    i.bi-exclamation-triangle {
+        font-size: 25px;
+        color: $vivid_red;
+
+    }
 }
 
 /* Close button */
@@ -150,7 +155,7 @@
         padding: 10px;
         padding-bottom: 0;
 
-        i {
+        i.bi-exclamation-triangle {
             font-size: 25px;
             color: $vivid_red;
 
@@ -165,5 +170,9 @@
             right: 14px;
             top: 12px;
         }
+    }
+
+    .notices-deleteCategory-modal {
+        min-width: 90%;
     }
 }

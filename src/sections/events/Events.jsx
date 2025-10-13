@@ -44,7 +44,8 @@ export const Events = () => {
     { key: 'date', label: 'Date', test: () => !!eventForm?.form?.date },
     {
       key: 'description', label: 'Description', test: () => {
-        const html = (eventForm?.editorHtml || eventForm?.form?.description || '');
+        const htmlValue = eventForm?.editorHtml || eventForm?.form?.description || '';
+        const html = typeof htmlValue === 'string' ? htmlValue : (htmlValue?.html || '');
         const text = html.replace(/<[^>]+>/g, '').trim();
         return text.length > 0;
       }
@@ -111,6 +112,16 @@ export const Events = () => {
 
     document.body.removeChild(testElement)
   }, [])
+
+  const getEventDescriptionText = (description) => {
+    if (typeof description === 'string') {
+      return description.replace(/<[^>]+>/g, '').trim();
+    }
+    if (typeof description === 'object' && description?.html) {
+      return description.html.replace(/<[^>]+>/g, '').trim();
+    }
+    return '';
+  }
 
   const truncateText = (text, maxLength = 110) => {
     if (!text || text.length <= maxLength) return text
@@ -203,7 +214,8 @@ export const Events = () => {
   }
 
   // Rich Text Editor handler - one-way flow
-  const handleEditorChange = (html) => {
+  const handleEditorChange = (data) => {
+    const html = typeof data === 'string' ? data : (data?.html || '');
     eventForm.setEditorHtml(html)
     const text = eventForm.stripHtml(html)
     eventForm.setEditorText(text)
@@ -489,7 +501,7 @@ export const Events = () => {
                         <span className="event-title__inner" title={event.title}>{event.title}</span>
                       </div>
                       <p className="event-description">
-                        {useFallback ? truncateText(event.description) : event.description}
+                        {useFallback ? truncateText(getEventDescriptionText(event.description)) : getEventDescriptionText(event.description)}
                       </p>
                       <div className="event-details">
                         <div className="event-time">
@@ -775,7 +787,7 @@ export const Events = () => {
 
                   <div className="register-event-description">
                     <h3>About this event</h3>
-                    <p>{registeringEvent.description}</p>
+                    <p>{getEventDescriptionText(registeringEvent.description)}</p>
                   </div>
                 </div>
               </div>

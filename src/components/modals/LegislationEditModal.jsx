@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import RichTextEditor from '../editor/RichTextEditor';
@@ -6,13 +6,15 @@ import { isValidUrl } from '../../helpers/urlValidation';
 import ModalLifecycleLock from './ModalLifecycleLock';
 import '../../styles/components/LegislationEditModal.scss';
 
-const LegislationEditModal = ({ isOpen, onClose, onSave }) => {
+const LegislationEditModal = ({ isOpen, onClose, onSave, existingAttachments = [] }) => {
   const [description, setDescription] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileName, setFileName] = useState('');
   const [errors, setErrors] = useState({});
+  const [missingRequired, setMissingRequired] = useState([]);
+  const bannerRef = useRef(null);
   
   const fileInputRef = useRef(null);
   
@@ -92,11 +94,31 @@ const LegislationEditModal = ({ isOpen, onClose, onSave }) => {
   };
 
   const handleDescriptionChange = (data) => {
-    setDescription(data.html);
-    if (data.html.trim()) {
+    const htmlContent = data?.html || '';
+    setDescription(htmlContent);
+    if (htmlContent.trim()) {
       setErrors(prev => ({ ...prev, description: '' }));
     }
   };
+
+  // Required fields validation
+  const REQUIRED = [
+    { key: 'description', label: 'Description', test: () => (description || '').trim().length > 0 },
+    { key: 'file', label: 'File Upload', test: () => !!selectedFile },
+    { key: 'link', label: 'Link URL', test: () => (linkUrl || '').trim().length > 0 && isValidUrl(linkUrl) }
+  ];
+
+  // Validation function
+  const validateRequired = () => {
+    const missing = REQUIRED.filter(r => !r.test()).map(r => r.label);
+    setMissingRequired(missing);
+    return missing.length === 0;
+  };
+
+  // Reactive validation
+  useEffect(() => {
+    if (missingRequired.length) validateRequired();
+  }, [description, selectedFile, linkUrl]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -120,13 +142,34 @@ const LegislationEditModal = ({ isOpen, onClose, onSave }) => {
   };
 
   const handleSave = () => {
-    if (!validateForm()) {
+    if (!validateRequired()) {
+      bannerRef.current?.focus();
       return;
     }
 
+    // Generate automatic title based on existing attachments
+    const generateSupportDocumentTitle = (attachments) => {
+      if (!attachments || attachments.length === 0) {
+        return 'Support Document 1';
+      }
+
+      // Extract numbers from existing titles
+      const numbers = attachments
+        .map(attachment => {
+          const match = attachment.title?.match(/Support Document (\d+)/i);
+          return match ? parseInt(match[1], 10) : 0;
+        })
+        .filter(num => num > 0);
+
+      // Find the highest number
+      const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
+      
+      return `Support Document ${maxNumber + 1}`;
+    };
+
     const newAttachment = {
       id: `attachment-${Date.now()}`,
-      title: fileName || 'New Attachment',
+      title: generateSupportDocumentTitle(existingAttachments),
       descriptionHTML: description,
       fileUrl: selectedFile ? URL.createObjectURL(selectedFile) : '',
       fileName: fileName,
@@ -144,6 +187,7 @@ const LegislationEditModal = ({ isOpen, onClose, onSave }) => {
     setSelectedFile(null);
     setFileName('');
     setErrors({});
+    setMissingRequired([]);
     setIsDragOver(false);
     onClose();
   };
@@ -204,6 +248,7 @@ const LegislationEditModal = ({ isOpen, onClose, onSave }) => {
             >
               <input
                 ref={fileInputRef}
+                id="file"
                 type="file"
                 accept=".pdf,.doc,.docx,.txt,.xls,.xlsx"
                 onChange={handleFileInputChange}
@@ -238,6 +283,17 @@ const LegislationEditModal = ({ isOpen, onClose, onSave }) => {
         </div>
 
         <div className="legislation-edit-modal__footer">
+          {missingRequired.length > 0 && (
+            <div
+              className="app-form__error-banner"
+              role="alert"
+              aria-live="assertive"
+              tabIndex={-1}
+              ref={bannerRef}
+            >
+              <strong>Please fill all required fields:</strong> {missingRequired.join(', ')}
+            </div>
+          )}
           <button
             type="button"
             className="btn update-now-btn"

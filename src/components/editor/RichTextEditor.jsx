@@ -47,7 +47,7 @@ const RichTextEditor = ({
     autofocus: false,
     onUpdate: ({ editor }) => {
       // DO NOT call setContent here - one-way flow
-      onChange?.(editor.getHTML())
+      onChange?.({ html: editor.getHTML() })
     },
     editorProps: {
       attributes: {

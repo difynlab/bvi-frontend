@@ -78,6 +78,7 @@
     text-align: center;
     transition: border-color 0.2s;
     width: 100%;
+    overflow: hidden;
   }
 
   .dropzone.drag-over {
@@ -238,6 +239,7 @@
   text-align: center;
   transition: border-color 0.2s;
   width: 100%;
+  overflow: hidden;
 }
 
 .dropzone.drag-over {
@@ -818,6 +820,7 @@
     text-align: center;
     transition: border-color 0.2s;
     width: 100%;
+    overflow: hidden;
   }
 
   .dropzone.drag-over {

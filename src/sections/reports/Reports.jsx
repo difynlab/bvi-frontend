@@ -6,11 +6,22 @@ import { useReportForm } from '../../hooks/useReportForm';
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal';
+import ReportsTabPicker from '../../components/modals/ReportsTabPicker';
 import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock';
 import '../../styles/sections/Reports.scss';
 
 export default function Reports() {
+  const MOBILE_Q = '(max-width: 768px)'
   const { user, toggleRole, isInitialized } = useAuth();
+
+  // Mobile state management
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia(MOBILE_Q).matches)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [activeTabId, setActiveTabId] = useState(() => {
+    // Load from localStorage or default to first category
+    const saved = localStorage.getItem('reports-active-tab')
+    return saved || null
+  })
 
   const {
     categories,
@@ -47,11 +58,74 @@ export default function Reports() {
   const [isReportDeleteConfirmOpen, setIsReportDeleteConfirmOpen] = useState(false);
   const [reportToDelete, setReportToDelete] = useState(null);
 
+  // Mobile responsive effect
+  useEffect(() => {
+    const mql = window.matchMedia(MOBILE_Q)
+    const onChange = () => setIsMobile(mql.matches)
+    mql.addEventListener?.('change', onChange)
+    return () => mql.removeEventListener?.('change', onChange)
+  }, [])
+
+  // Active tab management effect
+  useEffect(() => {
+    if (!categories.length) {
+      setActiveTabId(null)
+      localStorage.removeItem('reports-active-tab')
+      return
+    }
+    if (!activeTabId || !categories.includes(activeTabId)) {
+      const next = categories[0]
+      setActiveTabId(next)
+      localStorage.setItem('reports-active-tab', next)
+    }
+  }, [categories, activeTabId])
+
+  // Sync mobile activeTabId with desktop activeCategory when in mobile mode
+  useEffect(() => {
+    if (isMobile && activeCategory && activeCategory !== activeTabId) {
+      setActiveTabId(activeCategory)
+      localStorage.setItem('reports-active-tab', activeCategory)
+    }
+  }, [isMobile, activeCategory, activeTabId])
+
+  // Mobile handlers
+  const onSelectCategory = (id) => {
+    setActiveTabId(id)
+    localStorage.setItem('reports-active-tab', id)
+    if (isMobile) {
+      setActiveCategory(id)
+    }
+  }
+
+  const onAddCategory = () => {
+    setIsCategoryModalOpen(true)
+  }
+
+  const onDeleteCategory = (id) => {
+    handleDeleteCategory(id)
+    if (id === activeTabId) {
+      const remaining = categories.filter(c => c !== id)
+      const next = remaining[0] || null
+      setActiveTabId(next)
+      if (next) {
+        localStorage.setItem('reports-active-tab', next)
+      } else {
+        localStorage.removeItem('reports-active-tab')
+      }
+    }
+  }
+
+  // Get active category for mobile display
+  const activeCategoryData = useMemo(
+    () => activeTabId || null,
+    [activeTabId]
+  )
+
   const categoryModalBackdropClose = useModalBackdropClose(() => setIsCategoryModalOpen(false));
   const reportModalBackdropClose = useModalBackdropClose(() => closeReportModalWithReset());
   const confirmModalBackdropClose = useModalBackdropClose(() => setConfirmModalOpen(false));
 
-  useBodyScrollLock(isCategoryModalOpen || isReportModalOpen || confirmModalOpen || isReportDeleteConfirmOpen);
+  useBodyScrollLock(isCategoryModalOpen || isReportModalOpen || confirmModalOpen || isReportDeleteConfirmOpen || pickerOpen);
 
   const closeCategoryModal = () => {
     setNewCategoryName('');
@@ -171,43 +245,96 @@ export default function Reports() {
         </button>
 
         {can(user, 'reports:create') && (
-          <button type="button" className="add-report-btn" onClick={openCreateReportModal}>
+          <button type="button" className="add-report-btn add-report-btn--desktop" onClick={openCreateReportModal}>
             <i className="bi bi-plus" aria-hidden="true"></i> Add New
           </button>
         )}
       </div>
       </div>
 
-      <div className="reports-tabs" role="tablist">
-        {categories.map(cat => (
-          <div key={cat} className="reports-tab-group">
+      {/* Header area */}
+      {isMobile ? (
+        <div className="reports-mobile-header" role="region" aria-label="Report categories">
+          <div className="category-title">
             <button
-              className={`reports-tab ${cat === activeCategory ? 'active' : ''}`}
-              onClick={() => setActiveCategory(cat)}
-            >
-              <span>{cat}</span>
+              type="button"
+              className="category-picker-btn"
+              onClick={() => setPickerOpen(true)}
+              aria-haspopup="dialog"
+              aria-controls="reportsTabPicker">
+              <h2>
+                {activeCategoryData || 'Reports'}
+              </h2>
+              <i className="bi bi-chevron-down" aria-hidden="true"></i>
             </button>
+            
+            {/* Reports Tab Picker Dropdown */}
+            <ReportsTabPicker
+              open={pickerOpen}
+              onClose={() => setPickerOpen(false)}
+              categories={categories}
+              activeTabId={activeTabId}
+              onSelect={onSelectCategory}
+              canManage={can(user, 'reports:create')}
+              onAddCategory={onAddCategory}
+              onDeleteCategory={onDeleteCategory}
+            />
+          </div>
+          {can(user, 'reports:create') && (
+            <button
+              type="button"
+              className="add-tab-btn"
+              onClick={onAddCategory}
+              aria-label="Add category"
+              title="Add category"
+            >
+              <i className="bi bi-plus" aria-hidden="true"></i>
+            </button>
+          )}
+        </div>
+      ) : (
+        /* existing desktop tabs header stays as-is */
+        <div className="reports-tabs-desktop" role="tablist" aria-orientation="horizontal">
+          <div className="reports-tabs">
+            {categories.map(cat => (
+              <div key={cat} className="reports-tab-group">
+                <button
+                  className={`reports-tab ${cat === activeCategory ? 'active' : ''}`}
+                  onClick={() => setActiveCategory(cat)}
+                >
+                  <span>{cat}</span>
+                </button>
+                {can(user, 'reports:create') && (
+                  <button
+                    className="reports-tab__delete"
+                    onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat); }}
+                    aria-label="Delete category"
+                  >
+                    <i className="bi bi-x-lg"></i>
+                  </button>
+                )}
+              </div>
+            ))}
+
             {can(user, 'reports:create') && (
               <button
-                className="reports-tab__delete"
-                onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat); }}
-                aria-label="Delete category"
+                className="reports-add-category-btn"
+                onClick={() => setIsCategoryModalOpen(true)}
               >
-                <i className="bi bi-x-lg"></i>
+                <i className="bi bi-plus"></i>
               </button>
             )}
           </div>
-        ))}
+        </div>
+      )}
 
-        {can(user, 'reports:create') && (
-          <button
-            className="reports-add-category-btn"
-            onClick={() => setIsCategoryModalOpen(true)}
-          >
-            <i className="bi bi-plus"></i>
-          </button>
-        )}
-      </div>
+      {/* Dropdown Overlay */}
+      {pickerOpen && (
+        <div 
+          className="reports-dropdown-overlay" 
+          onClick={() => setPickerOpen(false)}
+        />
+      )}
 
       <section className="reports-list-wrap" aria-live="polite">
         {visibleItems.length === 0 ? (
@@ -235,6 +362,11 @@ export default function Reports() {
                   <div className="report-title">{r.title}</div>
                 </div>
                 <div className="report-actions">
+                  {can(user, 'reports:delete') && (
+                    <button type="button" className="btn-delete" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.title}`}>
+                      Delete
+                    </button>
+                  )}
                   {can(user, 'reports:create') && (
                     <button type="button" className="btn-edit" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.title}`}>
                       Edit Report
@@ -243,9 +375,23 @@ export default function Reports() {
                   <button type="button" className="btn-download" onClick={() => downloadReport(r)} aria-label={`Download ${r.title}`}>
                     Download PDF
                   </button>
-                  <button type="button" className="btn-delete" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.title}`}>
-                    Delete
-                  </button>
+
+                  {/* Mobile actions - shown only on mobile */}
+                  <div className="report-actions-mobile">
+                    {can(user, 'reports:delete') && (
+                      <button type="button" className="btn-delete-mobile" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.title}`}>
+                        <i className="bi bi-trash"></i>
+                      </button>
+                    )}
+                    {can(user, 'reports:create') && (
+                      <button type="button" className="btn-edit-mobile" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.title}`}>
+                        Edit
+                      </button>
+                    )}
+                    <button type="button" className={`btn-download-mobile ${!can(user, 'reports:create') ? 'btn-download-mobile--user' : ''}`} onClick={() => downloadReport(r)} aria-label={`Download ${r.title}`}>
+                      Download PDF
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}
@@ -253,7 +399,20 @@ export default function Reports() {
         )}
       </section>
 
-      {/* Category Modal */}
+    {/* Mobile FAB */}
+    {can(user, 'reports:create') && (
+      <button 
+        type="button" 
+        className="add-report-btn add-report-btn--mobile"
+        onClick={openCreateReportModal}
+        aria-label="Add new report"
+      >
+        <i className="bi bi-plus" aria-hidden="true"></i>
+        <span className="btn-text">Add New</span>
+      </button>
+    )}
+
+    {/* Category Modal */}
       {isCategoryModalOpen && (
         <div
           className="reports-modal-overlay"

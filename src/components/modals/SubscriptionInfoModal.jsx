@@ -108,9 +108,13 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
     <div
       className="subscription-info-modal-overlay"
       role="presentation"
-      onPointerDown={modalBackdropClose.onBackdropPointerDown}
-      onPointerUp={modalBackdropClose.onBackdropPointerUp}
-      onPointerCancel={modalBackdropClose.onBackdropPointerCancel}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleCloseAttempt();
+        }
+        e.preventDefault();
+        e.stopPropagation();
+      }}
     >
       <div
         className="subscription-info-modal"
@@ -133,17 +137,6 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
             <h2 className="subscription-info-modal__title">{title}</h2>
             <p className="subscription-info-modal__subtitle">{subtitle}</p>
           </div>
-          {isAdmin && (
-            <div className="subscription-info-modal__actions">
-              <button
-                type="button"
-                className="subscription-info-modal__update-btn"
-                onClick={openUpload}
-              >
-                <i className="bi bi-plus" aria-hidden="true"></i> Update Now
-              </button>
-            </div>
-          )}
         </header>
 
         <div className="subscription-info-modal__body">
@@ -155,6 +148,18 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
             />
           )}
         </div>
+
+        {isAdmin && (
+          <div className="subscription-info-modal__actions">
+            <button
+              type="button"
+              className="subscription-info-modal__update-btn"
+              onClick={openUpload}
+            >
+              <i className="bi bi-plus" aria-hidden="true"></i> Update Now
+            </button>
+          </div>
+        )}
       </div>
 
       {isUploadOpen && (

@@ -1,3 +1,4 @@
+@use '../vars' as *;
 // Confirm Logout Modal Styles
 .logout-modal-overlay {
   position: fixed;
@@ -122,6 +123,14 @@
     margin: 20px;
   }
   
+  .logout-modal-header {
+    padding-bottom: 10px;
+    i.bi-power {
+      font-size: 30px;
+      color: $vivid_red;
+    }
+  }
+
   .logout-modal-footer {
     flex-direction: column;
     gap: 8px;

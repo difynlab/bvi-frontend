@@ -812,6 +812,7 @@
     line-height: 1;
     background-color: #fff;
     border-radius: 50%;
+
     &:hover {
       color: #374151;
     }
@@ -1129,7 +1130,8 @@
     padding: 20px;
     position: relative;
 
-    &-header.close-btn, .close-btn {
+    &-header.close-btn,
+    .close-btn {
       position: sticky;
       top: 0;
       left: calc(100% - 20px);
@@ -1199,12 +1201,12 @@
           margin-top: auto;
 
           .edit-btn {
-            width: 60%;
+            width: fit-content;
           }
 
           .download-btn {
             width: 100%;
-            text-wrap: nowrap;
+            white-space: nowrap;
 
           }
         }
@@ -1245,45 +1247,53 @@
 
   .notices-mobile-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: left;
     align-items: center;
-    gap: 10px;
+    gap: 20px;
     max-width: 100% !important;
     margin-bottom: 20px;
+    position: relative;
 
     .category-title {
-      max-width: 80%;
+      min-width: 85%;
       display: flex;
       align-items: center;
       border-bottom: 2px solid #e93125;
+      position: relative;
 
       h2 {
         position: relative;
         margin: 0;
         font-size: 16px;
         line-height: 24px;
-        text-wrap: wrap;
+        word-wrap: break-word;
         text-align: left;
       }
 
       .category-picker-btn {
         display: inline-flex;
         align-items: center;
+        justify-content: space-between;
         gap: 6px;
         background: none;
         border: none;
-        padding: 5px 0;
-        border-radius: 6px;
+        padding: 5px 15px;
+        padding-right: 10px;
+
         cursor: pointer;
         transition: border-color 0.2s;
+        min-width: 100%;
 
-        &:hover {
-          border-color: #999;
-        }
 
-        span {
+        h2 {
           font-size: 14px;
-          color: #333;
+          color: #333 !important;
+          font-weight: 400;
+          margin: 0;
+          padding: 0;
+          display: block;
+          visibility: visible;
+          opacity: 1;
         }
 
         i {
@@ -1351,16 +1361,22 @@
   }
 }
 
-// Picker modal styles
+// Picker dropdown styles
 .notices-tab-picker {
-  max-width: 520px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-
-  .notices-modal-body {
-    padding: 20px;
-  }
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+  margin-top: 4px;
 
   .notices-tab-picker__list {
     list-style: none;
@@ -1368,25 +1384,30 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    width: 100%;
+    gap: 2px;
+  }
+
+  .notices-modal-body {
+    min-width: 100%;
   }
 
   .notices-tab-picker__item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
+    padding: 15px;
     transition: background-color 0.2s;
+    min-width: 100%;
 
     &:hover {
       background-color: #f8f9fa;
     }
 
     &.is-active {
-      background-color: rgba(233, 49, 37, 0.1);
-      border-color: rgba(233, 49, 37, 0.3);
+      background-color: rgba(122, 122, 122, 0.3);
+      padding: 15px;
+      width: 100%;
     }
 
     button {
@@ -1394,14 +1415,13 @@
       border: none;
       padding: 0;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 14px;
       color: #333;
       flex: 1;
       text-align: left;
+      white-space: nowrap;
+      font-weight: 400;
 
-      &:hover {
-        color: #e93125;
-      }
     }
 
     .notices-tab-picker__delete {
@@ -1420,18 +1440,15 @@
       }
     }
   }
+}
 
-  .notices-tab-picker__actions {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #e9ecef;
-
-    .btn {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-  }
+/* Dropdown overlay for closing when clicking outside */
+.notices-dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  background: transparent;
 }

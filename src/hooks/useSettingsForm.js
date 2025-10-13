@@ -37,12 +37,24 @@ export function useSettingsForm() {
   const [profilePreview, setProfilePreview] = useState(baseUser.profilePicture || '');
   const [selectedFile, setSelectedFile] = useState(null);
 
-  const requiredOk = useMemo(() => 
-    Boolean(form.name?.trim()) && 
-    Boolean(form.email?.trim()) && 
-    String(form.countryCode || '').length > 0, 
-    [form]
-  );
+  const requiredOk = useMemo(() => {
+    // Check if any required fields are being changed
+    const nameChanged = form.name !== baseUser.name;
+    const emailChanged = form.email !== baseUser.email;
+    const countryCodeChanged = form.countryCode !== baseUser.countryCode;
+    const phoneChanged = form.phoneNumber !== baseUser.phoneNumber;
+    const profilePictureChanged = form.profilePicture !== baseUser.profilePicture;
+    
+    // If only profile picture is being changed, allow it
+    if (profilePictureChanged && !nameChanged && !emailChanged && !countryCodeChanged && !phoneChanged) {
+      return true;
+    }
+    
+    // Otherwise, validate required fields
+    return Boolean(form.name?.trim()) && 
+           Boolean(form.email?.trim()) && 
+           String(form.countryCode || '').length > 0;
+  }, [form, baseUser]);
 
   const wantsPasswordChange = useMemo(() => 
     !!(currentPassword || newPassword || confirmPassword), 
@@ -72,13 +84,15 @@ export function useSettingsForm() {
     if (!file) {
       // When clearing, set to empty string to show default placeholder
       setProfilePreview('');
+      setForm(prev => ({ ...prev, profilePicture: '' }));
       setDirty(true);
       return;
     }
     const r = new FileReader();
     r.onload = () => { 
       const imageDataUrl = String(r.result || '');
-      setProfilePreview(imageDataUrl); 
+      setProfilePreview(imageDataUrl);
+      setForm(prev => ({ ...prev, profilePicture: imageDataUrl }));
       setDirty(true); 
     };
     r.readAsDataURL(file);
@@ -135,7 +149,7 @@ export function useSettingsForm() {
     }
     
     // Add profile picture if it has changed
-    const imagePreviewUrl = profilePreview || ''
+    const imagePreviewUrl = form.profilePicture || ''
     const imageFileName = selectedFile?.name || ''
     if (imagePreviewUrl !== baseUser.profilePicture) {
       // Save the actual image data for display, but handle storage carefully
@@ -151,12 +165,12 @@ export function useSettingsForm() {
     // Also save to profile storage for additional settings
     const updatedProfile = {
       ...form,
-      profilePicture: profilePreview || '',
+      profilePicture: form.profilePicture || '',
     };
     setProfile(currentUser, updatedProfile);
     
     resetAfterSave(updatedProfile);
-  }, [canSave, currentUser.id, form, profilePreview, baseUser, ctx, resetAfterSave]);
+  }, [canSave, currentUser.id, form, selectedFile, baseUser, ctx, resetAfterSave]);
 
   // Initialize form when user data changes
   useEffect(() => {

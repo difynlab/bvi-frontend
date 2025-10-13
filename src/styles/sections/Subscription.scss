@@ -206,16 +206,6 @@
   transition: background-color 0.2s ease;
 }
 
-@media (max-width: 768px) {
-  .general-details .row {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .general-details {
-    padding: 16px;
-  }
-}
 
 .membership-details {
   max-width: 100%;
@@ -392,11 +382,6 @@
 }
 
 
-@media (max-width: 768px) {
-  .membership-details {
-    padding: 16px;
-  }
-}
 
 .subscription-tab-container {
   .company-details {
@@ -618,25 +603,6 @@
     background: #f9fafb;
   }
 
-  @media (max-width: 768px) {
-    .company-details {
-      padding: 16px;
-    }
-
-    .company-details .row {
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .company-details .categories-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .company-details .office-presence .checkbox-group {
-      flex-direction: column;
-      gap: 12px;
-    }
-  }
 }
 
 .subscription-cards {
@@ -645,11 +611,6 @@
   gap: 24px;
 }
 
-@media (max-width: 768px) {
-  .subscription-cards {
-    grid-template-columns: 1fr;
-  }
-}
 
 .subscription-card {
   background-color: rgba(27, 114, 255, 0.15);
@@ -807,11 +768,6 @@
         }
       }
 
-      @media (max-width: 768px) {
-        .row {
-          grid-template-columns: 1fr;
-        }
-      }
     }
 
     .actions {
@@ -842,11 +798,6 @@
       }
     }
 
-    @media (max-width: 768px) {
-      .officer-block {
-        padding: 1rem;
-      }
-    }
   }
 }
 
@@ -864,4 +815,219 @@
 /* Utility: hide native file input used by dropzones (scoped to subscription) */
 .subscription-container .hidden-file-input {
   display: none;
+}
+
+/* Mobile Responsive Styles - Unified Media Query */
+@media (max-width: 768px) {
+
+  .subscription-container {
+    padding: 20px;
+  }
+  /* General Details */
+  .general-details {
+    padding: 16px;
+  }
+  
+  .general-details .row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  /* Membership Details */
+  .membership-details {
+    padding: 16px;
+  }
+  
+  /* Company Details */
+  .subscription-tab-container .company-details {
+    padding: 16px;
+  }
+
+  .subscription-tab-container .company-details .row {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .subscription-tab-container .company-details .categories-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .subscription-tab-container .company-details .office-presence .checkbox-group {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  /* Subscription Cards */
+  .subscription-cards {
+    grid-template-columns: 1fr;
+    .subscription-card {
+      padding: 15px;
+    }
+  }
+
+  .subscription-tab-container .membership-license-officer .officer-block .row {
+    grid-template-columns: 1fr;
+  }
+  
+  .subscription-tab-container .membership-license-officer .officer-block {
+    padding: 1rem;
+  }
+}
+
+/* Subscription Tab Picker Dropdown Styles */
+.subscription-tab-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+  margin-top: 4px;
+
+
+  .subscription-tab-picker__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 2px;
+  }
+
+  .subscription-modal-body {
+    min-width: 100%;
+  }
+
+  .subscription-tab-picker__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    min-width: 100%;
+    position: relative;
+
+    &:hover {
+      background-color: #f8f9fa;
+    }
+
+    &.is-active {
+      background-color: rgba(122, 122, 122, 0.3);
+      padding: 15px;
+      width: 100%;
+    }
+
+    button {
+      background: none;
+      border: none;
+      padding: 15px;
+      margin: -15px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #333;
+      flex: 1;
+      text-align: left;
+      white-space: nowrap;
+      width: 100%;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+
+      &:hover {
+        color: #e93125;
+      }
+    }
+  }
+}
+
+/* Dropdown overlay for closing when clicking outside */
+.subscription-dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  background: transparent;
+}
+
+/* Subscription Mobile Header Styles */
+@media (max-width: 768px) {
+  .subscription-mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    max-width: 100% !important;
+    margin-bottom: 20px;
+    position: relative;
+
+    .subscription-tab-title {
+      min-width: 100%;
+      display: flex;
+      align-items: center;
+      border-bottom: 2px solid #e93125;
+      position: relative;
+
+      h2 {
+        position: relative;
+        margin: 0;
+        font-size: 16px;
+        line-height: 24px;
+        word-wrap: break-word;
+        text-align: left;
+      }
+
+      .subscription-tab-picker-btn {
+        margin-top: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        background: none;
+        border: none;
+        padding: 5px 0;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: border-color 0.2s;
+        min-width: 100%;
+
+        &:hover {
+          border-color: #999;
+        }
+
+        h2 {
+          font-size: 14px;
+          color: #333;
+          font-weight: 400;
+        }
+
+        i {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+    }
+  }
+
+  // Hide desktop tabs on mobile
+  .subscription-tabs-desktop {
+    display: none;
+  }
+}
+
+// Desktop styles - hide mobile header
+@media (min-width: 769px) {
+  .subscription-mobile-header {
+    display: none;
+  }
 }

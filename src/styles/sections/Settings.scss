@@ -53,7 +53,7 @@
     &-label {
       width: 100%;
       font-size: 16px;
-      text-wrap: nowrap;
+      white-space: nowrap;
     }
     &-choose-btn {
       display: none;
@@ -64,7 +64,7 @@
       overflow: hidden;
       font-size: 12px;
       padding: 5px 10px;
-      text-wrap: nowrap;
+      white-space: nowrap;
       text-overflow: ellipsis;
     }
 
@@ -249,6 +249,8 @@ select.settings-input {
 
 .settings-input--country-code {
   flex: 0 0 100px; // Fixed width for country code
+  width: 100px; // Ensure consistent width
+  max-width: 100px;
 }
 
 // Preferences layout - two separate flex rows
@@ -280,57 +282,139 @@ select.settings-input {
 // Responsive design
 @media (max-width: 768px) {
   .settings-container {
-    padding: 16px;
+    padding: 20px;
   }
 
-  .settings-contact-row {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .settings-phone-group {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .settings-input--country-code {
-    flex: 1; // Reset to full width on mobile
-  }
-
-  .settings-preferences-row {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .settings-password-row {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .settings-password-toggle {
-    right: 8px;
-  }
-}
-
-@media (max-width: 480px) {
   .settings-header-title {
+    margin-bottom: 24px;
+    min-height: fit-content;
+    
     h1 {
-      font-size: 24px;
-      line-height: 32px;
+      font-size: 28px;
+      line-height: 36px;
+      margin-bottom: 8px;
     }
 
     p {
       font-size: 16px;
       line-height: 24px;
+      margin: 0;
     }
   }
 
+  .settings-grid {
+    gap: 16px;
+  }
+
   .settings-card {
-    padding: 16px;
+    padding: 20px;
+  }
+
+  .settings-card.settings-general-details {
+    padding: 0;
+  }
+  .settings-card-title {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+
+  // Image upload section mobile optimization
+  .image-inputs-row {
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
+
+    .settings-preferences {
+      width: 100%;
+      padding: 0;
+    }
+  }
+
+  .settings-field {
+    margin-bottom: 20px;
+
+    .image-upload {
+      width: 100%;
+      max-width: 100%;
+
+      &-status {
+        max-width: 100%;
+      }
+
+      &-preview {
+        padding: 16px 0;
+
+        &-img {
+          max-width: 100%;
+          width: 100%;
+          height: auto;
+          max-height: 200px;
+        }
+      }
+    }
+  }
+
+  .settings-contact-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .settings-contact-field {
+    min-width: 100%;
+  }
+  .settings-contact-field--phone-group {
+    min-width: 100%;
+  }
+
+  .settings-phone-group {
+    flex-direction: column;
+    gap: 12px;
+    min-width: 100%;
+  }
+
+  .settings-input--country-code {
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .settings-preferences-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .settings-password-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .settings-password-toggle {
+    right: 12px;
+    padding: 8px;
+    font-size: 1.4rem;
+  }
+
+  .settings-input {
+    padding: 14px 16px;
+    font-size: 16px; // Prevent zoom on iOS
+    min-height: 48px; // Better touch target
+    width: 100% !important; // Force 100% width on mobile
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .settings-label {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
   }
 
   .settings-save-btn {
     width: 100%;
-    margin-top: 20px;
+    padding: 16px 24px;
+    height: 56px;
+    font-size: 16px;
+    margin-top: 24px;
   }
 }
+

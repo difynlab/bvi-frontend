@@ -11,20 +11,7 @@
     margin-bottom: $spacing-lg;
   }
 
-  .legislation-header-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #333;
-    p {
-      margin: 0;
-    }
-  }
 
-  .legislation-header-subtitle {
-    color: #666;
-    font-size: 0.9rem;
-    margin: 0;
-  }
 
   .legislation-edit-btn {
     display: flex;
@@ -36,6 +23,11 @@
     i {
       font-size: 25px;
     }
+  }
+
+  /* Mobile FAB - Hidden by default */
+  .legislation-edit-btn--mobile {
+    display: none;
   }
 
   .legislation-meta {
@@ -157,15 +149,48 @@
 
   @media (max-width: 768px) {
     padding: $spacing-md;
-
+    margin-bottom: 80px;
+    
     .legislation-header {
       flex-direction: column;
       gap: $spacing-md;
       align-items: stretch;
+      .legislation-header-title {
+        min-height: fit-content;
+      }
     }
 
-    .legislation-edit-btn {
-      align-self: flex-start;
+    .legislation-edit-btn--desktop {
+      display: none; // Hide desktop button on mobile
+    }
+
+    /* Mobile FAB */
+    .legislation-edit-btn--mobile {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      min-width: 0;
+      background-color: $vivid_red;
+      color: white;
+      border: none;
+
+      i {
+        font-size: 20px;
+        margin-left: 5px;
+        opacity: 1
+      }
+
+      .btn-text {
+        display: none; // Hide text on mobile
+      }
     }
 
     .legislation-meta {
@@ -186,6 +211,18 @@
         .actions {
           justify-content: flex-end;
         }
+      }
+    }
+    .legislation-edit-modal{
+      min-width: 90%;
+      padding: 20px;
+      &__header {
+        padding-top: 0px;
+      }
+      &__close {
+        position: sticky;
+        top: 0;
+        left: calc(100% );
       }
     }
   }

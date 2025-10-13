@@ -128,34 +128,64 @@
 
 
   .empty-state {
-    border-radius: 8px;
-    padding: 40px 20px;
-    padding-top: 19px;
+    padding: 30px 20px;
+    color: #6b7280;
+    margin-top: 75px;
 
     img {
       width: 300px;
       height: 300px;
       opacity: 0.8;
       object-fit: cover;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
 
     img.empty-state-user {
+      margin-bottom: 0;
       width: 250px;
       height: 250px;
-      margin-bottom: 0;
     }
 
     h2 {
-      color: #333;
-      margin: 0 0 10px 0;
       font-size: 1.5rem;
+      font-weight: 400;
+      color: #374151;
+      margin: 0 0 12px 0;
     }
 
     p {
-      color: #666;
+      color: #6b7280;
       margin: 0;
       font-size: 0.9rem;
+      line-height: 1.5;
+    }
+  }
+
+  // Mobile-only empty-state responsive styles
+  @media (max-width: 768px) {
+    .empty-state {
+      padding: 16px;
+
+      img,
+      img.empty-state-user {
+        display: block;
+        max-width: 250px;
+        width: 100%;
+        height: auto;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 16px;
+      }
+
+      h2 {
+        font-size: 20px;
+        line-height: 28px;
+      }
+
+      p {
+        font-size: 16px;
+        line-height: 24px;
+      }
     }
   }
 }
@@ -603,10 +633,134 @@
 }
 // Form styles
 
+/* Hide mobile elements on desktop */
+.reports-mobile-header {
+  display: none;
+}
+
+.add-report-btn--mobile {
+  display: none;
+}
+
 // Responsive design
 @media (max-width: 768px) {
   .reports-container {
-    padding: 16px;
+    padding: 20px;
+    margin-bottom: 80px;
+  }
+
+  .reports-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+    margin-bottom: 0;
+    max-width: 100%;
+  }
+
+  .reports-header-actions {
+    justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+
+    /* keep buttons readable and not hidden behind cards */
+    position: sticky;
+    /* stays visible while scrolling */
+    top: 20px;
+    /* same vertical rhythm */
+    z-index: 2;
+
+    /* prevent overlap clipping in tight layouts */
+    background: transparent;
+    /* do not change visuals */
+    /* buttons keep their existing classes; no visual token changes */
+  }
+
+  .reports-mobile-header {
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    gap: 20px;
+    max-width: 100% !important;
+    margin-bottom: 20px;
+    position: relative;
+
+    .category-title {
+      min-width: 85%;
+      display: flex;
+      align-items: center;
+      border-bottom: 2px solid #e93125;
+      position: relative;
+
+      h2 {
+        position: relative;
+        margin: 0;
+        font-size: 16px;
+        line-height: 24px;
+        word-wrap: break-word;
+        text-align: left;
+      }
+
+      .category-picker-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        background: none;
+        border: none;
+        padding: 5px 15px;
+        padding-right: 10px;
+
+        cursor: pointer;
+        transition: border-color 0.2s;
+        min-width: 100%;
+
+        h2 {
+          font-size: 14px;
+          color: #333 !important;
+          font-weight: 400;
+          margin: 0;
+          padding: 0;
+          display: block;
+          visibility: visible;
+          opacity: 1;
+        }
+
+        i {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+    }
+
+    .add-tab-btn {
+      flex: 0 0 auto;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(233, 49, 37, 0.1);
+      color: rgba(233, 49, 37, 0.7);
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        background: rgba(233, 49, 37, 0.15);
+      }
+
+      i {
+        font-size: 16px;
+      }
+    }
+  }
+
+  // Hide desktop tabs on mobile
+  .reports-tabs-desktop {
+    display: none;
   }
 
   .add-report-btn {
@@ -619,12 +773,84 @@
   .report-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 10px;
+    padding: 15px;
   }
 
   .report-actions {
     width: 100%;
     justify-content: flex-end;
+
+    // Hide desktop actions on mobile
+    .btn-delete,
+    .btn-edit,
+    .btn-download {
+      display: none;
+    }
+
+    // Show mobile actions
+    .report-actions-mobile {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      width: 100%;
+
+      .btn-delete-mobile {
+        background: #f2f2f2;
+        color: #333;
+        border: 0;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        padding: 10px;
+        width: fit-content;
+
+        &:hover {
+          background: #e8e8e8;
+        }
+
+        i {
+          font-size: 16px;
+        }
+      }
+
+      .btn-edit-mobile {
+        background: #f8f8f8;
+        color: #333;
+        border: 0;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        padding: 10px 20px;
+
+        &:hover {
+          background: #e8e8e8;
+        }
+      }
+
+      .btn-download-mobile {
+        background: #262626;
+        color: #fff;
+        border: 0;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 400;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        padding: 10px 14px;
+        width: 100%;
+
+
+        // Full width for user view (non-admin)
+        &.btn-download-mobile--user {
+          width: 100%;
+        }
+      }
+    }
   }
 
   .reports-tabs {
@@ -639,5 +865,198 @@
   .reports-modal {
     width: 95%;
     margin: 20px;
+  }
+
+  /* Hide desktop button on mobile */
+  .add-report-btn--desktop {
+    display: none;
+  }
+
+  /* Show mobile FAB */
+  .add-report-btn--mobile {
+    display: flex;
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    margin-bottom: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    min-width: 0;
+    background-color: #e93125;
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(233, 49, 37, 0.3);
+
+    i {
+      font-size: 30px;
+      margin: 0;
+      padding: 0;
+      opacity: 1;
+      line-height: 1;
+    }
+
+    .btn-text {
+      display: none;
+    }
+
+    &:hover {
+      background-color: #d6281a;
+      transform: scale(1.05);
+    }
+  }
+  .temp-role-toggle-btn, .reports-seed-btn {
+    // display: none; //hide temp
+  }
+
+  /* Show mobile FAB */
+  .add-report-btn--mobile {
+    display: flex;
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    margin-bottom: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    min-width: 0;
+    background-color: #e93125;
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(233, 49, 37, 0.3);
+
+    i {
+      font-size: 30px;
+      margin: 0;
+      padding: 0;
+      opacity: 1;
+      line-height: 1;
+    }
+
+    .btn-text {
+      display: none;
+    }
+
+  }
+}
+
+// Desktop styles - hide mobile header
+@media (min-width: 769px) {
+  .reports-mobile-header {
+    display: none;
+  }
+}
+
+// Picker dropdown styles
+.reports-tab-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+  margin-top: 4px;
+
+  .reports-tab-picker__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 2px;
+  }
+
+  .reports-modal-body {
+    min-width: 100%;
+  }
+
+  .reports-tab-picker__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    transition: background-color 0.2s;
+    min-width: 100%;
+
+    &:hover {
+      background-color: #f8f9fa;
+    }
+
+    &.is-active {
+      background-color: rgba(122, 122, 122, 0.3);
+      padding: 15px;
+      width: 100%;
+    }
+
+    button {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-size: 14px;
+      color: #333;
+      flex: 1;
+      text-align: left;
+      white-space: nowrap;
+      font-weight: 400;
+    }
+
+    .reports-tab-picker__delete {
+      flex: 0 0 auto;
+      color: #dc3545;
+      padding: 4px;
+      margin-left: 8px;
+
+      &:hover {
+        background-color: rgba(220, 53, 69, 0.1);
+        border-radius: 4px;
+      }
+
+      i {
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+/* Dropdown overlay for closing when clicking outside */
+.reports-dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  background: transparent;
+}
+
+// Desktop styles - hide mobile actions and show desktop actions
+@media (min-width: 769px) {
+  .report-actions {
+    .report-actions-mobile {
+      display: none;
+    }
+
+    .btn-delete,
+    .btn-edit,
+    .btn-download {
+      display: flex;
+    }
   }
 }

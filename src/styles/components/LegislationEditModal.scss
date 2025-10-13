@@ -144,10 +144,26 @@
   margin-top: $spacing-xs;
 }
 
+.app-form__error-banner {
+  background-color: #fee;
+  border: 1px solid #e93125;
+  color: #e93125;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+  
+  strong {
+    font-weight: 600;
+  }
+}
+
 .legislation-edit-modal__footer {
   padding: 0;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
 }
 
 .btn {
