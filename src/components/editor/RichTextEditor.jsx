@@ -7,9 +7,59 @@ import Image from '@tiptap/extension-image'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import { TextStyle } from '@tiptap/extension-text-style'
+import { Extension } from '@tiptap/core'
 import Color from '@tiptap/extension-color'
 import TextAlign from '@tiptap/extension-text-align'
 import '../../styles/components/RichTextEditor.scss'
+
+// Extensión personalizada para FontFamily
+const FontFamily = Extension.create({
+  name: 'fontFamily',
+  
+  addOptions() {
+    return {
+      types: ['textStyle'],
+    }
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          fontFamily: {
+            default: null,
+            parseHTML: element => element.style.fontFamily?.replace(/['"]/g, ''),
+            renderHTML: attributes => {
+              if (!attributes.fontFamily) {
+                return {}
+              }
+              return {
+                style: `font-family: ${attributes.fontFamily}`,
+              }
+            },
+          },
+        },
+      },
+    ]
+  },
+
+  addCommands() {
+    return {
+      setFontFamily: fontFamily => ({ chain }) => {
+        // Solo aplicar a la selección actual, no a todo el texto
+        return chain().focus().setMark('textStyle', { fontFamily }).run()
+      },
+      unsetFontFamily: () => ({ chain }) => {
+        return chain()
+          .focus()
+          .setMark('textStyle', { fontFamily: null })
+          .removeEmptyTextStyle()
+          .run()
+      },
+    }
+  },
+})
 
 const RichTextEditor = ({
   docId,
@@ -21,11 +71,17 @@ const RichTextEditor = ({
 }) => {
   const [currentFont, setCurrentFont] = useState('')
   const [currentTextColor, setCurrentTextColor] = useState('#000000')
+  const [isLinkInputOpen, setIsLinkInputOpen] = useState(false)
+  const [linkUrl, setLinkUrl] = useState('')
 
   // Stable editor configuration - no dynamic dependencies
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        // Excluir extensiones que agregamos por separado para evitar duplicación
+        link: false,
+        underline: false,
+      }),
       Underline,
       Link.configure({
         openOnClick: true,
@@ -38,6 +94,7 @@ const RichTextEditor = ({
         nested: true,
       }),
       TextStyle,
+      FontFamily,
       Color,
       TextAlign.configure({
         types: ['heading', 'paragraph', 'image'],
@@ -55,23 +112,37 @@ const RichTextEditor = ({
         placeholder: placeholder,
       },
     },
+    onCreate: ({ editor }) => {
+      // Editor creado exitosamente
+    },
   }, []) // No dynamic dependencies
+
 
   const setLink = useCallback(() => {
     const previousUrl = editor.getAttributes('link').href
-    const url = window.prompt('URL', previousUrl)
-
-    if (url === null) {
-      return
-    }
-
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run()
-      return
-    }
-
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+    setLinkUrl(previousUrl || '')
+    setIsLinkInputOpen(true)
   }, [editor])
+
+  const handleLinkConfirm = useCallback(() => {
+    if (linkUrl.trim()) {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl.trim() }).run()
+    }
+    setIsLinkInputOpen(false)
+    setLinkUrl('')
+  }, [editor, linkUrl])
+
+  const handleLinkDiscard = useCallback(() => {
+    editor.chain().focus().extendMarkRange('link').unsetLink().run()
+    setIsLinkInputOpen(false)
+    setLinkUrl('')
+  }, [editor])
+
+  const handleLinkCancel = useCallback(() => {
+    setIsLinkInputOpen(false)
+    setLinkUrl('')
+  }, [])
+
 
   const setImage = useCallback(() => {
     const url = window.prompt('Image URL')
@@ -91,19 +162,7 @@ const RichTextEditor = ({
 
 
   const setTextAlign = useCallback((alignment) => {
-    if (alignment === 'justify') {
-      editor.commands.setTextAlign('left')
-      const contentElement = editor.view.dom.querySelector('.rte__content')
-      if (contentElement) {
-        contentElement.classList.add('text-justify')
-      }
-    } else {
-      const contentElement = editor.view.dom.querySelector('.rte__content')
-      if (contentElement) {
-        contentElement.classList.remove('text-justify')
-      }
-      editor.commands.setTextAlign(alignment)
-    }
+    editor.commands.setTextAlign(alignment)
   }, [editor])
 
   // const setVerticalAlign = useCallback((alignment) => {
@@ -169,28 +228,17 @@ const RichTextEditor = ({
               value={editor.isActive('heading', { level: 1 }) ? '1' : editor.isActive('heading', { level: 2 }) ? '2' : 'paragraph'}
               onChange={(e) => {
                 const level = e.target.value
-                const chain = editor.chain().focus()
-
+                
+                // 🔧 SOLUCIÓN: Aplicar solo al párrafo/línea actual
                 if (level === 'paragraph') {
-                  // Remove any heading and convert to paragraph
-                  if (editor.isActive('heading', { level: 1 })) {
-                    chain.toggleHeading({ level: 1 }).run()
-                  } else if (editor.isActive('heading', { level: 2 })) {
-                    chain.toggleHeading({ level: 2 }).run()
-                  }
-                  // If already paragraph, do nothing
+                  // Convertir a párrafo normal
+                  editor.chain().focus().setParagraph().run()
                 } else if (level === '1') {
-                  // Convert to heading 1
-                  if (editor.isActive('heading', { level: 2 })) {
-                    chain.toggleHeading({ level: 2 }).run()
-                  }
-                  chain.toggleHeading({ level: 1 }).run()
+                  // Convertir a Heading 1
+                  editor.chain().focus().setHeading({ level: 1 }).run()
                 } else if (level === '2') {
-                  // Convert to heading 2
-                  if (editor.isActive('heading', { level: 1 })) {
-                    chain.toggleHeading({ level: 1 }).run()
-                  }
-                  chain.toggleHeading({ level: 2 }).run()
+                  // Convertir a Heading 2
+                  editor.chain().focus().setHeading({ level: 2 }).run()
                 }
               }}
             >
@@ -206,18 +254,18 @@ const RichTextEditor = ({
               value={currentFont}
               onChange={(e) => {
                 const val = e.target.value
-                const chain = editor.chain().focus()
+                
                 if (!val) {
-                  chain.unsetMark('textStyle').run()
+                  editor.chain().focus().unsetFontFamily().run()
                 } else {
-                  chain.setMark('textStyle', { fontFamily: val }).run()
+                  editor.chain().focus().setFontFamily(val).run()
                 }
               }}
               aria-label="Font family"
             >
               <option value="Arial">Arial</option>
-              <option value="'Public Sans'">Public Sans</option>
-              <option value="'Times New Roman'">Times New Roman</option>
+              <option value="Public Sans">Public Sans</option>
+              <option value="Times New Roman">Times New Roman</option>
             </select>
           </div>
         </div>
@@ -336,7 +384,7 @@ const RichTextEditor = ({
           </button>
         </div>
 
-        <div className="rte__group">
+        <div className="rte__group rte__link-group">
           <button
             type="button"
             className={`rte__btn ${editor.isActive('link') ? 'rte__btn--active' : ''}`}
@@ -348,6 +396,7 @@ const RichTextEditor = ({
           >
             <i className="bi bi-link-45deg"></i>
           </button>
+          
           <button
             type="button"
             className="rte__btn"
@@ -422,17 +471,6 @@ const RichTextEditor = ({
           >
             <i className="bi bi-text-right"></i>
           </button>
-          <button
-            type="button"
-            className={`rte__btn ${editor.view.dom.querySelector('.rte__content')?.classList.contains('text-justify') ? 'rte__btn--active' : ''}`}
-            onMouseDown={(e) => {
-              e.preventDefault()
-              setTextAlign('justify')
-            }}
-            title="Justify"
-          >
-            <i className="bi bi-justify"></i>
-          </button>
         </div>
       </div>
 
@@ -447,6 +485,67 @@ const RichTextEditor = ({
       >
         <EditorContent editor={editor} />
       </div>
+
+      {/* Modal para insertar/editar link */}
+      {isLinkInputOpen && (
+        <div className="rte__link-modal-overlay" onClick={handleLinkCancel}>
+          <div className="rte__link-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="rte__link-modal-header">
+              <h3 className="rte__link-modal-title">Insertar/Editar Enlace</h3>
+              <button
+                type="button"
+                className="rte__link-modal-close"
+                onClick={handleLinkCancel}
+                title="Cerrar"
+              >
+                <i className="bi bi-x"></i>
+              </button>
+            </div>
+            
+            <div className="rte__link-modal-body">
+              <div className="rte__link-modal-field">
+                <label className="rte__link-modal-label">URL:</label>
+                <input
+                  type="url"
+                  className="rte__link-modal-input"
+                  placeholder="https://ejemplo.com"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleLinkConfirm()
+                    } else if (e.key === 'Escape') {
+                      handleLinkCancel()
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
+            </div>
+            
+            <div className="rte__link-modal-footer">
+              <button
+                type="button"
+                className="rte__btn rte__btn--secondary"
+                onClick={handleLinkDiscard}
+                title="Remover enlace"
+              >
+                <i className="bi bi-trash"></i>
+                <span>Remover</span>
+              </button>
+              <button
+                type="button"
+                className="rte__btn rte__btn--primary"
+                onClick={handleLinkConfirm}
+                title="Confirmar enlace"
+              >
+                <i className="bi bi-check"></i>
+                <span>Confirmar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

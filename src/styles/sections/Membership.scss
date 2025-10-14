@@ -173,7 +173,7 @@
 
 .status-pending {
   display: flex;
-  justify-content: center;
+  justify-content: left;
   align-items: center;
   gap: 8px;
 }
@@ -581,7 +581,10 @@
       padding: 0;
       overflow: hidden;
     }
-
+    .status-pending {
+      display: flex;
+      justify-content: center;
+    }
     .processing-status {
       display: flex;
       align-items: center;

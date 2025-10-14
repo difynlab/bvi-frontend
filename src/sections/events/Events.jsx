@@ -123,6 +123,30 @@ export const Events = () => {
     return '';
   }
 
+  const getEventDescriptionParagraphs = (event) => {
+    // Usar editorHtml si está disponible, sino usar description
+    const htmlContent = event.editorHtml || event.description || '';
+    
+    if (!htmlContent) return '';
+    
+    // Crear un elemento temporal para parsear el HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    
+    // Extraer solo los párrafos
+    const paragraphs = tempDiv.querySelectorAll('p');
+    
+    if (paragraphs.length === 0) {
+      // Si no hay párrafos, devolver el texto plano sin HTML
+      return htmlContent.replace(/<[^>]+>/g, '').trim();
+    }
+    
+    // Extraer el texto de cada párrafo y unirlos con espacios
+    const paragraphTexts = Array.from(paragraphs).map(p => p.textContent.trim()).filter(text => text.length > 0);
+    
+    return paragraphTexts.join(' ');
+  }
+
   const truncateText = (text, maxLength = 110) => {
     if (!text || text.length <= maxLength) return text
     const truncated = text.substring(0, maxLength)
@@ -501,7 +525,7 @@ export const Events = () => {
                         <span className="event-title__inner" title={event.title}>{event.title}</span>
                       </div>
                       <p className="event-description">
-                        {useFallback ? truncateText(getEventDescriptionText(event.description)) : getEventDescriptionText(event.description)}
+                        {useFallback ? truncateText(getEventDescriptionParagraphs(event)) : getEventDescriptionParagraphs(event)}
                       </p>
                       <div className="event-details">
                         <div className="event-time">
@@ -787,7 +811,12 @@ export const Events = () => {
 
                   <div className="register-event-description">
                     <h3>About this event</h3>
-                    <p>{getEventDescriptionText(registeringEvent.description)}</p>
+                    <div 
+                      className="wysiwyg-content"
+                      dangerouslySetInnerHTML={{ 
+                        __html: registeringEvent.editorHtml || registeringEvent.description || ''
+                      }}
+                    />
                   </div>
                 </div>
               </div>

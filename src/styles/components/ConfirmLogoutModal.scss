@@ -34,6 +34,10 @@
   padding: 25px 0 30px 0;
   gap: 10px;
   position: relative;
+  i.bi-power {
+    font-size: 30px;
+    color: $vivid_red;
+  }
 }
 
 .logout-modal-header h2 {

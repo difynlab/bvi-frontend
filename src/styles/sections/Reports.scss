@@ -853,6 +853,19 @@
     }
   }
 
+  /* Estilos para dispositivos muy pequeños (< 350px) */
+  @media (max-width: 349px) {
+    .report-actions-mobile {
+      .btn-delete-mobile,
+      .btn-edit-mobile,
+      .btn-download-mobile {
+        width: 33.33% !important;
+        font-size: 12px;
+        padding: 8px 4px;
+      }
+    }
+  }
+
   .reports-tabs {
     gap: 16px;
   }

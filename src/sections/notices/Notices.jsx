@@ -161,8 +161,8 @@ export const Notices = () => {
     { key: 'noticeType', label: 'Notice Type', test: () => !!noticeForm?.form?.noticeType },
     {
       key: 'description', label: 'Description', test: () => {
-        const html = (noticeForm?.editorHtml || noticeForm?.form?.description || '');
-        const text = html.replace(/<[^>]+>/g, '').trim();
+        const html = noticeForm?.editorHtml || noticeForm?.form?.description || '';
+        const text = String(html).replace(/<[^>]+>/g, '').trim();
         return text.length > 0;
       }
     },
@@ -235,7 +235,8 @@ export const Notices = () => {
     noticeForm.onChange(name, value)
   }
 
-  const handleEditorChange = (html) => {
+  const handleEditorChange = (data) => {
+    const html = typeof data === 'string' ? data : (data?.html || '');
     noticeForm.setEditorHtml(html)
     const text = noticeForm.stripHtml(html)
     noticeForm.setEditorText(text)
@@ -390,7 +391,7 @@ export const Notices = () => {
                   </h2>
                   <i className="bi bi-chevron-down" aria-hidden="true"></i>
                 </button>
-                
+
                 {/* Notices Tab Picker Dropdown */}
                 <NoticesTabPicker
                   open={pickerOpen}
@@ -458,8 +459,8 @@ export const Notices = () => {
 
           {/* Dropdown Overlay */}
           {pickerOpen && (
-            <div 
-              className="notices-dropdown-overlay" 
+            <div
+              className="notices-dropdown-overlay"
               onClick={() => setPickerOpen(false)}
             />
           )}
@@ -529,22 +530,24 @@ export const Notices = () => {
 
                     {/* Mobile actions - shown only on mobile */}
                     <div className="notice-actions-mobile">
-                      {can(user, 'notices:delete') && (
-                        <button
-                          className="notice-card__delete-btn"
-                          onClick={() => handleDeleteNoticeLocal(notice.id)}
-                        >
-                          <i className="bi bi-trash"></i>
-                        </button>
-                      )}
-                      {can(user, 'notices:update') && (
-                        <button
-                          className="edit-btn"
-                          onClick={() => openEditNotice(notice)}
-                        >
-                          Edit
-                        </button>
-                      )}
+                      <div className="notice-actions-mobile-adm">
+                        {can(user, 'notices:delete') && (
+                          <button
+                            className="notice-card__delete-btn"
+                            onClick={() => handleDeleteNoticeLocal(notice.id)}
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        )}
+                        {can(user, 'notices:update') && (
+                          <button
+                            className="edit-btn"
+                            onClick={() => openEditNotice(notice)}
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </div>
                       <button
                         className="download-btn"
                         onClick={() => window.open(notice.linkUrl, '_blank')}

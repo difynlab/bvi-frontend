@@ -1089,7 +1089,7 @@
 
     .temp-role-toggle-btn,
     .notices-seed-btn {
-      // display: none; // hide temp notices
+      display: none; // hide temp notices
     }
 
     justify-content: center;
@@ -1098,17 +1098,11 @@
     gap: 12px;
     align-items: center;
 
-    /* keep buttons readable and not hidden behind cards */
     position: sticky;
-    /* stays visible while scrolling */
     top: 20px;
-    /* same vertical rhythm */
     z-index: 2;
 
-    /* prevent overlap clipping in tight layouts */
     background: transparent;
-    /* do not change visuals */
-    /* buttons keep their existing classes; no visual token changes */
   }
 
   .tabs-container {
@@ -1186,15 +1180,14 @@
         }
 
         .notice-date {
-          order: 2; // Date comes second
+          order: 2;
           margin-bottom: 12px;
         }
 
-        // Add new actions at the bottom
         .notice-actions-mobile {
-          order: 3; // Actions come last
+          order: 3;
           display: flex;
-          flex-direction: row;
+          flex-direction: column;
           gap: 8px;
           justify-content: space-between;
           align-items: center;
@@ -1208,6 +1201,19 @@
             width: 100%;
             white-space: nowrap;
 
+          }
+          &-adm {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            align-items: center;
+            justify-content: space-between;
+            button {
+              width: 35%;
+            }
+            .edit-btn {
+              width: 65%;
+            }
           }
         }
       }
@@ -1255,7 +1261,7 @@
     position: relative;
 
     .category-title {
-      min-width: 85%;
+      min-width: 70%;
       display: flex;
       align-items: center;
       border-bottom: 2px solid #e93125;

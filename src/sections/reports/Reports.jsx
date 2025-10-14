@@ -16,6 +16,7 @@ export default function Reports() {
 
   // Mobile state management
   const [isMobile, setIsMobile] = useState(() => window.matchMedia(MOBILE_Q).matches)
+  const [isVerySmallScreen, setIsVerySmallScreen] = useState(() => window.innerWidth < 350)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [activeTabId, setActiveTabId] = useState(() => {
     // Load from localStorage or default to first category
@@ -64,6 +65,15 @@ export default function Reports() {
     const onChange = () => setIsMobile(mql.matches)
     mql.addEventListener?.('change', onChange)
     return () => mql.removeEventListener?.('change', onChange)
+  }, [])
+
+  // Detect very small screens
+  useEffect(() => {
+    const handleResize = () => {
+      setIsVerySmallScreen(window.innerWidth < 350)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   // Active tab management effect
@@ -389,7 +399,11 @@ export default function Reports() {
                       </button>
                     )}
                     <button type="button" className={`btn-download-mobile ${!can(user, 'reports:create') ? 'btn-download-mobile--user' : ''}`} onClick={() => downloadReport(r)} aria-label={`Download ${r.title}`}>
-                      Download PDF
+                      {isVerySmallScreen ? (
+                        <i className="bi bi-download"></i>
+                      ) : (
+                        'Download PDF'
+                      )}
                     </button>
                   </div>
                 </div>
