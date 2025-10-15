@@ -26,7 +26,7 @@ export function useCurrentUser() {
           email: user.email || '',
           firstName: user.firstName || '',
           lastName: user.lastName || '',
-          role: user.role || 'user',
+          role: user.role || 'member',
           permissions: user.permissions || [],
           id: user.id || '',
           phoneNumber: user.phoneNumber || ''
@@ -44,7 +44,7 @@ export function useCurrentUser() {
       email: fallback.email,
       firstName: '',
       lastName: '',
-      role: 'user',
+      role: 'member',
       permissions: [],
       id: '',
       phoneNumber: ''

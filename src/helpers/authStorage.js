@@ -4,22 +4,22 @@ const USERS_KEY = 'bvi.auth.users'
 const SESSION_KEY = 'bvi.auth.session'
 
 /**
- * Get all registered users
- * @returns {Array} Array of user objects
+ * Get all registered members
+ * @returns {Array} Array of member objects
  */
 export function getUsers() {
   try {
     const users = localStorage.getItem(USERS_KEY)
     return users ? JSON.parse(users) : []
   } catch (error) {
-    console.error('Error reading users from storage:', error)
+    console.error('Error reading members from storage:', error)
     return []
   }
 }
 
 /**
  * Save all users to storage
- * @param {Array} users - Array of user objects
+ * @param {Array} users - Array of member objects
  * @returns {boolean} True if successful
  */
 export function setUsers(users) {
@@ -27,7 +27,7 @@ export function setUsers(users) {
     localStorage.setItem(USERS_KEY, JSON.stringify(users))
     return true
   } catch (error) {
-    console.error('Error writing users to storage:', error)
+    console.error('Error writing members to storage:', error)
     return false
   }
 }
@@ -35,7 +35,7 @@ export function setUsers(users) {
 /**
  * Find user by email (case-insensitive)
  * @param {string} email - Email to search for
- * @returns {Object|null} User object or null
+ * @returns {Object|null} Member object or null
  */
 export function findUserByEmail(email) {
   if (!email) return null
@@ -47,8 +47,8 @@ export function findUserByEmail(email) {
 }
 
 /**
- * Save user session
- * @param {Object} user - User object to store in session
+ * Save member session
+ * @param {Object} user - Member object to store in session
  * @returns {boolean} True if successful
  */
 export function saveSession(user) {
@@ -110,7 +110,7 @@ export function clearAllAuthData() {
 }
 
 /**
- * Safely reads current user data from localStorage (legacy compatibility)
+ * Safely reads current member data from localStorage (legacy compatibility)
  * Tries common keys and shapes used in the app's localStorage
  * Returns null-safe fallbacks without throwing errors
  * @returns {Object} { name: string, email: string }

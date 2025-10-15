@@ -176,8 +176,9 @@ const SideNav = () => {
     // TODO BACKEND: Invalidate server session/token before redirect
   };
 
-  const displayName = user?.firstName || 'User'
-  const role = user?.role || 'user'
+  // Display name logic: use custom userName if set, otherwise use firstName
+  const displayName = user?.userName || user?.first_name || 'Member'
+  const role = user?.role || 'member'
 
   return (
     <>
@@ -271,7 +272,7 @@ const SideNav = () => {
               {(() => {
                 const avatarSrc = user?.profilePictureUrl || user?.profilePicture || '';
                 return avatarSrc ? (
-                  <img className="user-avatar-img" src={avatarSrc} alt={`${user?.firstName || 'User'} profile`} />
+                  <img className="user-avatar-img" src={avatarSrc} alt={`${user?.first_name || 'Member'} profile`} />
                 ) : (
                   <i className="bi bi-person-fill user-avatar-icon" aria-label="profile icon" />
                 );
@@ -279,7 +280,7 @@ const SideNav = () => {
             </div>
             <div className="profile-info">
               <h3 className="user-name">{displayName}</h3>
-              <p className="user-role">{role === 'admin' ? 'Administrator' : 'User'}</p>
+              <p className="user-role">{role === 'admin' ? 'Administrator' : 'Member'}</p>
             </div>
           </NavLink>
         </div>
@@ -291,7 +292,7 @@ const SideNav = () => {
               {(() => {
                 const avatarSrc = user?.profilePictureUrl || user?.profilePicture || '';
                 return avatarSrc ? (
-                  <img className="user-avatar-img" src={avatarSrc} alt={`${user?.firstName || 'User'} profile`} />
+                  <img className="user-avatar-img" src={avatarSrc} alt={`${user?.first_name || 'Member'} profile`} />
                 ) : (
                   <i className="bi bi-person-fill user-avatar-icon" aria-label="profile icon" />
                 );
@@ -299,7 +300,7 @@ const SideNav = () => {
             </div>
             <div className="profile-info">
               <h3 className="user-name">{displayName}</h3>
-              <p className="user-role">{role === 'admin' ? 'Administrator' : 'User'}</p>
+              <p className="user-role">{role === 'admin' ? 'Administrator' : 'Member'}</p>
             </div>
           </NavLink>
 

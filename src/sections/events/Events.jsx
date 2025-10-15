@@ -463,10 +463,10 @@ export const Events = () => {
               <div className="events-actions">
                 {/* TODO TEMPORARY: role toggle button for testing only. REMOVE before production. */}
                 <button
-                  className={`temp-role-toggle-btn ${user?.role === 'admin' ? 'admin' : 'user'}`}
+                  className={`temp-role-toggle-btn ${user?.role === 'admin' ? 'admin' : 'member'}`}
                   onClick={toggleRole}
                 >
-                  {user?.role === 'admin' ? 'Switch to User View' : 'Switch to Admin View'}
+                  {user?.role === 'admin' ? 'Switch to Member View' : 'Switch to Admin View'}
                 </button>
                 {/* TODO TEMPORARY: button to show sample events. REMOVE before production. */}
                 <button

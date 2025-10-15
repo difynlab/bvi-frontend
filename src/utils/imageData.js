@@ -19,10 +19,10 @@ export function dataUrlToBlob(dataUrl) {
 
 /**
  * Generate a safe filename for avatar based on user data
- * @param {Object} user - User object with id or email
+ * @param {Object} user - Member object with id or email
  * @returns {string} - Safe filename for avatar
  */
 export function fileNameForAvatar(user) {
-  const base = (user?.id || user?.email || 'user').toString().replace(/[^a-z0-9_-]/gi, '');
+  const base = (user?.id || user?.email || 'member').toString().replace(/[^a-z0-9_-]/gi, '');
   return `${base}-avatar.jpg`;
 }

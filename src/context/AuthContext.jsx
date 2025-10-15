@@ -4,6 +4,7 @@ import { AuthContext } from './AuthContext'
 import { getSession, saveSession, clearSession, clearAllAuthData, getUsers, setUsers, findUserByEmail } from '../helpers/authStorage'
 import { setProfile, getProfile, ensureProfile } from '../helpers/profileStorage'
 import { uploadAvatar } from '../api/avatarApi'
+import { registerUser, loginUser, logoutUser, getCurrentSession } from '../api/authApi'
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -51,28 +52,67 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const { firstName, lastName, email, phoneNumber, password } = payload
-      
+
+      // Try API first if available
+      if (API_BASE) {
+        try {
+          const response = await registerUser(payload)
+
+          // API registration successful
+          const authUser = {
+            id: response.data?.user?.id || Date.now().toString(),
+            first_name: response.data?.user?.first_name || firstName.trim(),
+            last_name: response.data?.user?.last_name || lastName.trim(),
+            email: response.data?.user?.email || email.toLowerCase().trim(),
+            phone: response.data?.user?.phone || phoneNumber || '',
+            role: response.data?.user?.role || 'member',
+            permissions: response.data?.user?.permissions || getPermissions('member')
+          }
+
+          // Ensure profile exists for new user
+          ensureProfile(authUser, {})
+
+          // Compose session user with stored profile
+          const sessionUser = composeSessionUser(authUser)
+
+          // Store token if provided by API
+          if (response.data?.token) {
+            sessionUser.token = response.data.token
+          }
+
+          saveSession(sessionUser)
+          setUser(sessionUser)
+          setIsAuthenticated(true)
+
+          console.log('API Registration successful:', sessionUser)
+          return true
+        } catch (apiError) {
+          console.warn('API registration failed, falling back to localStorage:', apiError.message)
+          // Fall through to localStorage fallback
+        }
+      }
+
+      // Fallback to localStorage (development mode)
       const existingUser = findUserByEmail(email)
       if (existingUser) {
         setError('User with this email already exists')
         return false
       }
 
-      const role = deriveRoleFromEmail(email)
+      const role = 'member' // Always assign member role for new registrations
       const permissions = getPermissions(role)
-      
+
       const passwordHash = await hashPassword(password)
-      
+
       const newUser = {
         id: Date.now().toString(),
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
         email: email.toLowerCase().trim(),
-        phoneNumber: phoneNumber || '',
+        phone: phoneNumber || '',
         role,
         permissions,
-        passwordHash,
-        createdAt: new Date().toISOString()
+        passwordHash
       }
 
       const users = getUsers()
@@ -82,25 +122,25 @@ export const AuthProvider = ({ children }) => {
       // Create session
       const authUser = {
         id: newUser.id,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
+        first_name: newUser.first_name,
+        last_name: newUser.last_name,
         email: newUser.email,
-        phoneNumber: newUser.phoneNumber,
+        phone: newUser.phone,
         role: newUser.role,
         permissions: newUser.permissions
       }
 
       // Ensure profile exists for new user
       ensureProfile(authUser, {})
-      
+
       // Compose session user with stored profile
       const sessionUser = composeSessionUser(authUser)
-      
+
       saveSession(sessionUser)
       setUser(sessionUser)
       setIsAuthenticated(true)
 
-      console.log('Registration successful:', sessionUser)
+      console.log('localStorage Registration successful:', sessionUser)
       return true
     } catch (err) {
       console.error('Registration error:', err)
@@ -116,6 +156,51 @@ export const AuthProvider = ({ children }) => {
     setError(null)
 
     try {
+      // Try API first if available
+      if (API_BASE) {
+        try {
+          const response = await loginUser({ email, password })
+          
+          // API login successful
+          const authUser = {
+            id: response.data?.user?.id || Date.now().toString(),
+            first_name: response.data?.user?.first_name || '',
+            last_name: response.data?.user?.last_name || '',
+            email: response.data?.user?.email || email.toLowerCase().trim(),
+            phone: response.data?.user?.phone || '',
+            role: response.data?.user?.role || 'member',
+            permissions: response.data?.user?.permissions || getPermissions('member')
+          }
+          
+          // Compose session user with stored profile
+          const sessionUser = composeSessionUser(authUser)
+
+          // Store token if provided by API
+          if (response.data?.token) {
+            sessionUser.token = response.data.token
+          }
+
+          saveSession(sessionUser)
+          setUser(sessionUser)
+          setIsAuthenticated(true)
+
+          console.log('API Login successful:', sessionUser)
+          return true
+        } catch (apiError) {
+          console.warn('API login failed:', apiError.message)
+          
+          // Handle specific API errors
+          if (apiError.message.includes('credentials do not match')) {
+            setError({ type: 'general', message: apiError.message })
+            return false
+          }
+          
+          // For other API errors, fall back to localStorage
+          console.warn('Falling back to localStorage due to API error')
+        }
+      }
+
+      // Fallback to localStorage (development mode)
       const user = findUserByEmail(email)
       if (!user) {
         setError({ type: 'email', message: 'User not found' })
@@ -130,22 +215,22 @@ export const AuthProvider = ({ children }) => {
 
       const authUser = {
         id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        first_name: user.first_name,
+        last_name: user.last_name,
         email: user.email,
-        phoneNumber: user.phoneNumber,
+        phone: user.phone,
         role: user.role,
         permissions: user.permissions
       }
 
       // Compose session user with stored profile
       const sessionUser = composeSessionUser(authUser)
-      
+
       saveSession(sessionUser)
       setUser(sessionUser)
       setIsAuthenticated(true)
 
-      console.log('Login successful:', sessionUser)
+      console.log('localStorage Login successful:', sessionUser)
       return true
     } catch (err) {
       setError({ type: 'general', message: 'Login failed' })
@@ -176,15 +261,15 @@ export const AuthProvider = ({ children }) => {
       const payload = parseJwt(credential)
       if (!payload?.email) throw new Error('Invalid Google token')
 
-      const role = deriveRoleFromEmail(payload.email)
+      const role = 'member' // Always assign member role for Google login
       const permissions = getPermissions(role)
 
       const authUser = {
         id: payload.sub || Date.now().toString(),
-        firstName: payload.given_name || 'Google',
-        lastName: payload.family_name || 'User',
+        first_name: payload.given_name || 'Google',
+        last_name: payload.family_name || 'Member',
         email: payload.email,
-        phoneNumber: '',
+        phone: '',
         role,
         permissions,
         oauthProvider: 'google'
@@ -193,14 +278,14 @@ export const AuthProvider = ({ children }) => {
 
       // Ensure profile exists for Google user
       ensureProfile(authUser, {})
-      
+
       // Compose session user with stored profile
       const sessionUser = composeSessionUser(authUser)
-      
+
       saveSession(sessionUser)     // localStorage mock // TODO BACKEND
       setUser(sessionUser)
       setIsAuthenticated(true)
-      
+
       console.log('Google login successful:', sessionUser)
       return true
     } catch (err) {
@@ -213,32 +298,40 @@ export const AuthProvider = ({ children }) => {
   }
 
   const logout = () => {
+    // Try API logout first if available and user has token
+    if (API_BASE && user?.token) {
+      logoutUser(user.token).catch(error => {
+        console.warn('API logout failed:', error.message)
+        // Continue with local logout even if API fails
+      })
+    }
+
     clearSession()          // remove only session key
     setUser(null)
     setIsAuthenticated(false)
     setError(null)
-    
+
     console.log('User logged out')
   }
 
   // TODO TEMPORARY: role toggle function for testing only. REMOVE before production.
   const toggleRole = () => {
     if (user) {
-      const newRole = user.role === 'admin' ? 'user' : 'admin'
+      const newRole = user.role === 'admin' ? 'member' : 'admin'
       const newPermissions = getPermissions(newRole)
-      
+
       const updatedUser = {
         ...user,
         role: newRole,
         permissions: newPermissions
       }
-      
+
       setUser(updatedUser)
       saveSession(updatedUser)
     }
   }
 
-  // TEMPORARY: Debug function to clear all registered users (REMOVE before production)
+  // TEMPORARY: Debug function to clear all registered members (REMOVE before production)
   const clearAllUsers = () => {
     const users = getUsers()
     console.log('Clearing users:', users)
@@ -250,10 +343,10 @@ export const AuthProvider = ({ children }) => {
     console.log('All users cleared. You can now register with any email.')
   }
 
-  // TEMPORARY: Debug function to show all registered users (REMOVE before production)
+  // TEMPORARY: Debug function to show all registered members (REMOVE before production)
   const showRegisteredUsers = () => {
     const users = getUsers()
-    console.log('Currently registered users:', users.map(u => ({ email: u.email, role: u.role })))
+    console.log('Currently registered members:', users.map(u => ({ email: u.email, role: u.role })))
     return users
   }
 
@@ -286,9 +379,9 @@ export const AuthProvider = ({ children }) => {
         profilePicture: next.profilePicture || '',
         profilePictureUrl: next.profilePictureUrl || '',
         profilePictureSync: next.profilePictureSync || '',
-        firstName: next.firstName || '',
-        lastName: next.lastName || '',
-        phoneNumber: next.phoneNumber || '',
+        first_name: next.first_name || '',
+        last_name: next.last_name || '',
+        phone: next.phone || '',
       }); // TODO BACKEND: move to server profile
 
       // Persist to session storage with error handling
@@ -297,7 +390,7 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         if (error.name === 'QuotaExceededError') {
           console.warn('localStorage quota exceeded, trying to compress image')
-          
+
           // Try to compress the image if it exists
           if (next.profilePicture && next.profilePicture.startsWith('data:image')) {
             try {
@@ -305,13 +398,13 @@ export const AuthProvider = ({ children }) => {
               const canvas = document.createElement('canvas')
               const ctx = canvas.getContext('2d')
               const img = new Image()
-              
+
               img.onload = () => {
                 try {
                   // Set canvas size to a smaller dimension (max 200x200)
                   const maxSize = 200
                   let { width, height } = img
-                  
+
                   if (width > height) {
                     if (width > maxSize) {
                       height = (height * maxSize) / width
@@ -323,17 +416,17 @@ export const AuthProvider = ({ children }) => {
                       height = maxSize
                     }
                   }
-                  
+
                   canvas.width = width
                   canvas.height = height
-                  
+
                   // Draw and compress with lower quality
                   ctx.drawImage(img, 0, 0, width, height)
                   const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6) // 60% quality
-                  
+
                   // Try to save the compressed version
                   const compressedNext = { ...next, profilePicture: compressedDataUrl }
-                  
+
                   try {
                     saveSession(compressedNext)
                     setUser(compressedNext)
@@ -351,21 +444,21 @@ export const AuthProvider = ({ children }) => {
                   setUser(nextWithoutImage)
                 }
               }
-              
+
               img.onerror = () => {
                 console.warn('Image loading failed, removing image')
                 const { profilePicture, ...nextWithoutImage } = next
                 saveSession(nextWithoutImage)
                 setUser(nextWithoutImage)
               }
-              
+
               img.src = next.profilePicture
               return
             } catch (compressionError) {
               console.warn('Image compression failed, removing image')
             }
           }
-          
+
           // Fallback: remove image and try again
           const { profilePicture, ...nextWithoutImage } = next
           saveSession(nextWithoutImage)
@@ -374,7 +467,7 @@ export const AuthProvider = ({ children }) => {
         }
         throw error
       }
-      
+
       // Update state with new object
       setUser(next);
       return true;

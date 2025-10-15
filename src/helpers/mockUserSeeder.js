@@ -21,17 +21,17 @@ export function mockProfileForEmail(email = '') {
   if (e === 'user@user') {
     return {
       ...base,
-      name: 'Regular User',
+      name: 'Regular Member',
       email: 'user@user',
-      role: 'user',
+      role: 'member',
     };
   }
   // Fallback for any other email
   return {
     ...base,
-    name: 'User',
+    name: 'Member',
     email,
-    role: 'user',
+    role: 'member',
   };
 }
 

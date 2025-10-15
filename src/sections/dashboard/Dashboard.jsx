@@ -61,7 +61,7 @@ const Dashboard = () => {
     return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
-  const displayName = user?.firstName || 'Member'
+  const displayName = user?.userName || user?.first_name || 'Member'
 
   const today = startOfToday()
   const futureEvents = events

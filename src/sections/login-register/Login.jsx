@@ -78,6 +78,10 @@ export const Login = () => {
       } else if (authError.type === 'password') {
         setPasswordError(authError.message)
         setEmailError('')
+      } else if (authError.type === 'general') {
+        // Clear field errors when showing general error
+        setEmailError('')
+        setPasswordError('')
       }
     }
   }, [authError])
@@ -115,7 +119,10 @@ export const Login = () => {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     const credential = credentialResponse?.credential || ''
-    if (!credential) return handleGoogleError?.()
+    if (!credential) {
+      handleGoogleError()
+      return
+    }
     console.log('Google login success')
     setIsSubmitting(true)
     try {
@@ -148,6 +155,11 @@ export const Login = () => {
           {successMessage && (
             <div className="login-success-message">
               {successMessage}
+            </div>
+          )}
+          {authError && authError.type === 'general' && (
+            <div className="login-error-message">
+              {authError.message}
             </div>
           )}
           <h1 className="auth-title">Login Your Account</h1>

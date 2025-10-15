@@ -106,7 +106,8 @@ export const Register = () => {
           lastName: formValues.lastName.trim(),
           email: email,
           phoneNumber: formValues.phoneNumber.trim() || '',
-          password: password
+          password: password,
+          confirmPassword: formValues.confirmPassword
         }
 
         const success = await register(registrationData)
@@ -292,7 +293,7 @@ export const Register = () => {
                   className="debug-button"
                   onClick={() => {
                     showRegisteredUsers()
-                    alert('Check console to see registered users')
+                    alert('Check console to see registered members')
                   }}
                 >
                   Show Users
@@ -301,9 +302,9 @@ export const Register = () => {
                   type="button" 
                   className="debug-button"
                   onClick={() => {
-                    if (confirm('This will clear ALL registered users. Are you sure?')) {
+                    if (confirm('This will clear ALL registered members. Are you sure?')) {
                       clearAllUsers()
-                      alert('All users cleared! You can now register with any email.')
+                      alert('All members cleared! You can now register with any email.')
                     }
                   }}
                 >

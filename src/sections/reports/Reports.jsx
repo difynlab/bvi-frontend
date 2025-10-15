@@ -244,7 +244,7 @@ export default function Reports() {
           className="temp-role-toggle-btn"
           onClick={toggleRole}
         >
-          {user?.role === 'admin' ? 'Switch to User View' : 'Switch to Admin View'}
+          {user?.role === 'admin' ? 'Switch to Member View' : 'Switch to Admin View'}
         </button>
 
         <button

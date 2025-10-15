@@ -132,7 +132,7 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
           <i className="bi bi-x" aria-hidden="true"></i>
         </button>
 
-        <header className={`subscription-info-modal__header ${isAdmin ? 'admin' : 'user'}`}>
+        <header className={`subscription-info-modal__header ${isAdmin ? 'admin' : 'member'}`}>
           <div className="subscription-info-modal__titles">
             <h2 className="subscription-info-modal__title">{title}</h2>
             <p className="subscription-info-modal__subtitle">{subtitle}</p>

@@ -2,8 +2,8 @@
 
 const PROFILE_KEY_PREFIX = 'bvi.profile.'
 
-// Keying strategy: prefer user.id; fallback to email lowercased
-const keyFor = (user) => user?.id ? `bvi.profile.${user.id}` : (user?.email ? `bvi.profile.${user.email.toLowerCase()}` : null);
+// Keying strategy: prefer member.id; fallback to email lowercased
+const keyFor = (member) => member?.id ? `bvi.profile.${member.id}` : (member?.email ? `bvi.profile.${member.email.toLowerCase()}` : null);
 
 /**
  * Get profile data by storage key
@@ -20,22 +20,22 @@ export function getProfileByKey(key) {
 }
 
 /**
- * Get user profile data by user object (id or email)
- * @param {Object} user - User object with id or email
+ * Get member profile data by member object (id or email)
+ * @param {Object} user - Member object with id or email
  * @returns {Object|null} Profile data or null
  */
-export function getProfile(user) {
-  return getProfileByKey(keyFor(user));
+export function getProfile(member) {
+  return getProfileByKey(keyFor(member));
 }
 
 /**
- * Set user profile data by user object
- * @param {Object} user - User object with id or email
+ * Set member profile data by member object
+ * @param {Object} user - Member object with id or email
  * @param {Object} partial - Partial profile data to update
  * @returns {boolean} True if successful
  */
-export function setProfile(user, partial) {
-  const k = keyFor(user); 
+export function setProfile(member, partial) {
+  const k = keyFor(member); 
   if (!k) return false;
   const prev = getProfileByKey(k) || {};
   try {
@@ -49,12 +49,12 @@ export function setProfile(user, partial) {
 
 /**
  * Ensure a profile record exists on first login
- * @param {Object} user - User object with id or email
+ * @param {Object} user - Member object with id or email
  * @param {Object} seed - Default profile data
  * @returns {boolean} True if successful
  */
-export function ensureProfile(user, seed = {}) {
-  const k = keyFor(user); 
+export function ensureProfile(member, seed = {}) {
+  const k = keyFor(member); 
   if (!k) return false;
   if (!getProfileByKey(k)) {
     try {
@@ -69,35 +69,35 @@ export function ensureProfile(user, seed = {}) {
 }
 
 /**
- * Read user from session storage (legacy compatibility)
- * @returns {Object|null} User data or null
+ * Read member from session storage (legacy compatibility)
+ * @returns {Object|null} Member data or null
  */
-export function readUserFromStorage() {
+export function readMemberFromStorage() {
   try { 
-    // Try session first (AuthContext stores here), then fallback to user
+    // Try session first (AuthContext stores here), then fallback to member
     const session = localStorage.getItem('bvi.auth.session');
     if (session) {
       const parsed = JSON.parse(session);
       return parsed || null; // session is now the user object directly
     }
-    return JSON.parse(localStorage.getItem('user')) || null; 
+    return JSON.parse(localStorage.getItem('member')) || null; 
   } catch { 
     return null; 
   }
 }
 
 /**
- * Write user to session storage (legacy compatibility)
- * @param {Object} user - User data to write
+ * Write member to session storage (legacy compatibility)
+ * @param {Object} user - Member data to write
  */
-export function writeUserToStorage(user) {
+export function writeMemberToStorage(user) {
   try { 
-    // Update both session and user keys for consistency
+    // Update both session and member keys for consistency
     const session = localStorage.getItem('bvi.auth.session');
     if (session) {
       localStorage.setItem('bvi.auth.session', JSON.stringify(user));
     }
-    localStorage.setItem('user', JSON.stringify(user)); 
+      localStorage.setItem('member', JSON.stringify(user));
   } catch (error) {
     console.error('Error writing user to storage:', error);
   }
@@ -105,17 +105,17 @@ export function writeUserToStorage(user) {
 
 /**
  * Ensure user defaults for backward compatibility
- * @param {Object} u - User object
- * @returns {Object} User object with defaults
+ * @param {Object} u - Member object
+ * @returns {Object} Member object with defaults
  */
 export function ensureUserDefaults(u = {}) {
   return {
     name: u.name || '',
     email: u.email || '',
     password: u.password || '',
-    role: u.role || 'user',
+    role: u.role || 'member',
     countryCode: u.countryCode ?? '+54',
-    phoneNumber: u.phoneNumber ?? '',
+    phone: u.phone ?? '',
     profilePicture: u.profilePicture ?? '',
     profilePictureUrl: u.profilePictureUrl ?? '',
     profilePictureSync: u.profilePictureSync ?? '',

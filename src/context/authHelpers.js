@@ -3,10 +3,10 @@
 /**
  * Derive role from email address
  * @param {string} email - Email address
- * @returns {string} Role: 'admin' or 'user'
+ * @returns {string} Role: 'admin' or 'member'
  */
 export const deriveRoleFromEmail = (email) => {
-  if (!email || typeof email !== 'string') return 'user'
+  if (!email || typeof email !== 'string') return 'member'
   
   const normalizedEmail = email.toLowerCase().trim()
   
@@ -17,11 +17,11 @@ export const deriveRoleFromEmail = (email) => {
   
   // Check if email contains "@user" OR domain starts with "user"
   if (normalizedEmail.includes('@user') || normalizedEmail.split('@')[1]?.startsWith('user')) {
-    return 'user'
+    return 'member'
   }
   
   // Default to user
-  return 'user'
+  return 'member'
 }
 
 /**

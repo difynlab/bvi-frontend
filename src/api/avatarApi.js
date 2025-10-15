@@ -4,7 +4,7 @@ import { dataUrlToBlob, fileNameForAvatar } from '../utils/imageData';
  * Upload avatar to backend API
  * @param {Object} params - Upload parameters
  * @param {string} params.apiBase - API base URL
- * @param {Object} params.user - User object
+ * @param {Object} params.user - Member object
  * @param {string} params.dataUrl - Data URL of the avatar image
  * @returns {Promise<{ok: boolean, url: string}>} - Upload result
  */
@@ -25,7 +25,7 @@ export async function uploadAvatar({ apiBase, user, dataUrl }) {
 
   if (!res || !res.ok) return { ok: false, url: '' };
 
-  // Expecting { url: 'https://...' }
+  // Expecting { url: 'https://...' } 
   const json = await res.json().catch(() => ({}));
   return { ok: Boolean(json?.url), url: json?.url || '' };
 }

@@ -1,4 +1,5 @@
 @use '../vars' as *;
+@use 'sass:color';
 
 .rte {
   display: flex;
@@ -453,7 +454,7 @@
     border: 1px solid $vivid_red;
 
     &:hover {
-      background: darken($vivid_red, 10%);
+      background: color.adjust($vivid_red, $lightness: -10%);
     }
   }
 }
