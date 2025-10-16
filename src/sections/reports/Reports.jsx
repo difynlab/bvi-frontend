@@ -517,7 +517,7 @@ export default function Reports() {
 
             <form onSubmit={handleReportSubmit}>
               <div className="form-group">
-                <label htmlFor="title">Title<span className="req-star" aria-hidden="true">*</span></label>
+                <label htmlFor="title">Reports Title<span className="req-star" aria-hidden="true">*</span></label>
                 <input
                   type="text"
                   id="title"

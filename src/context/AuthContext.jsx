@@ -19,7 +19,14 @@ export const AuthProvider = ({ children }) => {
   // Compose session user by merging auth user with stored profile
   const composeSessionUser = (authUser) => {
     const stored = getProfile(authUser) || {}
-    return { ...authUser, ...stored } // profile overrides base defaults
+    const composed = { ...authUser, ...stored } // profile overrides base defaults
+    
+    // Ensure userName is set if not present
+    if (!composed.userName && (composed.first_name || composed.last_name)) {
+      composed.userName = `${composed.first_name || ''} ${composed.last_name || ''}`.trim()
+    }
+    
+    return composed
   }
 
   // Try to sync avatar to backend
@@ -63,6 +70,7 @@ export const AuthProvider = ({ children }) => {
             id: response.data?.user?.id || Date.now().toString(),
             first_name: response.data?.user?.first_name || firstName.trim(),
             last_name: response.data?.user?.last_name || lastName.trim(),
+            userName: `${response.data?.user?.first_name || firstName.trim()} ${response.data?.user?.last_name || lastName.trim()}`.trim(),
             email: response.data?.user?.email || email.toLowerCase().trim(),
             phone: response.data?.user?.phone || phoneNumber || '',
             role: response.data?.user?.role || 'member',
@@ -108,6 +116,7 @@ export const AuthProvider = ({ children }) => {
         id: Date.now().toString(),
         first_name: firstName.trim(),
         last_name: lastName.trim(),
+        userName: `${firstName.trim()} ${lastName.trim()}`.trim(),
         email: email.toLowerCase().trim(),
         phone: phoneNumber || '',
         role,
@@ -124,6 +133,7 @@ export const AuthProvider = ({ children }) => {
         id: newUser.id,
         first_name: newUser.first_name,
         last_name: newUser.last_name,
+        userName: newUser.userName,
         email: newUser.email,
         phone: newUser.phone,
         role: newUser.role,
@@ -166,6 +176,7 @@ export const AuthProvider = ({ children }) => {
             id: response.data?.user?.id || Date.now().toString(),
             first_name: response.data?.user?.first_name || '',
             last_name: response.data?.user?.last_name || '',
+            userName: `${response.data?.user?.first_name || ''} ${response.data?.user?.last_name || ''}`.trim(),
             email: response.data?.user?.email || email.toLowerCase().trim(),
             phone: response.data?.user?.phone || '',
             role: response.data?.user?.role || 'member',
@@ -217,6 +228,7 @@ export const AuthProvider = ({ children }) => {
         id: user.id,
         first_name: user.first_name,
         last_name: user.last_name,
+        userName: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
         email: user.email,
         phone: user.phone,
         role: user.role,
@@ -268,6 +280,7 @@ export const AuthProvider = ({ children }) => {
         id: payload.sub || Date.now().toString(),
         first_name: payload.given_name || 'Google',
         last_name: payload.family_name || 'Member',
+        userName: `${payload.given_name || 'Google'} ${payload.family_name || 'Member'}`.trim(),
         email: payload.email,
         phone: '',
         role,
@@ -358,6 +371,15 @@ export const AuthProvider = ({ children }) => {
       const prev = user || {};
       let next = { ...prev, ...partial };
 
+      // If firstName or lastName are being updated, also update userName
+      if (partial?.firstName || partial?.lastName) {
+        const firstName = partial.firstName || next.first_name || '';
+        const lastName = partial.lastName || next.last_name || '';
+        next.userName = `${firstName} ${lastName}`.trim();
+        next.first_name = firstName;
+        next.last_name = lastName;
+      }
+
       // If avatar dataURL present, try backend upload
       if (partial?.profilePicture) {
         const { synced, url } = await trySyncAvatarToBackend(next, partial.profilePicture);
@@ -381,6 +403,7 @@ export const AuthProvider = ({ children }) => {
         profilePictureSync: next.profilePictureSync || '',
         first_name: next.first_name || '',
         last_name: next.last_name || '',
+        userName: next.userName || '',
         phone: next.phone || '',
       }); // TODO BACKEND: move to server profile
 

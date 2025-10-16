@@ -507,7 +507,7 @@
   .file-input-label {
     display: inline-block;
     background: #262626;
-    color: #fff;
+    color: #fff !important;
     padding: 8px 16px;
     border-radius: 6px;
     cursor: pointer;
@@ -534,13 +534,15 @@
   .upload-now-btn {
     background: #262626;
     color: #fff;
-    padding: 10px 20px;
+    padding: 12px 24px;
     border: 0;
     border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    height: 55px;
+    width: fit-content;
   }
   
   .upload-now-btn:hover {
@@ -923,7 +925,7 @@
     }
   }
   .temp-role-toggle-btn, .reports-seed-btn {
-    // display: none; //hide temp
+    display: none; //hide temp
   }
 
   /* Show mobile FAB */

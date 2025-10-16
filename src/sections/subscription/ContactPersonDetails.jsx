@@ -162,6 +162,7 @@ const ContactPersonDetails = ({ onNext = () => {} }) => {
               onChange={(e) => handleFieldChange(contactKey, 'name', e.target.value)}
               onKeyDown={handleKeyDown}
               aria-invalid={hasError ? 'true' : 'false'}
+              placeholder="Enter full name"
             />
           </div>
           
@@ -174,6 +175,7 @@ const ContactPersonDetails = ({ onNext = () => {} }) => {
               onChange={(e) => handleFieldChange(contactKey, 'title', e.target.value)}
               onKeyDown={handleKeyDown}
               aria-invalid={hasError ? 'true' : 'false'}
+              placeholder="Enter job title or position"
             />
           </div>
         </div>
@@ -188,6 +190,7 @@ const ContactPersonDetails = ({ onNext = () => {} }) => {
               onChange={(e) => handlePhoneChange(contactKey, e.target.value)}
               onKeyDown={handleKeyDown}
               aria-invalid={hasError ? 'true' : 'false'}
+              placeholder="Enter phone number"
             />
           </div>
           
@@ -200,6 +203,7 @@ const ContactPersonDetails = ({ onNext = () => {} }) => {
               onChange={(e) => handleFieldChange(contactKey, 'email', e.target.value)}
               onKeyDown={handleKeyDown}
               aria-invalid={hasError ? 'true' : 'false'}
+              placeholder="Enter email address"
             />
           </div>
         </div>

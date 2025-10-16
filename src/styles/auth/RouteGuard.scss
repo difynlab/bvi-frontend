@@ -4,5 +4,6 @@
   align-items: center;
   height: 100vh;
   font-size: 18px;
-  color: #666;
+  background-color: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
 }

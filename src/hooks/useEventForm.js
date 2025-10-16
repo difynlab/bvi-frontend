@@ -77,14 +77,7 @@ const TIME_ZONES = [
   'UTC',
   'GMT',
   'GMT-3',
-  'GMT+1',
-  'America/Argentina/Buenos_Aires',
-  'America/New_York',
-  'Europe/Madrid',
-  'Europe/London',
-  'Asia/Tokyo',
-  'Asia/Kolkata',
-  'Australia/Sydney'
+  'GMT+1'
 ]
 
 const EVENT_TYPES = [

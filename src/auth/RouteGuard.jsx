@@ -5,7 +5,7 @@ import { useAuth } from '../context/useAuth'
 const RouteGuard = ({ children, requireAuth = true, allowRoles = [] }) => {
   const { isAuthenticated, user, loading, isInitialized } = useAuth()
 
-  if (!isInitialized || loading) {
+  if (!isInitialized) {
     return <div className="route-guard-loading">
       Loading...
     </div>

@@ -12,6 +12,7 @@ import { CustomRecurrencePopover } from '../../components/events/CustomRecurrenc
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
 import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock'
 import EmptyPage from '../../components/EmptyPage'
+import CustomDropdown from '../../components/CustomDropdown'
 import '../../styles/sections/Events.scss'
 
 export const Events = () => {
@@ -604,6 +605,7 @@ export const Events = () => {
                     name="title"
                     value={eventForm.form.title}
                     onChange={handleInputChange}
+                    placeholder="Enter event title"
                     required
                   />
                 </div>
@@ -647,16 +649,14 @@ export const Events = () => {
 
                   <div className="form-group">
                     <label htmlFor="timeZone">Time Zone</label>
-                    <select
+                    <CustomDropdown
                       id="timeZone"
                       name="timeZone"
                       value={eventForm.form.timeZone}
                       onChange={handleInputChange}
-                    >
-                      {eventForm.TIME_ZONES.map(tz => (
-                        <option key={tz} value={tz}>{tz}</option>
-                      ))}
-                    </select>
+                      options={eventForm.TIME_ZONES.map(tz => ({ value: tz, label: tz }))}
+                      placeholder="Select time zone"
+                    />
                   </div>
                   <div className="form-group repeat-field">
                     <label htmlFor="repeat">Repeat</label>
@@ -711,6 +711,7 @@ export const Events = () => {
                     name="location"
                     value={eventForm.form.location}
                     onChange={handleInputChange}
+                    placeholder="Enter event location"
                   />
                 </div>
 

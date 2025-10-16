@@ -61,6 +61,7 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
         <input
           id="companyName"
           type="text"
+          placeholder="Enter company name"
           value={companyValues.companyName || ''}
           onChange={(e) => setField('companyDetails', 'companyName', e.target.value)}
           onKeyDown={handleKeyDown}
@@ -80,6 +81,7 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
         <input
           id="companyAddress"
           type="text"
+          placeholder="Enter company address"
           value={companyValues.companyAddress || ''}
           onChange={(e) => setField('companyDetails', 'companyAddress', e.target.value)}
           onKeyDown={handleKeyDown}
@@ -100,6 +102,7 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
           <input
             id="telephone"
             type="number"
+            placeholder="Enter phone number"
             value={companyValues.telephone || ''}
             onChange={handleTelephoneChange}
             onKeyDown={handleKeyDown}
@@ -118,6 +121,7 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
           <input
             id="email"
             type="email"
+            placeholder="Enter email address"
             value={companyValues.email || ''}
             onChange={(e) => setField('companyDetails', 'email', e.target.value)}
             onKeyDown={handleKeyDown}
@@ -138,6 +142,7 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
         <input
           id="website"
           type="text"
+          placeholder="Enter website URL"
           value={companyValues.website || ''}
           onChange={(e) => setField('companyDetails', 'website', e.target.value)}
           onKeyDown={handleKeyDown}
@@ -156,6 +161,7 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
         <label htmlFor="brief">Brief company profile</label>
         <textarea
           id="brief"
+          placeholder="Enter brief company description"
           value={companyValues.brief || ''}
           onChange={(e) => setField('companyDetails', 'brief', e.target.value)}
           onKeyDown={handleKeyDown}
@@ -240,6 +246,7 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
         <input
           id="otherCategory"
           type="text"
+          placeholder="Specify other business category"
           value={companyValues.otherCategory || ''}
           onChange={(e) => setField('companyDetails', 'otherCategory', e.target.value)}
           onKeyDown={handleKeyDown}

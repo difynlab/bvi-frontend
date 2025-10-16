@@ -1,0 +1,129 @@
+// Custom Dropdown Styles
+.custom-dropdown {
+  position: relative;
+  width: 100%;
+  
+  &__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px;
+    min-height: 45px;
+    font-size: 16px; // Prevent zoom on iOS
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    
+    &:hover {
+      border-color: #9ca3af;
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+  }
+  
+  &__value {
+    color: #262626;
+    font-weight: 400;
+    flex: 1;
+    text-align: left;
+  }
+  
+  &__icon {
+    color: #6b7280;
+    font-size: 14px;
+    transition: transform 0.2s ease;
+    margin-left: 8px;
+  }
+  
+  &__menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background-color: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-top: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  &__option {
+    padding: 12px 16px;
+    color: #262626;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 16px;
+    
+    &:hover {
+      background-color: #f3f4f6;
+    }
+    
+    &.selected {
+      background-color: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 500;
+    }
+    
+    &:first-child {
+      border-radius: 6px 6px 0 0;
+    }
+    
+    &:last-child {
+      border-radius: 0 0 6px 6px;
+    }
+  }
+  
+  // Open state
+  &.open {
+    .custom-dropdown__icon {
+      transform: rotate(180deg);
+    }
+  }
+  
+  // Disabled state
+  &.disabled {
+    .custom-dropdown__trigger {
+      background-color: #f9fafb;
+      color: #9ca3af;
+      cursor: not-allowed;
+      
+      &:hover {
+        border-color: #d1d5db;
+      }
+    }
+    
+    .custom-dropdown__value {
+      color: #9ca3af;
+    }
+    
+    .custom-dropdown__icon {
+      color: #9ca3af;
+    }
+  }
+}
+
+// Mobile responsive adjustments
+@media (max-width: 768px) {
+  .custom-dropdown {
+    &__trigger {
+      padding: 12px;
+      min-height: 44px;
+      font-size: 16px; // Prevent zoom on iOS
+    }
+    
+    &__option {
+      padding: 14px 16px;
+      font-size: 16px; // Prevent zoom on iOS
+    }
+  }
+}

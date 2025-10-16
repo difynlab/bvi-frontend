@@ -513,6 +513,7 @@
         min-width: 0;
         box-sizing: border-box;
         padding: 15px;
+        border: 1px solid rgba(0, 0, 0, 0.3);
 
         &.events-card {
           min-height: fit-content;
@@ -525,7 +526,6 @@
           .list-item {
             overflow: hidden;
             padding: 15px;
-            background-color: #21B65A;
             .item-description {
               overflow: hidden;
               text-overflow: ellipsis;
@@ -566,11 +566,11 @@
         display: none;
       }
     }
+
+    p {
+      font-size: 16px !important;
+      line-height: 24px !important;
+    }
   }
 
-  // Estilos para todos los párrafos en mobile
-  p {
-    font-size: 16px !important;
-    line-height: 24px !important;
-  }
 }

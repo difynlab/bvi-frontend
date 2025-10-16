@@ -329,6 +329,7 @@ const Newsletters = () => {
                     name="fileName"
                     value={form.fileName}
                     onChange={(e) => onChange('fileName', e.target.value)}
+                    placeholder="Please mention how do you want to save the document name"
                     required
                   />
                 </div>

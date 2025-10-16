@@ -176,8 +176,8 @@ const SideNav = () => {
     // TODO BACKEND: Invalidate server session/token before redirect
   };
 
-  // Display name logic: use custom userName if set, otherwise use firstName
-  const displayName = user?.userName || user?.first_name || 'Member'
+  // Display name logic: use only first name for display
+  const displayName = user?.first_name || 'Member'
   const role = user?.role || 'member'
 
   return (

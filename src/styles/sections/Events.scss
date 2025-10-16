@@ -35,7 +35,6 @@
     display: flex;
     flex-direction: row;
     align-items: flex-end;
-    height: 70px;
     gap: 16px;
   }
 
@@ -55,15 +54,7 @@
     }
   }
 
-  .form-group input,
-  .form-group select {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    box-sizing: border-box;
-  }
+  
 
   .form-group input:focus,
   .form-group select:focus {
@@ -157,15 +148,6 @@
   }
 }
 
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  box-sizing: border-box;
-}
 
 .form-group input:focus,
 .form-group select:focus {
@@ -531,6 +513,7 @@
   padding: 15px;
   border-radius: 0 0 12px 12px;
   border: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: none;
 }
 
 .event-header {
@@ -1368,7 +1351,7 @@
     .form-group select {
       font-size: 16px; // Prevent zoom on iOS
       padding: 14px 12px;
-      min-height: 48px;
+      min-height: 45px;
     }
 
     // Remove default time input icons
@@ -1488,6 +1471,10 @@
         }
       }
     }
+  }
+  .event-content {
+    border: 2px solid rgba(0, 0, 0, 0.3);
+    border-top: none
   }
 }
 

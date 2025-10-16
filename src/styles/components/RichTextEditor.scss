@@ -478,7 +478,6 @@
 
       .rte__select {
         min-width: 100% !important;
-        background-color: aqua;
       }
     }
 
@@ -487,10 +486,10 @@
       display: flex;
       justify-content: space-around;
       align-items: center;
+      gap: 10px;
 
-      .rte__group .rte__select {
-        width: 100%;
-        background-color: #fff;
+      .rte__group {
+        width: 50%;
       }
     }
   }

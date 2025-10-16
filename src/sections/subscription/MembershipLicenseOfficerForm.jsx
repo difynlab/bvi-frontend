@@ -70,6 +70,7 @@ const MembershipLicenseOfficerForm = ({ values, errors, setOfficer, onSave }) =>
               onKeyDown={handleKeyDown}
               aria-invalid={hasError ? 'true' : 'false'}
               aria-describedby={hasError ? `officer${officerIndex + 1}-name-error` : undefined}
+              placeholder="Enter officer's full name"
             />
             {errors[`membershipLicenseOfficers.officer${officerIndex + 1}.name`] && (
               <div id={`officer${officerIndex + 1}-name-error`} className="error-message">
@@ -88,6 +89,7 @@ const MembershipLicenseOfficerForm = ({ values, errors, setOfficer, onSave }) =>
               onKeyDown={handleKeyDown}
               aria-invalid={hasError ? 'true' : 'false'}
               aria-describedby={hasError ? `officer${officerIndex + 1}-title-error` : undefined}
+              placeholder="Enter officer's job title"
             />
             {errors[`membershipLicenseOfficers.officer${officerIndex + 1}.title`] && (
               <div id={`officer${officerIndex + 1}-title-error`} className="error-message">
@@ -108,6 +110,7 @@ const MembershipLicenseOfficerForm = ({ values, errors, setOfficer, onSave }) =>
               onKeyDown={handleKeyDown}
               aria-invalid={hasError ? 'true' : 'false'}
               aria-describedby={hasError ? `officer${officerIndex + 1}-phone-error` : undefined}
+              placeholder="Enter officer's phone number"
             />
             {errors[`membershipLicenseOfficers.officer${officerIndex + 1}.phone`] && (
               <div id={`officer${officerIndex + 1}-phone-error`} className="error-message">
@@ -126,6 +129,7 @@ const MembershipLicenseOfficerForm = ({ values, errors, setOfficer, onSave }) =>
               onKeyDown={handleKeyDown}
               aria-invalid={hasError ? 'true' : 'false'}
               aria-describedby={hasError ? `officer${officerIndex + 1}-email-error` : undefined}
+              placeholder="Enter officer's email address"
             />
             {errors[`membershipLicenseOfficers.officer${officerIndex + 1}.email`] && (
               <div id={`officer${officerIndex + 1}-email-error`} className="error-message">

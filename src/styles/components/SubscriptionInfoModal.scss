@@ -1,4 +1,3 @@
-
 .subscription-info-modal-overlay {
   position: fixed;
   top: 0;
@@ -25,13 +24,22 @@
   overflow: auto;
   position: relative;
   padding: 40px;
-  
+
   scrollbar-width: none;
   -ms-overflow-style: none;
-  
+
   &::-webkit-scrollbar {
     display: none;
   }
+
+  // Disable text selection
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  // Remove text selection highlight
+  -webkit-tap-highlight-color: transparent;
 }
 
 .subscription-info-modal__close {
@@ -60,10 +68,23 @@
   margin-bottom: 20px;
   text-align: center;
   flex-direction: column;
+
+  // Desktop styles for admin and member
+  &.admin {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  &.member {
+    align-items: center;
+    text-align: center;
+  }
 }
 
 .subscription-info-modal__titles {
   flex: 1;
+  max-width: 80%;
+
 }
 
 .subscription-info-modal__title {
@@ -87,6 +108,14 @@
   justify-content: center;
   gap: 10px;
   margin-top: 20px;
+
+  // Desktop: Position absolute for admin (only for screens > 1200px)
+  @media (min-width: 1201px) {
+    position: absolute;
+    top: 40px;
+    right: 40px;
+    margin-top: 0;
+  }
 }
 
 .subscription-info-modal__update-btn {
@@ -104,9 +133,6 @@
   gap: 8px;
 }
 
-
-
-
 .subscription-info-modal__body {
   margin-top: 16px;
 }
@@ -121,7 +147,65 @@
   min-height: 200px;
 }
 
-// Responsive adjustments
+// Tablet styles (769px to 1200px) - same as mobile
+@media (min-width: 769px) and (max-width: 1200px) {
+  .subscription-info-modal {
+    width: 80%;
+    margin: 20px;
+    padding: 15px;
+    padding-top: 30px;
+    max-height: fit-content;
+  }
+
+  .subscription-info-modal__header {
+    flex-direction: column;
+    align-items: left;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .subscription-info-modal__header.admin {
+    flex-direction: column;
+    align-items: left;
+  }
+
+  .subscription-info-modal__actions {
+    justify-content: center;
+    position: static; // Reset absolute positioning for tablet
+    top: auto;
+    right: auto;
+    margin-top: 20px; // Restore original margin
+  }
+
+  .subscription-info-modal__update-btn {
+    width: fit-content;
+    justify-content: center;
+    padding-left: 50px;
+    gap: 10px;
+
+    i {
+      opacity: 1;
+    }
+  }
+
+  .subscription-info-modal__image {
+    min-height: 0;
+  }
+
+  .subscription-info-modal-overlay .subscription-upload-modal-overlay .subscription-upload-modal {
+    flex: 0;
+    display: flex;
+    min-width: 90%;
+    min-height: fit-content;
+    padding-top: 30px;
+  }
+
+  .subscription-upload-modal__close {
+    font-size: 30px;
+  }
+}
+
+// Mobile styles
 @media (max-width: 768px) {
   .subscription-info-modal {
     width: 95%;
@@ -130,35 +214,42 @@
     padding-top: 30px;
     max-height: fit-content;
   }
-  
+
   .subscription-info-modal__header {
     flex-direction: column;
     align-items: center;
     text-align: center;
     gap: 12px;
   }
-  
+
   .subscription-info-modal__header.admin {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .subscription-info-modal__actions {
     justify-content: center;
+    position: static; // Reset absolute positioning for mobile
+    top: auto;
+    right: auto;
+    margin-top: 20px; // Restore original margin
   }
-  
+
   .subscription-info-modal__update-btn {
     width: fit-content;
     justify-content: center;
     padding-left: 50px;
     gap: 10px;
+
     i {
       opacity: 1;
     }
   }
+
   .subscription-info-modal__image {
     min-height: 0;
   }
+
   .subscription-info-modal-overlay .subscription-upload-modal-overlay .subscription-upload-modal {
     flex: 0;
     display: flex;
@@ -166,6 +257,7 @@
     min-height: fit-content;
     padding-top: 30px;
   }
+
   .subscription-upload-modal__close {
     font-size: 30px;
   }

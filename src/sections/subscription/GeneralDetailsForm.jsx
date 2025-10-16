@@ -73,6 +73,7 @@ const GeneralDetailsForm = ({ values, errors, setField, onNext }) => {
           <input
             id="general-companyName"
             type="text"
+            placeholder="Enter company name"
             value={values.companyName || ''}
             onChange={(e) => setField('companyName', e.target.value)}
             onKeyDown={handleKeyDown}
@@ -93,6 +94,7 @@ const GeneralDetailsForm = ({ values, errors, setField, onNext }) => {
           <input
             id="general-directorName"
             type="text"
+            placeholder="Enter director's full name"
             value={values.directorName || ''}
             onChange={(e) => setField('directorName', e.target.value)}
             onKeyDown={handleKeyDown}

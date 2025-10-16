@@ -604,6 +604,7 @@ export const Notices = () => {
                     name="fileName"
                     value={noticeForm.form.fileName}
                     onChange={handleInputChange}
+                    placeholder="Please mention how do you want to save the document name"
                     required
                   />
                 </div>
