@@ -30,11 +30,6 @@ const MainLayout = ({ children }) => {
   )
 }
 
-
-
-
-
-
 function App() {
 
   return (

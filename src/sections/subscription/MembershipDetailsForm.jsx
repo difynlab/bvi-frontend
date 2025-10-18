@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { setMembershipDetails } from '../../helpers/subscriptionStorage';
+import CustomDropdown from '../../components/CustomDropdown';
 
 // TODO BACKEND: Replace with API data
 const ORDINARY_PLANS = [
-  'Standard(Basic)',
-  'Silver(Intermediate)', 
-  'Gold(Premium)'
+  'Standard (Basic)',
+  'Silver (Intermediate)', 
+  'Gold (Premium)'
 ];
 
 const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
@@ -93,19 +94,18 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
       {/* Membership Type */}
       <div className="field">
         <label htmlFor="membership-membershipType">Membership Type <span className="req-star">*</span></label>
-        <select
+        <CustomDropdown
           id="membership-membershipType"
+          name="membershipType"
           value={membershipValues.membershipType || ''}
           onChange={handleMembershipTypeChange}
-          onKeyDown={handleKeyDown}
-          aria-invalid={errors['membershipDetails.membershipType'] ? 'true' : 'false'}
-          aria-describedby={errors['membershipDetails.membershipType'] ? 'membership-membershipType-error' : undefined}
-        >
-          <option value="">Select Membership Type</option>
-          <option value="Ordinary Member">Ordinary Member</option>
-          <option value="Industry Body Member">Industry Body Member</option>
-          <option value="Associate Member">Associate Member</option>
-        </select>
+          options={[
+            { value: 'Ordinary Member', label: 'Ordinary Member' },
+            { value: 'Industry Body Member', label: 'Industry Body Member' },
+            { value: 'Associate Member', label: 'Associate Member' }
+          ]}
+          placeholder="Select Membership Type"
+        />
         {errors['membershipDetails.membershipType'] && (
           <div id="membership-membershipType-error" className="error-message">
             {errors['membershipDetails.membershipType']}
@@ -119,21 +119,15 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
           If you have chosen ordinary membership, please choose your plan
           {membershipValues.membershipType === 'Ordinary Member' && <span className="req-star">*</span>}
         </label>
-        <select
+        <CustomDropdown
           id="membership-ordinaryPlan"
+          name="ordinaryPlan"
           value={membershipValues.ordinaryPlan || ''}
           onChange={(e) => setField('membershipDetails', 'ordinaryPlan', e.target.value)}
-          onKeyDown={handleKeyDown}
+          options={ORDINARY_PLANS.map(plan => ({ value: plan, label: plan }))}
+          placeholder="Select Plan"
           disabled={membershipValues.membershipType !== 'Ordinary Member'}
-          aria-disabled={membershipValues.membershipType !== 'Ordinary Member'}
-          aria-invalid={errors['membershipDetails.ordinaryPlan'] ? 'true' : 'false'}
-          aria-describedby={errors['membershipDetails.ordinaryPlan'] ? 'membership-ordinaryPlan-error' : undefined}
-        >
-          <option value="">Select Plan</option>
-          {ORDINARY_PLANS.map(plan => (
-            <option key={plan} value={plan}>{plan}</option>
-          ))}
-        </select>
+        />
         {errors['membershipDetails.ordinaryPlan'] && (
           <div id="membership-ordinaryPlan-error" className="error-message">
             {errors['membershipDetails.ordinaryPlan']}
@@ -144,19 +138,18 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
       {/* Payment Method */}
       <div className="field">
         <label htmlFor="membership-paymentMethod">Payment Method <span className="req-star">*</span></label>
-        <select
+        <CustomDropdown
           id="membership-paymentMethod"
+          name="paymentMethod"
           value={membershipValues.paymentMethod || ''}
           onChange={(e) => setField('membershipDetails', 'paymentMethod', e.target.value)}
-          onKeyDown={handleKeyDown}
-          aria-invalid={errors['membershipDetails.paymentMethod'] ? 'true' : 'false'}
-          aria-describedby={errors['membershipDetails.paymentMethod'] ? 'membership-paymentMethod-error' : undefined}
-        >
-          <option value="">Select Payment Method</option>
-          <option value="E-mail: members@bvifinance.vg">E-mail: members@bvifinance.vg</option>
-          <option value="Hand/Mail: BVI Address">Hand/Mail: BVI Address</option>
-          <option value="Cheque: to 'BVI Finance Limited'">Cheque: to 'BVI Finance Limited'</option>
-        </select>
+          options={[
+            { value: 'E-mail: members@bvifinance.vg', label: 'E-mail: members@bvifinance.vg' },
+            { value: 'Hand/Mail: BVI Address', label: 'Hand/Mail: BVI Address' },
+            { value: 'Cheque: to \'BVI Finance Limited\'', label: 'Cheque: to \'BVI Finance Limited\'' }
+          ]}
+          placeholder="Select Payment Method"
+        />
         {errors['membershipDetails.paymentMethod'] && (
           <div id="membership-paymentMethod-error" className="error-message">
             {errors['membershipDetails.paymentMethod']}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { PDFDownloadLink, pdf } from '@react-pdf/renderer'
 import { useAuth } from '../../context/useAuth'
 import { can } from '../../auth/acl'
 import { useNoticesState } from '../../hooks/useNoticesState'
@@ -11,14 +12,55 @@ import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
 import NoticesTabPicker from '../../components/modals/NoticesTabPicker'
 import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock'
 import EmptyPage from '../../components/EmptyPage'
+import CustomDropdown from '../../components/CustomDropdown'
+import NoticePDFDocument from '../../components/pdf/NoticePDFDocument'
 import { loadActiveTabId, saveActiveTabId } from '../../helpers/noticesStorage'
 import '../../styles/sections/Notices.scss'
 
 export const Notices = () => {
-  const NOTICE_PLACEHOLDER = '/images/notices-mock.png'
+  // Función para obtener un fileName seguro
+  const getSafeFileName = (notice) => {
+    const fileName = notice.fileName || notice.title || 'notice';
+    // Remover caracteres problemáticos para nombres de archivo
+    return String(fileName).replace(/[<>:"/\\|?*]/g, '_').substring(0, 50);
+  };
+
+  // Función para generar y descargar PDF dinámicamente
+  const handleDownloadPDF = async (notice) => {
+    const noticeId = notice.id;
+    
+    // Activar loading para este notice específico
+    setPdfLoadingStates(prev => ({ ...prev, [noticeId]: true }));
+    
+    try {
+      const fileName = `${getSafeFileName(notice)}.pdf`;
+      const blob = await pdf(<NoticePDFDocument notice={notice} />).toBlob();
+      
+      // Crear enlace de descarga
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      // Desactivar loading para este notice específico
+      setPdfLoadingStates(prev => ({ ...prev, [noticeId]: false }));
+    }
+  };
+
+  // Estado para controlar el loading de PDFs individuales
+  const [pdfLoadingStates, setPdfLoadingStates] = useState({});
   const MOBILE_Q = '(max-width: 768px)'
   const failedImageIdsRef = useRef(new Set())
   const [fallbackTick, setFallbackTick] = useState(0)
+  
+  // Placeholder para imágenes de notices
+  const NOTICE_PLACEHOLDER = '/images/placeholder-notice.png'
 
   // Mobile state management
   const [isMobile, setIsMobile] = useState(() => window.matchMedia(MOBILE_Q).matches)
@@ -513,9 +555,10 @@ export const Notices = () => {
                         )}
                         <button
                           className="download-btn"
-                          onClick={() => {/* TODO: Implement download functionality */ }}
+                          disabled={pdfLoadingStates[notice.id]}
+                          onClick={() => handleDownloadPDF(notice)}
                         >
-                          Download Notice
+                          {pdfLoadingStates[notice.id] ? 'Generating...' : 'Download Notice'}
                         </button>
                       </div>
                     </div>
@@ -551,9 +594,10 @@ export const Notices = () => {
                       </div>
                       <button
                         className="download-btn"
-                        onClick={() => window.open(notice.linkUrl, '_blank')}
+                        disabled={pdfLoadingStates[notice.id]}
+                        onClick={() => handleDownloadPDF(notice)}
                       >
-                        Download Notice
+                        {pdfLoadingStates[notice.id] ? 'Generating...' : 'Download Notice'}
                       </button>
                     </div>
                   </div>
@@ -611,17 +655,14 @@ export const Notices = () => {
 
                 <div className="form-group">
                   <label htmlFor="noticeType">Notice Type<span className="req-star" aria-hidden="true">*</span></label>
-                  <select
+                  <CustomDropdown
                     id="noticeType"
                     name="noticeType"
                     value={noticeForm.form.noticeType}
                     onChange={handleInputChange}
-                  >
-                    <option value="">Select category</option>
-                    {categories.map(category => (
-                      <option key={category.id} value={category.id}>{category.name}</option>
-                    ))}
-                  </select>
+                    options={categories.map(category => ({ value: category.id, label: category.name }))}
+                    placeholder="Select category"
+                  />
                 </div>
 
                 <div className="form-group">

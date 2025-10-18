@@ -56,7 +56,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: help;
 }
 
 .image-upload-dropzone {
@@ -82,9 +81,6 @@
   border-style: solid;
 }
 
-.image-upload-dropzone[data-has-file="true"] {
-  cursor: help;
-}
 
 .image-upload-placeholder {
   width: 100%;

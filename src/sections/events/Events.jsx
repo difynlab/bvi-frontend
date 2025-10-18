@@ -660,17 +660,15 @@ export const Events = () => {
                   </div>
                   <div className="form-group repeat-field">
                     <label htmlFor="repeat">Repeat</label>
-                    <select
+                    <CustomDropdown
                       id="repeat"
                       name="repeat"
                       value={eventForm.form.repeat}
                       onChange={handleInputChange}
                       onClick={handleRepeatSelectClick}
-                    >
-                      {eventForm.REPEAT_OPTIONS.map(option => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
+                      options={eventForm.REPEAT_OPTIONS.map(option => ({ value: option.value, label: option.label }))}
+                      placeholder="Select repeat option"
+                    />
                     <CustomRecurrencePopover
                       isOpen={isCustomRecurrenceOpen}
                       onClose={() => setIsCustomRecurrenceOpen(false)}
@@ -680,16 +678,14 @@ export const Events = () => {
                   </div>
                   <div className="form-group">
                     <label htmlFor="eventType">Event Type</label>
-                    <select
+                    <CustomDropdown
                       id="eventType"
                       name="eventType"
                       value={eventForm.form.eventType}
                       onChange={handleInputChange}
-                    >
-                      {eventForm.EVENT_TYPES.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
+                      options={eventForm.EVENT_TYPES.map(type => ({ value: type, label: type }))}
+                      placeholder="Select event type"
+                    />
                   </div>
                 </div>
 

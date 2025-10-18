@@ -146,8 +146,8 @@ export const Register = () => {
       <div className="auth-container register-container">
         <div className="auth-left" aria-hidden>
           <img
-            src="https://images.unsplash.com/photo-1497215842964-222b430dc094?q=80&w=1600&auto=format&fit=crop"
-            alt="Skyscrapers"
+            src="/images/register.jpg"
+            alt="Register Background"
           />
         </div>
         <div className="auth-right">

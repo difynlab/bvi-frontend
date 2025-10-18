@@ -5,10 +5,12 @@ const CustomDropdown = ({
   name, 
   value, 
   onChange, 
+  onClick,
   options, 
   placeholder = "Select an option",
   className = "",
-  disabled = false
+  disabled = false,
+  variant = "default" // "default" or "wysiwyg"
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -48,6 +50,10 @@ const CustomDropdown = ({
   const handleToggle = () => {
     if (!disabled) {
       setIsOpen(!isOpen)
+      // Call onClick if provided (for custom functionality like opening popovers)
+      if (onClick) {
+        onClick()
+      }
     }
   }
 
@@ -79,7 +85,7 @@ const CustomDropdown = ({
       className={`custom-dropdown ${className} ${isOpen ? 'open' : ''} ${disabled ? 'disabled' : ''}`}
     >
       <div
-        className="custom-dropdown__trigger"
+        className={`custom-dropdown__trigger ${variant === 'wysiwyg' ? 'custom-dropdown__trigger--wysiwyg' : ''}`}
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
         tabIndex={disabled ? -1 : 0}

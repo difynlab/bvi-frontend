@@ -10,6 +10,7 @@ import { TextStyle } from '@tiptap/extension-text-style'
 import { Extension } from '@tiptap/core'
 import Color from '@tiptap/extension-color'
 import TextAlign from '@tiptap/extension-text-align'
+import CustomDropdown from '../CustomDropdown'
 import '../../styles/components/RichTextEditor.scss'
 
 // Extensión personalizada para FontFamily
@@ -223,7 +224,7 @@ const RichTextEditor = ({
       <div className="rte__toolbar">
         <div className="rte__toolbar-mobile">
           <div className="rte__group">
-            <select
+            <CustomDropdown
               className="rte__select"
               value={editor.isActive('heading', { level: 1 }) ? '1' : editor.isActive('heading', { level: 2 }) ? '2' : 'paragraph'}
               onChange={(e) => {
@@ -241,15 +242,18 @@ const RichTextEditor = ({
                   editor.chain().focus().setHeading({ level: 2 }).run()
                 }
               }}
-            >
-              <option value="paragraph">Paragraph</option>
-              <option value="1">Heading 1</option>
-              <option value="2">Heading 2</option>
-            </select>
+              options={[
+                { value: 'paragraph', label: 'Paragraph' },
+                { value: '1', label: 'Heading 1' },
+                { value: '2', label: 'Heading 2' }
+              ]}
+              placeholder="Select format"
+              variant="wysiwyg"
+            />
           </div>
 
           <div className="rte__group">
-            <select
+            <CustomDropdown
               className="rte__select rte__select--font"
               value={currentFont}
               onChange={(e) => {
@@ -261,12 +265,14 @@ const RichTextEditor = ({
                   editor.chain().focus().setFontFamily(val).run()
                 }
               }}
-              aria-label="Font family"
-            >
-              <option value="Arial">Arial</option>
-              <option value="Public Sans">Public Sans</option>
-              <option value="Times New Roman">Times New Roman</option>
-            </select>
+              options={[
+                { value: 'Arial', label: 'Arial' },
+                { value: 'Public Sans', label: 'Public Sans' },
+                { value: 'Times New Roman', label: 'Times New Roman' }
+              ]}
+              placeholder="Select font"
+              variant="wysiwyg"
+            />
           </div>
         </div>
         <div className="rte__group">

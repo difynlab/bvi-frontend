@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { forgotPassword } from '../../api/authApi'
 import '../../styles/sections/ForgetPassword.scss'
 
 export const ForgetPassword = () => {
@@ -32,21 +33,29 @@ export const ForgetPassword = () => {
     try {
       await sendPasswordResetEmail(email)
       setIsEmailSent(true)
-    } catch {
-      setError('Failed to send reset email. Please try again.')
+    } catch (error) {
+      // Handle specific error messages from backend
+      if (error.message.includes('Email not found')) {
+        setError('Email not found. Please check your email address.')
+      } else if (error.message.includes('Validation failed')) {
+        setError('Please enter a valid email address.')
+      } else {
+        setError('Failed to send reset email. Please try again.')
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
   const sendPasswordResetEmail = async (email) => {
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // TODO: Replace with actual API call
-    
-    console.log('Password reset email sent to:', email)
-    
-    return Promise.resolve()
+    try {
+      const response = await forgotPassword({ email })
+      console.log('Password reset email sent successfully:', response)
+      return response
+    } catch (error) {
+      console.error('Failed to send password reset email:', error)
+      throw error
+    }
   }
 
   const handleEmailChange = (e) => {

@@ -90,8 +90,9 @@ export async function logoutUser(token) {
     const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/logout`, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Accept': 'application/json'
       }
     })
 

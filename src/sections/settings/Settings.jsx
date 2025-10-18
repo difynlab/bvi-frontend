@@ -2,6 +2,7 @@ import React from 'react';
 import { useSettingsForm } from '../../hooks/useSettingsForm';
 import { usePasswordVisibility } from '../../hooks/usePasswordVisibility';
 import ImageUpload from '../../components/ImageUpload';
+import CustomDropdown from '../../components/CustomDropdown';
 import '../../styles/sections/Settings.scss';
 
 export default function Settings() {
@@ -68,10 +69,17 @@ export default function Settings() {
                 <div className="settings-phone-group">
                   <input
                     className="settings-input settings-input--country-code"
-                    type="text"
+                    type="number"
                     value={form.countryCode}
-                    onChange={(e) => onChange('countryCode', e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Prevent negative numbers
+                      if (value === '' || (parseInt(value) >= 0 && !isNaN(parseInt(value)))) {
+                        onChange('countryCode', value);
+                      }
+                    }}
                     placeholder="+54"
+                    min="0"
                   />
                   <input
                     className="settings-input"
@@ -99,29 +107,33 @@ export default function Settings() {
                   <div className="settings-field-group">
                     <label className="settings-label">Date Format</label>
                     <div className="settings-select-wrapper">
-                      <select
-                        className="settings-input"
+                      <CustomDropdown
+                        name="dateFormat"
                         value={form.dateFormat}
                         onChange={(e) => onChange('dateFormat', e.target.value)}
-                      >
-                        <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                        <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                        <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                      </select>
+                        options={[
+                          { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
+                          { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
+                          { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' }
+                        ]}
+                        placeholder="Select date format"
+                      />
                     </div>
                   </div>
                   <div className="settings-field-group">
                     <label className="settings-label">Time Zone</label>
                     <div className="settings-select-wrapper">
-                      <select
-                        className="settings-input"
+                      <CustomDropdown
+                        name="timeZone"
                         value={form.timeZone}
                         onChange={(e) => onChange('timeZone', e.target.value)}
-                      >
-                        <option value="EST">EST</option>
-                        <option value="PST">PST</option>
-                        <option value="UTC">UTC</option>
-                      </select>
+                        options={[
+                          { value: 'EST', label: 'EST' },
+                          { value: 'PST', label: 'PST' },
+                          { value: 'UTC', label: 'UTC' }
+                        ]}
+                        placeholder="Select time zone"
+                      />
                     </div>
                   </div>
                 </div>
@@ -142,15 +154,17 @@ export default function Settings() {
                   <div className="settings-field-group">
                     <label className="settings-label">Language</label>
                     <div className="settings-select-wrapper">
-                      <select
-                        className="settings-input"
+                      <CustomDropdown
+                        name="language"
                         value={form.language}
                         onChange={(e) => onChange('language', e.target.value)}
-                      >
-                        <option>English (Default)</option>
-                        <option>Español</option>
-                        <option>Português</option>
-                      </select>
+                        options={[
+                          { value: 'English (Default)', label: 'English (Default)' },
+                          { value: 'Español', label: 'Español' },
+                          { value: 'Português', label: 'Português' }
+                        ]}
+                        placeholder="Select language"
+                      />
                     </div>
                   </div>
                 </div>

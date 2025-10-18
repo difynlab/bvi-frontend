@@ -8,6 +8,7 @@ import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal';
 import ReportsTabPicker from '../../components/modals/ReportsTabPicker';
 import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock';
+import CustomDropdown from '../../components/CustomDropdown';
 import '../../styles/sections/Reports.scss';
 
 export default function Reports() {
@@ -534,21 +535,17 @@ export default function Reports() {
 
               <div className="form-group">
                 <label htmlFor="typeId">Report Type<span className="req-star" aria-hidden="true">*</span></label>
-                <select
+                <CustomDropdown
                   id="typeId"
                   name="typeId"
                   value={reportForm.form.typeId || ''}
                   onChange={(e) => reportForm.setField('typeId', e.target.value)}
-                  required
-                >
-                  <option value="" disabled>Select type</option>
-                  {categories
+                  options={categories
                     .map(name => (typeof name === 'string' ? name.trim() : ''))
                     .filter(Boolean)
-                    .map(name => (
-                      <option key={name} value={name}>{name}</option>
-                    ))}
-                </select>
+                    .map(name => ({ value: name, label: name }))}
+                  placeholder="Select type"
+                />
                 {reportForm.errors.typeId && (
                   <div className="error-message">{reportForm.errors.typeId}</div>
                 )}

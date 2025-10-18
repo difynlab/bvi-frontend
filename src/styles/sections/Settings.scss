@@ -135,18 +135,7 @@ select.settings-input {
   width: 100%;
 }
 
-.settings-select-wrapper::after {
-  content: "\F282"; /* Bootstrap Icons chevron-down */
-  font-family: "bootstrap-icons";
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6b7280;
-  font-size: 16px;
-  pointer-events: none;
-  z-index: 1;
-}
+// Removed ::after pseudo-element to avoid duplicate chevron icons with CustomDropdown
 
 .settings-file { 
   display: block; 
@@ -251,6 +240,16 @@ select.settings-input {
   flex: 0 0 100px; // Fixed width for country code
   width: 100px; // Ensure consistent width
   max-width: 100px;
+  
+  // Remove number input spinners/toggles
+  -moz-appearance: textfield;
+  appearance: textfield;
+  
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
 
 // Preferences layout - two separate flex rows
