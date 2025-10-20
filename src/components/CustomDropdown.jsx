@@ -10,7 +10,9 @@ const CustomDropdown = ({
   placeholder = "Select an option",
   className = "",
   disabled = false,
-  variant = "default" // "default" or "wysiwyg"
+  variant = "default", // "default" or "wysiwyg"
+  actionLabel,
+  onAction
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -113,6 +115,16 @@ const CustomDropdown = ({
               {option.label}
             </div>
           ))}
+          {actionLabel && onAction && (
+            <div
+              className="custom-dropdown__option"
+              onClick={() => { setIsOpen(false); onAction(); }}
+              role="option"
+              aria-selected={false}
+            >
+              {actionLabel}
+            </div>
+          )}
         </div>
       )}
     </div>

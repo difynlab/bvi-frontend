@@ -10,6 +10,7 @@ import { useModalRegistration } from '../../hooks/useModalState.jsx'
 import RichTextEditor from '../../components/editor/RichTextEditor'
 import { CustomRecurrencePopover } from '../../components/events/CustomRecurrencePopover'
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
+import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal'
 import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock'
 import EmptyPage from '../../components/EmptyPage'
 import CustomDropdown from '../../components/CustomDropdown'
@@ -30,14 +31,16 @@ export const Events = () => {
   const [isCustomRecurrenceOpen, setIsCustomRecurrenceOpen] = useState(false)
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
   const [eventToDelete, setEventToDelete] = useState(null)
+  const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false)
 
   const eventForm = useEventForm()
 
   // Register modal states to disable SideNav gestures
-  const isAnyModalOpen = isModalOpen || isRegisterModalOpen || isConfirmDeleteOpen
+  const isAnyModalOpen = isModalOpen || isRegisterModalOpen || isConfirmDeleteOpen || isSuccessDeleteOpen
   useModalRegistration('events-modal', isModalOpen)
   useModalRegistration('register-modal', isRegisterModalOpen)
   useModalRegistration('confirm-delete-modal', isConfirmDeleteOpen)
+  useModalRegistration('success-delete-modal', isSuccessDeleteOpen)
 
   // Validation logic
   const REQUIRED = [
@@ -127,24 +130,24 @@ export const Events = () => {
   const getEventDescriptionParagraphs = (event) => {
     // Usar editorHtml si está disponible, sino usar description
     const htmlContent = event.editorHtml || event.description || '';
-    
+
     if (!htmlContent) return '';
-    
+
     // Crear un elemento temporal para parsear el HTML
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = htmlContent;
-    
+
     // Extraer solo los párrafos
     const paragraphs = tempDiv.querySelectorAll('p');
-    
+
     if (paragraphs.length === 0) {
       // Si no hay párrafos, devolver el texto plano sin HTML
       return htmlContent.replace(/<[^>]+>/g, '').trim();
     }
-    
+
     // Extraer el texto de cada párrafo y unirlos con espacios
     const paragraphTexts = Array.from(paragraphs).map(p => p.textContent.trim()).filter(text => text.length > 0);
-    
+
     return paragraphTexts.join(' ');
   }
 
@@ -361,7 +364,6 @@ export const Events = () => {
   }
 
   const formatDate = (dateString) => {
-    // Display the date exactly as entered (no timezone conversion)
     const date = new Date(dateString + 'T12:00:00')
     return date.toLocaleDateString('en-US', {
       month: 'long',
@@ -370,7 +372,6 @@ export const Events = () => {
     })
   }
 
-  // Get today's date in YYYY-MM-DD format for date input min attribute
   const getTodayDate = () => {
     const today = new Date()
     return today.toISOString().split('T')[0]
@@ -427,6 +428,7 @@ export const Events = () => {
       if (eventToDelete) {
         deleteEvent(eventToDelete.id)
         setEventToDelete(null)
+        setIsSuccessDeleteOpen(true)
       }
     } catch (error) {
       console.error('Error in handleConfirmDelete:', error)
@@ -434,14 +436,11 @@ export const Events = () => {
     }
   }
 
-  // Handle custom recurrence update
   const handleCustomRecurrenceUpdate = (recurrenceData) => {
     const normalizedRecurrence = eventForm.normalizeRecurrence(recurrenceData)
 
-    // Update the recurrence in form state
     eventForm.updateRecurrence(normalizedRecurrence)
 
-    // Update the repeat field based on normalization
     if (normalizedRecurrence.kind === 'WEEKLY') {
       eventForm.onChange('repeat', 'WEEKLY')
     } else {
@@ -504,70 +503,83 @@ export const Events = () => {
                 }
               />
             ) : (
-              <div className="events-list">
-                {events.map(event => (
-                  <div key={event.id} className="event-card">
-                    <div className="event-image">
-                      <img src={event.imagePreviewUrl} alt={event.title} />
-                    </div>
-                    <div className="event-content">
-                      <div className="event-header">
-                        <span className={`event-type ${event.eventType.toLowerCase()}`}>
-                          {event.eventType}
-                        </span>
-                        <span className="event-date">{formatDate(event.date)}</span>
+              <>
+                <div className="events-list">
+                  {events.map(event => (
+                    <div key={event.id} className="event-card">
+                      <div className="event-image">
+                        <img src={event.imagePreviewUrl} alt={event.title} />
                       </div>
-                      <div
-                        className="event-title one-line-ellipsis"
-                        ref={titleMarquee.titleContainerRef}
-                        onMouseEnter={titleMarquee.onMouseEnter}
-                        onMouseLeave={titleMarquee.onMouseLeave}
-                      >
-                        <span className="event-title__inner" title={event.title}>{event.title}</span>
-                      </div>
-                      <p className="event-description">
-                        {useFallback ? truncateText(getEventDescriptionParagraphs(event)) : getEventDescriptionParagraphs(event)}
-                      </p>
-                      <div className="event-details">
-                        <div className="event-time">
-                          <span className="icon"><i className="bi bi-clock"></i></span>
-                          {formatTime(event.startTime)} - {formatTime(event.endTime)} {event.timeZone}
+                      <div className="event-content">
+                        <div className="event-header">
+                          <span className={`event-type ${event.eventType.toLowerCase()}`}>
+                            {event.eventType}
+                          </span>
+                          <span className="event-date">{formatDate(event.date)}</span>
                         </div>
-                        <div className="event-location">
-                          <span className="icon"><i className="bi bi-geo-alt"></i></span>
-                          {event.location}
+                        <div
+                          className="event-title one-line-ellipsis"
+                          ref={titleMarquee.titleContainerRef}
+                          onMouseEnter={titleMarquee.onMouseEnter}
+                          onMouseLeave={titleMarquee.onMouseLeave}
+                        >
+                          <span className="event-title__inner" title={event.title}>{event.title}</span>
+                        </div>
+                        <p className="event-description">
+                          {useFallback ? truncateText(getEventDescriptionParagraphs(event)) : getEventDescriptionParagraphs(event)}
+                        </p>
+                        <div className="event-details">
+                          <div className="event-time">
+                            <span className="icon"><i className="bi bi-clock"></i></span>
+                            {formatTime(event.startTime)} - {formatTime(event.endTime)} {event.timeZone}
+                          </div>
+                          <div className="event-location">
+                            <span className="icon"><i className="bi bi-geo-alt"></i></span>
+                            {event.location}
+                          </div>
+                        </div>
+                        <div className="event-actions">
+                          {can(user, 'events:update') && (
+                            <button
+                              className="edit-btn"
+                              onClick={() => handleEdit(event.id)}
+                            >
+                              Edit Details
+                            </button>
+                          )}
+                          {can(user, 'events:delete') && (
+                            <button
+                              className="delete-btn"
+                              onClick={() => handleDelete(event.id)}
+                            >
+                              Delete
+                            </button>
+                          )}
+                          {!can(user, 'events:create') && (
+                            <button
+                              className="register-btn"
+                              onClick={() => openRegisterModal(event)}
+                            >
+                              Register Now
+                            </button>
+                          )}
                         </div>
                       </div>
-                      <div className="event-actions">
-                        {can(user, 'events:update') && (
-                          <button
-                            className="edit-btn"
-                            onClick={() => handleEdit(event.id)}
-                          >
-                            Edit Details
-                          </button>
-                        )}
-                        {can(user, 'events:delete') && (
-                          <button
-                            className="delete-btn"
-                            onClick={() => handleDelete(event.id)}
-                          >
-                            Delete
-                          </button>
-                        )}
-                        {!can(user, 'events:create') && (
-                          <button
-                            className="register-btn"
-                            onClick={() => openRegisterModal(event)}
-                          >
-                            Register Now
-                          </button>
-                        )}
-                      </div>
                     </div>
+                  ))}
+                </div>
+                <div className="events-pagination">
+                  <button className="prev-btn">
+                    <i className="bi bi-chevron-left"></i>
+                  </button>
+                  <div className="page-counter">
+                    <span>1</span>
                   </div>
-                ))}
-              </div>
+                  <button className="next-btn">
+                    <i className="bi bi-chevron-right"></i>
+                  </button>
+                </div>
+              </>
             )}
           </section>
         </div>
@@ -808,9 +820,9 @@ export const Events = () => {
 
                   <div className="register-event-description">
                     <h3>About this event</h3>
-                    <div 
+                    <div
                       className="wysiwyg-content"
-                      dangerouslySetInnerHTML={{ 
+                      dangerouslySetInnerHTML={{
                         __html: registeringEvent.editorHtml || registeringEvent.description || ''
                       }}
                     />
@@ -839,6 +851,11 @@ export const Events = () => {
           setEventToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
+      />
+
+      <SuccessDeleteModal
+        isOpen={isSuccessDeleteOpen}
+        onClose={() => setIsSuccessDeleteOpen(false)}
       />
     </>
   )

@@ -1,0 +1,72 @@
+/* src/styles/components/SuccessDeleteModal.scss */
+@use '../vars' as *;
+.success-delete-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.success-delete-modal {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  position: relative;
+  animation: successModalSlideIn 0.3s ease-out;
+}
+
+.success-delete-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.success-delete-modal-content i {
+  font-size: 3rem;
+  color: $vivid_red;
+}
+
+.success-delete-modal-content h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+@keyframes successModalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 768px) {
+  .success-delete-modal {
+    padding: 1.5rem;
+    max-width: 350px;
+  }
+  
+  .success-delete-modal-content i {
+    font-size: 2.5rem;
+  }
+  
+  .success-delete-modal-content h2 {
+    font-size: 1.25rem;
+  }
+}
+

@@ -6,6 +6,7 @@ import { useReportForm } from '../../hooks/useReportForm';
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal';
+import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal';
 import ReportsTabPicker from '../../components/modals/ReportsTabPicker';
 import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock';
 import CustomDropdown from '../../components/CustomDropdown';
@@ -59,6 +60,7 @@ export default function Reports() {
   const [categoryError, setCategoryError] = useState('');
   const [isReportDeleteConfirmOpen, setIsReportDeleteConfirmOpen] = useState(false);
   const [reportToDelete, setReportToDelete] = useState(null);
+  const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false);
 
   // Mobile responsive effect
   useEffect(() => {
@@ -136,7 +138,7 @@ export default function Reports() {
   const reportModalBackdropClose = useModalBackdropClose(() => closeReportModalWithReset());
   const confirmModalBackdropClose = useModalBackdropClose(() => setConfirmModalOpen(false));
 
-  useBodyScrollLock(isCategoryModalOpen || isReportModalOpen || confirmModalOpen || isReportDeleteConfirmOpen || pickerOpen);
+  useBodyScrollLock(isCategoryModalOpen || isReportModalOpen || confirmModalOpen || isReportDeleteConfirmOpen || isSuccessDeleteOpen || pickerOpen);
 
   const closeCategoryModal = () => {
     setNewCategoryName('');
@@ -210,6 +212,7 @@ export default function Reports() {
     if (reportToDelete) {
       onDeleteReport(reportToDelete.id)
       setReportToDelete(null)
+      setIsSuccessDeleteOpen(true)
     }
   }
 
@@ -430,7 +433,7 @@ export default function Reports() {
     {/* Category Modal */}
       {isCategoryModalOpen && (
         <div
-          className="reports-modal-overlay"
+          className="reports-modal-overlay reports-addcat-overlay"
           onPointerDown={categoryModalBackdropClose.onBackdropPointerDown}
           onPointerUp={categoryModalBackdropClose.onBackdropPointerUp}
           onPointerCancel={categoryModalBackdropClose.onBackdropPointerCancel}
@@ -545,6 +548,8 @@ export default function Reports() {
                     .filter(Boolean)
                     .map(name => ({ value: name, label: name }))}
                   placeholder="Select type"
+                  actionLabel="New category..."
+                  onAction={() => setIsCategoryModalOpen(true)}
                 />
                 {reportForm.errors.typeId && (
                   <div className="error-message">{reportForm.errors.typeId}</div>
@@ -659,6 +664,11 @@ export default function Reports() {
           setReportToDelete(null)
         }}
         onConfirm={handleConfirmDeleteReport}
+      />
+
+      <SuccessDeleteModal
+        isOpen={isSuccessDeleteOpen}
+        onClose={() => setIsSuccessDeleteOpen(false)}
       />
     </div>
   );

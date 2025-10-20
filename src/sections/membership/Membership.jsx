@@ -191,6 +191,9 @@ const Membership = () => {
                   <span className="benefit-text">Unlimited downloads and exports</span>
                 </li>
               </ul>
+              <NavLink to="/subscription?tab=Membership Plans" className="membership-plans-link">
+                View all membership plans
+              </NavLink>
             </Card>
 
             <Card title="Upcoming Events" className="membership-events-section">

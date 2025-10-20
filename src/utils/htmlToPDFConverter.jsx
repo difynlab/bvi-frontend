@@ -16,9 +16,9 @@ export const styles = StyleSheet.create({
   publishedDate: { fontSize: 10, color: '#999', marginTop: 20, textAlign: 'right' },
 
   // Estilos para elementos HTML convertidos
-  h1: { fontSize: 20, fontWeight: 'bold', marginBottom: 15, marginTop: 10, color: '#333' },
-  h2: { fontSize: 16, fontWeight: 'bold', marginBottom: 12, marginTop: 8, color: '#333' },
-  paragraph: { fontSize: 12, lineHeight: 1.5, marginBottom: 10, marginTop: 5, color: '#333' },
+  h1: { fontSize: 20, fontWeight: 'bold', marginBottom: 10, marginTop: 10, color: '#333' },
+  h2: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, marginTop: 8, color: '#333' },
+  paragraph: { fontSize: 12, lineHeight: 1.5, marginBottom: 6, marginTop: 5, color: '#333' },
   bold: { fontWeight: 'bold' },
   italic: { fontStyle: 'italic' },
   underline: { textDecoration: 'underline' },
@@ -119,6 +119,7 @@ export const convertHtmlToPDF = (htmlContent) => {
 
     const tagName = element.tagName?.toLowerCase();
     const children = Array.from(element.children || []);
+    const nodes = Array.from(element.childNodes || []); // incluye nodos de texto
     const textContent = element.textContent || '';
     const inlineStyles = getInlineStyles(element);
 
@@ -180,25 +181,35 @@ export const convertHtmlToPDF = (htmlContent) => {
       );
     }
 
+    // Helper para procesar childNodes preservando texto y espacios
+    const renderChildNodes = () =>
+      nodes.map((node, i) => {
+        // 3 = Node.TEXT_NODE
+        if (node.nodeType === 3) {
+          return node.nodeValue;
+        }
+        return convertElement(node, i);
+      });
+
     switch (tagName) {
       case 'h1':
         return (
           <Text key={index} style={[styles.h1, inlineStyles]}>
-            {children.length ? children.map((child, i) => convertElement(child, i)) : textContent}
+            {nodes.length ? renderChildNodes() : textContent}
           </Text>
         );
 
       case 'h2':
         return (
           <Text key={index} style={[styles.h2, inlineStyles]}>
-            {children.length ? children.map((child, i) => convertElement(child, i)) : textContent}
+            {nodes.length ? renderChildNodes() : textContent}
           </Text>
         );
 
       case 'p':
         return (
           <Text key={index} style={[styles.paragraph, inlineStyles]}>
-            {children.length ? children.map((child, i) => convertElement(child, i)) : textContent}
+            {nodes.length ? renderChildNodes() : textContent}
           </Text>
         );
 
@@ -206,7 +217,7 @@ export const convertHtmlToPDF = (htmlContent) => {
       case 'b':
         return (
           <Text key={index} style={[styles.bold, inlineStyles]}>
-            {children.length ? children.map((child, i) => convertElement(child, i)) : textContent}
+            {nodes.length ? renderChildNodes() : textContent}
           </Text>
         );
 
@@ -214,14 +225,14 @@ export const convertHtmlToPDF = (htmlContent) => {
       case 'i':
         return (
           <Text key={index} style={[styles.italic, inlineStyles]}>
-            {children.length ? children.map((child, i) => convertElement(child, i)) : textContent}
+            {nodes.length ? renderChildNodes() : textContent}
           </Text>
         );
 
       case 'u':
         return (
           <Text key={index} style={[styles.underline, inlineStyles]}>
-            {children.length ? children.map((child, i) => convertElement(child, i)) : textContent}
+            {nodes.length ? renderChildNodes() : textContent}
           </Text>
         );
 
@@ -229,7 +240,7 @@ export const convertHtmlToPDF = (htmlContent) => {
       case 'strike':
         return (
           <Text key={index} style={[styles.strike, inlineStyles]}>
-            {children.length ? children.map((child, i) => convertElement(child, i)) : textContent}
+            {nodes.length ? renderChildNodes() : textContent}
           </Text>
         );
 
@@ -238,14 +249,14 @@ export const convertHtmlToPDF = (htmlContent) => {
         if (isValidUrl(href)) {
           return (
             <Link key={index} src={href} style={[styles.link, inlineStyles]}>
-              {children.length ? children.map((child, i) => convertElement(child, i)) : textContent}
+              {nodes.length ? renderChildNodes() : textContent}
             </Link>
           );
         } else {
           // Si el href no es válido, mostrar como texto normal
           return (
             <Text key={index} style={[styles.link, inlineStyles]}>
-              {children.length ? children.map((child, i) => convertElement(child, i)) : textContent}
+              {nodes.length ? renderChildNodes() : textContent}
             </Text>
           );
         }
@@ -253,21 +264,21 @@ export const convertHtmlToPDF = (htmlContent) => {
       case 'ul':
         return (
           <View key={index} style={styles.bulletList}>
-            {children.map((child, i) => convertElement(child, i))}
+            {nodes.map((node, i) => convertElement(node, i))}
           </View>
         );
 
       case 'ol':
         return (
           <View key={index} style={styles.orderedList}>
-            {children.map((child, i) => convertElement(child, i))}
+            {nodes.map((node, i) => convertElement(node, i))}
           </View>
         );
 
       case 'li':
         return (
           <Text key={index} style={styles.listItem}>
-            • {children.length ? children.map((child, i) => convertElement(child, i)) : textContent}
+            • {nodes.length ? renderChildNodes() : textContent}
           </Text>
         );
 
@@ -277,14 +288,14 @@ export const convertHtmlToPDF = (htmlContent) => {
       case 'div':
         return (
           <View key={index}>
-            {children.map((child, i) => convertElement(child, i))}
+            {nodes.map((node, i) => convertElement(node, i))}
           </View>
         );
 
       case 'span':
         return (
           <Text key={index} style={inlineStyles}>
-            {children.length ? children.map((child, i) => convertElement(child, i)) : textContent}
+            {nodes.length ? renderChildNodes() : textContent}
           </Text>
         );
 
@@ -321,16 +332,19 @@ export const convertHtmlToPDF = (htmlContent) => {
 };
 
 // Función para formatear fecha con validación
-export const formatDate = (dateString) => {
-  if (!dateString) return 'Date not available';
-  
+export const formatDate = (value) => {
+  if (!value) return 'Date not available';
   try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return 'Invalid date';
+    // YYYY-MM-DD -> tratar como UTC
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const [y, m, d] = value.split('-').map(Number);
+      const dateUtc = new Date(Date.UTC(y, m - 1, d));
+      return dateUtc.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
     }
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
+
+    const date = typeof value === 'number' ? new Date(value) : new Date(String(value));
+    if (isNaN(date.getTime())) return 'Invalid date';
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
   } catch (error) {
     console.error('Error formatting date:', error);
     return 'Date not available';

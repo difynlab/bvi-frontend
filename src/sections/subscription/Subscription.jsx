@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../../styles/sections/Subscription.scss';
 import SubscriptionInfoModal from '../../components/modals/SubscriptionInfoModal';
 import SubscriptionTabPicker from '../../components/modals/SubscriptionTabPicker';
@@ -17,7 +17,13 @@ const Subscription = () => {
   const handleOpen = (key) => setOpenInfo(key);
   const handleClose = () => setOpenInfo(null);
 
-  const { activeTab, values, errors, setField, setOfficer, toggleArray, goNext, setTab } = useSubscriptionWizard();
+  const getInitialTab = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    return tabParam || 'Important Info';
+  };
+
+  const { activeTab, values, errors, setField, setOfficer, toggleArray, goNext, setTab } = useSubscriptionWizard(getInitialTab());
 
   // Define the subscription tabs (static list)
   const subscriptionTabs = [

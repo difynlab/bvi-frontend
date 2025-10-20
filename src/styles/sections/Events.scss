@@ -246,6 +246,8 @@
 .events-page {
   padding: 30px;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .event-description {
@@ -309,12 +311,25 @@
 .events-container {
   max-width: 1200px;
   margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 
   .error-message {
     color: $vivid_red;
     font-size: 12px;
     margin-bottom: 10px;
   }
+}
+
+.events-section {
+  min-width: 100% !important;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  flex: 1;
+  position: relative;
 
 
 
@@ -481,6 +496,9 @@
   flex-wrap: wrap;
   gap: 30px;
   justify-content: flex-start;
+  padding-bottom: 80px;
+  width: 100%;
+  min-height: 200px;
 }
 
 .event-card {
@@ -491,13 +509,17 @@
   border: none;
   overflow: hidden;
   transition: transform 0.2s, box-shadow 0.2s;
+  width: calc(33.333% - 20px);
   flex: 0 0 calc(33.333% - 20px);
+  min-width: calc(33.333% - 20px);
   max-width: calc(33.333% - 20px);
 }
 
 @media (max-width: 1200px) {
   .event-card {
+    width: calc(50% - 15px);
     flex: 0 0 calc(50% - 15px);
+    min-width: calc(50% - 15px);
     max-width: calc(50% - 15px);
   }
 }
@@ -1478,11 +1500,33 @@
       }
     }
   }
-  .event-content {
-    border: 2px solid rgba(0, 0, 0, 0.3);
-    border-top: none
+    .event-content {
+      border: 2px solid rgba(0, 0, 0, 0.3);
+      border-top: none
+    }
+
+    .events-pagination {
+      gap: 12px;
+      padding: 15px 0;
+
+      .prev-btn,
+      .next-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+      }
+
+      .page-counter {
+        font-size: 14px;
+        padding: 6px 12px;
+        min-width: 60px;
+      }
+    }
+
+    .events-list {
+      padding-bottom: 70px;
+    }
   }
-}
 
 .events-modal {
   scrollbar-width: none;
@@ -1566,6 +1610,61 @@
   direction: ltr;
   unicode-bidi: plaintext;
   transform: none;
+}
+
+.events-pagination {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 0;
+
+  .prev-btn,
+  .next-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #d1d5db;
+    background-color: white;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 16px;
+
+    &:hover {
+      background-color: #f3f4f6;
+      border-color: #9ca3af;
+    }
+
+    &:active {
+      background-color: #e5e7eb;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background-color: #f9fafb;
+      color: #9ca3af;
+    }
+  }
+
+  .page-counter {
+    font-size: 16px;
+    font-weight: 500;
+    color: #374151;
+    padding: 8px 16px;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    min-width: 80px;
+    text-align: center;
+  }
 }
 
 // Custom Recurrence Popover Styles

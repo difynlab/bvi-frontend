@@ -7,6 +7,7 @@ import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import RichTextEditor from '../../components/editor/RichTextEditor'
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
+import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal'
 import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock'
 import EmptyPage from '../../components/EmptyPage'
 import '../../styles/sections/Newsletters.scss'
@@ -33,6 +34,7 @@ const Newsletters = () => {
   const [useFallback, setUseFallback] = useState(false)
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
   const [newsletterToDelete, setNewsletterToDelete] = useState(null)
+  const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false)
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false)
@@ -59,7 +61,7 @@ const Newsletters = () => {
     closeModal()
   })
 
-  useBodyScrollLock(isModalOpen || isConfirmDeleteOpen)
+  useBodyScrollLock(isModalOpen || isConfirmDeleteOpen || isSuccessDeleteOpen)
 
 
   useEffect(() => {
@@ -140,6 +142,7 @@ const Newsletters = () => {
     if (newsletterToDelete) {
       deleteNewsletter(newsletterToDelete.id)
       setNewsletterToDelete(null)
+      setIsSuccessDeleteOpen(true)
     }
   }
 
@@ -408,6 +411,11 @@ const Newsletters = () => {
           setNewsletterToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
+      />
+
+      <SuccessDeleteModal
+        isOpen={isSuccessDeleteOpen}
+        onClose={() => setIsSuccessDeleteOpen(false)}
       />
     </div>
   )

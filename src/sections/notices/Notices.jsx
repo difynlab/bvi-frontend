@@ -9,6 +9,7 @@ import { useTitleMarquee } from '../../hooks/useTitleMarquee'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import RichTextEditor from '../../components/editor/RichTextEditor'
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
+import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal'
 import NoticesTabPicker from '../../components/modals/NoticesTabPicker'
 import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock'
 import EmptyPage from '../../components/EmptyPage'
@@ -169,6 +170,7 @@ export const Notices = () => {
   const [categoryError, setCategoryError] = useState('')
   const [isNoticeDeleteConfirmOpen, setIsNoticeDeleteConfirmOpen] = useState(false)
   const [noticeToDelete, setNoticeToDelete] = useState(null)
+  const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false)
 
   const modalBackdropClose = useModalBackdropClose(() => {
     if (editingNotice) {
@@ -183,7 +185,7 @@ export const Notices = () => {
 
   const titleMarquee = useTitleMarquee()
 
-  useBodyScrollLock(isNoticeModalOpen || isCategoryModalOpen || confirmModalOpen || isNoticeDeleteConfirmOpen || pickerOpen)
+  useBodyScrollLock(isNoticeModalOpen || isCategoryModalOpen || confirmModalOpen || isNoticeDeleteConfirmOpen || isSuccessDeleteOpen || pickerOpen)
 
   const truncateText = (text, maxLength = 110) => {
     if (!text || text.length <= maxLength) return text
@@ -305,11 +307,29 @@ export const Notices = () => {
     }
   }
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (value) => {
+    if (!value) return 'Date not available'
+
+    // Si viene como fecha sólo (YYYY-MM-DD), parsear en UTC para evitar desfasajes
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const [y, m, d] = value.split('-').map(Number)
+      const dateUtc = new Date(Date.UTC(y, m - 1, d))
+      return dateUtc.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        timeZone: 'UTC'
+      })
+    }
+
+    const date = typeof value === 'number' ? new Date(value) : new Date(String(value))
+    if (isNaN(date.getTime())) return 'Invalid date'
+
+    return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
+      timeZone: 'UTC'
     })
   }
 
@@ -365,6 +385,7 @@ export const Notices = () => {
     if (noticeToDelete) {
       handleDeleteNotice(noticeToDelete.id)
       setNoticeToDelete(null)
+      setIsSuccessDeleteOpen(true)
     }
   }
 
@@ -662,6 +683,8 @@ export const Notices = () => {
                     onChange={handleInputChange}
                     options={categories.map(category => ({ value: category.id, label: category.name }))}
                     placeholder="Select category"
+                    actionLabel="New category..."
+                    onAction={() => setIsCategoryModalOpen(true)}
                   />
                 </div>
 
@@ -857,6 +880,11 @@ export const Notices = () => {
           setNoticeToDelete(null)
         }}
         onConfirm={handleConfirmDeleteNotice}
+      />
+
+      <SuccessDeleteModal
+        isOpen={isSuccessDeleteOpen}
+        onClose={() => setIsSuccessDeleteOpen(false)}
       />
 
     </>

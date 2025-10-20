@@ -4,6 +4,7 @@ import { useAuth } from '../../context/useAuth';
 import { can } from '../../auth/acl';
 import LegislationEditModal from '../../components/modals/LegislationEditModal';
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal';
+import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal';
 import '../../styles/sections/Legislation.scss';
 
 const Legislation = () => {
@@ -12,6 +13,7 @@ const Legislation = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [attachmentToDelete, setAttachmentToDelete] = useState(null);
+  const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false);
 
   const handleEditClick = () => {
     if (can(user, 'legislation:update')) {
@@ -48,6 +50,7 @@ const Legislation = () => {
     if (attachmentToDelete) {
       removeAttachment(attachmentToDelete.id)
       setAttachmentToDelete(null)
+      setIsSuccessDeleteOpen(true)
     }
   }
 
@@ -201,6 +204,11 @@ const Legislation = () => {
           setAttachmentToDelete(null)
         }}
         onConfirm={handleConfirmDeleteAttachment}
+      />
+
+      <SuccessDeleteModal
+        isOpen={isSuccessDeleteOpen}
+        onClose={() => setIsSuccessDeleteOpen(false)}
       />
 
       {/* Mobile FAB */}

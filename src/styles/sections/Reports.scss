@@ -573,6 +573,12 @@
 // Category modal specific styles
 .reports-addcat-modal {
   position: relative;
+  z-index: 1250; // Ensure it sits above edit/add modal
+}
+
+// Ensure add category modal overlay appears above edit/add modal
+.reports-modal-overlay.reports-addcat-overlay {
+  z-index: 1200;
 }
 
 .reports-addcat-modal__title {
@@ -665,25 +671,17 @@
     flex-wrap: wrap;
     gap: 12px;
     align-items: center;
-
-    /* keep buttons readable and not hidden behind cards */
     position: sticky;
-    /* stays visible while scrolling */
     top: 20px;
-    /* same vertical rhythm */
     z-index: 2;
-
-    /* prevent overlap clipping in tight layouts */
     background: transparent;
-    /* do not change visuals */
-    /* buttons keep their existing classes; no visual token changes */
   }
 
   .reports-mobile-header {
     display: flex;
-    justify-content: left;
+    justify-content: space-between;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
     max-width: 100% !important;
     margin-bottom: 20px;
     position: relative;
@@ -925,7 +923,7 @@
     }
   }
   .temp-role-toggle-btn, .reports-seed-btn {
-    display: none; //hide temp
+    // display: none; //hide temp
   }
 
   /* Show mobile FAB */
