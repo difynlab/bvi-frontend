@@ -41,6 +41,19 @@ export const AuthProvider = ({ children }) => {
     try {
       const session = getSession()
       if (session) {
+        // Sync API-compatible tokens if session has token
+        if (session.token) {
+          localStorage.setItem('token', session.token)
+          if (session.email) {
+            localStorage.setItem('user', JSON.stringify({
+              email: session.email,
+              role: session.role,
+              first_name: session.first_name,
+              last_name: session.last_name
+            }))
+          }
+        }
+        
         setIsAuthenticated(true)
         setUser(session)
       }
@@ -60,84 +73,24 @@ export const AuthProvider = ({ children }) => {
     try {
       const { firstName, lastName, email, phoneNumber, password } = payload
 
-      // Try API first if available
-      if (API_BASE) {
-        try {
-          const response = await registerUser(payload)
-
-          // API registration successful
-          const authUser = {
-            id: response.data?.user?.id || Date.now().toString(),
-            first_name: response.data?.user?.first_name || firstName.trim(),
-            last_name: response.data?.user?.last_name || lastName.trim(),
-            userName: `${response.data?.user?.first_name || firstName.trim()} ${response.data?.user?.last_name || lastName.trim()}`.trim(),
-            email: response.data?.user?.email || email.toLowerCase().trim(),
-            phone: response.data?.user?.phone || phoneNumber || '',
-            role: response.data?.user?.role || 'member',
-            permissions: response.data?.user?.permissions || getPermissions('member')
-          }
-
-          // Ensure profile exists for new user
-          ensureProfile(authUser, {})
-
-          // Compose session user with stored profile
-          const sessionUser = composeSessionUser(authUser)
-
-          // Store token if provided by API
-          if (response.data?.token) {
-            sessionUser.token = response.data.token
-          }
-
-          saveSession(sessionUser)
-          setUser(sessionUser)
-          setIsAuthenticated(true)
-
-          console.log('API Registration successful:', sessionUser)
-          return true
-        } catch (apiError) {
-          console.warn('API registration failed, falling back to localStorage:', apiError.message)
-          // Fall through to localStorage fallback
-        }
-      }
-
-      // Fallback to localStorage (development mode)
-      const existingUser = findUserByEmail(email)
-      if (existingUser) {
-        setError('User with this email already exists')
+      // Require API for registration
+      if (!API_BASE) {
+        setError('API not configured. Registration unavailable.')
         return false
       }
 
-      const role = 'member' // Always assign member role for new registrations
-      const permissions = getPermissions(role)
+      const response = await registerUser(payload)
 
-      const passwordHash = await hashPassword(password)
-
-      const newUser = {
-        id: Date.now().toString(),
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        userName: `${firstName.trim()} ${lastName.trim()}`.trim(),
-        email: email.toLowerCase().trim(),
-        phone: phoneNumber || '',
-        role,
-        permissions,
-        passwordHash
-      }
-
-      const users = getUsers()
-      users.push(newUser)
-      setUsers(users)
-
-      // Create session
+      // API registration successful
       const authUser = {
-        id: newUser.id,
-        first_name: newUser.first_name,
-        last_name: newUser.last_name,
-        userName: newUser.userName,
-        email: newUser.email,
-        phone: newUser.phone,
-        role: newUser.role,
-        permissions: newUser.permissions
+        id: response.data?.user?.id || Date.now().toString(),
+        first_name: response.data?.user?.first_name || firstName.trim(),
+        last_name: response.data?.user?.last_name || lastName.trim(),
+        userName: `${response.data?.user?.first_name || firstName.trim()} ${response.data?.user?.last_name || lastName.trim()}`.trim(),
+        email: response.data?.user?.email || email.toLowerCase().trim(),
+        phone: response.data?.user?.phone || phoneNumber || '',
+        role: response.data?.user?.role || 'member',
+        permissions: response.data?.user?.permissions || getPermissions('member')
       }
 
       // Ensure profile exists for new user
@@ -146,15 +99,22 @@ export const AuthProvider = ({ children }) => {
       // Compose session user with stored profile
       const sessionUser = composeSessionUser(authUser)
 
+      // Store token if provided by API
+      if (response.data?.token) {
+        sessionUser.token = response.data.token
+        localStorage.setItem('token', response.data.token)
+        localStorage.setItem('user', JSON.stringify(response.data.user))
+      }
+
       saveSession(sessionUser)
       setUser(sessionUser)
       setIsAuthenticated(true)
 
-      console.log('localStorage Registration successful:', sessionUser)
+      console.log('API Registration successful:', sessionUser)
       return true
-    } catch (err) {
-      console.error('Registration error:', err)
-      setError('Registration failed')
+    } catch (apiError) {
+      console.error('API registration failed:', apiError.message)
+      setError(apiError.message || 'Registration failed')
       return false
     } finally {
       setLoading(false)
@@ -166,87 +126,45 @@ export const AuthProvider = ({ children }) => {
     setError(null)
 
     try {
-      // Try API first if available
-      if (API_BASE) {
-        try {
-          const response = await loginUser({ email, password })
-          
-          // API login successful
-          const authUser = {
-            id: response.data?.user?.id || Date.now().toString(),
-            first_name: response.data?.user?.first_name || '',
-            last_name: response.data?.user?.last_name || '',
-            userName: `${response.data?.user?.first_name || ''} ${response.data?.user?.last_name || ''}`.trim(),
-            email: response.data?.user?.email || email.toLowerCase().trim(),
-            phone: response.data?.user?.phone || '',
-            role: response.data?.user?.role || 'member',
-            permissions: response.data?.user?.permissions || getPermissions('member')
-          }
-          
-          // Compose session user with stored profile
-          const sessionUser = composeSessionUser(authUser)
-
-          // Store token if provided by API
-          if (response.data?.token) {
-            sessionUser.token = response.data.token
-          }
-
-          saveSession(sessionUser)
-          setUser(sessionUser)
-          setIsAuthenticated(true)
-
-          console.log('API Login successful:', sessionUser)
-          return true
-        } catch (apiError) {
-          console.warn('API login failed:', apiError.message)
-          
-          // Handle specific API errors
-          if (apiError.message.includes('credentials do not match')) {
-            setError({ type: 'general', message: apiError.message })
-            return false
-          }
-          
-          // For other API errors, fall back to localStorage
-          console.warn('Falling back to localStorage due to API error')
-        }
-      }
-
-      // Fallback to localStorage (development mode)
-      const user = findUserByEmail(email)
-      if (!user) {
-        setError({ type: 'email', message: 'User not found' })
+      // Require API for login
+      if (!API_BASE) {
+        setError({ type: 'general', message: 'API not configured. Login unavailable.' })
         return false
       }
 
-      const providedPasswordHash = await hashPassword(password)
-      if (providedPasswordHash !== user.passwordHash) {
-        setError({ type: 'password', message: 'Invalid password' })
-        return false
-      }
-
+      const response = await loginUser({ email, password })
+      
+      // API login successful
       const authUser = {
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        userName: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        permissions: user.permissions
+        id: response.data?.user?.id || Date.now().toString(),
+        first_name: response.data?.user?.first_name || '',
+        last_name: response.data?.user?.last_name || '',
+        userName: `${response.data?.user?.first_name || ''} ${response.data?.user?.last_name || ''}`.trim(),
+        email: response.data?.user?.email || email.toLowerCase().trim(),
+        phone: response.data?.user?.phone || '',
+        role: response.data?.user?.role || 'member',
+        permissions: response.data?.user?.permissions || getPermissions('member')
       }
-
+      
       // Compose session user with stored profile
       const sessionUser = composeSessionUser(authUser)
+
+      // Store token if provided by API
+      if (response.data?.token) {
+        sessionUser.token = response.data.token
+        localStorage.setItem('token', response.data.token)
+        localStorage.setItem('user', JSON.stringify(response.data.user))
+      }
 
       saveSession(sessionUser)
       setUser(sessionUser)
       setIsAuthenticated(true)
 
-      console.log('localStorage Login successful:', sessionUser)
+      console.log('API Login successful:', sessionUser)
       return true
-    } catch (err) {
-      setError({ type: 'general', message: 'Login failed' })
-      console.error('Login error:', err)
+    } catch (apiError) {
+      console.error('API login failed:', apiError.message)
+      setError({ type: 'general', message: apiError.message || 'Login failed' })
       return false
     } finally {
       setLoading(false)
@@ -314,17 +232,25 @@ export const AuthProvider = ({ children }) => {
     // Try API logout first if available and user has token
     if (API_BASE && user?.token) {
       logoutUser(user.token).catch(error => {
-        console.warn('API logout failed:', error.message)
+        // This is expected if token is expired/invalid
+        if (error.message.includes('Unauthenticated')) {
+          console.log('Token was already expired/invalid, proceeding with local logout')
+        } else {
+          console.warn('API logout failed:', error.message)
+        }
         // Continue with local logout even if API fails
       })
     }
 
     clearSession()          // remove only session key
+    // Also clear API-compatible tokens
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
     setUser(null)
     setIsAuthenticated(false)
     setError(null)
 
-    console.log('User logged out')
+    console.log('User logged out successfully')
   }
 
   // TODO TEMPORARY: role toggle function for testing only. REMOVE before production.

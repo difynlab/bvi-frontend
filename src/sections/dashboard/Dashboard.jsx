@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
-import { useEventsState } from '../../hooks/useEventsState'
+import { useEvents } from '../../hooks/useEvents'
 import { useNoticesState } from '../../hooks/useNoticesState'
 import { useNewslettersState } from '../../hooks/useNewslettersState'
 import '../../styles/sections/Dashboard.scss'
 
 const Dashboard = () => {
   const { user } = useAuth()
-  const { events } = useEventsState()
+  const { events } = useEvents()
   const { notices } = useNoticesState()
   const { newsletters } = useNewslettersState()
   const [, forceUpdate] = useState({})

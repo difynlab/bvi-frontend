@@ -58,7 +58,7 @@ export const CustomRecurrencePopover = ({
   initialRecurrence = null 
 }) => {
   const [recurrence, setRecurrence] = useState({
-    kind: 'CUSTOM',
+    kind: 'custom',
     interval: 1,
     unit: 'week',
     daysOfWeek: [],

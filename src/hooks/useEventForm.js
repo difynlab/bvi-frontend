@@ -38,7 +38,7 @@ const deepClone = (obj) => {
 // Utility to build form state from item
 const fromItem = (item) => {
   const recurrence = item.recurrence || {
-    kind: 'NONE',
+    kind: 'na',
     interval: 1,
     unit: 'week',
     daysOfWeek: [],
@@ -46,11 +46,11 @@ const fromItem = (item) => {
   }
   
   // Derive repeat value from recurrence kind
-  let repeat = 'NONE'
-  if (recurrence.kind === 'WEEKLY') {
-    repeat = 'WEEKLY'
-  } else if (recurrence.kind === 'CUSTOM') {
-    repeat = 'CUSTOM'
+  let repeat = 'na'
+  if (recurrence.kind === 'weekly') {
+    repeat = 'weekly'
+  } else if (recurrence.kind === 'custom') {
+    repeat = 'custom'
   } else if (item.repeat) {
     // Fallback to stored repeat value if recurrence kind is not set
     repeat = item.repeat
@@ -62,10 +62,11 @@ const fromItem = (item) => {
     startTime: item.startTime || '',
     endTime: item.endTime || '',
     timeZone: item.timeZone || 'UTC',
-    eventType: item.eventType || 'Conference',
+    eventType: item.eventType || 'conference',
     repeat: repeat,
     description: item.description || '',
     location: item.location || '',
+    register_link: item.register_link || '',
     file: null,
     imageFileName: item.imageFileName || '',
     imagePreviewUrl: item.imagePreviewUrl || '',
@@ -81,18 +82,18 @@ const TIME_ZONES = [
 ]
 
 const EVENT_TYPES = [
-  'Conference',
-  'Webinar',
-  'Workshop'
+  'conference',
+  'webinar',
+  'workshop'
 ]
 
 const REPEAT_OPTIONS = [
-  { label: 'None',      value: 'NONE' },
-  { label: 'Daily', value: 'DAILY' },
-  { label: 'Weekly',                 value: 'WEEKLY'   },
-  { label: 'Monthly',                value: 'MONTHLY'  },
-  { label: 'Yearly',               value: 'YEARLY' },
-  { label: 'Custom...',              value: 'CUSTOM'   }
+  { label: 'None',      value: 'na' },
+  { label: 'Daily',     value: 'daily' },
+  { label: 'Weekly',    value: 'weekly' },
+  { label: 'Monthly',   value: 'monthly' },
+  { label: 'Yearly',    value: 'annually' },
+  { label: 'Custom...', value: 'custom' }
 ]
 
 export const useEventForm = () => {
@@ -106,15 +107,16 @@ export const useEventForm = () => {
     startTime: '09:00',
     endTime: '17:00',
     timeZone: 'UTC',
-    eventType: 'Conference',
-    repeat: 'NONE',
+    eventType: 'conference',
+    repeat: 'na',
     description: '',
     location: '',
+    register_link: '',
     file: null,
     imageFileName: '',
     imagePreviewUrl: '',
     recurrence: {
-      kind: 'NONE',
+      kind: 'na',
       interval: 1,
       unit: 'week',
       daysOfWeek: [],
@@ -190,47 +192,120 @@ export const useEventForm = () => {
 
   const setFileFromDrop = (file) => {
     if (file && file.type.startsWith('image/')) {
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      
+      if (file.size > maxSize) {
+        setErrorMessage('Image size must not exceed 5MB')
+        // Clear any existing file data when size exceeds limit
+        setForm(prev => ({ ...prev, file: null, imageFileName: '', imagePreviewUrl: '' }))
+        return;
+      }
+      
       setForm(prev => ({ ...prev, file }))
       setForm(prev => ({ ...prev, imageFileName: file.name }))
       setForm(prev => ({ ...prev, imagePreviewUrl: URL.createObjectURL(file) }))
       
-      // Clear error when user selects a file
+      // Clear error when user selects a valid file
       if (errorMessage) {
         setErrorMessage('')
       }
     }
   }
 
-  const validate = () => {
+  const validate = (isEditMode = false) => {
     const errors = []
     
-    // Check all required fields are not empty
+    // 📝 Campos de Texto (Mínimo 3 caracteres)
     if (!form.title.trim()) {
-      errors.push('Please complete all required fields.')
-    } else if (!form.date) {
-      errors.push('Please complete all required fields.')
-    } else if (!form.startTime) {
-      errors.push('Please complete all required fields.')
-    } else if (!form.endTime) {
-      errors.push('Please complete all required fields.')
-    } else if (!form.timeZone) {
-      errors.push('Please complete all required fields.')
-    } else if (!form.eventType) {
-      errors.push('Please complete all required fields.')
-    } else if (!form.description.trim() && !editorText.trim()) {
-      errors.push('Please complete all required fields.')
-    } else if (!form.location.trim()) {
-      errors.push('Please complete all required fields.')
+      errors.push('Title is required.')
+    } else if (form.title.trim().length < 3) {
+      errors.push('Title must be at least 3 characters long.')
     }
     
-    // Check image is required
-    if (!form.file && !form.imagePreviewUrl) {
+    // Content/Description validation
+    const contentText = editorText.trim()
+    if (!contentText) {
+      errors.push('Description is required.')
+    } else if (contentText.length < 3) {
+      errors.push('Description must be at least 3 characters long.')
+    }
+    
+    if (!form.location.trim()) {
+      errors.push('Location is required.')
+    } else if (form.location.trim().length < 3) {
+      errors.push('Location must be at least 3 characters long.')
+    }
+    
+    if (!form.register_link.trim()) {
+      errors.push('Registration link is required.')
+    } else if (form.register_link.trim().length < 3) {
+      errors.push('Registration link must be at least 3 characters long.')
+    }
+    
+    // 📅 Campos de Fecha y Hora
+    if (!form.date) {
+      errors.push('Date is required.')
+    } else {
+      const selectedDate = new Date(form.date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      if (selectedDate < today) {
+        errors.push('Date must be today or later.')
+      }
+    }
+    
+    if (!form.startTime) {
+      errors.push('Start time is required.')
+    } else {
+      const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/
+      if (!timeRegex.test(form.startTime)) {
+        errors.push('Start time must be in HH:MM format.')
+      }
+    }
+    
+    if (!form.endTime) {
+      errors.push('End time is required.')
+    } else {
+      const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/
+      if (!timeRegex.test(form.endTime)) {
+        errors.push('End time must be in HH:MM format.')
+      }
+    }
+    
+    // Check start time is before end time
+    if (form.startTime && form.endTime && form.startTime >= form.endTime) {
+      errors.push('Start time must be earlier than end time.')
+    }
+    
+    // 📂 Campos de Selección (Enum)
+    if (!form.eventType) {
+      errors.push('Event type is required.')
+    } else if (!['workshop', 'webinar', 'conference'].includes(form.eventType)) {
+      errors.push('Event type must be workshop, webinar, or conference.')
+    }
+    
+    if (!form.repeat) {
+      errors.push('Repeat option is required.')
+    } else if (!['na', 'daily', 'weekly', 'monthly', 'annually', 'custom'].includes(form.repeat)) {
+      errors.push('Repeat option must be na, daily, weekly, monthly, annually, or custom.')
+    }
+    
+    // 🖼️ Archivo de Imagen
+    if (!isEditMode && !form.file && !form.imagePreviewUrl) {
       errors.push('An image is required.')
     }
     
-    // Check start time is before end time (shouldn't happen due to clamping, but keep as safety check)
-    if (form.startTime && form.endTime && form.startTime >= form.endTime) {
-      errors.push('Start time must be earlier than end time.')
+    // Check image size if file is present (max 5MB = 5120 KB)
+    if (form.file && form.file.size > 5 * 1024 * 1024) {
+      errors.push('Image size must not exceed 5MB.')
+    }
+    
+    // Check image format if file is present
+    if (form.file) {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+      if (!allowedTypes.includes(form.file.type)) {
+        errors.push('Image must be JPG, PNG, GIF, or WebP format.')
+      }
     }
     
     // Convert array to single error message
@@ -240,7 +315,7 @@ export const useEventForm = () => {
   }
 
   const buildEventObject = (existingId = null) => {
-    const id = existingId || (Date.now().toString() + Math.random().toString(36).substring(2, 11))
+    const id = existingId || Math.floor(Math.random() * 1000000000).toString()
     
     return {
       id,
@@ -252,11 +327,15 @@ export const useEventForm = () => {
       eventType: form.eventType,
       repeat: form.repeat,
       description: editorText,
+      shortDescription: editorText, // Agregar shortDescription
       editorHtml: editorHtml,
       location: form.location,
+      register_link: form.register_link,
+      file: form.file,
       imageFileName: form.imageFileName || 'no-image.jpg',
       imagePreviewUrl: form.imagePreviewUrl || '',
-      recurrence: form.recurrence
+      recurrence: form.recurrence,
+      status: 1 // Default status: active (as number, not string)
       // TODO BACKEND: send normalized recurrence to API
     }
   }
@@ -279,7 +358,7 @@ export const useEventForm = () => {
     // If unit is week and all 7 days are selected, treat as Weekly
     if (recurrence.unit === 'week' && recurrence.daysOfWeek.length === 7) {
       return {
-        kind: 'WEEKLY',
+        kind: 'weekly',
         interval: 1,
         unit: 'week',
         daysOfWeek: ['MO','TU','WE','TH','FR','SA','SU'],
@@ -287,10 +366,10 @@ export const useEventForm = () => {
       }
     }
     
-    // Otherwise keep as CUSTOM
+    // Otherwise keep as custom
     return {
       ...recurrence,
-      kind: 'CUSTOM'
+      kind: 'custom'
     }
   }
 

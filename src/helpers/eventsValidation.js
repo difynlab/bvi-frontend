@@ -21,7 +21,7 @@ export const isTimeOrderValid = (start, end) => {
   return startMinutes < endMinutes
 }
 
-const ALLOWED_REPEAT = ['NONE', 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'CUSTOM']
+const ALLOWED_REPEAT = ['na', 'daily', 'weekly', 'monthly', 'annually', 'custom']
 
 export const validateEvent = (form) => {
   const errors = []
@@ -79,7 +79,7 @@ export const validateRecurrence = (recurrence) => {
   }
   
   // Validate days of week for weekly recurrence
-  if (recurrence.unit === 'week' && recurrence.kind === 'CUSTOM') {
+  if (recurrence.unit === 'week' && recurrence.kind === 'custom') {
     if (!recurrence.daysOfWeek || recurrence.daysOfWeek.length === 0) {
       errors.daysOfWeek = 'Select at least one day'
     }

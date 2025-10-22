@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/useAuth'
 import { can } from '../../auth/acl'
-import { useEventsState } from '../../hooks/useEventsState'
+import { useEvents } from '../../hooks/useEvents'
 import { useEventForm } from '../../hooks/useEventForm'
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
 import { useTitleMarquee } from '../../hooks/useTitleMarquee'
@@ -14,12 +14,15 @@ import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal'
 import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock'
 import EmptyPage from '../../components/EmptyPage'
 import CustomDropdown from '../../components/CustomDropdown'
+import EventsListSkeleton from '../../components/events/EventsListSkeleton'
+import EventsPaginationSkeleton from '../../components/events/EventsPaginationSkeleton'
 import '../../styles/sections/Events.scss'
+import '../../styles/sections/shimmerLoader.scss'
 
 export const Events = () => {
   const { user, toggleRole, isInitialized } = useAuth()
 
-  const { events, addEvent, updateEvent, deleteEvent, seedIfEmpty } = useEventsState()
+  const { events, createEvent, updateEvent, deleteEvent, loading, error, pagination, refreshEvents, changePage } = useEvents()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState('create')
@@ -34,6 +37,7 @@ export const Events = () => {
   const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false)
 
   const eventForm = useEventForm()
+
 
   // Register modal states to disable SideNav gestures
   const isAnyModalOpen = isModalOpen || isRegisterModalOpen || isConfirmDeleteOpen || isSuccessDeleteOpen
@@ -54,6 +58,7 @@ export const Events = () => {
         return text.length > 0;
       }
     },
+    { key: 'register_link', label: 'Registration Link', test: () => (eventForm?.form?.register_link || '').trim().length > 0 },
     { key: 'file', label: 'File Upload', test: () => !!(eventForm?.form?.imagePreviewUrl || eventForm?.form?.imageFileName) }
   ];
 
@@ -74,6 +79,7 @@ export const Events = () => {
     eventForm?.form?.date,
     eventForm?.editorHtml,
     eventForm?.form?.description,
+    eventForm?.form?.register_link,
     eventForm?.form?.imagePreviewUrl,
     eventForm?.form?.imageFileName
   ]);
@@ -96,7 +102,7 @@ export const Events = () => {
   const modalBackdropClose = useModalBackdropClose(handleCancel)
 
   useEffect(() => {
-    if (isModalOpen && eventForm.form.repeat === 'CUSTOM' && !isCustomRecurrenceOpen) {
+    if (isModalOpen && eventForm.form.repeat === 'custom' && !isCustomRecurrenceOpen) {
     }
   }, [isModalOpen, eventForm.form.repeat, isCustomRecurrenceOpen])
   const registerModalBackdropClose = useModalBackdropClose(() => setIsRegisterModalOpen(false))
@@ -158,69 +164,210 @@ export const Events = () => {
     return lastSpaceIndex > 0 ? truncated.substring(0, lastSpaceIndex) + '…' : truncated + '…'
   }
 
-  if (!isInitialized) {
-    return (
-      <div className="events-page">
-        <div className="events-container">
-          <div className="events-loading">
-            <h2>Loading...</h2>
-          </div>
-        </div>
+  // Header siempre visible (independiente del estado)
+  const renderHeader = () => (
+    <header className="events-header">
+      <div className="events-header-title">
+        <h1>Events</h1>
+        <p>Manage Events</p>
       </div>
+      <div className="events-actions">
+        {can(user, 'events:create') && (
+          <button
+            className="add-event-btn events-add-btn"
+            onClick={openCreateModal}
+            aria-label="Add new event"
+          >
+            <i className="bi bi-plus" aria-hidden="true"></i>
+            <span className="btn-label">Add New</span>
+          </button>
+        )}
+      </div>
+    </header>
+  )
+
+  // Renderizar contenido según el estado
+  const renderContent = () => {
+    if (!isInitialized || loading) {
+      return (
+        <>
+          {renderHeader()}
+          <EventsListSkeleton count={6} />
+          <EventsPaginationSkeleton />
+        </>
+      )
+    }
+
+    if (error) {
+      // Si el error es "No data found" (404), mostrar EmptyPage
+      if (error.includes('No data found')) {
+        return (
+          <>
+            {renderHeader()}
+            <EmptyPage
+              isAdmin={can(user, 'events:create')}
+              title={can(user, 'events:create') ? 'Oops nothing to see here yet!' : 'Oops! No data found.'}
+              description={
+                can(user, 'events:create')
+                  ? <>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</>
+                  : <>Nothing's been added here yet, or there might be a hiccup.<br />Try again or check back later!</>
+              }
+            />
+          </>
+        )
+      }
+
+      // Para otros errores, mostrar el estado de error normal
+      return (
+        <div className="events-error">
+          <h2>Error loading events</h2>
+          <p>{error}</p>
+          {error.includes('Sesión expirada') ? (
+            <div className="error-actions">
+              <button onClick={() => window.location.href = '/login'} className="login-btn">
+                Go to Login
+              </button>
+              <button onClick={refreshEvents} className="retry-btn">
+                Try Again
+              </button>
+            </div>
+          ) : (
+            <button onClick={refreshEvents} className="retry-btn">
+              Try Again
+            </button>
+          )}
+        </div>
+      )
+    }
+
+    if (!user) {
+      return (
+        <div className="events-error">
+          <h2>Please log in to view events.</h2>
+        </div>
+      )
+    }
+
+    // Estado normal con datos
+    return (
+      <>
+        {renderHeader()}
+        {events.length === 0 ? (
+          <EmptyPage
+            isAdmin={can(user, 'events:create')}
+            title={can(user, 'events:create') ? 'Oops nothing to see here yet!' : 'Oops! No data found.'}
+            description={
+              can(user, 'events:create')
+                ? <>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</>
+                : <>Nothing's been added here yet, or there might be a hiccup.<br />Try again or check back later!</>
+            }
+          />
+        ) : (
+          <>
+            <div className="events-list">
+              {events.map((event, index) => (
+                <div key={event.id || `event-${index}`} className="event-card">
+                  <div className="event-image">
+                    <img 
+                      src={event.imagePreviewUrl} 
+                      alt={event.title}
+                      onError={(e) => {
+                        e.target.style.display = 'none'
+                      }}
+                    />
+                  </div>
+                  <div className="event-content">
+                    <div className="event-header">
+                      <span className={`event-type ${event.eventType.toLowerCase()}`}>
+                        {event.eventType}
+                      </span>
+                      <span className="event-date">{formatDate(event.date)}</span>
+                    </div>
+                    <div
+                      className="event-title one-line-ellipsis"
+                      ref={titleMarquee.titleContainerRef}
+                      onMouseEnter={titleMarquee.onMouseEnter}
+                      onMouseLeave={titleMarquee.onMouseLeave}
+                    >
+                      <span className="event-title__inner" title={event.title}>{event.title}</span>
+                    </div>
+                    <p className="event-description">
+                      {useFallback ? truncateText(getEventDescriptionParagraphs(event)) : getEventDescriptionParagraphs(event)}
+                    </p>
+                    <div className="event-details">
+                      <div className="event-time">
+                        <span className="icon"><i className="bi bi-clock"></i></span>
+                        {formatTime(event.startTime)} - {formatTime(event.endTime)} {event.timeZone}
+                      </div>
+                      <div className="event-location">
+                        <span className="icon"><i className="bi bi-geo-alt"></i></span>
+                        {event.location}
+                      </div>
+                    </div>
+                    <div className="event-actions">
+                      {can(user, 'events:update') && (
+                        <button
+                          className="edit-btn"
+                          onClick={() => handleEdit(event.id)}
+                        >
+                          Edit Details
+                        </button>
+                      )}
+                      {can(user, 'events:delete') && (
+                        <button
+                          className="delete-btn"
+                          onClick={() => handleDelete(event.id)}
+                        >
+                          Delete
+                        </button>
+                      )}
+                      {!can(user, 'events:create') && (
+                        <button
+                          className="register-btn"
+                          onClick={() => openRegisterModal(event)}
+                        >
+                          Register Now
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="events-pagination">
+              <button 
+                className="prev-btn"
+                onClick={() => changePage(pagination.current_page - 1)}
+                disabled={pagination.current_page <= 1}
+              >
+                <i className="bi bi-chevron-left"></i>
+              </button>
+              <div className="page-counter">
+                <span>{pagination.current_page} of {pagination.last_page}</span>
+                <small>({pagination.total} total events)</small>
+              </div>
+              <button 
+                className="next-btn"
+                onClick={() => changePage(pagination.current_page + 1)}
+                disabled={pagination.current_page >= pagination.last_page}
+              >
+                <i className="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          </>
+        )}
+      </>
     )
   }
-
-  if (!user) {
-    return (
-      <div className="events-page">
-        <div className="events-container">
-          <div className="events-error">
-            <h2>Please log in to view events.</h2>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // TODO BACKEND: Fetch events from backend on component mount
-  // useEffect(() => {
-  //   const fetchEvents = async () => {
-  //     try {
-  //       const response = await fetch('/api/events', {
-  //         headers: {
-  //           'Authorization': `Bearer ${token}`
-  //         }
-  //       })
-  //       if (!response.ok) throw new Error('Failed to fetch events')
-  //       const eventsData = await response.json()
-  //       setEvents(eventsData)
-  //     } catch (error) {
-  //       console.error('Error fetching events:', error)
-  //       // Fallback to localStorage or seed data
-  //       const savedEvents = localStorage.getItem('events')
-  //       if (savedEvents) {
-  //         try {
-  //           setEvents(JSON.parse(savedEvents))
-  //         } catch (parseError) {
-  //           console.error('Error parsing saved events:', parseError)
-  //           setEvents(seedEvents)
-  //         }
-  //       } else {
-  //         setEvents(seedEvents)
-  //       }
-  //     }
-  //   }
-  //   fetchEvents()
-  // }, [])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
     eventForm.onChange(name, value)
 
     // Handle custom recurrence popover and clear custom recurrence when changing to non-custom
-    if (name === 'repeat' && value === 'CUSTOM') {
+    if (name === 'repeat' && value === 'custom') {
       setIsCustomRecurrenceOpen(true)
-    } else if (name === 'repeat' && value !== 'CUSTOM') {
+    } else if (name === 'repeat' && value !== 'custom') {
       setIsCustomRecurrenceOpen(false)
       // Clear custom recurrence when changing to non-custom repeat option
       eventForm.updateRecurrence({
@@ -235,8 +382,8 @@ export const Events = () => {
 
   // Handle click on repeat select to ensure custom popover can open
   const handleRepeatSelectClick = (e) => {
-    // If the current value is CUSTOM and popover is closed, open it
-    if (eventForm.form.repeat === 'CUSTOM' && !isCustomRecurrenceOpen) {
+    // If the current value is custom and popover is closed, open it
+    if (eventForm.form.repeat === 'custom' && !isCustomRecurrenceOpen) {
       setIsCustomRecurrenceOpen(true)
     }
   }
@@ -275,7 +422,7 @@ export const Events = () => {
 
         // Check if event has custom recurrence and set popover state accordingly
         // but don't auto-open it - let user click "Custom" to open
-        if (event.recurrence && event.recurrence.kind === 'CUSTOM') {
+        if (event.recurrence && event.recurrence.kind === 'custom') {
           // Event has custom recurrence, but don't auto-open popover
           setIsCustomRecurrenceOpen(false)
         } else {
@@ -378,17 +525,24 @@ export const Events = () => {
   }
 
   const validateForm = () => {
-    return eventForm.validate()
+    return eventForm.validate(modalMode === 'edit')
   }
 
   const handleSubmit = (e) => {
     try {
       e.preventDefault()
       if (!validateRequired()) { bannerRef.current?.focus(); return; }
+      
+      // Validate form using hook validation (includes image size check)
+      const isEditMode = modalMode === 'edit'
+      if (!eventForm.validate(isEditMode)) { 
+        bannerRef.current?.focus(); 
+        return; 
+      }
 
       if (modalMode === 'create') {
         const newEvent = eventForm.buildEventObject()
-        addEvent(newEvent)
+        createEvent(newEvent)
       } else if (modalMode === 'edit' && editingEventId) {
         const updatedEvent = eventForm.buildEventObject(editingEventId)
         updateEvent(updatedEvent)
@@ -441,10 +595,10 @@ export const Events = () => {
 
     eventForm.updateRecurrence(normalizedRecurrence)
 
-    if (normalizedRecurrence.kind === 'WEEKLY') {
-      eventForm.onChange('repeat', 'WEEKLY')
+    if (normalizedRecurrence.kind === 'weekly') {
+      eventForm.onChange('repeat', 'weekly')
     } else {
-      eventForm.onChange('repeat', 'CUSTOM')
+      eventForm.onChange('repeat', 'custom')
     }
 
     setIsCustomRecurrenceOpen(false)
@@ -455,132 +609,7 @@ export const Events = () => {
       <div className="events-page">
         <div className="events-container">
           <section className="events-section">
-            <header className="events-header">
-              <div className="events-header-title">
-                <h1>Events</h1>
-                <p>Manage Events</p>
-              </div>
-              <div className="events-actions">
-                {/* TODO TEMPORARY: role toggle button for testing only. REMOVE before production. */}
-                <button
-                  className={`temp-role-toggle-btn ${user?.role === 'admin' ? 'admin' : 'member'}`}
-                  onClick={toggleRole}
-                >
-                  {user?.role === 'admin' ? 'Switch to Member View' : 'Switch to Admin View'}
-                </button>
-                {/* TODO TEMPORARY: button to show sample events. REMOVE before production. */}
-                <button
-                  className="temp-load-sample-btn"
-                  onClick={() => {
-                    localStorage.removeItem('events')
-                    seedIfEmpty()
-                  }}
-                >
-                  Load Sample Events
-                </button>
-
-                {can(user, 'events:create') && (
-                  <button
-                    className="add-event-btn events-add-btn"
-                    onClick={openCreateModal}
-                    aria-label="Add new event"
-                  >
-                    <i className="bi bi-plus" aria-hidden="true"></i>
-                    <span className="btn-label">Add New</span>
-                  </button>
-                )}
-              </div>
-            </header>
-
-            {events.length === 0 ? (
-              <EmptyPage
-                isAdmin={can(user, 'events:create')}
-                title={can(user, 'events:create') ? 'Oops nothing to see here yet!' : 'Oops! No data found.'}
-                description={
-                  can(user, 'events:create')
-                    ? <>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</>
-                    : <>Nothing's been added here yet, or there might be a hiccup.<br />Try again or check back later!</>
-                }
-              />
-            ) : (
-              <>
-                <div className="events-list">
-                  {events.map(event => (
-                    <div key={event.id} className="event-card">
-                      <div className="event-image">
-                        <img src={event.imagePreviewUrl} alt={event.title} />
-                      </div>
-                      <div className="event-content">
-                        <div className="event-header">
-                          <span className={`event-type ${event.eventType.toLowerCase()}`}>
-                            {event.eventType}
-                          </span>
-                          <span className="event-date">{formatDate(event.date)}</span>
-                        </div>
-                        <div
-                          className="event-title one-line-ellipsis"
-                          ref={titleMarquee.titleContainerRef}
-                          onMouseEnter={titleMarquee.onMouseEnter}
-                          onMouseLeave={titleMarquee.onMouseLeave}
-                        >
-                          <span className="event-title__inner" title={event.title}>{event.title}</span>
-                        </div>
-                        <p className="event-description">
-                          {useFallback ? truncateText(getEventDescriptionParagraphs(event)) : getEventDescriptionParagraphs(event)}
-                        </p>
-                        <div className="event-details">
-                          <div className="event-time">
-                            <span className="icon"><i className="bi bi-clock"></i></span>
-                            {formatTime(event.startTime)} - {formatTime(event.endTime)} {event.timeZone}
-                          </div>
-                          <div className="event-location">
-                            <span className="icon"><i className="bi bi-geo-alt"></i></span>
-                            {event.location}
-                          </div>
-                        </div>
-                        <div className="event-actions">
-                          {can(user, 'events:update') && (
-                            <button
-                              className="edit-btn"
-                              onClick={() => handleEdit(event.id)}
-                            >
-                              Edit Details
-                            </button>
-                          )}
-                          {can(user, 'events:delete') && (
-                            <button
-                              className="delete-btn"
-                              onClick={() => handleDelete(event.id)}
-                            >
-                              Delete
-                            </button>
-                          )}
-                          {!can(user, 'events:create') && (
-                            <button
-                              className="register-btn"
-                              onClick={() => openRegisterModal(event)}
-                            >
-                              Register Now
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="events-pagination">
-                  <button className="prev-btn">
-                    <i className="bi bi-chevron-left"></i>
-                  </button>
-                  <div className="page-counter">
-                    <span>1</span>
-                  </div>
-                  <button className="next-btn">
-                    <i className="bi bi-chevron-right"></i>
-                  </button>
-                </div>
-              </>
-            )}
+            {renderContent()}
           </section>
         </div>
 
@@ -724,6 +753,19 @@ export const Events = () => {
                 </div>
 
                 <div className="form-group">
+                  <label htmlFor="register_link">Registration Link<span className="req-star" aria-hidden="true">*</span></label>
+                  <input
+                    type="url"
+                    id="register_link"
+                    name="register_link"
+                    value={eventForm.form.register_link}
+                    onChange={handleInputChange}
+                    placeholder="https://register-event.com"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
                   <label>File Upload<span className="req-star" aria-hidden="true">*</span></label>
                   <div
                     className={`dropzone dropzone-surface ${isDragOver ? 'drag-over' : ''}`}
@@ -754,7 +796,7 @@ export const Events = () => {
                 </div>
 
                 <div className="form-actions">
-                  {missingRequired.length > 0 && (
+                  {(missingRequired.length > 0 || eventForm.errorMessage) && (
                     <div
                       className="app-form__error-banner"
                       role="alert"
@@ -762,10 +804,25 @@ export const Events = () => {
                       tabIndex={-1}
                       ref={bannerRef}
                     >
-                      <strong>Please fill all required fields:</strong> {missingRequired.join(', ')}
+                      {missingRequired.length > 0 && (
+                        <div>
+                          <strong>Please fill all required fields:</strong> {missingRequired.join(', ')}
+                        </div>
+                      )}
+                      {eventForm.errorMessage && (
+                        <div>
+                          <strong>Error:</strong> {eventForm.errorMessage}
+                        </div>
+                      )}
                     </div>
                   )}
-                  <button type="submit" className="upload-now-btn">Upload Now</button>
+                  <button 
+                    type="submit" 
+                    className="upload-now-btn"
+                    disabled={eventForm.errorMessage ? true : false}
+                  >
+                    Upload Now
+                  </button>
                 </div>
               </form>
             </div>

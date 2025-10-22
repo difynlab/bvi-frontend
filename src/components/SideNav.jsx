@@ -3,6 +3,9 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
 import { isAnyModalOpen } from '../helpers/modalLock'
 import ConfirmLogoutModal from './modals/ConfirmLogoutModal'
+import NotificationTrigger from './NotificationTrigger'
+import NotificationPanel from './NotificationPanel'
+import { useNotificationDropdown } from '../hooks/useNotificationDropdown'
 import '../styles/components/SideNav.scss'
 
 const MOBILE_Q = '(max-width: 768px)';
@@ -26,6 +29,9 @@ const SideNav = () => {
   const { user, logout } = useAuth();
   const navRef = useRef(null);
   const dragging = useRef({ active: false, startX: 0, startY: 0, moved: false });
+
+  // Hook de notificaciones
+  const notificationHook = useNotificationDropdown();
 
   const openLogoutModal = () => setLogoutOpen(true);
   const closeLogoutModal = () => setLogoutOpen(false);
@@ -208,10 +214,11 @@ const SideNav = () => {
         <div className="logo-section">
           <img src="/logo-sidenav.png" alt="BVI Finance Logo"></img>
         </div>
-        <div className="notification-icon">
-          <i className="bi bi-bell"></i>
-          <span className="notification-badge"></span>
-        </div>
+        <NotificationTrigger 
+          isOpen={notificationHook.isOpen}
+          unreadCount={notificationHook.unreadCount}
+          onToggle={notificationHook.handleToggle}
+        />
       </div>
 
       <div className="nav-links" onClick={blockWhenCollapsed}>
@@ -331,6 +338,21 @@ const SideNav = () => {
           </button>
         </div>
       </div>
+
+      {/* Panel de notificaciones */}
+      {notificationHook.isOpen && (
+        <NotificationPanel
+          notifications={notificationHook.notifications}
+          unreadCount={notificationHook.unreadCount}
+          onNotificationClick={notificationHook.handleNotificationClick}
+          onMarkAllAsRead={notificationHook.handleMarkAllAsRead}
+          onRemoveNotification={notificationHook.handleRemoveNotification}
+          formatTimeAgo={notificationHook.formatTimeAgo}
+          formatEventDate={notificationHook.formatEventDate}
+          getNotificationIcon={notificationHook.getNotificationIcon}
+          getNotificationColor={notificationHook.getNotificationColor}
+        />
+      )}
 
       </nav>
 

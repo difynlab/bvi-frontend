@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { mockPaymentHistory, mockMemberDetails } from '../helpers/membershipMocks';
-import { readEvents } from '../helpers/eventsStorage';
+import eventsService from '../services/eventsService';
+import { transformFromBackend } from '../utils/eventTransformers';
 
 export function useMembershipData() {
   const [paymentHistory, setPaymentHistory] = useState([]);
@@ -40,26 +41,27 @@ export function useMembershipData() {
     }
   }, []);
 
-  const loadUpcomingEvents = useCallback(() => {
+  const loadUpcomingEvents = useCallback(async () => {
     try {
-      // TODO BACKEND: GET /api/events?upcoming=true (or reuse Events list from server)
-      const events = readEvents();
+      const response = await eventsService.getEvents(10, 1)
       
-      // Filter for future events only
-      const now = new Date();
-      const futureEvents = events.items.filter(event => {
-        const eventDate = new Date(event.date || event.dateISO || event.publishedAt);
-        return eventDate > now;
-      });
-      
-      // Sort ascending by date
-      futureEvents.sort((a, b) => {
-        const dateA = new Date(a.date || a.dateISO || a.publishedAt);
-        const dateB = new Date(b.date || b.dateISO || b.publishedAt);
-        return dateA - dateB;
-      });
-      
-      setUpcomingEvents(futureEvents);
+      if (response.http_status === 200 && response.data) {
+        const transformedEvents = response.data.data.map(transformFromBackend)
+        
+        const now = new Date();
+        const futureEvents = transformedEvents.filter(event => {
+          const eventDate = new Date(event.date);
+          return eventDate > now;
+        });
+        
+        futureEvents.sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return dateA - dateB;
+        });
+        
+        setUpcomingEvents(futureEvents.slice(0, 3));
+      }
     } catch (error) {
       console.error('Error loading upcoming events:', error);
       setUpcomingEvents([]);

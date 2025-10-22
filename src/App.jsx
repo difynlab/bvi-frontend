@@ -17,7 +17,9 @@ import Forbidden from './pages/Forbidden'
 import ResetPassword from './pages/ResetPassword'
 import SideNav from './components/SideNav'
 import { AuthProvider } from './context/AuthContext.jsx'
+import { NotificationProvider } from './context/NotificationContext'
 import { ModalStateProvider } from './hooks/useModalState.jsx'
+import SkeletonThemeProvider from './components/SkeletonSetup'
 
 const MainLayout = ({ children }) => {
   return (
@@ -34,101 +36,105 @@ function App() {
 
   return (
     <AuthProvider>
-      <ModalStateProvider>
-        <BrowserRouter>
-        <Routes>
-        <Route path='/' element={<Navigate to="/register" replace />}></Route>
-        <Route path='/register' element={<Register />}></Route>
-        <Route path='/login' element={<Login />}></Route>
-        <Route path='/forget-password' element={<ForgetPassword />}></Route>
-        <Route path='/reset-password/:token' element={<ResetPassword />}></Route>
-        <Route path='/forbidden' element={<Forbidden />}></Route>
+      <NotificationProvider>
+        <ModalStateProvider>
+          <SkeletonThemeProvider>
+            <BrowserRouter>
+            <Routes>
+          <Route path='/' element={<Navigate to="/register" replace />}></Route>
+          <Route path='/register' element={<Register />}></Route>
+          <Route path='/login' element={<Login />}></Route>
+          <Route path='/forget-password' element={<ForgetPassword />}></Route>
+          <Route path='/reset-password/:token' element={<ResetPassword />}></Route>
+          <Route path='/forbidden' element={<Forbidden />}></Route>
 
-        <Route path='/dashboard' element={
-          <RouteGuard requireAuth>
-            <MainLayout>
-              <Dashboard />
-            </MainLayout>
-          </RouteGuard>
-        }></Route>
+          <Route path='/dashboard' element={
+            <RouteGuard requireAuth>
+              <MainLayout>
+                <Dashboard />
+              </MainLayout>
+            </RouteGuard>
+          }></Route>
 
-        <Route path='/events' element={
-          <RouteGuard requireAuth>
-            <MainLayout>
-              <Events />
-            </MainLayout>
-          </RouteGuard>
-        }></Route>
+          <Route path='/events' element={
+            <RouteGuard requireAuth>
+              <MainLayout>
+                <Events />
+              </MainLayout>
+            </RouteGuard>
+          }></Route>
 
-        <Route path='/notices' element={
-          <RouteGuard requireAuth>
-            <MainLayout>
-              <Notices />
-            </MainLayout>
-          </RouteGuard>
-        }></Route>
+          <Route path='/notices' element={
+            <RouteGuard requireAuth>
+              <MainLayout>
+                <Notices />
+              </MainLayout>
+            </RouteGuard>
+          }></Route>
 
-        <Route path='/newsletters' element={
-          <RouteGuard requireAuth>
-            <MainLayout>
-              <Newsletters />
-            </MainLayout>
-          </RouteGuard>
-        }></Route>
+          <Route path='/newsletters' element={
+            <RouteGuard requireAuth>
+              <MainLayout>
+                <Newsletters />
+              </MainLayout>
+            </RouteGuard>
+          }></Route>
 
-        <Route path='/membership' element={
-          <RouteGuard requireAuth>
-            <MainLayout>
-              <Membership />
-            </MainLayout>
-          </RouteGuard>
-        }></Route>
+          <Route path='/membership' element={
+            <RouteGuard requireAuth>
+              <MainLayout>
+                <Membership />
+              </MainLayout>
+            </RouteGuard>
+          }></Route>
 
-        <Route path='/subscription' element={
-          <RouteGuard requireAuth>
-            <MainLayout>
-              <Subscription />
-            </MainLayout>
-          </RouteGuard>
-        }></Route>
+          <Route path='/subscription' element={
+            <RouteGuard requireAuth>
+              <MainLayout>
+                <Subscription />
+              </MainLayout>
+            </RouteGuard>
+          }></Route>
 
-        <Route path='/legislation' element={
-          <RouteGuard requireAuth>
-            <MainLayout>
-              <Legislation />
-            </MainLayout>
-          </RouteGuard>
-        }></Route>
+          <Route path='/legislation' element={
+            <RouteGuard requireAuth>
+              <MainLayout>
+                <Legislation />
+              </MainLayout>
+            </RouteGuard>
+          }></Route>
 
-        <Route path='/reports' element={
-          <RouteGuard requireAuth>
-            <MainLayout>
-              <Reports />
-            </MainLayout>
-          </RouteGuard>
-        }></Route>
+          <Route path='/reports' element={
+            <RouteGuard requireAuth>
+              <MainLayout>
+                <Reports />
+              </MainLayout>
+            </RouteGuard>
+          }></Route>
 
-        <Route path='/settings' element={
-          <RouteGuard requireAuth>
-            <MainLayout>
-              <Settings />
-            </MainLayout>
-          </RouteGuard>
-        }></Route>
+          <Route path='/settings' element={
+            <RouteGuard requireAuth>
+              <MainLayout>
+                <Settings />
+              </MainLayout>
+            </RouteGuard>
+          }></Route>
 
-        <Route path='/admin' element={
-          <RouteGuard allowRoles={['admin']}>
-            <MainLayout>
-              <div className="page-content-centered">
-                <h1>Admin Panel</h1>
-                <p>Welcome to the admin panel!</p>
-              </div>
-            </MainLayout>
-          </RouteGuard>
-        }></Route>
-        </Routes>
-        </BrowserRouter>
-      </ModalStateProvider>
+          <Route path='/admin' element={
+            <RouteGuard allowRoles={['admin']}>
+              <MainLayout>
+                <div className="page-content-centered">
+                  <h1>Admin Panel</h1>
+                  <p>Welcome to the admin panel!</p>
+                </div>
+              </MainLayout>
+            </RouteGuard>
+          }></Route>
+            </Routes>
+            </BrowserRouter>
+          </SkeletonThemeProvider>
+        </ModalStateProvider>
+      </NotificationProvider>
     </AuthProvider>
   )
 }

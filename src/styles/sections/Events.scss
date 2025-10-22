@@ -811,6 +811,12 @@
     font-weight: 300;
     border: none;
     cursor: pointer;
+    
+    &:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
   }
 
   .file-input-label {
@@ -2049,4 +2055,89 @@
       margin-top: 4px;
     }
   }
+}
+
+.events-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  
+  h2 {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-light);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+.events-error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  text-align: center;
+  
+  h2 {
+    color: var(--error-color);
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+  }
+  
+  .error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+  
+  .retry-btn, .login-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+  
+  .retry-btn {
+    background: var(--primary-color);
+    color: white;
+    
+    &:hover {
+      background: var(--primary-dark);
+    }
+  }
+  
+  .login-btn {
+    background: #dc3545;
+    color: white;
+    
+    &:hover {
+      background: #c82333;
+    }
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

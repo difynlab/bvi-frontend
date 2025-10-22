@@ -13,7 +13,7 @@ export const SuccessDeleteModal = ({
     if (isOpen) {
       timeoutRef.current = setTimeout(() => {
         onClose()
-      }, 3000)
+      }, 2000)
 
       return () => {
         if (timeoutRef.current) {
@@ -62,4 +62,6 @@ export const SuccessDeleteModal = ({
     </div>
   )
 }
+
+
 
