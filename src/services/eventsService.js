@@ -1,6 +1,7 @@
 class EventsService {
   constructor() {
-    this.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+    // TODO PRODUCTION: CHANGE IMAGES - Use full URL in production
+    this.baseURL = import.meta.env.VITE_API_BASE_URL || '/api'
     this.tokenKey = 'token'
   }
 
@@ -48,7 +49,9 @@ class EventsService {
           throw new Error(`${errorMessage}${validationErrors ? ': ' + validationErrors : ''}`)
         } else if (data.http_status === 500) {
           const errorMessage = data.message || data.error || 'Error interno del servidor'
-          throw new Error(errorMessage)
+          console.error('500 Server Error details:', data)
+          console.error('Full error response:', JSON.stringify(data, null, 2))
+          throw new Error(`${errorMessage} (Error 500)`)
         } else {
           const errorMessage = data.message || data.error || `Error del servidor: ${response.status}`
           throw new Error(errorMessage)
@@ -71,6 +74,9 @@ class EventsService {
   async getEvents(pagination = 6, page = 1) {
     try {
       const url = `${this.baseURL}/events?pagination=${pagination}&page=${page}`
+      console.log('=== FETCHING EVENTS ===')
+      console.log('URL:', url)
+      console.log('Headers:', this.getHeaders(true))
       
       const response = await fetch(url, {
         method: 'GET',
@@ -104,16 +110,21 @@ class EventsService {
     try {
       console.log('=== CREATE EVENT DEBUG ===')
       console.log('Raw eventData received:', eventData)
+      console.log('EventData type:', typeof eventData)
+      console.log('EventData keys:', Object.keys(eventData))
       
       const formData = new FormData()
       
       // Agregar todos los campos del evento al FormData
       Object.keys(eventData).forEach(key => {
-        if (eventData[key] !== null && eventData[key] !== undefined && eventData[key] !== '') {
-          formData.append(key, eventData[key])
-          console.log(`Added to FormData: ${key} =`, eventData[key])
+        const value = eventData[key]
+        console.log(`Processing field: ${key}, type: ${typeof value}, value:`, value)
+        
+        if (value !== null && value !== undefined && value !== '') {
+          formData.append(key, value)
+          console.log(`✅ Added to FormData: ${key} =`, value)
         } else {
-          console.log(`Skipped empty field: ${key} =`, eventData[key])
+          console.log(`❌ Skipped empty field: ${key} =`, value)
         }
       })
 
@@ -127,6 +138,8 @@ class EventsService {
       }
 
       console.log('Headers being sent:', this.getHeaders(false))
+      console.log('Token being used:', this.getToken() ? 'Present' : 'Missing')
+      console.log('Base URL:', this.baseURL)
 
       const response = await fetch(`${this.baseURL}/events`, {
         method: 'POST',
@@ -137,8 +150,19 @@ class EventsService {
       console.log('Response status:', response.status)
       console.log('Response ok:', response.ok)
       console.log('Response headers:', Object.fromEntries(response.headers.entries()))
-
-      return await this.handleResponse(response)
+      
+      // Log response body for debugging
+      const responseText = await response.text()
+      console.log('Response body:', responseText)
+      
+      // Create a new response object for handleResponse
+      const responseClone = new Response(responseText, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers
+      })
+      
+      return await this.handleResponse(responseClone)
     } catch (error) {
       console.error('Error creating event:', error)
       throw error

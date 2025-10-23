@@ -603,6 +603,9 @@ export default function Reports() {
                       />
                     </div>
                   )}
+                  {reportForm.errors.file && (
+                    <div className="error-message">{reportForm.errors.file}</div>
+                  )}
                 </div>
               </div>
 

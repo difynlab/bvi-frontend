@@ -31,7 +31,15 @@ export const useNotificationDropdown = () => {
   // Cerrar dropdown al hacer click fuera
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      // Verificar si el click es fuera del panel de notificaciones
+      const notificationPanel = document.querySelector('.notification-panel')
+      const notificationTrigger = document.querySelector('.notification-trigger')
+      
+      if (isOpen && 
+          notificationPanel && 
+          !notificationPanel.contains(event.target) &&
+          notificationTrigger &&
+          !notificationTrigger.contains(event.target)) {
         setIsOpen(false)
       }
     }

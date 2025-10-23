@@ -102,6 +102,28 @@ export function deleteCategoryAndNotices(id) {
   return { categories: updatedCategories, items: updatedItems }
 }
 
+export function updateCategory(id, newName) {
+  const { categories, items } = readNotices()
+  const slug = newName.toLowerCase().replace(/\s+/g, '-')
+  
+  // TODO BACKEND: PUT /api/notice-categories/:id
+  const updatedCategories = categories.map(cat => 
+    cat.id === id 
+      ? { ...cat, name: newName.trim(), slug: slug }
+      : cat
+  )
+  
+  // Update the categoryId in items if needed (though it shouldn't change)
+  const updatedItems = items.map(group => 
+    group.categoryId === id 
+      ? { ...group, categoryId: slug }
+      : group
+  )
+  
+  writeNotices(updatedCategories, updatedItems)
+  return { categories: updatedCategories, items: updatedItems }
+}
+
 export function upsertNotice(noticeObj) {
   const { categories, items } = readNotices()
   const group = items.find(group => group.categoryId === noticeObj.noticeType)

@@ -148,9 +148,18 @@ export const useNoticeForm = () => {
 
   const setFileFromDrop = useCallback((file) => {
     if (file && file.type.startsWith('image/')) {
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      
+      if (file.size > maxSize) {
+        setErrorMessage('Image size must not exceed 5MB')
+        // Clear any existing file data when size exceeds limit
+        setForm(prev => ({ ...prev, file: null, imageFileName: '', imagePreviewUrl: '' }))
+        return;
+      }
+      
       setForm(prev => ({ ...prev, file, imageFileName: file.name, imagePreviewUrl: URL.createObjectURL(file) }))
       
-      // Clear error when user selects a file
+      // Clear error when user selects a valid file
       if (errorMessage) {
         setErrorMessage('')
       }
@@ -174,6 +183,11 @@ export const useNoticeForm = () => {
     // Check image is required
     if (!form.file && !form.imagePreviewUrl) {
       errors.push('An image is required.')
+    }
+    
+    // Check image size if file is present (max 5MB)
+    if (form.file && form.file.size > 5 * 1024 * 1024) {
+      errors.push('Image size must not exceed 5MB.')
     }
     
     // Check category exists

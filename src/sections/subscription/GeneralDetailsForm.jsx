@@ -37,7 +37,16 @@ const GeneralDetailsForm = ({ values, errors, setField, onNext }) => {
   const handleFile = (file) => {
     const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf'];
     if (allowedTypes.includes(file.type)) {
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      
+      if (file.size > maxSize) {
+        setField('signatureFileError', 'File size must not exceed 5MB');
+        setField('signatureFile', null);
+        return;
+      }
+      
       setField('signatureFile', file);
+      setField('signatureFileError', '');
     }
   };
 
@@ -169,13 +178,18 @@ const GeneralDetailsForm = ({ values, errors, setField, onNext }) => {
               </button>
               <p className="dropzone-hint">PNG, JPG, JPEG, PDF (max 5MB)</p>
             </div>
-          </div>
-          {errors.signatureFile && (
-            <div id="general-signatureFile-error" className="error-message">
-              {errors.signatureFile}
-            </div>
-          )}
         </div>
+        {errors.signatureFile && (
+          <div id="general-signatureFile-error" className="error-message">
+            {errors.signatureFile}
+          </div>
+        )}
+        {values.signatureFileError && (
+          <div className="error-message">
+            {values.signatureFileError}
+          </div>
+        )}
+      </div>
       </div>
 
       <input

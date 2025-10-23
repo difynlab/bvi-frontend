@@ -36,6 +36,7 @@ export function useSettingsForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [profilePreview, setProfilePreview] = useState(baseUser.profilePicture || '');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const requiredOk = useMemo(() => {
     // Check if any required fields are being changed
@@ -80,14 +81,29 @@ export function useSettingsForm() {
   }, [baseUser]);
 
   const onSelectFile = useCallback((file) => {
-    setSelectedFile(file);
     if (!file) {
       // When clearing, set to empty string to show default placeholder
+      setSelectedFile(null);
       setProfilePreview('');
       setForm(prev => ({ ...prev, profilePicture: '' }));
       setDirty(true);
+      setErrorMessage('');
       return;
     }
+
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    
+    if (file.size > maxSize) {
+      setErrorMessage('Image size must not exceed 5MB');
+      setSelectedFile(null);
+      setProfilePreview('');
+      setForm(prev => ({ ...prev, profilePicture: '' }));
+      return;
+    }
+
+    setSelectedFile(file);
+    setErrorMessage('');
+    
     const r = new FileReader();
     r.onload = () => { 
       const imageDataUrl = String(r.result || '');
@@ -96,6 +112,13 @@ export function useSettingsForm() {
       setDirty(true); 
     };
     r.readAsDataURL(file);
+  }, []);
+
+  const onImageError = useCallback((errorMsg) => {
+    setErrorMessage(errorMsg);
+    setSelectedFile(null);
+    setProfilePreview('');
+    setForm(prev => ({ ...prev, profilePicture: '' }));
   }, []);
 
   const resetAfterSave = useCallback((updatedProfile) => {
@@ -196,6 +219,7 @@ export function useSettingsForm() {
     profilePreview, 
     selectedFile,
     onSelectFile,
+    onImageError,
     currentPassword, 
     setCurrentPassword,
     newPassword, 
@@ -207,5 +231,6 @@ export function useSettingsForm() {
     dirty, 
     canSave, 
     save,
+    errorMessage,
   };
 }

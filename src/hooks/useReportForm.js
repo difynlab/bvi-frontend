@@ -56,6 +56,13 @@ export function useReportForm(initialReport, isOpen, mode) {
 
   const setFile = useCallback((file) => {
     if (file) {
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      
+      if (file.size > maxSize) {
+        setErrors(prev => ({ ...prev, file: 'File size must not exceed 5MB' }));
+        return;
+      }
+      
       const url = URL.createObjectURL(file);
       setForm(prev => ({ 
         ...prev, 
@@ -63,6 +70,14 @@ export function useReportForm(initialReport, isOpen, mode) {
         imagePreviewUrl: url, 
         fileName: file.name 
       }));
+      
+      // Clear file error when user selects a valid file
+      setErrors(prev => {
+        if (prev.file) {
+          return { ...prev, file: '' };
+        }
+        return prev;
+      });
     }
   }, []);
 
@@ -81,6 +96,11 @@ export function useReportForm(initialReport, isOpen, mode) {
       newErrors.linkUrl = 'Link is required';
     } else if (!isValidUrl(form.linkUrl)) {
       newErrors.linkUrl = 'Please enter a valid URL';
+    }
+
+    // Check file size if file is present (max 5MB)
+    if (form.file && form.file.size > 5 * 1024 * 1024) {
+      newErrors.file = 'File size must not exceed 5MB';
     }
 
     setErrors(newErrors);

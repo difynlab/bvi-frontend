@@ -12,6 +12,7 @@ export default function Settings() {
     profilePreview,
     selectedFile,
     onSelectFile,
+    onImageError,
     currentPassword,
     setCurrentPassword,
     newPassword,
@@ -19,7 +20,8 @@ export default function Settings() {
     confirmPassword,
     setConfirmPassword,
     canSave,
-    save
+    save,
+    errorMessage
   } = useSettingsForm();
 
   const cur = usePasswordVisibility(false);
@@ -99,6 +101,8 @@ export default function Settings() {
               selectedFile={selectedFile}
               preview={profilePreview}
               accept="image/*"
+              errorMessage={errorMessage}
+              onError={onImageError}
             />
             {/* TODO BACKEND: upload to backend and store remote URL; hydrate on load */}
             <section className="settings-card settings-preferences">
@@ -249,6 +253,16 @@ export default function Settings() {
         </section>
 
         <div className="settings-actions">
+          {errorMessage && (
+            <div
+              className="app-form__error-banner"
+              role="alert"
+              aria-live="assertive"
+              tabIndex={-1}
+            >
+              <strong>Error:</strong> {errorMessage}
+            </div>
+          )}
           <button type="submit" className="settings-save-btn" disabled={!canSave}>
             Save Changes
           </button>

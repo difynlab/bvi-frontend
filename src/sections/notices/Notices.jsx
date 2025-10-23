@@ -16,6 +16,7 @@ import EmptyPage from '../../components/EmptyPage'
 import CustomDropdown from '../../components/CustomDropdown'
 import NoticePDFDocument from '../../components/pdf/NoticePDFDocument'
 import { loadActiveTabId, saveActiveTabId } from '../../helpers/noticesStorage'
+import noticeCategoriesService from '../../services/noticeCategoriesService'
 import '../../styles/sections/Notices.scss'
 
 export const Notices = () => {
@@ -90,9 +91,15 @@ export const Notices = () => {
     editingNotice,
     confirmModalOpen,
     categoryToDelete,
+    editingCategory,
+    categoriesLoaded,
+    categoriesLoading,
     setActiveCategory,
     handleAddCategory,
     handleDeleteCategory,
+    handleEditCategory,
+    handleUpdateCategory,
+    closeCategoryModal,
     openCreateNotice,
     openEditNotice,
     closeNoticeModal,
@@ -102,7 +109,8 @@ export const Notices = () => {
     setIsCategoryModalOpen,
     setConfirmModalOpen,
     setCategoryToDelete,
-    seedFromMocks
+    seedFromMocks,
+    loadCategoriesFromAPI
   } = useNoticesState()
 
   // Mobile responsive effect
@@ -112,6 +120,11 @@ export const Notices = () => {
     mql.addEventListener?.('change', onChange)
     return () => mql.removeEventListener?.('change', onChange)
   }, [])
+
+  // Load categories from API when component mounts
+  useEffect(() => {
+    loadCategoriesFromAPI()
+  }, []) // Empty dependency array - only run once on mount
 
   // Active tab management effect
   useEffect(() => {
@@ -168,6 +181,7 @@ export const Notices = () => {
 
   const [newCategoryName, setNewCategoryName] = useState('')
   const [categoryError, setCategoryError] = useState('')
+  const [isCategoryLoading, setIsCategoryLoading] = useState(false)
   const [isNoticeDeleteConfirmOpen, setIsNoticeDeleteConfirmOpen] = useState(false)
   const [noticeToDelete, setNoticeToDelete] = useState(null)
   const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false)
@@ -356,22 +370,55 @@ export const Notices = () => {
     handleUpsertNotice(payload)
   }
 
-  const handleAddCategorySubmit = () => {
+  const handleAddCategorySubmit = async () => {
     const trimmedName = newCategoryName.trim()
     if (!trimmedName) {
       setCategoryError('Category name is required')
       return
     }
-    handleAddCategory(trimmedName)
-    setNewCategoryName('')
+    if (trimmedName.length < 3) {
+      setCategoryError('Category name must be at least 3 characters')
+      return
+    }
+    
+    setIsCategoryLoading(true)
     setCategoryError('')
+    
+    try {
+      if (editingCategory) {
+        // Update existing category
+        await handleUpdateCategory(trimmedName)
+      } else {
+        // Create new category
+        await handleAddCategory(trimmedName)
+      }
+      
+      // Close modal on success
+      setNewCategoryName('')
+      setCategoryError('')
+      
+    } catch (error) {
+      console.error('Error creating/updating category:', error)
+      setCategoryError(`Something went wrong. Error: ${error.message}`)
+    } finally {
+      setIsCategoryLoading(false)
+    }
   }
 
-  const closeCategoryModal = () => {
+  const closeCategoryModalLocal = () => {
     setNewCategoryName('')
     setCategoryError('')
-    setIsCategoryModalOpen(false)
+    closeCategoryModal()
   }
+
+  // Effect to preload category name when editing
+  useEffect(() => {
+    if (editingCategory) {
+      setNewCategoryName(editingCategory.name)
+    } else {
+      setNewCategoryName('')
+    }
+  }, [editingCategory])
 
   const handleDeleteNoticeLocal = (noticeId) => {
     const notice = visibleItems.find(n => n.id === noticeId)
@@ -442,31 +489,48 @@ export const Notices = () => {
           {/* Header area */}
           {isMobile ? (
             <div className="notices-mobile-header" role="region" aria-label="Notice categories">
-              <div className="category-title">
-                <button
-                  type="button"
-                  className="category-picker-btn"
-                  onClick={() => setPickerOpen(true)}
-                  aria-haspopup="dialog"
-                  aria-controls="noticesTabPicker">
-                  <h2>
-                    {activeCategoryData?.name || 'Notices'}
-                  </h2>
-                  <i className="bi bi-chevron-down" aria-hidden="true"></i>
-                </button>
+              {categoriesLoading ? (
+                <div className="category-title-skeleton">
+                  <div className="category-picker-btn-skeleton">
+                    <span style={{ opacity: 0 }}>Loading...</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="category-title">
+                  {categories.length > 0 ? (
+                    <>
+                      <button
+                        type="button"
+                        className="category-picker-btn"
+                        onClick={() => setPickerOpen(true)}
+                        aria-haspopup="dialog"
+                        aria-controls="noticesTabPicker">
+                        <h2>
+                          {activeCategoryData?.name || 'Notices'}
+                        </h2>
+                        <i className="bi bi-chevron-down" aria-hidden="true"></i>
+                      </button>
 
-                {/* Notices Tab Picker Dropdown */}
-                <NoticesTabPicker
-                  open={pickerOpen}
-                  onClose={() => setPickerOpen(false)}
-                  categories={categories}
-                  activeTabId={activeTabId}
-                  onSelect={onSelectCategory}
-                  canManage={can(user, 'notices:create')}
-                  onAddCategory={onAddCategory}
-                  onDeleteCategory={onDeleteCategory}
-                />
-              </div>
+                      {/* Notices Tab Picker Dropdown */}
+                      <NoticesTabPicker
+                        open={pickerOpen}
+                        onClose={() => setPickerOpen(false)}
+                        categories={categories}
+                        activeTabId={activeTabId}
+                        onSelect={onSelectCategory}
+                        canManage={can(user, 'notices:create')}
+                        onAddCategory={onAddCategory}
+                        onDeleteCategory={onDeleteCategory}
+                        onEditCategory={handleEditCategory}
+                      />
+                    </>
+                  ) : (
+                    <div className="no-categories-message-mobile">
+                      <p>No notice categories created yet...</p>
+                    </div>
+                  )}
+                </div>
+              )}
               {can(user, 'notices:create') && (
                 <button
                   type="button"
@@ -480,42 +544,75 @@ export const Notices = () => {
               )}
             </div>
           ) : (
-            /* existing desktop tabs header stays as-is */
+            /* Desktop tabs header with skeleton loading */
             <div className="notices-tabs-desktop" role="tablist" aria-orientation="horizontal">
               <div className="category-tabs">
                 <div className="tabs-container">
-                  {categories.map(category => (
-                    <div key={category.id} className="tab-group">
-                      <button
-                        className={`category-tab ${activeCategory === category.id ? 'active' : ''}`}
-                        onClick={() => setActiveCategory(category.id)}
-                      >
-                        <span>{category.name}</span>
-                      </button>
-                      {can(user, 'notices:delete') && (
+                  {categoriesLoading ? (
+                    <>
+                      {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="tab-skeleton-group">
+                          <div className="category-tab-skeleton">
+                            <span style={{ opacity: 0 }}>Loading...</span>
+                          </div>
+                        </div>
+                      ))}
+                      {can(user, 'notices:create') && (
                         <button
-                          className="category-tab__delete"
-                          onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id); }}
-                          aria-label="Delete category"
+                          className="add-category-btn"
+                          onClick={() => setIsCategoryModalOpen(true)}
                         >
-                          <i className="bi bi-x-lg"></i>
+                          <i className="bi bi-plus"></i>
                         </button>
                       )}
-                    </div>
-                  ))}
-
-                  {can(user, 'notices:create') && (
-                    <button
-                      className="add-category-btn"
-                      onClick={() => setIsCategoryModalOpen(true)}
-                    >
-                      <i className="bi bi-plus"></i>
-                    </button>
+                    </>
+                  ) : (
+                    <>
+                      {categories.length > 0 ? (
+                        categories.map(category => (
+                          <div key={category.id} className="tab-group">
+                            <button
+                              className={`category-tab ${activeCategory === category.id ? 'active' : ''}`}
+                              onClick={() => setActiveCategory(category.id)}
+                            >
+                              <span>{category.name}</span>
+                            </button>
+                            {can(user, 'notices:update') && (
+                              <button
+                                className="category-tab__edit"
+                                onClick={(e) => { e.stopPropagation(); handleEditCategory(category.id); }}
+                                aria-label="Edit category"
+                              >
+                                <i className="bi bi-pencil-square"></i>
+                              </button>
+                            )}
+                            {can(user, 'notices:delete') && (
+                              <button
+                                className="category-tab__delete"
+                                onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id); }}
+                                aria-label="Delete category"
+                              >
+                                <i className="bi bi-x-lg"></i>
+                              </button>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="no-categories-message">
+                          <p>No notice categories created yet...</p>
+                        </div>
+                      )}
+                      {can(user, 'notices:create') && (
+                        <button
+                          className="add-category-btn"
+                          onClick={() => setIsCategoryModalOpen(true)}
+                        >
+                          <i className="bi bi-plus"></i>
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
-                {categoryError && (
-                  <div className="category-error">{categoryError}</div>
-                )}
               </div>
             </div>
           )}
@@ -744,7 +841,7 @@ export const Notices = () => {
                 </div>
 
                 <div className="form-actions">
-                  {missingRequired.length > 0 && (
+                  {(missingRequired.length > 0 || noticeForm.errorMessage) && (
                     <div
                       className="app-form__error-banner"
                       role="alert"
@@ -752,7 +849,16 @@ export const Notices = () => {
                       tabIndex={-1}
                       ref={bannerRef}
                     >
-                      <strong>Please fill all required fields:</strong> {missingRequired.join(', ')}
+                      {missingRequired.length > 0 && (
+                        <div>
+                          <strong>Please fill all required fields:</strong> {missingRequired.join(', ')}
+                        </div>
+                      )}
+                      {noticeForm.errorMessage && (
+                        <div>
+                          <strong>Error:</strong> {noticeForm.errorMessage}
+                        </div>
+                      )}
                     </div>
                   )}
                   <button type="submit" className="upload-now-btn">
@@ -782,22 +888,26 @@ export const Notices = () => {
             <div className="notices-modal-header">
               <button
                 className="close-btn"
-                onClick={closeCategoryModal}
+                onClick={closeCategoryModalLocal}
               >
                 <i className="bi bi-x"></i>
               </button>
             </div>
 
             <div className="notices-addcat-modal__content">
-              <h2 className="notices-addcat-modal__title">Add New Tab</h2>
-              <p className="notices-addcat-modal__subtitle">Please add new tab details</p>
+              <h2 className="notices-addcat-modal__title">
+                {editingCategory ? 'Update Tab Title' : 'Add New Tab'}
+              </h2>
+              <p className="notices-addcat-modal__subtitle">
+                {editingCategory ? 'Please update the tab name' : 'Please add new tab details'}
+              </p>
 
               <div className="form-group">
                 <label htmlFor="categoryName" className="notices-addcat-modal__label">Enter the Tab Name</label>
                 <input
                   type="text"
                   id="categoryName"
-                  placeholder="Please mention the name of the new tab which you want to create"
+                  placeholder={editingCategory ? "Please enter the new tab name" : "Please mention the name of the new tab which you want to create"}
                   className="notices-addcat-modal__input"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
@@ -812,8 +922,8 @@ export const Notices = () => {
               </div>
 
               {categoryError && (
-                <div className="error-message">
-                  {categoryError}
+                <div className="app-form__error-banner">
+                  Error: {categoryError}
                 </div>
               )}
 
@@ -822,8 +932,9 @@ export const Notices = () => {
                   type="button"
                   className="notices-addcat-modal__update-btn"
                   onClick={handleAddCategorySubmit}
+                  disabled={isCategoryLoading}
                 >
-                  Update
+                  {isCategoryLoading ? 'Loading...' : (editingCategory ? 'Update' : 'Update')}
                 </button>
               </div>
             </div>

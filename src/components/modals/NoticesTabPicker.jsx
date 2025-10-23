@@ -8,7 +8,8 @@ export default function NoticesTabPicker({
   onSelect, 
   canManage, 
   onAddCategory, 
-  onDeleteCategory 
+  onDeleteCategory,
+  onEditCategory 
 }) {
   if (!open) return null
 
@@ -29,11 +30,21 @@ export default function NoticesTabPicker({
               {canManage && (
                 <button 
                   type="button" 
+                  className="notices-tab-picker__edit" 
+                  onClick={() => onEditCategory(c.id)} 
+                  aria-label={`Edit ${c.name}`}
+                >
+                  <i className="bi bi-pencil-square" aria-hidden="true"></i>
+                </button>
+              )}
+              {canManage && (
+                <button 
+                  type="button" 
                   className="notices-tab-picker__delete" 
                   onClick={() => onDeleteCategory(c.id)} 
                   aria-label={`Delete ${c.name}`}
                 >
-                  <i className="bi bi-trash" aria-hidden="true"></i>
+                  <i className="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
               )}
             </li>

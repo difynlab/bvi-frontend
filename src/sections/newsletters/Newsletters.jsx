@@ -393,6 +393,16 @@ const Newsletters = () => {
                 </div>
 
                 <div className="form-actions">
+                  {errorMessage && (
+                    <div
+                      className="app-form__error-banner"
+                      role="alert"
+                      aria-live="assertive"
+                      tabIndex={-1}
+                    >
+                      <strong>Error:</strong> {errorMessage}
+                    </div>
+                  )}
                   <button type="submit" className="upload-now-btn">
                     Upload Now
                   </button>

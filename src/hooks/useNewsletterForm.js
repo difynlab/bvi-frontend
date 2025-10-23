@@ -92,10 +92,26 @@ export const useNewsletterForm = () => {
 
   const setFileFromDrop = (file) => {
     if (file && file.type.startsWith('image/')) {
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      
+      if (file.size > maxSize) {
+        setErrorMessage('Image size must not exceed 5MB')
+        // Clear any existing file data when size exceeds limit
+        onChange('file', null)
+        onChange('imageFileName', '')
+        onChange('imagePreviewUrl', '')
+        return;
+      }
+      
       const previewUrl = URL.createObjectURL(file)
       onChange('file', file)
       onChange('imageFileName', file.name)
       onChange('imagePreviewUrl', previewUrl)
+      
+      // Clear error when user selects a valid file
+      if (errorMessage) {
+        setErrorMessage('')
+      }
     }
   }
 

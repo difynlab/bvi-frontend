@@ -47,7 +47,16 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
   const handleFile = (file) => {
     const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf'];
     if (allowedTypes.includes(file.type)) {
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      
+      if (file.size > maxSize) {
+        setField('membershipDetails', 'signatureFileError', 'File size must not exceed 5MB');
+        setField('membershipDetails', 'signatureFile', null);
+        return;
+      }
+      
       setField('membershipDetails', 'signatureFile', file);
+      setField('membershipDetails', 'signatureFileError', '');
     }
   };
 
@@ -203,6 +212,11 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
         {errors['membershipDetails.signatureFile'] && (
           <div id="membership-signatureFile-error" className="error-message">
             {errors['membershipDetails.signatureFile']}
+          </div>
+        )}
+        {membershipValues.signatureFileError && (
+          <div className="error-message">
+            {membershipValues.signatureFileError}
           </div>
         )}
       </div>

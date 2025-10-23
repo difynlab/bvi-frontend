@@ -6,6 +6,7 @@ import '../../styles/components/SubscriptionUploadModal.scss';
 const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm }) => {
   const [dragActive, setDragActive] = useState(false);
   const [previewDataUrl, setPreviewDataUrl] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef(null);
   
   const modalBackdropClose = useModalBackdropClose(onClose);
@@ -43,9 +44,18 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm }) => {
 
   const handleFile = (file) => {
     if (file && file.type.startsWith('image/')) {
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      
+      if (file.size > maxSize) {
+        setErrorMessage('Image size must not exceed 5MB')
+        setPreviewDataUrl('')
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = () => {
         setPreviewDataUrl(reader.result);
+        setErrorMessage('')
       };
       reader.readAsDataURL(file);
     }
@@ -152,6 +162,16 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm }) => {
         </div>
 
         <div className="subscription-upload-modal__footer">
+          {errorMessage && (
+            <div
+              className="app-form__error-banner"
+              role="alert"
+              aria-live="assertive"
+              tabIndex={-1}
+            >
+              <strong>Error:</strong> {errorMessage}
+            </div>
+          )}
           <button
             type="button"
             className="subscription-upload-modal__update"

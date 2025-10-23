@@ -7,7 +7,9 @@ export default function ImageUpload({
   selectedFile, 
   preview, 
   accept = "image/*",
-  className = ""
+  className = "",
+  errorMessage = "",
+  onError = null
 }) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [fileName, setFileName] = useState('');
@@ -15,6 +17,16 @@ export default function ImageUpload({
 
   const handleFile = useCallback(async (file) => {
     if (file && file.type.startsWith('image/')) {
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      
+      if (file.size > maxSize) {
+        // Call error callback if provided
+        if (onError) {
+          onError('Image size must not exceed 5MB');
+        }
+        return;
+      }
+      
       setFileName(file.name);
       
       try {
@@ -36,7 +48,7 @@ export default function ImageUpload({
         onFileSelect(file);
       }
     }
-  }, [onFileSelect]);
+  }, [onFileSelect, onError]);
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -132,6 +144,12 @@ export default function ImageUpload({
           >
             {fileName || 'No File Chosen'}
           </div>
+
+      {errorMessage && (
+        <div className="error-message">
+          {errorMessage}
+        </div>
+      )}
 
       <input
         ref={fileInputRef}

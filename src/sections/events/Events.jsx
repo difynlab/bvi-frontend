@@ -268,9 +268,31 @@ export const Events = () => {
               {events.map((event, index) => (
                 <div key={event.id || `event-${index}`} className="event-card">
                   <div className="event-image">
+                    {/* Imagen borrosa para carga rápida */}
                     <img 
-                      src={event.imagePreviewUrl} 
+                      src={event.blurred_thumbnail} 
                       alt={event.title}
+                      className="event-image-blurred"
+                      onError={(e) => {
+                        e.target.style.display = 'none'
+                      }}
+                    />
+                    {/* Imagen principal de alta calidad */}
+                    <img 
+                      src={event.original_thumbnail || event.imagePreviewUrl} 
+                      alt={event.title}
+                      className="event-image-original"
+                      onLoad={(e) => {
+                        // Agregar clase loaded y ocultar imagen borrosa
+                        e.target.classList.add('loaded')
+                        const blurredImg = e.target.parentElement.querySelector('.event-image-blurred')
+                        if (blurredImg) {
+                          blurredImg.style.opacity = '0'
+                          setTimeout(() => {
+                            blurredImg.style.display = 'none'
+                          }, 300)
+                        }
+                      }}
                       onError={(e) => {
                         e.target.style.display = 'none'
                       }}

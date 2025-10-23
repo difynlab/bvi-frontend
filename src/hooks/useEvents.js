@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import eventsService from '../services/eventsService'
-import { transformFromBackend, transformToBackend } from '../utils/eventTransformers'
+import { transformFromBackend, transformToBackend, saveEventImageToLocalStorage, removeEventImageFromLocalStorage } from '../utils/eventTransformers'
 import { useNotifications } from '../context/NotificationContext'
 
 const CACHE_KEY = 'events_cache'
@@ -132,6 +132,12 @@ export const useEvents = () => {
     setError(null)
 
     try {
+      // TODO PRODUCTION: CHANGE IMAGES - Save image to localStorage before sending to backend
+      if (eventData.file) {
+        console.log('💾 Saving event image to localStorage before backend submission')
+        saveEventImageToLocalStorage(eventData.id, eventData.file)
+      }
+      
       const backendData = transformToBackend(eventData, false)
       const response = await eventsService.createEvent(backendData)
       
@@ -197,6 +203,10 @@ export const useEvents = () => {
     setError(null)
 
     try {
+      // TODO PRODUCTION: CHANGE IMAGES - Remove image from localStorage when deleting event
+      console.log('🗑️ Removing event image from localStorage')
+      removeEventImageFromLocalStorage(id)
+      
       // Obtener el evento antes de eliminarlo para la notificación
       const eventToDelete = events.find(e => e.id === id)
       
