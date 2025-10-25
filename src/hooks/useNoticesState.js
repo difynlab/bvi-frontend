@@ -14,6 +14,8 @@ import {
   setNoticeCategories,
   setNotices
 } from '../helpers/noticesStorage'
+import { transformFromBackend, transformToBackend, saveNoticeImageToLocalStorage, removeNoticeImageFromLocalStorage, getNoticeImageFromLocalStorage } from '../utils/noticeTransformers'
+import noticesService from '../services/noticesService'
 import noticeCategoriesService from '../services/noticeCategoriesService'
 
 export const useNoticesState = () => {
@@ -34,12 +36,13 @@ export const useNoticesState = () => {
     }
   })
   const [categoriesLoading, setCategoriesLoading] = useState(false)
+  const [noticesLoading, setNoticesLoading] = useState(false)
   const [shouldReloadCategories, setShouldReloadCategories] = useState(false)
 
-  // Load notices from storage on mount (categories will be loaded from API)
+  // Load notices from API on mount
   useEffect(() => {
-    // Don't load notices from localStorage - they should come from API too
-    setNotices([])
+    // Load notices from API
+    loadNoticesFromAPI()
     
     // Only load categories from localStorage if they came from API (not mocks)
     try {
@@ -50,12 +53,39 @@ export const useNoticesState = () => {
         const parsedCategories = JSON.parse(cachedCategories)
         setCategories(parsedCategories)
         setCategoriesLoaded(true)
+        
+        // Ensure category groups are created in localStorage
+        setNoticeCategories(parsedCategories)
+        
         if (parsedCategories.length > 0 && !activeCategory) {
           setActiveCategory(parsedCategories[0].id)
         }
       }
     } catch (error) {
       console.error('Error loading cached categories:', error)
+    }
+  }, [])
+
+  // Function to load notices from API
+  const loadNoticesFromAPI = useCallback(async () => {
+    setNoticesLoading(true)
+    try {
+      const response = await noticesService.getNotices()
+      
+      if (response.http_status === 200 && response.data) {
+        // Transform API data to frontend format
+        const apiNotices = response.data.data.map(notice => transformFromBackend(notice))
+        setNotices(apiNotices)
+      } else if (response.http_status === 404) {
+        // No notices found - show empty state
+        setNotices([])
+      }
+    } catch (error) {
+      console.error('Error loading notices from API:', error)
+      // Don't fallback to localStorage - let empty state show
+      setNotices([])
+    } finally {
+      setNoticesLoading(false)
     }
   }, [])
 
@@ -75,6 +105,10 @@ export const useNoticesState = () => {
         if (parsedCategories.length > 0) {
           setCategories(parsedCategories)
           setCategoriesLoaded(true)
+          
+          // Ensure category groups are created in localStorage
+          setNoticeCategories(parsedCategories)
+          
           if (!activeCategory) {
             setActiveCategory(parsedCategories[0].id)
           }
@@ -103,6 +137,9 @@ export const useNoticesState = () => {
         localStorage.setItem('bvi.notices.categoriesLoaded', 'true')
         localStorage.setItem('bvi.notices.categoriesCache', JSON.stringify(apiCategories))
         localStorage.setItem('bvi.notices.categoriesFromAPI', 'true')
+        
+        // Ensure category groups are created in localStorage
+        setNoticeCategories(apiCategories)
         
         // Set first category as active if available
         if (apiCategories.length > 0 && !activeCategory) {
@@ -179,10 +216,15 @@ export const useNoticesState = () => {
     setShouldReloadCategories(true)
   }, [])
 
-  // Derived state
+  // Derived state - filter notices by active category
   const visibleItems = useMemo(() => {
-    const group = notices.find(group => group.categoryId === activeCategory)
-    return group?.items || []
+    if (!activeCategory || !notices.length) {
+      return []
+    }
+    
+    // Filter notices by notice_category_id matching activeCategory
+    const filtered = notices.filter(notice => notice.noticeType === activeCategory)
+    return filtered
   }, [notices, activeCategory])
 
   const getGroup = useCallback((categoryId) => {
@@ -291,26 +333,132 @@ export const useNoticesState = () => {
     setEditingNotice(null)
   }, [])
 
-  const handleUpsertNotice = useCallback((payload) => {
-    // TODO BACKEND: replace seeds with GET /api/notices
-    if (editingNotice) {
-      // Update existing notice
-      const { categories: updatedCategories, items: updatedItems } = updateNotice(payload)
-      setCategories(updatedCategories)
-      setNotices(updatedItems)
-    } else {
-      // Create new notice
-      const { categories: updatedCategories, items: updatedItems } = upsertNotice(payload)
-      setCategories(updatedCategories)
-      setNotices(updatedItems)
+  const handleUpsertNotice = useCallback(async (payload) => {
+    try {
+      if (editingNotice) {
+        // Update existing notice
+        // Save image to localStorage for update (same as create)
+        // Check if there's a tempId (image was saved in handleSubmit)
+        if (payload.tempId) {
+          // Get the image from temp storage
+          const tempImage = getNoticeImageFromLocalStorage(payload.tempId, 'original')
+          if (tempImage) {
+            try {
+              // Create a file from the data URL
+              const response = await fetch(tempImage)
+              const blob = await response.blob()
+              const imageFile = new File([blob], 'image.png', { type: 'image/png' })
+              
+              // Save with real ID
+              await saveNoticeImageToLocalStorage(editingNotice.id, imageFile)
+              
+              // Clean up temp storage
+              removeNoticeImageFromLocalStorage(payload.tempId, 'all')
+            } catch (error) {
+              // Continue with update without image if localStorage fails
+            }
+          }
+        } else if (payload.file && payload.file.type.startsWith('image/')) {
+          try {
+            await saveNoticeImageToLocalStorage(editingNotice.id, payload.file)
+          } catch (error) {
+            // Continue with update without image if localStorage fails
+          }
+        }
+        
+        const backendData = transformToBackend(payload, true)
+        const response = await noticesService.updateNotice(editingNotice.id, backendData)
+        
+        if (response.http_status === 200) {
+          const backendNotice = response.data
+          const noticeWithImages = transformFromBackend(backendNotice)
+          
+          setNotices(prev => prev.map(notice => 
+            notice.id === editingNotice.id ? noticeWithImages : notice
+          ))
+          
+          // Refresh the list from API to ensure consistency
+          setTimeout(() => {
+            loadNoticesFromAPI()
+          }, 1000)
+        }
+      } else {
+        // Create new notice
+        // TODO PRODUCTION: CHANGE IMAGES - Save image to localStorage before sending to backend
+        // Use the tempId from payload if it exists, otherwise generate one
+        const tempId = payload.tempId || `temp_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+        
+        // Only save if it's an image file, not PDF
+        if (payload.file && payload.file.type.startsWith('image/')) {
+          await saveNoticeImageToLocalStorage(tempId, payload.file)
+        }
+        
+        const backendData = transformToBackend(payload, false)
+        
+        const response = await noticesService.createNotice(backendData)
+        
+        if (response.http_status === 200) {
+          const backendNotice = response.data
+          
+          // TODO PRODUCTION: CHANGE IMAGES - Move image from temp ID to real backend ID FIRST
+          if (payload.file && backendNotice.id) {
+            // Get image from temp storage
+            const tempImage = getNoticeImageFromLocalStorage(tempId, 'original')
+            
+            if (tempImage) {
+              // Move image from temp to real ID - use the original image file, not PDF
+              if (payload.thumbnail && payload.thumbnail.type.startsWith('image/')) {
+                await saveNoticeImageToLocalStorage(backendNotice.id, payload.thumbnail)
+              } else {
+                // Fallback: use the temp image data
+                const tempImageData = getNoticeImageFromLocalStorage(tempId, 'original')
+                if (tempImageData) {
+                  // Create a temporary file from the data URL
+                  const response = await fetch(tempImageData)
+                  const blob = await response.blob()
+                  const imageFile = new File([blob], 'image.png', { type: 'image/png' })
+                  await saveNoticeImageToLocalStorage(backendNotice.id, imageFile)
+                }
+              }
+              
+              // Clean up temp storage
+              removeNoticeImageFromLocalStorage(tempId, 'all')
+            }
+          }
+          
+          // NOW apply localStorage image logic to the new notice (after moving the image)
+          const noticeWithImages = transformFromBackend(backendNotice)
+          setNotices(prev => [...prev, noticeWithImages])
+          
+          // Reload notices from backend to ensure consistency
+          setTimeout(() => {
+            loadNoticesFromAPI()
+          }, 100)
+        }
+      }
+      
+      closeNoticeModal()
+    } catch (error) {
+      console.error('Error upserting notice:', error)
+      throw error
     }
-    closeNoticeModal()
   }, [editingNotice, closeNoticeModal])
 
-  const handleDeleteNotice = useCallback((id) => {
-    const { categories: updatedCategories, items: updatedItems } = deleteNotice(id)
-    setCategories(updatedCategories)
-    setNotices(updatedItems)
+  const handleDeleteNotice = useCallback(async (id) => {
+    try {
+      const response = await noticesService.deleteNotice(id)
+      
+      if (response.http_status === 200) {
+        // Remove from state
+        setNotices(prev => prev.filter(notice => notice.id !== id))
+        
+        // Remove image from localStorage
+        removeNoticeImageFromLocalStorage(id, 'all')
+      }
+    } catch (error) {
+      console.error('Error deleting notice:', error)
+      throw error
+    }
   }, [])
 
   // Explicit seeding action: overwrite categories and items with mocks
@@ -355,6 +503,7 @@ export const useNoticesState = () => {
     editingCategory,
     categoriesLoaded,
     categoriesLoading,
+    noticesLoading,
     
     // Actions
     setActiveCategory,
@@ -374,6 +523,7 @@ export const useNoticesState = () => {
     setCategoryToDelete,
     seedFromMocks,
     loadCategoriesFromAPI,
+    loadNoticesFromAPI,
     refreshCategories,
     // loadNoticesForCategory, // Commented for future use
     

@@ -134,27 +134,9 @@ export const Events = () => {
   }
 
   const getEventDescriptionParagraphs = (event) => {
-    // Usar editorHtml si está disponible, sino usar description
-    const htmlContent = event.editorHtml || event.description || '';
-
-    if (!htmlContent) return '';
-
-    // Crear un elemento temporal para parsear el HTML
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlContent;
-
-    // Extraer solo los párrafos
-    const paragraphs = tempDiv.querySelectorAll('p');
-
-    if (paragraphs.length === 0) {
-      // Si no hay párrafos, devolver el texto plano sin HTML
-      return htmlContent.replace(/<[^>]+>/g, '').trim();
-    }
-
-    // Extraer el texto de cada párrafo y unirlos con espacios
-    const paragraphTexts = Array.from(paragraphs).map(p => p.textContent.trim()).filter(text => text.length > 0);
-
-    return paragraphTexts.join(' ');
+    // Con la nueva implementación, event.description ya contiene el texto plano del primer párrafo
+    // event.editorHtml contiene el HTML completo para el modal
+    return event.description || '';
   }
 
   const truncateText = (text, maxLength = 110) => {

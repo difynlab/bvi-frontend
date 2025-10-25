@@ -404,13 +404,45 @@
 // Scoped image styles for notice card image only
 .notices-container {
   .notice-card {
-    .notice-card-image {
-      display: block;
+    .notice-image-container {
+      position: relative;
       width: 100%;
+      height: 250px; /* Fixed height instead of max-height */
       max-height: 250px;
       border-radius: 8px;
       margin: $spacing-sm 0;
+      overflow: hidden;
+      background-color: #f5f5f5; /* Placeholder background */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .notice-image-blurred {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      filter: blur(5px);
+      transform: scale(1.1);
+      transition: opacity 0.3s ease;
       object-fit: cover;
+    }
+    
+    .notice-image-original {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      object-fit: cover;
+    }
+    
+    .notice-image-original.loaded {
+      opacity: 1;
     }
   }
 }
@@ -1581,6 +1613,165 @@
       transparent
     );
     animation: shimmer 1.5s infinite;
+  }
+}
+
+// Shimmer Loading Styles
+.notices-list-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 80px;
+  width: 100%;
+  min-height: 200px;
+}
+
+.notice-card-skeleton {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  position: relative;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+}
+
+// 1. Notice Header: Title + Description + 3 Buttons
+.notice-card-skeleton__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 20px 0 20px;
+  margin-bottom: 15px;
+}
+
+.notice-card-skeleton__header-left {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.notice-card-skeleton__header-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.notice-card-skeleton__title-line {
+  height: 20px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.notice-card-skeleton__title-line--long {
+  width: 80%;
+}
+
+.notice-card-skeleton__description-line {
+  height: 14px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.notice-card-skeleton__description-line--short {
+  width: 60%;
+}
+
+// 3 Buttons in header
+.notice-card-skeleton__button-small {
+  width: 32px;
+  height: 32px;
+  background-color: #e5e7eb;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.notice-card-skeleton__button-medium {
+  width: 100px;
+  height: 32px;
+  background-color: #e5e7eb;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.notice-card-skeleton__button-large {
+  width: 140px;
+  height: 32px;
+  background-color: #e5e7eb;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+// 2. Notice Image
+.notice-card-skeleton__image {
+  width: calc(100% - 40px);
+  height: 250px;
+  background-color: #f5f5f5;
+  position: relative;
+  align-self: center;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+// 3. Publication Date
+.notice-card-skeleton__date {
+  padding: 15px 20px 20px 20px;
+}
+
+.notice-card-skeleton__date-line {
+  height: 12px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  width: 120px;
+  position: relative;
+  overflow: hidden;
+}
+
+// Shimmer effect
+.notice-card-skeleton__shimmer,
+.notice-card-skeleton__title-line::before,
+.notice-card-skeleton__description-line::before,
+.notice-card-skeleton__button-small::before,
+.notice-card-skeleton__button-medium::before,
+.notice-card-skeleton__button-large::before,
+.notice-card-skeleton__date-line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #f3f4f6,
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+// Responsive adjustments for skeleton loaders
+@media (max-width: 768px) {
+  .notices-list-skeleton {
+    gap: 15px;
   }
 }
 

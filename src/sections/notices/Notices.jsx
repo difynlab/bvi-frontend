@@ -16,7 +16,9 @@ import EmptyPage from '../../components/EmptyPage'
 import CustomDropdown from '../../components/CustomDropdown'
 import NoticePDFDocument from '../../components/pdf/NoticePDFDocument'
 import { loadActiveTabId, saveActiveTabId } from '../../helpers/noticesStorage'
+import { getNoticeImageFromLocalStorage, saveNoticeImageToLocalStorage } from '../../utils/noticeTransformers'
 import noticeCategoriesService from '../../services/noticeCategoriesService'
+import NoticesListShimmer from '../../components/notices/NoticesListShimmer'
 import '../../styles/sections/Notices.scss'
 
 export const Notices = () => {
@@ -71,7 +73,33 @@ export const Notices = () => {
   const getNoticeImage = (n) => {
     if (!n) return NOTICE_PLACEHOLDER
     if (failedImageIdsRef.current.has(n.id)) return NOTICE_PLACEHOLDER
-    return (n.imagePreviewUrl || n.imageUrl || NOTICE_PLACEHOLDER)
+    
+    // PRIORITY 1: Try to get image from localStorage first
+    const localStorageImage = getNoticeImageFromLocalStorage(n.id, 'original')
+    
+    if (localStorageImage) {
+      return localStorageImage
+    }
+    
+    // PRIORITY 2: Fallback to notice data
+    const imageUrl = n.original_thumbnail || n.imagePreviewUrl || n.imageUrl || NOTICE_PLACEHOLDER
+    return imageUrl
+  }
+  
+  const getNoticeBlurredImage = (n) => {
+    if (!n) return NOTICE_PLACEHOLDER
+    if (failedImageIdsRef.current.has(n.id)) return NOTICE_PLACEHOLDER
+    
+    // PRIORITY 1: Try to get blurred image from localStorage first
+    const localStorageBlurred = getNoticeImageFromLocalStorage(n.id, 'blurred')
+    
+    if (localStorageBlurred) {
+      return localStorageBlurred
+    }
+    
+    // PRIORITY 2: Fallback to notice data
+    const blurredUrl = n.blurred_thumbnail || n.original_thumbnail || n.imagePreviewUrl || n.imageUrl || NOTICE_PLACEHOLDER
+    return blurredUrl
   }
   const onImgError = (n) => {
     if (!n?.id) return
@@ -94,6 +122,7 @@ export const Notices = () => {
     editingCategory,
     categoriesLoaded,
     categoriesLoading,
+    noticesLoading,
     setActiveCategory,
     handleAddCategory,
     handleDeleteCategory,
@@ -192,6 +221,7 @@ export const Notices = () => {
     } else {
       noticeForm.reset()
     }
+    setPdfGenerationError('') // Clear PDF generation errors when closing modal
     closeNoticeModal()
   })
   const confirmModalBackdropClose = useModalBackdropClose(() => setConfirmModalOpen(false))
@@ -211,6 +241,7 @@ export const Notices = () => {
   const [useFallback, setUseFallback] = useState(false)
   const [editorKey, setEditorKey] = useState(0)
   const [missingRequired, setMissingRequired] = useState([])
+  const [pdfGenerationError, setPdfGenerationError] = useState('')
   const bannerRef = useRef(null)
 
   // Required fields validation
@@ -230,9 +261,13 @@ export const Notices = () => {
 
   // Validation function
   function validateRequired() {
+    console.log('🔍 validateRequired called')
     const missing = REQUIRED.filter(r => !r.test()).map(r => r.label);
+    console.log('🔍 Missing required fields:', missing)
     setMissingRequired(missing);
-    return missing.length === 0;
+    const isValid = missing.length === 0;
+    console.log('🔍 Validation result:', isValid ? 'PASS' : 'FAIL')
+    return isValid;
   }
 
   useEffect(() => {
@@ -347,14 +382,18 @@ export const Notices = () => {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    
     if (!validateRequired()) {
       bannerRef.current?.focus();
       return;
     }
 
-    const payload = noticeForm.toPayload(editingNotice?.id)
+    // Clear any previous PDF generation errors
+    setPdfGenerationError('')
+
+    const payload = noticeForm.buildNoticeObject(editingNotice?.id)
 
     // Preserve creation timestamps when editing
     if (editingNotice) {
@@ -367,7 +406,54 @@ export const Notices = () => {
       }
     }
 
-    handleUpsertNotice(payload)
+    try {
+      // STEP 1: Preserve the original image file BEFORE generating PDF
+      const originalImageFile = payload.file // This is the original image file
+      
+      // STEP 2: Save image to localStorage for immediate display (BEFORE PDF generation)
+      if (originalImageFile && originalImageFile.type.startsWith('image/')) {
+        // Generate the same temp ID that useNoticesState will use
+        const tempId = `temp_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+        await saveNoticeImageToLocalStorage(tempId, originalImageFile, 'original')
+        
+        // Store the temp ID in payload for useNoticesState to use
+        payload.tempId = tempId
+      }
+      
+      // STEP 3: Generate PDF automatically
+      const pdfBlob = await pdf(<NoticePDFDocument notice={payload} />).toBlob()
+      
+      // Check if PDF is too large (10MB limit)
+      if (pdfBlob.size > 10 * 1024 * 1024) {
+        console.warn('PDF is very large:', pdfBlob.size, 'bytes')
+      }
+      
+      // STEP 4: Convert PDF blob to File object
+      const pdfFile = new File([pdfBlob], `${getSafeFileName(payload)}.pdf`, { 
+        type: 'application/pdf' 
+      })
+      
+      // STEP 5: Set up the correct files for backend
+      payload.file = pdfFile           // PDF for download
+      payload.thumbnail = originalImageFile  // Original image for thumbnail
+      
+      // Send to backend with PDF included
+      await handleUpsertNotice(payload)
+      
+    } catch (error) {
+      console.error('Error in handleSubmit:', error)
+      
+      // Check if it's a PDF generation error
+      if (error.message && (error.message.includes('PDF') || error.message.includes('renderer'))) {
+        setPdfGenerationError('Failed to generate PDF. Please try again.')
+        bannerRef.current?.focus()
+        return
+      }
+      
+      // Handle other errors
+      setPdfGenerationError(`Error: ${error.message}`)
+      bannerRef.current?.focus()
+    }
   }
 
   const handleAddCategorySubmit = async () => {
@@ -441,6 +527,12 @@ export const Notices = () => {
   }
 
   const getNoticeDescriptionText = (n) => {
+    // Use descriptionText (first paragraph) from the parsed description
+    if (n?.descriptionText) {
+      return n.descriptionText;
+    }
+    
+    // Fallback to other fields if descriptionText is not available
     const raw =
       (typeof n?.description === 'string' && n.description) ||
       (typeof n?.descriptionHTML === 'string' && n.descriptionHTML) ||
@@ -631,6 +723,8 @@ export const Notices = () => {
               title={can(user, 'notices:create') ? 'No categories yet!' : 'No categories available.'}
               description={can(user, 'notices:create') ? 'Create your first category to get started with notices.' : 'No notice categories have been created yet.'}
             />
+          ) : noticesLoading ? (
+            <NoticesListShimmer />
           ) : visibleItems.length === 0 ? (
             <EmptyPage
               isAdmin={can(user, 'notices:create')}
@@ -680,13 +774,38 @@ export const Notices = () => {
                         </button>
                       </div>
                     </div>
-                    <img
-                      className="notice-card-image"
-                      src={getNoticeImage(notice)}
-                      alt={notice.title || 'Notice image'}
-                      loading="lazy"
-                      onError={() => onImgError(notice)}
-                    />
+                    <div className="notice-image-container">
+                      {/* Imagen borrosa para carga rápida */}
+                      <img 
+                        src={getNoticeBlurredImage(notice)} 
+                        alt={notice.title || 'Notice image'}
+                        className="notice-image-blurred"
+                        onError={(e) => {
+                          e.target.style.display = 'none'
+                        }}
+                      />
+                      {/* Imagen principal de alta calidad */}
+                      <img 
+                        src={getNoticeImage(notice)} 
+                        alt={notice.title || 'Notice image'}
+                        className="notice-image-original"
+                        loading="lazy"
+                        onLoad={(e) => {
+                          // Agregar clase loaded y ocultar imagen borrosa
+                          e.target.classList.add('loaded')
+                          const blurredImg = e.target.parentElement.querySelector('.notice-image-blurred')
+                          if (blurredImg) {
+                            blurredImg.style.opacity = '0'
+                            setTimeout(() => {
+                              blurredImg.style.display = 'none'
+                            }, 300)
+                          }
+                        }}
+                        onError={(e) => {
+                          e.target.style.display = 'none'
+                        }}
+                      />
+                    </div>
                     <span className="notice-date">Published: {formatDate(notice.createdAt || notice.publishDate)}</span>
 
                     {/* Mobile actions - shown only on mobile */}
@@ -747,6 +866,7 @@ export const Notices = () => {
                   } else {
                     noticeForm.reset()
                   }
+                  setPdfGenerationError('') // Clear PDF generation errors when closing modal
                   closeNoticeModal()
                 }}
               >
@@ -841,7 +961,7 @@ export const Notices = () => {
                 </div>
 
                 <div className="form-actions">
-                  {(missingRequired.length > 0 || noticeForm.errorMessage) && (
+                  {(missingRequired.length > 0 || noticeForm.errorMessage || pdfGenerationError) && (
                     <div
                       className="app-form__error-banner"
                       role="alert"
@@ -859,9 +979,18 @@ export const Notices = () => {
                           <strong>Error:</strong> {noticeForm.errorMessage}
                         </div>
                       )}
+                      {pdfGenerationError && (
+                        <div>
+                          <strong>PDF Generation Error:</strong> {pdfGenerationError}
+                        </div>
+                      )}
                     </div>
                   )}
-                  <button type="submit" className="upload-now-btn">
+                  <button 
+                    type="submit" 
+                    className="upload-now-btn"
+                    onClick={() => console.log('🔘 Submit button clicked')}
+                  >
                     Upload Now
                   </button>
                 </div>

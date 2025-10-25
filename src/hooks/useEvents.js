@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import eventsService from '../services/eventsService'
-import { transformFromBackend, transformToBackend, saveEventImageToLocalStorage, removeEventImageFromLocalStorage } from '../utils/eventTransformers'
+import { transformFromBackend, transformToBackend, saveEventImageToLocalStorage, removeEventImageFromLocalStorage, getImageFromLocalStorage, removeImageFromLocalStorage } from '../utils/eventTransformers'
 import { useNotifications } from '../context/NotificationContext'
 
 const CACHE_KEY = 'events_cache'
@@ -52,12 +52,44 @@ const setCachedEvents = (eventsData) => {
     }
     localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData))
   } catch (error) {
-    console.error('Error saving events cache:', error)
+    if (error.name === 'QuotaExceededError') {
+      console.warn('localStorage quota exceeded, clearing cache and retrying...')
+      // Clear cache and try again
+      clearEventsCache()
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData))
+      } catch (retryError) {
+        console.warn('Cache disabled due to storage limitations')
+      }
+    } else {
+      console.error('Error saving events cache:', error)
+    }
   }
 }
 
 const clearEventsCache = () => {
   localStorage.removeItem(CACHE_KEY)
+}
+
+const clearAllEventsData = () => {
+  // Clear events cache
+  localStorage.removeItem(CACHE_KEY)
+  // Clear events images
+  localStorage.removeItem('eventsImages')
+  console.log('🧹 Cleared all events data from localStorage')
+}
+
+const getStorageUsage = () => {
+  try {
+    const used = JSON.stringify(localStorage).length
+    const usedKB = (used / 1024).toFixed(2)
+    const usedMB = (used / (1024 * 1024)).toFixed(2)
+    console.log(`📊 localStorage usage: ${usedKB} KB (${usedMB} MB)`)
+    return { used, usedKB, usedMB }
+  } catch (error) {
+    console.error('Error checking storage usage:', error)
+    return null
+  }
 }
 
 export const useEvents = () => {
@@ -133,27 +165,45 @@ export const useEvents = () => {
 
     try {
       // TODO PRODUCTION: CHANGE IMAGES - Save image to localStorage before sending to backend
+      // Generate temporary ID for localStorage storage
+      const tempId = `temp_${Date.now()}_${Math.floor(Math.random() * 1000)}`
       if (eventData.file) {
-        console.log('💾 Saving event image to localStorage before backend submission')
-        saveEventImageToLocalStorage(eventData.id, eventData.file)
+        await saveEventImageToLocalStorage(tempId, eventData.file)
       }
       
       const backendData = transformToBackend(eventData, false)
       const response = await eventsService.createEvent(backendData)
       
       if (response.http_status === 200) {
-        const newEvent = transformFromBackend(response.data)
-        setEvents(prev => sortEventsByDate([...prev, newEvent]))
+        const backendEvent = response.data
+        
+        // TODO PRODUCTION: CHANGE IMAGES - Move image from temp ID to real backend ID FIRST
+        if (eventData.file && backendEvent.id) {
+          // Get image from temp storage
+          const tempImage = getImageFromLocalStorage(tempId, 'original')
+          const tempBlurred = getImageFromLocalStorage(tempId, 'blurred')
+          
+          if (tempImage) {
+            // Save with real backend ID - WAIT for it to complete
+            await saveEventImageToLocalStorage(backendEvent.id, eventData.file)
+            // Clean up temp storage
+            removeImageFromLocalStorage(tempId, 'all')
+          }
+        }
+        
+        // NOW apply localStorage image logic to the new event (after moving the image)
+        const eventWithImages = transformFromBackend(backendEvent)
+        setEvents(prev => sortEventsByDate([...prev, eventWithImages]))
         clearEventsCache()
         
         // Agregar notificación de evento creado
         addNotification({
           type: 'event_created',
-          title: newEvent.title,
-          message: `Check the new scheduled event on ${formatDate(newEvent.date)}`,
-          eventDate: newEvent.date,
-          eventTime: `${newEvent.startTime} - ${newEvent.endTime}`,
-          eventLocation: newEvent.location
+          title: eventWithImages.title,
+          message: `Check the new scheduled event on ${formatDate(eventWithImages.date)}`,
+          eventDate: eventWithImages.date,
+          eventTime: `${eventWithImages.startTime} - ${eventWithImages.endTime}`,
+          eventLocation: eventWithImages.location
         })
       }
     } catch (err) {
@@ -171,6 +221,13 @@ export const useEvents = () => {
     try {
       const existingEvent = events.find(e => e.id === eventData.id)
       const existingThumbnail = existingEvent?.imageFileName || existingEvent?.thumbnail || ''
+      
+      // TODO PRODUCTION: CHANGE IMAGES - Save image to localStorage before sending to backend
+      // Handle image storage for updates
+      if (eventData.file) {
+        // Save new image to localStorage for the existing event ID
+        await saveEventImageToLocalStorage(eventData.id, eventData.file)
+      }
       
       const backendData = transformToBackend(eventData, true, existingThumbnail)
       const response = await eventsService.updateEvent(eventData.id, backendData)
@@ -251,6 +308,9 @@ export const useEvents = () => {
     deleteEvent,
     refreshEvents,
     changePage,
-    clearCache: clearEventsCache
+    clearCache: clearEventsCache,
+    // Utility functions for debugging
+    clearAllEventsData,
+    getStorageUsage
   }
 }

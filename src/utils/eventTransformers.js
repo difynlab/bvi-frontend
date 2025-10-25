@@ -134,6 +134,37 @@ const extractShortDescription = (content) => {
   return plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText
 }
 
+/**
+ * Extrae solo el primer párrafo del HTML, ignorando headings
+ * @param {string} html - HTML content
+ * @returns {string} - Texto plano del primer párrafo
+ */
+const extractFirstParagraph = (html) => {
+  if (!html || typeof html !== 'string') return ''
+  
+  try {
+    // Crear un parser DOM seguro
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
+    
+    // Buscar el primer elemento <p>
+    const firstParagraph = doc.querySelector('p')
+    
+    if (firstParagraph) {
+      // Extraer solo el texto, sin HTML
+      return firstParagraph.textContent?.trim() || ''
+    }
+    
+    // Si no hay párrafos, devolver texto plano de todo el contenido
+    const plainText = html.replace(/<[^>]+>/g, '').trim()
+    return plainText
+  } catch (error) {
+    console.warn('Error parsing HTML for first paragraph:', error)
+    // Fallback: extraer texto plano
+    return html.replace(/<[^>]+>/g, '').trim()
+  }
+}
+
 // ===== LOCALSTORAGE IMAGE MANAGEMENT =====
 // TODO PRODUCTION: CHANGE IMAGES - Remove localStorage strategy and use server URLs
 
@@ -160,35 +191,43 @@ const saveEventsImagesToStorage = (eventsImages) => {
 }
 
 const saveImageToLocalStorage = (eventId, imageFile, imageType = 'original') => {
-  if (!imageFile || !eventId) return null
-  
-  try {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const dataUrl = e.target.result
-      const eventsImages = getEventsImagesFromStorage()
-      
-      // Inicializar objeto del evento si no existe
-      if (!eventsImages[eventId]) {
-        eventsImages[eventId] = {}
-      }
-      
-      // Guardar la imagen
-      eventsImages[eventId][imageType] = dataUrl
-      
-      // Guardar en localStorage
-      saveEventsImagesToStorage(eventsImages)
-      console.log(`✅ Saved ${imageType} image to localStorage for event ${eventId}`)
+  return new Promise((resolve, reject) => {
+    if (!imageFile || !eventId) {
+      reject(new Error('Missing imageFile or eventId'))
+      return
     }
-    reader.readAsDataURL(imageFile)
-    return true
-  } catch (error) {
-    console.error(`❌ Error saving ${imageType} image to localStorage:`, error)
-    return false
-  }
+    
+    try {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const dataUrl = e.target.result
+        const eventsImages = getEventsImagesFromStorage()
+        
+        // Inicializar objeto del evento si no existe
+        if (!eventsImages[eventId]) {
+          eventsImages[eventId] = {}
+        }
+        
+        // Guardar la imagen
+        eventsImages[eventId][imageType] = dataUrl
+        
+        // Guardar en localStorage
+        saveEventsImagesToStorage(eventsImages)
+        resolve(true)
+      }
+      reader.onerror = (error) => {
+        console.error(`❌ Error saving ${imageType} image to localStorage:`, error)
+        reject(error)
+      }
+      reader.readAsDataURL(imageFile)
+    } catch (error) {
+      console.error(`❌ Error saving ${imageType} image to localStorage:`, error)
+      reject(error)
+    }
+  })
 }
 
-const getImageFromLocalStorage = (eventId, imageType = 'original') => {
+export const getImageFromLocalStorage = (eventId, imageType = 'original') => {
   if (!eventId) return null
   
   try {
@@ -204,7 +243,7 @@ const getImageFromLocalStorage = (eventId, imageType = 'original') => {
   }
 }
 
-const removeImageFromLocalStorage = (eventId, imageType = 'original') => {
+export const removeImageFromLocalStorage = (eventId, imageType = 'original') => {
   if (!eventId) return false
   
   try {
@@ -227,7 +266,6 @@ const removeImageFromLocalStorage = (eventId, imageType = 'original') => {
     }
     
     saveEventsImagesToStorage(eventsImages)
-    console.log(`🗑️ Removed ${imageType} image from localStorage for event ${eventId}`)
     return true
   } catch (error) {
     console.error(`❌ Error removing ${imageType} image from localStorage:`, error)
@@ -259,6 +297,15 @@ export const transformToBackend = (frontendEvent, isUpdate = false, existingThum
     baseData.status = baseData.status.toString()
   }
 
+  // Create JSON object with HTML and text content before removing editorHtml
+  if (frontendEvent.editorHtml) {
+    const descriptionObject = {
+      descriptionHtml: frontendEvent.editorHtml,
+      descriptionText: extractFirstParagraph(frontendEvent.editorHtml)
+    }
+    baseData.content = JSON.stringify(descriptionObject)
+  }
+
   // Remove fields that might cause issues
   delete baseData.timeZone
   delete baseData.editorHtml
@@ -266,29 +313,35 @@ export const transformToBackend = (frontendEvent, isUpdate = false, existingThum
   delete baseData.imagePreviewUrl
   delete baseData.recurrence
 
+  // For new events (create mode), don't send ID - let backend generate it
+  if (!isUpdate) {
+    delete baseData.id
+  }
+
   return baseData
 }
 
 // TODO PRODUCTION: CHANGE IMAGES - Remove localStorage strategy and use server URLs
-export const saveEventImageToLocalStorage = (eventId, imageFile) => {
+export const saveEventImageToLocalStorage = async (eventId, imageFile) => {
   if (!eventId || !imageFile) return false
   
-  console.log(`💾 Saving image to localStorage for event ${eventId}`)
-  
-  // Save original image
-  const originalSaved = saveImageToLocalStorage(eventId, imageFile, 'original')
-  
-  // For now, we'll use the same image for blurred (in production, backend should generate blurred version)
-  const blurredSaved = saveImageToLocalStorage(eventId, imageFile, 'blurred')
-  
-  return originalSaved && blurredSaved
+  try {
+    // Save original image
+    await saveImageToLocalStorage(eventId, imageFile, 'original')
+    
+    // For now, we'll use the same image for blurred (in production, backend should generate blurred version)
+    await saveImageToLocalStorage(eventId, imageFile, 'blurred')
+    
+    return true
+  } catch (error) {
+    console.error('❌ Error saving event image to localStorage:', error)
+    return false
+  }
 }
 
 // TODO PRODUCTION: CHANGE IMAGES - Remove localStorage strategy and use server URLs
 export const removeEventImageFromLocalStorage = (eventId) => {
   if (!eventId) return false
-  
-  console.log(`🗑️ Removing images from localStorage for event ${eventId}`)
   
   // Usar 'all' para eliminar todas las imágenes del evento
   return removeImageFromLocalStorage(eventId, 'all')
@@ -298,7 +351,6 @@ export const removeEventImageFromLocalStorage = (eventId) => {
 export const clearAllEventsImagesFromLocalStorage = () => {
   try {
     localStorage.removeItem(EVENTS_IMAGES_KEY)
-    console.log('🗑️ Cleared all events images from localStorage')
     return true
   } catch (error) {
     console.error('❌ Error clearing all events images from localStorage:', error)
@@ -327,10 +379,6 @@ export const getEventsImagesInfo = () => {
 }
 
 export const transformFromBackend = (backendEvent) => {
-  console.log('=== IMAGE TRANSFORMATION DEBUG ===')
-  console.log('Raw backend event:', backendEvent)
-  console.log('Backend event keys:', Object.keys(backendEvent))
-  
   const frontendEvent = transformObject(
     backendEvent,
     FIELD_MAPPINGS.backendToFrontend,
@@ -350,12 +398,10 @@ export const transformFromBackend = (backendEvent) => {
   if (localStorageOriginal) {
     frontendEvent.original_thumbnail = localStorageOriginal
     frontendEvent.imagePreviewUrl = localStorageOriginal
-    console.log(`✅ Using localStorage image for event ${eventId}`)
   } else {
     // Fallback to server URLs only if localStorage doesn't have the image
     frontendEvent.original_thumbnail = cleanImageUrl(buildImageUrl(backendEvent.original_thumbnail || backendEvent.thumbnail))
     frontendEvent.imagePreviewUrl = cleanImageUrl(buildImageUrl(backendEvent.thumbnail))
-    console.log(`⚠️ Using server URL for event ${eventId} (localStorage not found)`)
   }
   
   if (localStorageBlurred) {
@@ -365,13 +411,31 @@ export const transformFromBackend = (backendEvent) => {
     frontendEvent.blurred_thumbnail = cleanImageUrl(buildBlurredImageUrl(backendEvent.blurred_thumbnail))
   }
   
+  // Parse JSON content if it exists, otherwise use legacy fields
+  if (backendEvent.content) {
+    try {
+      const parsedContent = JSON.parse(backendEvent.content)
+      if (parsedContent.descriptionHtml && parsedContent.descriptionText) {
+        frontendEvent.editorHtml = parsedContent.descriptionHtml
+        frontendEvent.description = parsedContent.descriptionText
+      } else {
+        // Fallback to plain content
+        frontendEvent.description = backendEvent.content
+        frontendEvent.editorHtml = ''
+      }
+    } catch (error) {
+      // If JSON parsing fails, treat as plain text
+      frontendEvent.description = backendEvent.content
+      frontendEvent.editorHtml = ''
+    }
+  } else {
+    // Legacy fallback
+    frontendEvent.editorHtml = backendEvent.editorHtml || ''
+    frontendEvent.description = backendEvent.content || ''
+  }
   
-  frontendEvent.editorHtml = backendEvent.editorHtml || ''
   frontendEvent.timeZone = backendEvent.timeZone || 'UTC'
   frontendEvent.recurrence = backendEvent.recurrence || null
-
-  console.log('Final frontend event:', frontendEvent)
-  console.log('=== END IMAGE TRANSFORMATION ===')
 
   return frontendEvent
 }

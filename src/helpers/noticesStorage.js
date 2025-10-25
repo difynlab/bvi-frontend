@@ -48,7 +48,37 @@ export function setNoticeCategories(list) {
   try {
     const safe = Array.isArray(list) ? list : []
     localStorage.setItem(CATEGORIES_KEY, JSON.stringify(safe))
+    
+    // Ensure that items array has corresponding groups for all categories
+    ensureCategoryGroups(safe)
   } catch {}
+}
+
+// Helper function to ensure all categories have corresponding item groups
+function ensureCategoryGroups(categories) {
+  try {
+    const { items } = readNotices()
+    const categoryIds = categories.map(cat => cat.id)
+    const existingGroupIds = items.map(group => group.categoryId)
+    
+    // Find missing groups
+    const missingGroupIds = categoryIds.filter(id => !existingGroupIds.includes(id))
+    
+    if (missingGroupIds.length > 0) {
+      // Create missing groups
+      const newGroups = missingGroupIds.map(categoryId => ({
+        categoryId,
+        items: []
+      }))
+      
+      // Update items with new groups
+      const updatedItems = [...items, ...newGroups]
+      const { categories } = readNotices()
+      writeNotices(categories, updatedItems)
+    }
+  } catch (error) {
+    console.error('Error ensuring category groups:', error)
+  }
 }
 
 export function setNotices(list) {
@@ -124,80 +154,25 @@ export function updateCategory(id, newName) {
   return { categories: updatedCategories, items: updatedItems }
 }
 
+// DEPRECATED: This function is no longer used as notices are now stored in backend
+// Kept for backward compatibility during transition
 export function upsertNotice(noticeObj) {
-  const { categories, items } = readNotices()
-  const group = items.find(group => group.categoryId === noticeObj.noticeType)
-  
-  if (!group) {
-    console.error('Category group not found for notice')
-    return { categories, items }
-  }
-
-  // TODO BACKEND: timestamps must be set by server for audit integrity
-  // TODO BACKEND: POST /api/notices or PUT /api/notices/:id
-  const updatedItems = items.map(group => 
-    group.categoryId === noticeObj.noticeType 
-      ? { ...group, items: [...group.items, noticeObj] }
-      : group
-  )
-  
-  writeNotices(categories, updatedItems)
-  return { categories, items: updatedItems }
+  console.warn('upsertNotice is deprecated. Notices are now stored in backend.')
+  return { categories: [], items: [] }
 }
 
+// DEPRECATED: This function is no longer used as notices are now stored in backend
+// Kept for backward compatibility during transition
 export function updateNotice(noticeObj) {
-  const { categories, items } = readNotices()
-  const oldGroup = items.find(group => 
-    group.items.some(notice => notice.id === noticeObj.id)
-  )
-  const newGroup = items.find(group => group.categoryId === noticeObj.noticeType)
-
-  if (!oldGroup || !newGroup) {
-    console.error('Category groups not found for notice update')
-    return { categories, items }
-  }
-
-  // TODO BACKEND: timestamps must be set by server for audit integrity
-  // TODO BACKEND: PUT /api/notices/:id
-  let updatedItems
-  if (oldGroup.categoryId === newGroup.categoryId) {
-    // Same category - just update the notice
-    updatedItems = items.map(group => 
-      group.categoryId === oldGroup.categoryId
-        ? { ...group, items: group.items.map(notice => 
-            notice.id === noticeObj.id ? noticeObj : notice
-          )}
-        : group
-    )
-  } else {
-    // Different category - move notice between groups
-    updatedItems = items.map(group => {
-      if (group.categoryId === oldGroup.categoryId) {
-        // Remove from old group
-        return { ...group, items: group.items.filter(notice => notice.id !== noticeObj.id) }
-      } else if (group.categoryId === newGroup.categoryId) {
-        // Add to new group
-        return { ...group, items: [...group.items, noticeObj] }
-      }
-      return group
-    })
-  }
-  
-  writeNotices(categories, updatedItems)
-  return { categories, items: updatedItems }
+  console.warn('updateNotice is deprecated. Notices are now stored in backend.')
+  return { categories: [], items: [] }
 }
 
+// DEPRECATED: This function is no longer used as notices are now stored in backend
+// Kept for backward compatibility during transition
 export function deleteNotice(id) {
-  const { categories, items } = readNotices()
-  
-  // TODO BACKEND: DELETE /api/notices/:id
-  const updatedItems = items.map(group => ({
-    ...group,
-    items: group.items.filter(notice => notice.id !== id)
-  }))
-  
-  writeNotices(categories, updatedItems)
-  return { categories, items: updatedItems }
+  console.warn('deleteNotice is deprecated. Notices are now stored in backend.')
+  return { categories: [], items: [] }
 }
 
 // Mock notices factory with recent timestamps for Dashboard integration

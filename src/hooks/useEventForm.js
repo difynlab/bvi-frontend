@@ -315,10 +315,7 @@ export const useEventForm = () => {
   }
 
   const buildEventObject = (existingId = null) => {
-    const id = existingId || Math.floor(Math.random() * 1000000000).toString()
-    
-    return {
-      id,
+    const eventObject = {
       title: form.title,
       date: form.date,
       startTime: form.startTime,
@@ -338,6 +335,13 @@ export const useEventForm = () => {
       status: 1 // Default status: active (as number, not string)
       // TODO BACKEND: send normalized recurrence to API
     }
+    
+    // Only include ID for edit mode (existing events)
+    if (existingId) {
+      eventObject.id = existingId
+    }
+    
+    return eventObject
   }
 
   const resetForm = () => {

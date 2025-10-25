@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { isValidUrl } from '../helpers/urlValidation'
+import { transformToBackend, transformFromBackend } from '../utils/noticeTransformers'
 
 // Utility to convert plain text to minimal HTML
 const htmlFromPlain = (txt = '') => {
@@ -209,16 +210,7 @@ export const useNoticeForm = () => {
   const toPayload = useCallback((existingId = null) => {
     const id = existingId || (Date.now().toString() + Math.random().toString(36).substring(2, 11))
     
-    // Helper function to get local date in YYYY-MM-DD format
-    const getLocalDateString = () => {
-      const now = new Date()
-      const year = now.getFullYear()
-      const month = String(now.getMonth() + 1).padStart(2, '0')
-      const day = String(now.getDate()).padStart(2, '0')
-      return `${year}-${month}-${day}`
-    }
-    
-    const payload = {
+    const noticeObject = {
       id,
       fileName: form.fileName,
       noticeType: form.noticeType,
@@ -227,23 +219,44 @@ export const useNoticeForm = () => {
       imageFileName: form.imageFileName || 'no-image.jpg',
       imagePreviewUrl: form.imagePreviewUrl || '',
       linkUrl: form.linkUrl,
-      createdAt: getLocalDateString()
+      file: form.file,
+      status: 1 // Default status: active
     }
 
     // Add timestamps based on create vs edit
     if (existingId) {
       // Editing existing notice - preserve creation timestamps and add update timestamps
-      // Note: createdAtISO and createdAtMs should be preserved from the original notice
-      // They will be handled in the component layer
-      payload.updatedAtISO = new Date().toISOString()
-      payload.updatedAtMs = Date.now()
+      noticeObject.updatedAtISO = new Date().toISOString()
+      noticeObject.updatedAtMs = Date.now()
     } else {
       // Creating new notice - add creation timestamps
-      payload.createdAtISO = new Date().toISOString()
-      payload.createdAtMs = Date.now()
+      noticeObject.createdAtISO = new Date().toISOString()
+      noticeObject.createdAtMs = Date.now()
     }
 
-    return payload
+    return noticeObject
+  }, [form, editorText, editorHtml])
+
+  // Build notice object for backend (similar to buildEventObject in useEventForm)
+  const buildNoticeObject = useCallback((existingId = null) => {
+    const noticeObject = {
+      fileName: form.fileName,
+      noticeType: form.noticeType,
+      description: editorText,
+      editorHtml: editorHtml,
+      imageFileName: form.imageFileName || 'no-image.jpg',
+      imagePreviewUrl: form.imagePreviewUrl || '',
+      linkUrl: form.linkUrl,
+      file: form.file,
+      status: 1 // Default status: active
+    }
+    
+    // Only include ID for edit mode (existing notices)
+    if (existingId) {
+      noticeObject.id = existingId
+    }
+    
+    return noticeObject
   }, [form, editorText, editorHtml])
 
   const reset = useCallback(() => {
@@ -266,6 +279,7 @@ export const useNoticeForm = () => {
     setFileFromDrop,
     validate,
     toPayload,
+    buildNoticeObject,
     loadFrom,
     rollbackEdit,
     initializeCreate,
@@ -275,7 +289,6 @@ export const useNoticeForm = () => {
     // Legacy compatibility
     setForm,
     setErrorMessage,
-    buildNoticeObject: toPayload,
     resetForm: reset,
     beginEdit: loadFrom
   }
