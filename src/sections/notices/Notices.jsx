@@ -108,7 +108,7 @@ export const Notices = () => {
       setFallbackTick(t => t + 1)
     }
   }
-  const { user, toggleRole, isInitialized } = useAuth()
+  const { user, isInitialized } = useAuth()
 
   const {
     categories,
@@ -138,7 +138,6 @@ export const Notices = () => {
     setIsCategoryModalOpen,
     setConfirmModalOpen,
     setCategoryToDelete,
-    seedFromMocks,
     loadCategoriesFromAPI
   } = useNoticesState()
 
@@ -522,9 +521,6 @@ export const Notices = () => {
     }
   }
 
-  const handleSeedNotices = () => {
-    seedFromMocks()
-  }
 
   const getNoticeDescriptionText = (n) => {
     // Use descriptionText (first paragraph) from the parsed description
@@ -552,21 +548,6 @@ export const Notices = () => {
               <p>Manage Notices</p>
             </div>
             <div className="notices-header-actions">
-              {/* TODO TEMPORARY: button to switch between admin and user view. REMOVE before production. */}
-              <button
-                className="temp-role-toggle-btn"
-                onClick={toggleRole}
-              >
-                {user?.role === 'admin' ? 'Switch to Member View' : 'Switch to Admin View'}
-              </button>
-
-              <button
-                className="notices-seed-btn"
-                onClick={handleSeedNotices}
-              >
-                Seed Notices
-              </button>
-
               {can(user, 'notices:create') && (
                 <button
                   className="add-notice-btn"

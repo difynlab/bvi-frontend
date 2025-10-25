@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { PDFDownloadLink, pdf } from '@react-pdf/renderer'
 import { useAuth } from '../../context/useAuth'
 import { can } from '../../auth/acl'
 import { useNewslettersState } from '../../hooks/useNewslettersState'
@@ -10,6 +11,9 @@ import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
 import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal'
 import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock'
 import EmptyPage from '../../components/EmptyPage'
+import NewsletterPDFDocument from '../../components/pdf/NewsletterPDFDocument'
+import { getNewsletterImageFromLocalStorage } from '../../utils/newsletterTransformers'
+import NewsletterListShimmer from '../../components/newsletters/NewsletterListShimmer'
 import '../../styles/sections/Newsletters.scss'
 
 // Utility to strip HTML
@@ -20,17 +24,72 @@ const stripHtml = (html = '') => {
 }
 
 const Newsletters = () => {
-  const { user, toggleRole } = useAuth()
+  // Función para obtener un fileName seguro
+  const getSafeFileName = (newsletter) => {
+    const fileName = newsletter.fileName || newsletter.name || 'newsletter';
+    // Remover caracteres problemáticos para nombres de archivo
+    return String(fileName).replace(/[<>:"/\\|?*]/g, '_').substring(0, 50);
+  };
+
+  // Función para generar y descargar PDF dinámicamente
+  const handleDownloadPDF = async (newsletter) => {
+    const newsletterId = newsletter.id;
+    
+    // Activar loading para este newsletter específico
+    setPdfLoadingStates(prev => ({ ...prev, [newsletterId]: true }));
+    
+    try {
+      // Parse description JSON to extract HTML for PDF
+      let newsletterForPDF = { ...newsletter };
+      if (newsletter.description && typeof newsletter.description === 'string') {
+        try {
+          const parsed = JSON.parse(newsletter.description);
+          if (parsed.descriptionHtml) {
+            newsletterForPDF.descriptionHtml = parsed.descriptionHtml;
+          }
+        } catch (error) {
+          console.warn('Could not parse description JSON:', error);
+        }
+      }
+      
+      const fileName = `${getSafeFileName(newsletter)}.pdf`;
+      const blob = await pdf(<NewsletterPDFDocument newsletter={newsletterForPDF} />).toBlob();
+      
+      // Crear enlace de descarga
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      // Desactivar loading para este newsletter específico
+      setPdfLoadingStates(prev => ({ ...prev, [newsletterId]: false }));
+    }
+  };
+
+  // Estado para controlar el loading de PDFs individuales
+  const [pdfLoadingStates, setPdfLoadingStates] = useState({});
+  
+  // Placeholder para imágenes de newsletters
+  const NEWSLETTER_PLACEHOLDER = '/images/placeholder-notice.png'
+
+  const { user } = useAuth()
   const {
     newsletters,
     addNewsletter,
     updateNewsletter,
     deleteNewsletter,
-    seedFromMocks
+    initialLoading
   } = useNewslettersState()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingNewsletter, setEditingNewsletter] = useState(null)
+  const [editorKey, setEditorKey] = useState(0)
   const [useFallback, setUseFallback] = useState(false)
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
   const [newsletterToDelete, setNewsletterToDelete] = useState(null)
@@ -54,7 +113,8 @@ const Newsletters = () => {
     buildNewsletterObject,
     resetForm,
     initializeCreate,
-    initializeEdit
+    initializeEdit,
+    loadFrom
   } = useNewsletterForm()
 
   const modalBackdropClose = useModalBackdropClose(() => {
@@ -86,11 +146,62 @@ const Newsletters = () => {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
+  // Load newsletter data when opening for editing (similar to notices)
+  useEffect(() => {
+    if (isModalOpen && editingNewsletter) {
+      // Small delay to ensure modal is fully open before loading data
+      setTimeout(() => {
+        loadFrom(editingNewsletter)
+        setEditorKey(prev => prev + 1) // Force editor re-initialization
+      }, 10)
+    } else if (isModalOpen && !editingNewsletter) {
+      // Small delay to ensure modal is fully open before initializing
+      setTimeout(() => {
+        initializeCreate()
+        setEditorKey(prev => prev + 1) // Force editor re-initialization
+      }, 10)
+    }
+  }, [isModalOpen, editingNewsletter]) // Removed loadFrom and initializeCreate from dependencies
+
   if (!user) {
     return (
       <div className="newsletters-page">
         <div className="newsletters-container">
           <div className="loading">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show loading while fetching newsletters from API
+  if (initialLoading) {
+    return (
+      <div className="newsletters-page">
+        <div className="newsletters-container">
+          {/* Header */}
+          <header className="newsletters-header">
+            <div className="newsletters-header-title">
+              <h1>Newsletters</h1>
+              <p>Manage Newsletters</p>
+            </div>
+
+            <div className="newsletters-actions">
+              {user?.role === 'admin' && (
+                <button
+                  type="button"
+                  className="add-newsletter-btn"
+                  onClick={() => openModal()}
+                  aria-label="Add newsletter"
+                  title="Add Newsletter"
+                >
+                  <i className="bi bi-plus" aria-hidden="true"></i>
+                  <span className="btn-label">Add Newsletter</span>
+                </button>
+              )}
+            </div>
+          </header>
+          
+          <NewsletterListShimmer />
         </div>
       </div>
     )
@@ -114,21 +225,27 @@ const Newsletters = () => {
     resetForm()
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validate()) {
       return
     }
 
-    const newsletterObj = buildNewsletterObject(editingNewsletter?.id)
+    try {
+      
+      const newsletterObj = await buildNewsletterObject(editingNewsletter?.id)
 
     if (editingNewsletter) {
-      updateNewsletter(newsletterObj)
+      await updateNewsletter(editingNewsletter.id, newsletterObj)
     } else {
-      addNewsletter(newsletterObj)
+      await addNewsletter(newsletterObj)
     }
 
-    closeModal()
+      closeModal()
+    } catch (error) {
+      console.error('Error creating/updating newsletter:', error)
+      setErrorMessage('Error creating newsletter. Please try again.')
+    }
   }
 
   const handleDelete = (newsletter) => {
@@ -189,23 +306,6 @@ const Newsletters = () => {
           </div>
 
           <div className="newsletters-actions">
-            {/* TODO TEMPORARY: button to switch between admin and user view. REMOVE before production. */}
-            <button
-              className="temp-role-toggle-btn"
-              onClick={toggleRole}
-            >
-              {user?.role === 'admin' ? 'Switch to Member View' : 'Switch to Admin View'}
-            </button>
-
-            {user?.role === 'admin' && (
-              <button
-                className="newsletters-seed-btn"
-                onClick={seedFromMocks}
-              >
-                Seeds
-              </button>
-            )}
-
             {user?.role === 'admin' && (
               <button
                 type="button"
@@ -221,8 +321,9 @@ const Newsletters = () => {
           </div>
         </header>
 
+        
         {/* Newsletter List */}
-        {newsletters.length === 0 ? (
+        {!Array.isArray(newsletters) || newsletters.length === 0 ? (
           <EmptyPage
             isAdmin={user?.role === 'admin'}
             title={user?.role === 'admin' ? 'Oops nothing to see here yet!' : 'Oops! No data found.'}
@@ -234,20 +335,53 @@ const Newsletters = () => {
           />
         ) : (
           <div className="newsletters-list">
-            {newsletters.map((newsletter) => (
-              <div key={newsletter.id} className="newsletter-card">
+            {Array.isArray(newsletters) && newsletters.map((newsletter) => {
+              return (
+              <div key={newsletter.id || newsletter.data?.id || Math.random()} className="newsletter-card">
                 <div className="newsletter-header">
                   <div className="newsletter-info">
                     <h3 className="newsletter-title">
-                      {newsletter.fileName}
+                      {newsletter.data?.name || newsletter.name || 'Sin nombre'}
                     </h3>
                     <p
                       className={`newsletter-description ${useFallback ? 'fallback' : ''}`}
                     >
-                      {newsletter.description}
+                      {(() => {
+                        const description = newsletter.data?.description || newsletter.description
+                        
+                        // Handle description from backend - similar to notices
+                        if (typeof description === 'string' && description !== '[object Object]') {
+                          try {
+                            const parsed = JSON.parse(description)
+                            
+                            // Use descriptionText if available, otherwise extract from HTML
+                            if (parsed.descriptionText && parsed.descriptionText !== '[object Object]') {
+                              return parsed.descriptionText
+                            } else if (parsed.descriptionHtml && parsed.descriptionHtml.html) {
+                              // Extract first paragraph from HTML
+                              const temp = document.createElement('div')
+                              temp.innerHTML = parsed.descriptionHtml.html
+                              const firstP = temp.querySelector('p')
+                              return firstP ? firstP.textContent?.trim() || 'Sin descripción' : 'Sin descripción'
+                            }
+                            return 'Sin descripción'
+                          } catch (error) {
+                            return description
+                          }
+                        } else if (description === '[object Object]') {
+                          return 'Descripción no disponible'
+                        } else if (description && description.descriptionText) {
+                          return description.descriptionText
+                        } else if (newsletter.descriptionText) {
+                          return newsletter.descriptionText
+                        } else if (description && description !== '[object Object]') {
+                          return description
+                        }
+                        return 'Sin descripción'
+                      })()}
                     </p>
                     <div className="newsletter-date">
-                      Published: {formatDate(newsletter.createdAt)}
+                      Published: {formatDate(newsletter.data?.created_at || newsletter.createdAt || newsletter.created_at || new Date())}
                     </div>
                   </div>
 
@@ -273,22 +407,25 @@ const Newsletters = () => {
                     {isMobile && user?.role === 'admin' ? (
                       <button
                         className="download-btn-mobileAdmin"
-                        onClick={() => {/* TODO: Implement download functionality */ }}
+                        disabled={pdfLoadingStates[newsletter.id]}
+                        onClick={() => handleDownloadPDF(newsletter)}
                       >
                         <i className="bi bi-download"></i>
                       </button>
                     ) : (
                       <button
                         className="download-btn"
-                        onClick={() => {/* TODO: Implement download functionality */ }}
+                        disabled={pdfLoadingStates[newsletter.id]}
+                        onClick={() => handleDownloadPDF(newsletter)}
                       >
-                        Download PDF
+                        {pdfLoadingStates[newsletter.id] ? 'Generating...' : 'Download PDF'}
                       </button>
                     )}
                   </div>
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
@@ -340,6 +477,7 @@ const Newsletters = () => {
                 <div className="form-group">
                   <label htmlFor="description">Description<span className="req-star" aria-hidden="true">*</span></label>
                   <RichTextEditor
+                    key={editorKey}
                     docId={editingNewsletter ? editingNewsletter.id : 'new'}
                     initialHTML={editorHtml}
                     onChange={handleEditorChange}

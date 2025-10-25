@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { readNewsletters, setNewsletters as persistNewsletters, getMockNewsletters, upsertNewsletter, deleteNewsletter } from '../helpers/newslettersStorage'
+import newslettersApi from '../api/newslettersApi'
+import { saveNewsletterImageToLocalStorage } from '../utils/newsletterTransformers'
 
 // Generate Newsletter seeds with recent dates (≤7 days old)
 const generateNewsletterSeeds = () => {
@@ -66,41 +68,139 @@ export const useNewslettersState = () => {
   const hydratedRef = useRef(false)
   const [newsletters, setNewsletters] = useState([])
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
 
-  // Load newsletters from storage on mount (only once)
+  // Load newsletters from API on mount (only once)
   useEffect(() => {
     if (hydratedRef.current) return
     hydratedRef.current = true
 
-    // Load from storage without auto-seeding
-    const { items: stored } = readNewsletters()
-    setNewsletters(Array.isArray(stored) ? stored : [])
-  }, [])
-
-  const addNewsletter = useCallback((newsletterObj) => {
-    // TODO BACKEND: replace seeds with GET /api/newsletters
-    const newsletterWithDate = {
-      ...newsletterObj,
-      createdAt: newsletterObj.createdAt || new Date().toISOString().slice(0, 10)
+    // Load newsletters from API
+    const loadNewsletters = async () => {
+      try {
+        setLoading(true)
+        setInitialLoading(true)
+        const response = await newslettersApi.getAll()
+      // Handle different response structures
+      let newslettersData = []
+      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        // Paginated response: response.data.data
+        newslettersData = response.data.data
+      } else if (response.data && Array.isArray(response.data)) {
+        // Direct array in data
+        newslettersData = response.data
+      } else if (Array.isArray(response)) {
+        // Direct array response
+        newslettersData = response
+      } else if (response.newsletters && Array.isArray(response.newsletters)) {
+        // Alternative structure
+        newslettersData = response.newsletters
+      }
+        setNewsletters(newslettersData)
+      } catch (error) {
+        // Only log non-404 errors
+        if (!error.message.includes('No newsletters found') && !error.message.includes('No data found')) {
+          console.error('Error loading newsletters from API:', error)
+        }
+        // Fallback to empty array if API fails
+        setNewsletters([])
+      } finally {
+        setLoading(false)
+        setInitialLoading(false)
+      }
     }
-    const next = upsertNewsletter(newsletterWithDate)
-    setNewsletters(next)
+
+    loadNewsletters()
   }, [])
 
-  const updateNewsletter = useCallback((newsletterObj) => {
-    // TODO BACKEND: replace seeds with GET /api/newsletters
-    const newsletterWithDate = {
-      ...newsletterObj,
-      createdAt: newsletterObj.createdAt || new Date().toISOString().slice(0, 10)
+  const addNewsletter = useCallback(async (newsletterObj) => {
+    try {
+      setLoading(true)
+      
+      // Enviar al backend
+      const response = await newslettersApi.create(newsletterObj)
+      
+      // Actualizar lista local - extraer solo los datos del newsletter
+      const newsletterData = response.data || response
+      setNewsletters(prev => [...prev, newsletterData])
+      
+      // Guardar imagen en localStorage con el ID del backend para PDF
+      if (newsletterObj.thumbnail && newsletterData.id) {
+        try {
+          await saveNewsletterImageToLocalStorage(newsletterData.id, newsletterObj.thumbnail)
+        } catch (error) {
+          console.warn('⚠️ Could not save image to localStorage (quota exceeded), PDF will work without image:', error)
+        }
+      }
+      
+      // TODO: Remover localStorage cuando esté en producción
+      const newsletterWithDate = {
+        ...newsletterObj,
+        createdAt: newsletterObj.createdAt || new Date().toISOString().slice(0, 10)
+      }
+      upsertNewsletter(newsletterWithDate)
+    } catch (error) {
+      console.error('Error creating newsletter:', error)
+      throw error
+    } finally {
+      setLoading(false)
     }
-    const next = upsertNewsletter(newsletterWithDate)
-    setNewsletters(next)
   }, [])
 
-  const deleteNewsletterById = useCallback((id) => {
-    // TODO BACKEND: replace seeds with GET /api/newsletters
-    const next = deleteNewsletter(id)
-    setNewsletters(next)
+  const updateNewsletter = useCallback(async (id, newsletterObj) => {
+    try {
+      setLoading(true)
+      
+      // Enviar al backend
+      const response = await newslettersApi.update(id, newsletterObj)
+      
+      // Extraer los datos del newsletter de la respuesta
+      const updatedNewsletter = response.data || response
+      
+      // Actualizar lista local
+      setNewsletters(prev => prev.map(nl => nl.id === id ? updatedNewsletter : nl))
+      
+      // Guardar nueva imagen en localStorage con el ID del backend para PDF
+      if (newsletterObj.thumbnail && id) {
+        try {
+          await saveNewsletterImageToLocalStorage(id, newsletterObj.thumbnail)
+        } catch (error) {
+          console.warn('⚠️ Could not save updated image to localStorage (quota exceeded), PDF will work without image:', error)
+        }
+      }
+      
+      // TODO: Remover localStorage cuando esté en producción
+      const newsletterWithDate = {
+        ...newsletterObj,
+        createdAt: newsletterObj.createdAt || new Date().toISOString().slice(0, 10)
+      }
+      upsertNewsletter(newsletterWithDate)
+    } catch (error) {
+      console.error('Error updating newsletter:', error)
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const deleteNewsletterById = useCallback(async (id) => {
+    try {
+      setLoading(true)
+      
+      // Enviar al backend
+      await newslettersApi.delete(id)
+      
+      // Actualizar lista local
+      setNewsletters(prev => prev.filter(nl => nl.id !== id))
+      
+      // TODO: Remover localStorage cuando esté en producción
+      deleteNewsletter(id)
+    } catch (error) {
+      console.error('Error deleting newsletter:', error)
+      throw error
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const seedFromMocks = useCallback(() => {
@@ -114,14 +214,28 @@ export const useNewslettersState = () => {
     persistNewsletters(mockNewsletters)
   }, [])
 
+  // Función para limpiar seeds del localStorage pero mantener imágenes
+  const clearNewsletterSeeds = useCallback(() => {
+    try {
+      // Limpiar solo los datos de newsletters, no las imágenes
+      localStorage.removeItem('newsletters.storage.v1')
+      setNewsletters([])
+      console.log('✅ Cleared newsletter seeds from localStorage')
+    } catch (error) {
+      console.error('❌ Error clearing newsletter seeds:', error)
+    }
+  }, [])
+
   return {
     newsletters,
     setNewsletters,
     loading,
     setLoading,
+    initialLoading,
     addNewsletter,
     updateNewsletter,
     deleteNewsletter: deleteNewsletterById,
-    seedFromMocks
+    seedFromMocks,
+    clearNewsletterSeeds
   }
 }

@@ -1,4 +1,4 @@
-class NoticesService {
+class NewslettersService {
   constructor() {
     // TODO PRODUCTION: CHANGE IMAGES - Use full URL in production
     this.baseURL = import.meta.env.VITE_API_BASE_URL || '/api'
@@ -56,7 +56,7 @@ class NoticesService {
           // Return empty data instead of throwing error for 404
           return {
             http_status: 404,
-            message: 'No notices found',
+            message: 'No newsletters found',
             data: []
           }
         } else {
@@ -68,7 +68,7 @@ class NoticesService {
           // Return empty data instead of throwing error for 404
           return {
             http_status: 404,
-            message: 'No notices found',
+            message: 'No newsletters found',
             data: []
           }
         }
@@ -83,20 +83,10 @@ class NoticesService {
     }
   }
 
-  async getNotices() {
-    // Temporarily override console.error to suppress 404 messages
-    const originalConsoleError = console.error
-    console.error = (...args) => {
-      // Don't log 404 errors
-      if (args[0] && typeof args[0] === 'string' && args[0].includes('404')) {
-        return
-      }
-      originalConsoleError.apply(console, args)
-    }
-
+  async getNewsletters(pagination = 6, page = 1) {
     try {
-      const url = `${this.baseURL}/notices`
-      console.log('=== FETCHING NOTICES ===')
+      const url = `${this.baseURL}/newsletters?pagination=${pagination}&page=${page}`
+      console.log('=== FETCHING NEWSLETTERS ===')
       console.log('URL:', url)
       console.log('Headers:', this.getHeaders(true))
       
@@ -105,61 +95,41 @@ class NoticesService {
         headers: this.getHeaders(true)
       })
 
-      // Handle 404 silently - return empty data without logging
-      if (response.status === 404) {
-        return {
-          http_status: 404,
-          message: 'No notices found',
-          data: []
-        }
-      }
-
       return await this.handleResponse(response)
     } catch (error) {
-      // Suppress 404 errors completely - don't log them
-      if (error.message && (error.message.includes('404') || error.message.includes('Not Found'))) {
-        return {
-          http_status: 404,
-          message: 'No notices found',
-          data: []
-        }
+      if (!error.message.includes('No data found')) {
+        console.error('Error fetching newsletters:', error)
       }
-      
-      // Only log other errors
-      console.error('Error fetching notices:', error)
       throw error
-    } finally {
-      // Restore original console.error
-      console.error = originalConsoleError
     }
   }
 
-  async getNotice(id) {
+  async getNewsletter(id) {
     try {
-      const response = await fetch(`${this.baseURL}/notices/${id}`, {
+      const response = await fetch(`${this.baseURL}/newsletters/${id}`, {
         method: 'GET',
         headers: this.getHeaders(true)
       })
 
       return await this.handleResponse(response)
     } catch (error) {
-      console.error('Error fetching notice:', error)
+      console.error('Error fetching newsletter:', error)
       throw error
     }
   }
 
-  async createNotice(noticeData) {
+  async createNewsletter(newsletterData) {
     try {
-      console.log('=== CREATE NOTICE DEBUG ===')
-      console.log('Raw noticeData received:', noticeData)
-      console.log('NoticeData type:', typeof noticeData)
-      console.log('NoticeData keys:', Object.keys(noticeData))
+      console.log('=== CREATE NEWSLETTER DEBUG ===')
+      console.log('Raw newsletterData received:', newsletterData)
+      console.log('NewsletterData type:', typeof newsletterData)
+      console.log('NewsletterData keys:', Object.keys(newsletterData))
       
       const formData = new FormData()
       
-      // Agregar todos los campos del notice al FormData
-      Object.keys(noticeData).forEach(key => {
-        const value = noticeData[key]
+      // Agregar todos los campos del newsletter al FormData
+      Object.keys(newsletterData).forEach(key => {
+        const value = newsletterData[key]
         console.log(`Processing field: ${key}, type: ${typeof value}, value:`, value)
         
         if (value !== null && value !== undefined && value !== '') {
@@ -183,9 +153,9 @@ class NoticesService {
       console.log('Token being used:', this.getToken() ? 'Present' : 'Missing')
       console.log('Base URL:', this.baseURL)
 
-      const response = await fetch(`${this.baseURL}/notices`, {
+      const response = await fetch(`${this.baseURL}/newsletters`, {
         method: 'POST',
-        headers: this.getHeaders(false), 
+        headers: this.getHeaders(false), // false = no incluir Content-Type para FormData
         body: formData
       })
 
@@ -193,9 +163,11 @@ class NoticesService {
       console.log('Response ok:', response.ok)
       console.log('Response headers:', Object.fromEntries(response.headers.entries()))
       
+      // Log response body for debugging
       const responseText = await response.text()
       console.log('Response body:', responseText)
       
+      // Create a new response object for handleResponse
       const responseClone = new Response(responseText, {
         status: response.status,
         statusText: response.statusText,
@@ -204,23 +176,23 @@ class NoticesService {
       
       return await this.handleResponse(responseClone)
     } catch (error) {
-      console.error('Error creating notice:', error)
+      console.error('Error creating newsletter:', error)
       throw error
     }
   }
 
-  async updateNotice(id, noticeData) {
+  async updateNewsletter(id, newsletterData) {
     try {
       const formData = new FormData()
       
-      // Agregar todos los campos del notice al FormData
-      Object.keys(noticeData).forEach(key => {
-        if (noticeData[key] !== null && noticeData[key] !== undefined && noticeData[key] !== '') {
-          formData.append(key, noticeData[key])
+      // Agregar todos los campos del newsletter al FormData
+      Object.keys(newsletterData).forEach(key => {
+        if (newsletterData[key] !== null && newsletterData[key] !== undefined && newsletterData[key] !== '') {
+          formData.append(key, newsletterData[key])
         }
       })
 
-      const response = await fetch(`${this.baseURL}/notices/${id}`, {
+      const response = await fetch(`${this.baseURL}/newsletters/${id}`, {
         method: 'POST',
         headers: this.getHeaders(false), // false = no incluir Content-Type para FormData
         body: formData
@@ -228,21 +200,21 @@ class NoticesService {
 
       return await this.handleResponse(response)
     } catch (error) {
-      console.error('Error updating notice:', error)
+      console.error('Error updating newsletter:', error)
       throw error
     }
   }
 
-  async deleteNotice(id) {
+  async deleteNewsletter(id) {
     try {
-      const response = await fetch(`${this.baseURL}/notices/${id}`, {
+      const response = await fetch(`${this.baseURL}/newsletters/${id}`, {
         method: 'DELETE',
         headers: this.getHeaders()
       })
 
       return await this.handleResponse(response)
     } catch (error) {
-      console.error('Error deleting notice:', error)
+      console.error('Error deleting newsletter:', error)
       throw error
     }
   }
@@ -257,4 +229,4 @@ class NoticesService {
   }
 }
 
-export default new NoticesService()
+export default new NewslettersService()

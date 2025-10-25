@@ -3,8 +3,9 @@ import { StyleSheet, Text, View, Link } from '@react-pdf/renderer';
 
 export const styles = StyleSheet.create({
   page: { padding: 30, backgroundColor: '#fff' },
-  header: { marginBottom: 20, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 10, textAlign: 'center' },
+  header: { marginTop: -30, marginLeft: -30, marginRight: -30, marginBottom: 20, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 15, paddingTop: 15, textAlign: 'center', alignItems: 'center', backgroundColor: '#104394' },
   logo: { fontSize: 24, fontWeight: 'bold', color: '#333' },
+  logoImage: { width: 150, height: 'auto', objectFit: 'contain' },
   headerSubtitle: { fontSize: 12, color: '#666' },
   content: { marginTop: 20 },
   title: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: '#333' },

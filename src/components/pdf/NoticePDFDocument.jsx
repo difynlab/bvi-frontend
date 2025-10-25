@@ -2,6 +2,9 @@ import React from 'react';
 import { Document, Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import { convertHtmlToPDF, formatDate, styles } from '../../utils/htmlToPDFConverter.jsx';
 
+// Logo path - debe ser ruta absoluta desde public
+const BVI_LOGO_PATH = '/images/bvi-logo-downloads.png';
+
 const NoticePDFDocument = ({ notice }) => {
   // Validación más robusta
   if (!notice || typeof notice !== 'object') {
@@ -55,7 +58,10 @@ const NoticePDFDocument = ({ notice }) => {
       <Page style={styles.page}>
         {/* HEADER */}
         <View style={styles.header}>
-          <Text style={styles.logo}>BVI Logo</Text>
+          <Image 
+            src={BVI_LOGO_PATH} 
+            style={styles.logoImage}
+          />
         </View>
 
         {/* CONTENT */}

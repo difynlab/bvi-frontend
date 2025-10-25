@@ -1,11 +1,14 @@
 import React from 'react';
 import { useSettingsForm } from '../../hooks/useSettingsForm';
 import { usePasswordVisibility } from '../../hooks/usePasswordVisibility';
+import { useAuth } from '../../context/useAuth';
 import ImageUpload from '../../components/ImageUpload';
 import CustomDropdown from '../../components/CustomDropdown';
 import '../../styles/sections/Settings.scss';
 
 export default function Settings() {
+  const { user, toggleRole } = useAuth();
+  
   const {
     form,
     onChange,
@@ -265,6 +268,14 @@ export default function Settings() {
           )}
           <button type="submit" className="settings-save-btn" disabled={!canSave}>
             Save Changes
+          </button>
+          
+          <button 
+            type="button" 
+            className="settings-toggle-role-btn"
+            onClick={toggleRole}
+          >
+            {user?.role === 'admin' ? 'Switch to Member View' : 'Switch to Admin View'}
           </button>
         </div>
       </form>

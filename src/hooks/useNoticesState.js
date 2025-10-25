@@ -69,6 +69,17 @@ export const useNoticesState = () => {
   // Function to load notices from API
   const loadNoticesFromAPI = useCallback(async () => {
     setNoticesLoading(true)
+    
+    // Temporarily suppress 404 console errors
+    const originalConsoleError = console.error
+    console.error = (...args) => {
+      // Don't log 404 errors
+      if (args[0] && typeof args[0] === 'string' && args[0].includes('404')) {
+        return
+      }
+      originalConsoleError.apply(console, args)
+    }
+    
     try {
       const response = await noticesService.getNotices()
       
@@ -81,11 +92,16 @@ export const useNoticesState = () => {
         setNotices([])
       }
     } catch (error) {
-      console.error('Error loading notices from API:', error)
+      // Only log non-404 errors
+      if (!error.message.includes('No notices found') && !error.message.includes('No data found')) {
+        console.error('Error loading notices from API:', error)
+      }
       // Don't fallback to localStorage - let empty state show
       setNotices([])
     } finally {
       setNoticesLoading(false)
+      // Restore original console.error
+      console.error = originalConsoleError
     }
   }, [])
 
