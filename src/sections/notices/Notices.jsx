@@ -166,7 +166,7 @@ export const Notices = () => {
       setActiveTabId(next)
       saveActiveTabId(next)
     }
-  }, [categories, activeTabId])
+  }, [categories]) // Removed activeTabId to prevent infinite loop
 
   // Sync mobile activeTabId with desktop activeCategory when in mobile mode
   useEffect(() => {
@@ -564,9 +564,7 @@ export const Notices = () => {
             <div className="notices-mobile-header" role="region" aria-label="Notice categories">
               {categoriesLoading ? (
                 <div className="category-title-skeleton">
-                  <div className="category-picker-btn-skeleton">
-                    <span style={{ opacity: 0 }}>Loading...</span>
-                  </div>
+                  <span style={{ opacity: 0 }}>Loading...</span>
                 </div>
               ) : (
                 <div className="category-title">
@@ -579,7 +577,7 @@ export const Notices = () => {
                         aria-haspopup="dialog"
                         aria-controls="noticesTabPicker">
                         <h2>
-                          {activeCategoryData?.name || 'Notices'}
+                          {activeCategoryData?.name || 'Categories'}
                         </h2>
                         <i className="bi bi-chevron-down" aria-hidden="true"></i>
                       </button>

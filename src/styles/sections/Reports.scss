@@ -93,10 +93,39 @@
 .file-status {
   margin: 8px 0 0 0;
   font-size: 12px;
+  
+  .existing-file-indicator {
+    color: #059669;
+    font-weight: 500;
+    font-style: italic;
+  }
 }
 
 .image-preview {
   margin-top: 12px;
+}
+
+.existing-file-info {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 6px;
+  
+  .file-info-text {
+    margin: 0 0 8px 0;
+    font-size: 0.9rem;
+    color: #0c4a6e;
+    display: flex;
+    align-items: center;
+  }
+  
+  .file-info-note {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #0369a1;
+    font-style: italic;
+  }
 }
 
 .image-preview img {
@@ -239,11 +268,283 @@
 
 
 
+// Base styles for reports tabs - EXACT COPY from Notices.scss
+.category-tabs {
+  margin-bottom: 30px;
+}
+
+.tabs-container {
+  display: flex;
+  gap: 0;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.tab-group {
+  position: relative;
+  display: inline-block;
+}
+
+.category-tab {
+  background: none;
+  color: #666;
+  border: none;
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  border-bottom: 2px solid transparent;
+  padding-right: 60px;
+}
+
+.tab-group:not(:has(.category-tab__delete)):not(:has(.category-tab__edit)) .category-tab {
+  padding-right: 20px;
+}
+
+.tab-group:has(.category-tab__delete):not(:has(.category-tab__edit)) .category-tab {
+  padding-right: 35px;
+}
+
+.category-tab:hover {
+  color: #333;
+}
+
+.category-tab.active {
+  color: var(--vivid_red, #e53935);
+  border-bottom: 2px solid var(--vivid_red, #e53935);
+  font-weight: 500;
+}
+
+.category-tab__delete {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.4;
+  color: #000;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.8rem;
+  z-index: 10;
+}
+
+.category-tab__delete:hover {
+  opacity: 0.75;
+}
+
+.category-tab__edit {
+  position: absolute;
+  top: 50%;
+  right: 30px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.4;
+  color: #000;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.8rem;
+  z-index: 10;
+}
+
+.category-tab__edit:hover {
+  opacity: 0.75;
+}
+
+.add-category-btn {
+  margin-left: auto;
+  background: rgba(233, 49, 37, 0.1);
+  color: rgba(233, 49, 37, 0.7);
+  border: none;
+  height: 40px;
+  width: 40px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 30px;
+  transition: all 0.3s ease-in-out;
+}
+
+.add-category-btn:hover {
+  background: rgba(233, 49, 37, 0.15);
+}
+
+.add-category-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.add-category-btn:disabled:hover {
+  background: rgba(233, 49, 37, 0.1);
+}
+
+// Modal button disabled state
+.reports-addcat-modal__update-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #ccc;
+}
+
+.reports-addcat-modal__input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+}
+
+.close-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+// Reports tab picker edit button
+.reports-tab-picker__edit {
+  flex: 0 0 auto;
+  color: #6c757d;
+  padding: 4px;
+  margin-left: 8px;
+
+  &:hover {
+    background-color: rgba(108, 117, 125, 0.1);
+    border-radius: 4px;
+  }
+
+  i {
+    font-size: 14px;
+  }
+}
+
 .reports-tabs {
   display: flex;
   border-bottom: 1px solid #eaeaea;
   margin-bottom: 24px;
   flex-wrap: wrap;
+}
+
+.reports-tabs-loading {
+  padding: 12px 20px;
+  color: #666;
+  font-style: italic;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.reports-tabs-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 2px solid #e0e0e0;
+  
+  .reports-tabs-empty__message {
+    color: #666;
+    font-style: italic;
+    font-size: 0.9rem;
+  }
+}
+
+// No categories message - EXACT COPY from Notices.scss
+.no-categories-message {
+  padding: 12px 20px;
+  color: #666;
+  font-style: italic;
+  font-size: 0.9rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.no-categories-message-mobile {
+  padding: 12px 20px;
+  color: #666;
+  font-style: italic;
+  font-size: 0.9rem;
+  text-align: center;
+  width: 100%;
+}
+
+// Shimmer skeleton for categories - EXACT COPY from Notices.scss
+.tab-skeleton-group {
+  position: relative;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.category-tab-skeleton {
+  background: #e5e7eb;
+  border: none;
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  position: relative;
+  border-bottom: 2px solid transparent;
+  padding-right: 60px;
+  border-radius: 4px;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      #f3f4f6,
+      transparent
+    );
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.category-title-skeleton {
+  min-width: 85% !important;
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: #e5e7eb;
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  overflow: hidden;
+  width: 100%;
+  height: 40px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: shimmer 1.5s infinite;
+  }
 }
 
 .reports-tab-group {
@@ -298,6 +599,38 @@
 
 .reports-list-wrap {
   margin-top: 16px;
+  min-height: 400px;
+}
+
+// Reports loading state
+.reports-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .reports-list-title {
@@ -523,6 +856,12 @@
   .file-status {
     margin: 8px 0 0 0;
     font-size: 12px;
+    
+    .existing-file-indicator {
+      color: #059669;
+      font-weight: 500;
+      font-style: italic;
+    }
   }
   
   .form-actions {
@@ -1030,6 +1369,22 @@
       font-weight: 400;
     }
 
+    .reports-tab-picker__edit {
+      flex: 0 0 auto;
+      color: #6c757d;
+      padding: 4px;
+      margin-left: 8px;
+
+      &:hover {
+        background-color: rgba(108, 117, 125, 0.1);
+        border-radius: 4px;
+      }
+
+      i {
+        font-size: 14px;
+      }
+    }
+
     .reports-tab-picker__delete {
       flex: 0 0 auto;
       color: #dc3545;
@@ -1071,5 +1426,217 @@
     .btn-download {
       display: flex;
     }
+  }
+}
+
+// Reports Shimmer Loading Styles
+.reports-list-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.report-card-skeleton {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  overflow: hidden;
+  min-height: 80px;
+}
+
+.report-card-skeleton__info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  margin-right: 20px;
+}
+
+.report-card-skeleton__date {
+  height: 14px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  width: 120px;
+  position: relative;
+  overflow: hidden;
+}
+
+.report-card-skeleton__title {
+  height: 20px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  width: 60%;
+  position: relative;
+  overflow: hidden;
+}
+
+.report-card-skeleton__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.report-card-skeleton__button {
+  height: 32px;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.report-card-skeleton__button--delete {
+  width: 60px;
+  background-color: #e5e7eb;
+}
+
+.report-card-skeleton__button--edit {
+  width: 80px;
+  background-color: #e5e7eb;
+}
+
+.report-card-skeleton__button--download {
+  width: 90px;
+  background-color: #e5e7eb;
+}
+
+// Shimmer animation for all skeleton elements
+.report-card-skeleton__date::before,
+.report-card-skeleton__title::before,
+.report-card-skeleton__button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+// Mobile Reports Shimmer Loading Styles
+.reports-list-skeleton-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.report-card-skeleton-mobile {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  position: relative;
+  overflow: hidden;
+  min-height: 100px;
+}
+
+.report-card-skeleton-mobile__info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.report-card-skeleton-mobile__date {
+  height: 14px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  width: 120px;
+  position: relative;
+  overflow: hidden;
+}
+
+.report-card-skeleton-mobile__title {
+  height: 20px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  width: 70%;
+  position: relative;
+  overflow: hidden;
+}
+
+.report-card-skeleton-mobile__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: auto;
+}
+
+.report-card-skeleton-mobile__button {
+  height: 32px;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.report-card-skeleton-mobile__button--delete {
+  width: 60px;
+  background-color: #e5e7eb;
+}
+
+.report-card-skeleton-mobile__button--edit {
+  width: 50px;
+  background-color: #e5e7eb;
+}
+
+.report-card-skeleton-mobile__button--download {
+  width: 80px;
+  background-color: #e5e7eb;
+}
+
+// Shimmer animation for mobile skeleton elements
+.report-card-skeleton-mobile__date::before,
+.report-card-skeleton-mobile__title::before,
+.report-card-skeleton-mobile__button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+// Responsive adjustments for mobile shimmer
+@media (max-width: 768px) {
+  // Hide desktop skeleton on mobile
+  .reports-list-skeleton {
+    display: none;
+  }
+  
+  // Show mobile skeleton on mobile
+  .reports-list-skeleton-mobile {
+    display: flex;
+  }
+}
+
+@media (min-width: 769px) {
+  // Hide mobile skeleton on desktop
+  .reports-list-skeleton-mobile {
+    display: none;
+  }
+  
+  // Show desktop skeleton on desktop
+  .reports-list-skeleton {
+    display: flex;
   }
 }

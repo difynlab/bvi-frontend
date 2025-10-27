@@ -1583,22 +1583,18 @@
 
 // Mobile category picker skeleton
 .category-title-skeleton {
-  width: 100%;
+  min-width: 85% !important;
   display: flex;
   align-items: center;
-}
-
-.category-picker-btn-skeleton {
+  position: relative;
   background: #e5e7eb;
-  border: none;
   padding: 12px 20px;
   font-size: 0.9rem;
-  position: relative;
   border-radius: 4px;
   overflow: hidden;
   width: 100%;
   height: 40px;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -1609,7 +1605,7 @@
     background: linear-gradient(
       90deg,
       transparent,
-      #f3f4f6,
+      rgba(255, 255, 255, 0.4),
       transparent
     );
     animation: shimmer 1.5s infinite;

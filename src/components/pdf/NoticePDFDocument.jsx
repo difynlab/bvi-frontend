@@ -33,7 +33,7 @@ const NoticePDFDocument = ({ notice }) => {
 
   // Función para obtener la fecha correcta
   const getPublishedDate = (notice) => {
-    return notice.publishDate || notice.createdAt || notice.createdAtISO || 'Date not available';
+    return notice.createdAt || notice.createdAtISO || notice.publishDate || 'Date not available';
   };
 
   // Función para obtener un fileName seguro

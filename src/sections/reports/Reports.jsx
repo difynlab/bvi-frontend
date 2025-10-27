@@ -10,11 +10,13 @@ import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal';
 import ReportsTabPicker from '../../components/modals/ReportsTabPicker';
 import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock';
 import CustomDropdown from '../../components/CustomDropdown';
+import ReportsListShimmer from '../../components/reports/ReportsListShimmer';
+import ReportsListShimmerMobile from '../../components/reports/ReportsListShimmerMobile';
 import '../../styles/sections/Reports.scss';
 
 export default function Reports() {
   const MOBILE_Q = '(max-width: 768px)'
-  const { user, toggleRole, isInitialized } = useAuth();
+  const { user, isInitialized } = useAuth();
 
   // Mobile state management
   const [isMobile, setIsMobile] = useState(() => window.matchMedia(MOBILE_Q).matches)
@@ -35,11 +37,17 @@ export default function Reports() {
     editingReport,
     confirmModalOpen,
     categoryToDelete,
+    categoriesLoading,
+    creatingCategory,
+    editingCategory,
+    setEditingCategory,
     setActiveCategory,
     handleAddCategory,
     handleDeleteCategory,
+    resetCreatingCategory,
+    handleEditCategory,
+    handleUpdateCategory,
     handleConfirmDelete,
-    deleteCategoryCascade,
     openCreateReportModal,
     openEditReportModal,
     closeReportModal,
@@ -47,20 +55,46 @@ export default function Reports() {
     onDeleteReport,
     downloadReport,
     formatDate,
-    seedDemoReports,
     setIsCategoryModalOpen,
-    setConfirmModalOpen
+    setConfirmModalOpen,
+    setCategoryToDelete,
+    // New reports-related states
+    reportsLoading,
+    refreshReports,
+    loadReportsFromAPI
   } = useReportsState();
 
-  // Memoize initialReport to prevent recreation on every render
-  const initialReport = useMemo(() => editingReport || null, [editingReport?.id]);
 
-  const reportForm = useReportForm(initialReport, isReportModalOpen, editingReport ? 'edit' : 'add');
+  // Memoize initialReport to prevent recreation on every render
+  const initialReport = useMemo(() => {
+    console.log('🔍 Debug - Editing report:', editingReport);
+    return editingReport || null;
+  }, [editingReport?.id]);
+
+  const reportForm = useReportForm(initialReport, isReportModalOpen, editingReport ? 'edit' : 'add', categories);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [categoryError, setCategoryError] = useState('');
   const [isReportDeleteConfirmOpen, setIsReportDeleteConfirmOpen] = useState(false);
   const [reportToDelete, setReportToDelete] = useState(null);
   const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false);
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [reportError, setReportError] = useState('');
+
+  // Effect to preload category name when editing
+  useEffect(() => {
+    if (editingCategory) {
+      setNewCategoryName(editingCategory.title);
+    } else {
+      setNewCategoryName('');
+    }
+  }, [editingCategory]);
+
+  // Reset creating category state when modal closes
+  useEffect(() => {
+    if (!isCategoryModalOpen && creatingCategory) {
+      resetCreatingCategory();
+    }
+  }, [isCategoryModalOpen, creatingCategory, resetCreatingCategory]);
 
   // Mobile responsive effect
   useEffect(() => {
@@ -86,10 +120,12 @@ export default function Reports() {
       localStorage.removeItem('reports-active-tab')
       return
     }
-    if (!activeTabId || !categories.includes(activeTabId)) {
-      const next = categories[0]
+    if (!activeTabId || !categories.some(cat => cat.id === activeTabId)) {
+      const next = categories[0]?.id
       setActiveTabId(next)
-      localStorage.setItem('reports-active-tab', next)
+      if (next) {
+        localStorage.setItem('reports-active-tab', next)
+      }
     }
   }, [categories, activeTabId])
 
@@ -117,8 +153,8 @@ export default function Reports() {
   const onDeleteCategory = (id) => {
     handleDeleteCategory(id)
     if (id === activeTabId) {
-      const remaining = categories.filter(c => c !== id)
-      const next = remaining[0] || null
+      const remaining = categories.filter(c => c.id !== id)
+      const next = remaining[0]?.id || null
       setActiveTabId(next)
       if (next) {
         localStorage.setItem('reports-active-tab', next)
@@ -130,8 +166,17 @@ export default function Reports() {
 
   // Get active category for mobile display
   const activeCategoryData = useMemo(
-    () => activeTabId || null,
-    [activeTabId]
+    () => {
+      const activeCat = categories.find(cat => cat.id === activeTabId);
+      console.log('🔍 Debug - Active category data:', {
+        activeTabId,
+        categories: categories.length,
+        activeCat,
+        title: activeCat?.title
+      });
+      return activeCat || null;
+    },
+    [categories, activeTabId]
   )
 
   const categoryModalBackdropClose = useModalBackdropClose(() => setIsCategoryModalOpen(false));
@@ -144,6 +189,12 @@ export default function Reports() {
     setNewCategoryName('');
     setCategoryError('');
     setIsCategoryModalOpen(false);
+    // Reset creating category state when modal is closed
+    resetCreatingCategory();
+    // Reset editing category state
+    if (editingCategory) {
+      setEditingCategory(null);
+    }
   };
 
   const closeReportModalWithReset = () => {
@@ -151,52 +202,100 @@ export default function Reports() {
     closeReportModal();
   };
 
-  const handleAddCategorySubmit = () => {
+  const handleAddCategorySubmit = async () => {
     const trimmedName = newCategoryName.trim();
     if (!trimmedName) {
       setCategoryError('Category name is required');
       return;
     }
-    if (categories.includes(trimmedName)) {
+    if (trimmedName.length < 3) {
+      setCategoryError('Category name must be at least 3 characters long');
+      return;
+    }
+    if (categories.some(cat => cat.title === trimmedName && cat.id !== editingCategory?.id)) {
       setCategoryError('Category already exists');
       return;
     }
-    handleAddCategory(trimmedName);
-    closeCategoryModal();
+    
+    try {
+      if (editingCategory) {
+        // Update existing category
+        await handleUpdateCategory(trimmedName);
+        setEditingCategory(null); // Reset editing state
+      } else {
+        // Create new category
+        await handleAddCategory(trimmedName);
+      }
+      // Only close modal if successful
+      closeCategoryModal();
+    } catch (error) {
+      // Show error in banner, don't close modal
+      setCategoryError(`Error: ${error.message || 'Failed to save category'}`);
+    }
   };
 
-  const handleReportSubmit = (e) => {
+  const handleReportSubmit = async (e) => {
     e.preventDefault();
+    
     if (reportForm.validate()) {
-      // Enforce valid existing category
-      const trimmedCats = categories
-        .map(name => (typeof name === 'string' ? name.trim() : ''))
-        .filter(Boolean);
+      setIsSubmittingReport(true);
+      setReportError(''); // Clear any previous errors
+      
+      try {
+        // Enforce valid existing category
+        const activeCategories = categories
+          .filter(cat => cat.status === 1)
+          .map(cat => cat.title);
 
-      // Resolve legacy name to id by using the name string itself as id in storage
-      // Since categories are stored as string names, we use the name as both id and name
-      const currentId = reportForm.form.typeId && trimmedCats.includes(reportForm.form.typeId)
-        ? reportForm.form.typeId
-        : '';
+        console.log('🔍 Debug - Categories from API:', categories);
+        console.log('🔍 Debug - Active categories:', activeCategories);
+        console.log('🔍 Debug - Selected typeId:', reportForm.form.typeId);
 
-      if (!currentId) {
-        // If form had legacy typeName equal to active name, try fallback
-        const byName = trimmedCats.find(n => n.toLowerCase() === (reportForm.form.typeId || '').trim().toLowerCase());
-        if (!byName) {
-          // show error and stop
-          reportForm.setField('typeId', '');
+        // Check if selected category exists in active categories
+        const currentId = reportForm.form.typeId && activeCategories.includes(reportForm.form.typeId)
+          ? reportForm.form.typeId
+          : '';
+
+        console.log('🔍 Debug - Current ID found:', currentId);
+
+        if (!currentId) {
+          // If form had legacy typeName equal to active name, try fallback
+          const byName = activeCategories.find(n => n.toLowerCase() === (reportForm.form.typeId || '').trim().toLowerCase());
+          console.log('🔍 Debug - Fallback byName found:', byName);
+          if (!byName) {
+            // Show error in banner instead of resetting field
+            setReportError('Selected category is no longer available. Please choose another category.');
+            return;
+          }
+        }
+
+        const catName = reportForm.form.typeId;
+        
+        // Find the category ID from the selected category title
+        const selectedCategory = categories.find(cat => cat.title === reportForm.form.typeId);
+        const categoryId = selectedCategory ? selectedCategory.id : null;
+
+        if (!categoryId) {
+          setReportError('Invalid category selected. Please choose another category.');
           return;
         }
+
+        const payload = {
+          ...reportForm.toPayload(editingReport?.id),
+          report_category_id: categoryId  // Send the numeric ID, not the title
+        };
+        
+        console.log('🔍 Debug - Final payload:', payload);
+        console.log('🔍 Debug - Category ID:', categoryId);
+        console.log('🔍 Debug - Category title:', catName);
+        
+        await createOrUpdateReport(payload);
+      } catch (error) {
+        console.error('Error submitting report:', error);
+        setReportError(`Error: ${error.message || 'Failed to save report'}`);
+      } finally {
+        setIsSubmittingReport(false);
       }
-
-      const catName = reportForm.form.typeId;
-
-      const payload = {
-        ...reportForm.toPayload(editingReport?.id),
-        typeId: reportForm.form.typeId,
-        typeName: catName
-      };
-      createOrUpdateReport(payload);
     }
   };
 
@@ -208,18 +307,28 @@ export default function Reports() {
     }
   }
 
-  const handleConfirmDeleteReport = () => {
+  const handleConfirmDeleteReport = async () => {
     if (reportToDelete) {
-      onDeleteReport(reportToDelete.id)
-      setReportToDelete(null)
-      setIsSuccessDeleteOpen(true)
+      try {
+        await onDeleteReport(reportToDelete.id);
+        setReportToDelete(null);
+        setIsSuccessDeleteOpen(true);
+      } catch (error) {
+        console.error('Error deleting report:', error);
+      }
     }
-  }
+  };
 
-  const onConfirmDeleteCategory = () => {
+  const onConfirmDeleteCategory = async () => {
     if (activeCategory) {
-      deleteCategoryCascade(activeCategory);
-      setConfirmModalOpen(false);
+      try {
+        await handleConfirmDelete();
+        // Show success modal after successful deletion
+        setIsSuccessDeleteOpen(true);
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        // Don't show success modal if there was an error
+      }
     }
   };
 
@@ -243,21 +352,6 @@ export default function Reports() {
         </div>
 
       <div className="reports-header-actions">
-        {/* TODO TEMPORARY: button to switch between admin and user view. REMOVE before production. */}
-        <button
-          className="temp-role-toggle-btn"
-          onClick={toggleRole}
-        >
-          {user?.role === 'admin' ? 'Switch to Member View' : 'Switch to Admin View'}
-        </button>
-
-        <button
-          className="reports-seed-btn"
-          onClick={seedDemoReports}
-        >
-          Seed Reports
-        </button>
-
         {can(user, 'reports:create') && (
           <button type="button" className="add-report-btn add-report-btn--desktop" onClick={openCreateReportModal}>
             <i className="bi bi-plus" aria-hidden="true"></i> Add New
@@ -269,32 +363,47 @@ export default function Reports() {
       {/* Header area */}
       {isMobile ? (
         <div className="reports-mobile-header" role="region" aria-label="Report categories">
-          <div className="category-title">
-            <button
-              type="button"
-              className="category-picker-btn"
-              onClick={() => setPickerOpen(true)}
-              aria-haspopup="dialog"
-              aria-controls="reportsTabPicker">
-              <h2>
-                {activeCategoryData || 'Reports'}
-              </h2>
-              <i className="bi bi-chevron-down" aria-hidden="true"></i>
-            </button>
-            
-            {/* Reports Tab Picker Dropdown */}
-            <ReportsTabPicker
-              open={pickerOpen}
-              onClose={() => setPickerOpen(false)}
-              categories={categories}
-              activeTabId={activeTabId}
-              onSelect={onSelectCategory}
-              canManage={can(user, 'reports:create')}
-              onAddCategory={onAddCategory}
-              onDeleteCategory={onDeleteCategory}
-            />
-          </div>
-          {can(user, 'reports:create') && (
+          {categoriesLoading ? (
+            <div className="category-title-skeleton">
+              <span style={{ opacity: 0 }}>Loading...</span>
+            </div>
+          ) : (
+            <div className="category-title">
+              {categories.length > 0 ? (
+                <>
+                  <button
+                    type="button"
+                    className="category-picker-btn"
+                    onClick={() => setPickerOpen(true)}
+                    aria-haspopup="dialog"
+                    aria-controls="reportsTabPicker">
+                    <h2>
+                      {activeCategoryData?.title || 'Reports'}
+                    </h2>
+                    <i className="bi bi-chevron-down" aria-hidden="true"></i>
+                  </button>
+                  
+                  {/* Reports Tab Picker Dropdown */}
+                  <ReportsTabPicker
+                    open={pickerOpen}
+                    onClose={() => setPickerOpen(false)}
+                    categories={categories}
+                    activeTabId={activeTabId}
+                    onSelect={onSelectCategory}
+                    canManage={can(user, 'reports:create')}
+                    onAddCategory={onAddCategory}
+                    onDeleteCategory={onDeleteCategory}
+                    onEditCategory={handleEditCategory}
+                  />
+                </>
+              ) : (
+                <div className="no-categories-message-mobile">
+                  <p>No report categories created yet...</p>
+                </div>
+              )}
+            </div>
+          )}
+          {can(user, 'reports:create') && !categoriesLoading && (
             <button
               type="button"
               className="add-tab-btn"
@@ -309,35 +418,73 @@ export default function Reports() {
       ) : (
         /* existing desktop tabs header stays as-is */
         <div className="reports-tabs-desktop" role="tablist" aria-orientation="horizontal">
-          <div className="reports-tabs">
-            {categories.map(cat => (
-              <div key={cat} className="reports-tab-group">
-                <button
-                  className={`reports-tab ${cat === activeCategory ? 'active' : ''}`}
-                  onClick={() => setActiveCategory(cat)}
-                >
-                  <span>{cat}</span>
-                </button>
-                {can(user, 'reports:create') && (
-                  <button
-                    className="reports-tab__delete"
-                    onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat); }}
-                    aria-label="Delete category"
-                  >
-                    <i className="bi bi-x-lg"></i>
-                  </button>
-                )}
-              </div>
-            ))}
-
-            {can(user, 'reports:create') && (
-              <button
-                className="reports-add-category-btn"
-                onClick={() => setIsCategoryModalOpen(true)}
-              >
-                <i className="bi bi-plus"></i>
-              </button>
-            )}
+          <div className="category-tabs">
+            <div className="tabs-container">
+              {categoriesLoading ? (
+                <>
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="tab-skeleton-group">
+                      <div className="category-tab-skeleton">
+                        <span style={{ opacity: 0 }}>Loading...</span>
+                      </div>
+                    </div>
+                  ))}
+                  {can(user, 'reports:create') && (
+                    <button
+                      className="add-category-btn"
+                      onClick={() => setIsCategoryModalOpen(true)}
+                    >
+                      <i className="bi bi-plus"></i>
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  {categories.length > 0 ? (
+                    categories.map(category => (
+                      <div key={category.id} className="tab-group">
+                        <button
+                          className={`category-tab ${activeCategory === category.id ? 'active' : ''}`}
+                          onClick={() => setActiveCategory(category.id)}
+                        >
+                          <span>{category.title}</span>
+                        </button>
+                        {can(user, 'reports:update') && (
+                          <button
+                            className="category-tab__edit"
+                            onClick={(e) => { e.stopPropagation(); handleEditCategory(category.id); }}
+                            aria-label="Edit category"
+                          >
+                            <i className="bi bi-pencil-square"></i>
+                          </button>
+                        )}
+                        {can(user, 'reports:create') && (
+                          <button
+                            className="category-tab__delete"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id); }}
+                            aria-label="Delete category"
+                          >
+                            <i className="bi bi-x-lg"></i>
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="no-categories-message">
+                      <p>No report categories created yet...</p>
+                    </div>
+                  )}
+                  {can(user, 'reports:create') && (
+                    <button
+                      className="add-category-btn"
+                      onClick={() => setIsCategoryModalOpen(true)}
+                    >
+                      <i className="bi bi-plus"></i>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -351,7 +498,12 @@ export default function Reports() {
       )}
 
       <section className="reports-list-wrap" aria-live="polite">
-        {visibleItems.length === 0 ? (
+        {reportsLoading ? (
+          <>
+            <ReportsListShimmer />
+            <ReportsListShimmerMobile />
+          </>
+        ) : visibleItems.length === 0 ? (
           <div className="empty-state">
             {can(user, 'reports:create') ? (
               <>
@@ -369,50 +521,50 @@ export default function Reports() {
           </div>
         ) : (
           <div className="reports-list">
-            {visibleItems.map(r => (
+            {visibleItems.map(r => {
+              console.log('🔍 Debug - Report item data:', r);
+              return (
               <article key={r.id} className="report-item">
                 <div className="report-info">
-                  <div className="report-meta">Published: {formatDate(r.publishedAt)}</div>
-                  <div className="report-title">{r.title}</div>
+                  <div className="report-meta">Published: {formatDate(r.publish_date)}</div>
+                  <div className="report-title">{r.name}</div>
                 </div>
                 <div className="report-actions">
+                  {/* Desktop buttons */}
                   {can(user, 'reports:delete') && (
-                    <button type="button" className="btn-delete" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.title}`}>
+                    <button type="button" className="btn-delete" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.name}`}>
                       Delete
                     </button>
                   )}
                   {can(user, 'reports:create') && (
-                    <button type="button" className="btn-edit" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.title}`}>
+                    <button type="button" className="btn-edit" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.name}`}>
                       Edit Report
                     </button>
                   )}
-                  <button type="button" className="btn-download" onClick={() => downloadReport(r)} aria-label={`Download ${r.title}`}>
+                  <button type="button" className="btn-download" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
                     Download PDF
                   </button>
-
-                  {/* Mobile actions - shown only on mobile */}
+                  
+                  {/* Mobile buttons */}
                   <div className="report-actions-mobile">
                     {can(user, 'reports:delete') && (
-                      <button type="button" className="btn-delete-mobile" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.title}`}>
-                        <i className="bi bi-trash"></i>
+                      <button type="button" className="btn-delete-mobile" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.name}`}>
+                        Delete
                       </button>
                     )}
                     {can(user, 'reports:create') && (
-                      <button type="button" className="btn-edit-mobile" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.title}`}>
+                      <button type="button" className="btn-edit-mobile" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.name}`}>
                         Edit
                       </button>
                     )}
-                    <button type="button" className={`btn-download-mobile ${!can(user, 'reports:create') ? 'btn-download-mobile--user' : ''}`} onClick={() => downloadReport(r)} aria-label={`Download ${r.title}`}>
-                      {isVerySmallScreen ? (
-                        <i className="bi bi-download"></i>
-                      ) : (
-                        'Download PDF'
-                      )}
+                    <button type="button" className="btn-download-mobile" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
+                      Download
                     </button>
                   </div>
                 </div>
               </article>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
@@ -448,12 +600,17 @@ export default function Reports() {
             <div className="reports-addcat-modal__content">
               <button
                 className="close-btn"
-                onClick={closeCategoryModal}
+                onClick={creatingCategory ? undefined : closeCategoryModal}
+                disabled={creatingCategory}
               >
                 <i className="bi bi-x-lg"></i>
               </button>
-              <h2 className="reports-addcat-modal__title">Enter Tab name</h2>
-              <p className="reports-addcat-modal__subtitle">Please add new tab details</p>
+              <h2 className="reports-addcat-modal__title">
+                {editingCategory ? 'Edit Tab name' : 'Enter Tab name'}
+              </h2>
+              <p className="reports-addcat-modal__subtitle">
+                {editingCategory ? 'Please update tab details' : 'Please add new tab details'}
+              </p>
 
               <div className="form-group">
                 <label htmlFor="categoryName" className="reports-addcat-modal__label">Enter the Tab Name</label>
@@ -463,20 +620,32 @@ export default function Reports() {
                   placeholder="Please mention the name of the new tab which you want to create"
                   className="reports-addcat-modal__input"
                   value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onChange={(e) => {
+                    setNewCategoryName(e.target.value);
+                    // Clear error when user starts typing
+                    if (categoryError) {
+                      setCategoryError('');
+                    }
+                  }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === 'Enter' && !creatingCategory) {
                       e.preventDefault();
                       handleAddCategorySubmit();
                     }
                   }}
+                  disabled={creatingCategory}
                   autoFocus
                 />
               </div>
 
               {categoryError && (
-                <div className="error-message">
-                  {categoryError}
+                <div
+                  className="app-form__error-banner"
+                  role="alert"
+                  aria-live="assertive"
+                  tabIndex={-1}
+                >
+                  <strong>Error:</strong> {categoryError}
                 </div>
               )}
 
@@ -485,8 +654,9 @@ export default function Reports() {
                   type="button"
                   className="reports-addcat-modal__update-btn"
                   onClick={handleAddCategorySubmit}
+                  disabled={creatingCategory}
                 >
-                  Update
+                  {creatingCategory ? 'Loading...' : (editingCategory ? 'Update' : 'Upload')}
                 </button>
               </div>
             </div>
@@ -527,12 +697,22 @@ export default function Reports() {
                   id="title"
                   name="title"
                   value={reportForm.form.title}
-                  onChange={(e) => reportForm.setField('title', e.target.value)}
+                  onChange={(e) => {
+                    reportForm.setField('title', e.target.value);
+                    if (reportError) setReportError('');
+                  }}
                   placeholder="Please mention how do you want to save the document name"
                   required
                 />
                 {reportForm.errors.title && (
-                  <div className="error-message">{reportForm.errors.title}</div>
+                  <div
+                    className="app-form__error-banner"
+                    role="alert"
+                    aria-live="assertive"
+                    tabIndex={-1}
+                  >
+                    <strong>Error:</strong> {reportForm.errors.title}
+                  </div>
                 )}
               </div>
 
@@ -542,19 +722,28 @@ export default function Reports() {
                   id="typeId"
                   name="typeId"
                   value={reportForm.form.typeId || ''}
-                  onChange={(e) => reportForm.setField('typeId', e.target.value)}
+                  onChange={(e) => {
+                    reportForm.setField('typeId', e.target.value);
+                    if (reportError) setReportError('');
+                  }}
                   options={categories
-                    .map(name => (typeof name === 'string' ? name.trim() : ''))
-                    .filter(Boolean)
-                    .map(name => ({ value: name, label: name }))}
+                    .filter(cat => cat.status === 1)
+                    .map(cat => ({ value: cat.title, label: cat.title }))}
                   placeholder="Select type"
                   actionLabel="New category..."
                   onAction={() => setIsCategoryModalOpen(true)}
                 />
                 {reportForm.errors.typeId && (
-                  <div className="error-message">{reportForm.errors.typeId}</div>
+                  <div
+                    className="app-form__error-banner"
+                    role="alert"
+                    aria-live="assertive"
+                    tabIndex={-1}
+                  >
+                    <strong>Error:</strong> {reportForm.errors.typeId}
+                  </div>
                 )}
-                {reportForm.form.typeId && !categories.includes(reportForm.form.typeId) && (
+                {reportForm.form.typeId && !categories.some(cat => cat.title === reportForm.form.typeId) && (
                   <p className="report-type-helper">Previously selected category was removed. Please choose another.</p>
                 )}
               </div>
@@ -566,12 +755,22 @@ export default function Reports() {
                   id="linkUrl"
                   name="linkUrl"
                   value={reportForm.form.linkUrl}
-                  onChange={(e) => reportForm.setField('linkUrl', e.target.value)}
+                  onChange={(e) => {
+                    reportForm.setField('linkUrl', e.target.value);
+                    if (reportError) setReportError('');
+                  }}
                   placeholder="https://example.com/report.pdf"
                   required
                 />
                 {reportForm.errors.linkUrl && (
-                  <div className="error-message">{reportForm.errors.linkUrl}</div>
+                  <div
+                    className="app-form__error-banner"
+                    role="alert"
+                    aria-live="assertive"
+                    tabIndex={-1}
+                  >
+                    <strong>Error:</strong> {reportForm.errors.linkUrl}
+                  </div>
                 )}
               </div>
 
@@ -591,27 +790,74 @@ export default function Reports() {
                   </label>
                   <p className="file-status">
                     {reportForm.form.fileName || 'No file chosen'}
+                    {editingReport && reportForm.form.fileName && (
+                      <span className="existing-file-indicator"> (Existing file)</span>
+                    )}
                   </p>
+                  {console.log('🔍 Debug - File display data:', {
+                    fileName: reportForm.form.fileName,
+                    imagePreviewUrl: reportForm.form.imagePreviewUrl,
+                    hasFile: !!reportForm.form.file,
+                    mode: editingReport ? 'edit' : 'add',
+                    editingReport: editingReport,
+                    fileUrl: editingReport?.file_url,
+                    fileNameFromAPI: editingReport?.file_name
+                  })}
                   {reportForm.form.imagePreviewUrl && (
                     <div className="image-preview">
                       <img 
                         src={reportForm.form.imagePreviewUrl} 
                         alt="Preview" 
+                        onLoad={() => console.log('✅ Debug - Image loaded successfully:', reportForm.form.imagePreviewUrl)}
                         onError={(e) => {
+                          console.log('❌ Debug - Image failed to load (CORS?):', reportForm.form.imagePreviewUrl);
                           e.target.classList.add('image-preview-hidden');
                         }}
                       />
                     </div>
                   )}
+                  {editingReport && reportForm.form.fileName && (
+                    <div className="existing-file-info">
+                      <p className="file-info-text">
+                        <i className="bi bi-file-earmark-pdf" style={{marginRight: '8px', color: '#dc2626'}}></i>
+                        Current file: <strong>{reportForm.form.fileName}</strong>
+                      </p>
+                      <p className="file-info-note">
+                        Select a new file to replace the existing one, or leave empty to keep the current file.
+                      </p>
+                    </div>
+                  )}
                   {reportForm.errors.file && (
-                    <div className="error-message">{reportForm.errors.file}</div>
+                    <div
+                      className="app-form__error-banner"
+                      role="alert"
+                      aria-live="assertive"
+                      tabIndex={-1}
+                    >
+                      <strong>Error:</strong> {reportForm.errors.file}
+                    </div>
                   )}
                 </div>
               </div>
 
+              {reportError && (
+                <div
+                  className="app-form__error-banner"
+                  role="alert"
+                  aria-live="assertive"
+                  tabIndex={-1}
+                >
+                  <strong>Error:</strong> {reportError}
+                </div>
+              )}
+
               <div className="form-actions">
-                <button type="submit" className="upload-now-btn">
-                  Upload Now
+                <button 
+                  type="submit" 
+                  className="upload-now-btn"
+                  disabled={isSubmittingReport}
+                >
+                  {isSubmittingReport ? 'Loading...' : 'Upload Now'}
                 </button>
               </div>
             </form>

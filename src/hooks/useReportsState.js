@@ -1,87 +1,436 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { readReports, writeReports, addCategory, deleteCategory, upsertReport, deleteReport, saveReportsAndCategories } from '../helpers/reportsStorage';
+import reportCategoriesService from '../services/reportCategoriesService';
+import reportsService from '../services/reportsService';
+// import { readReports, writeReports, addCategory, deleteCategory, upsertReport, deleteReport, saveReportsAndCategories } from '../helpers/reportsStorage';
+
+const CACHE_KEY = 'reports_categories_cache';
+const REPORTS_CACHE_KEY = 'reports_cache';
+const CACHE_EXPIRY_TIME = 5 * 60 * 1000; // 5 minutos en milisegundos
+
+const getCachedCategories = () => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+    
+    const { data, timestamp } = JSON.parse(cached);
+    const now = Date.now();
+    
+    if (now - timestamp > CACHE_EXPIRY_TIME) {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    
+    // CRITICAL: Validate cached data structure
+    if (!Array.isArray(data) || data.some(cat => !cat.id || !cat.title)) {
+      console.error('🚨 Invalid cached categories data structure, clearing cache');
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error reading cached categories:', error);
+    localStorage.removeItem(CACHE_KEY);
+    return null;
+  }
+};
+
+const setCachedCategories = (categories) => {
+  try {
+    // Validate data before caching
+    if (!Array.isArray(categories) || categories.some(cat => !cat.id || !cat.title)) {
+      console.error('🚨 Invalid categories data, not caching');
+      return;
+    }
+    
+    const cacheData = {
+      data: categories,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+  } catch (error) {
+    console.error('Error caching categories:', error);
+  }
+};
+
+const clearCategoriesCache = () => {
+  try {
+    localStorage.removeItem(CACHE_KEY);
+  } catch (error) {
+    console.error('Error clearing categories cache:', error);
+  }
+};
+
+// Reports cache functions
+const getCachedReports = () => {
+  try {
+    const cached = localStorage.getItem(REPORTS_CACHE_KEY);
+    if (!cached) return null;
+    
+    const { data, timestamp } = JSON.parse(cached);
+    const now = Date.now();
+    
+    if (now - timestamp > CACHE_EXPIRY_TIME) {
+      localStorage.removeItem(REPORTS_CACHE_KEY);
+      return null;
+    }
+    
+    // Validate cached data structure
+    if (!Array.isArray(data) || data.some(report => !report.id || !report.name)) {
+      console.error('🚨 Invalid cached reports data structure, clearing cache');
+      localStorage.removeItem(REPORTS_CACHE_KEY);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error reading cached reports:', error);
+    localStorage.removeItem(REPORTS_CACHE_KEY);
+    return null;
+  }
+};
+
+const setCachedReports = (reports) => {
+  try {
+    // Validate data before caching
+    if (!Array.isArray(reports) || reports.some(report => !report.id || !report.name)) {
+      console.error('🚨 Invalid reports data, not caching');
+      return;
+    }
+    
+    const cacheData = {
+      data: reports,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cacheData));
+  } catch (error) {
+    console.error('Error caching reports:', error);
+  }
+};
+
+const clearReportsCache = () => {
+  try {
+    localStorage.removeItem(REPORTS_CACHE_KEY);
+  } catch (error) {
+    console.error('Error clearing reports cache:', error);
+  }
+};
 
 export function useReportsState() {
-  const [data, setData] = useState(() => readReports());
-  const [activeCategoryId, setActiveCategoryId] = useState(() => {
-    const initialData = readReports();
-    return initialData.categories[0] || null;
-  });
+  // Initialize with empty state instead of localStorage
+  const [data, setData] = useState({ categories: [], items: [] });
+  
+  // Initialize with cached data if available
+  useEffect(() => {
+    const cachedCategories = getCachedCategories();
+    if (cachedCategories) {
+      setData(prev => ({ ...prev, categories: cachedCategories }));
+      if (cachedCategories.length > 0) {
+        setActiveCategoryId(cachedCategories[0].id);
+      }
+    }
+  }, []);
+  
+  const [activeCategoryId, setActiveCategoryId] = useState(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [editingReport, setEditingReport] = useState(null);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [shouldReloadCategories, setShouldReloadCategories] = useState(false);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [shouldReloadReports, setShouldReloadReports] = useState(false);
 
-  // Save data to storage whenever data changes
+  // Function to refresh categories (called after create/update/delete)
+  const refreshCategories = useCallback(async () => {
+    // Clear cache to force API call
+    clearCategoriesCache();
+    setShouldReloadCategories(true);
+  }, []);
+
+  // Load categories from API function
+  const loadCategoriesFromAPI = useCallback(async () => {
+      // Check cache first for immediate display
+      const cachedCategories = getCachedCategories();
+      if (cachedCategories) {
+        setData(prev => ({ ...prev, categories: cachedCategories }));
+        
+        if (!activeCategoryId && cachedCategories.length > 0) {
+          setActiveCategoryId(cachedCategories[0].id);
+        }
+        
+        // Check if cache is still fresh (less than 5 minutes old)
+        const cacheData = JSON.parse(localStorage.getItem(CACHE_KEY));
+        const cacheAge = Date.now() - cacheData.timestamp;
+        const isCacheFresh = cacheAge < CACHE_EXPIRY_TIME;
+        
+        if (isCacheFresh) {
+          return; // Skip API call if cache is fresh
+        }
+      }
+      
+      // Only call API if no cache or cache is expired
+      setCategoriesLoading(true);
+      try {
+        const response = await reportCategoriesService.getReportCategories();
+        
+        if (response.http_status === 200 && response.data) {
+          // Handle different response structures
+          let dataArray = [];
+          
+          if (Array.isArray(response.data)) {
+            // Direct array response
+            dataArray = response.data;
+          } else if (response.data.categories && Array.isArray(response.data.categories)) {
+            // Nested categories array
+            dataArray = response.data.categories;
+          } else if (response.data.data && Array.isArray(response.data.data)) {
+            // Double nested data
+            dataArray = response.data.data;
+          }
+          
+          // Transform backend categories to frontend format
+          const categories = dataArray.map(category => ({
+            id: category.id,
+            title: category.title,
+            status: category.status
+          }));
+          
+          setData(prev => ({ ...prev, categories }));
+          
+          // Validate server data vs cached data
+          const cachedCategories = getCachedCategories();
+          if (cachedCategories && JSON.stringify(cachedCategories) !== JSON.stringify(categories)) {
+            console.warn('🚨 Cache inconsistency detected! Server data differs from cache');
+          }
+          
+          // Cache the validated server categories
+          setCachedCategories(categories);
+          
+          // Set first category as active if none is selected
+          if (!activeCategoryId && categories.length > 0) {
+            setActiveCategoryId(categories[0].id);
+          }
+        }
+      } catch (error) {
+        if (error.message.includes('No data found')) {
+          // Handle 404 - no categories found
+          setData(prev => ({ ...prev, categories: [] }));
+        } else {
+          console.error('Error loading report categories from API:', error);
+          // Keep empty state on other errors
+        }
+      } finally {
+        setCategoriesLoading(false);
+      }
+  }, []);
+
+  // Function to refresh reports (called after create/update/delete)
+  const refreshReports = useCallback(async () => {
+    console.log('🔍 Debug - refreshReports called, clearing cache...');
+    
+    // Clear cache to force API call
+    clearReportsCache();
+    
+    // Immediately update local state to remove deleted items
+    setData(prev => ({ ...prev, items: [] }));
+    console.log('✅ Debug - Local state cleared, reports array is now empty');
+    
+    setShouldReloadReports(true);
+    console.log('✅ Debug - shouldReloadReports set to true');
+  }, []);
+
+  // Load reports from API function
+  const loadReportsFromAPI = useCallback(async () => {
+    console.log('🔍 Debug - loadReportsFromAPI called');
+    
+    // Check cache first for immediate display
+    const cachedReports = getCachedReports();
+    console.log('🔍 Debug - Cached reports found:', cachedReports?.length || 0);
+    
+    if (cachedReports) {
+      setData(prev => ({ ...prev, items: cachedReports }));
+      console.log('✅ Debug - Set data from cache:', cachedReports.length, 'reports');
+      
+      // Check if cache is still fresh (less than 5 minutes old)
+      const cacheData = JSON.parse(localStorage.getItem(REPORTS_CACHE_KEY));
+      const cacheAge = Date.now() - cacheData.timestamp;
+      const isCacheFresh = cacheAge < CACHE_EXPIRY_TIME;
+      
+      console.log('🔍 Debug - Cache age:', cacheAge, 'ms, is fresh:', isCacheFresh);
+      
+      if (isCacheFresh) {
+        console.log('✅ Debug - Cache is fresh, skipping API call');
+        return; // Skip API call if cache is fresh
+      }
+    }
+
+    setReportsLoading(true);
+    try {
+      const response = await reportsService.getReports();
+      if (response.http_status === 200 && response.data) {
+        let dataArray = [];
+        if (Array.isArray(response.data)) {
+          dataArray = response.data;
+        } else if (response.data.reports && Array.isArray(response.data.reports)) {
+          dataArray = response.data.reports;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          dataArray = response.data.data;
+        }
+        
+        setData(prev => ({ ...prev, items: dataArray }));
+        setCachedReports(dataArray);
+        
+        console.log('✅ Debug - Reports loaded from API:', dataArray.length, 'reports');
+        console.log('✅ Debug - Reports data:', dataArray);
+      }
+    } catch (error) {
+      if (error.message.includes('No data found')) {
+        setData(prev => ({ ...prev, items: [] }));
+      } else {
+        console.error('Error loading reports from API:', error);
+      }
+    } finally {
+      setReportsLoading(false);
+    }
+  }, []);
+
+  // Effect to reload categories when needed
   useEffect(() => {
-    writeReports(data);
-  }, [data]);
+    if (shouldReloadCategories) {
+      loadCategoriesFromAPI();
+      setShouldReloadCategories(false);
+    }
+  }, [shouldReloadCategories, loadCategoriesFromAPI]);
 
-  const visibleItems = useMemo(() => 
-    data.items.filter(item => {
-      const byId = item.typeId && item.typeId === activeCategoryId;
-      const byName = item.typeName && item.typeName === activeCategoryId;
-      return byId || byName;
-    }),
-    [data.items, activeCategoryId]
-  );
+  // Effect to reload reports when needed
+  useEffect(() => {
+    if (shouldReloadReports) {
+      loadReportsFromAPI();
+      setShouldReloadReports(false);
+    }
+  }, [shouldReloadReports, loadReportsFromAPI]);
 
-  const deleteCategoryCascade = useCallback((categoryId) => {
-    setData(prev => {
-      const deleted = prev.categories.find(c => c === categoryId) || null;
-      const deletedName = (deleted || '').trim().toLowerCase();
+  // Load categories from API on component mount
+  useEffect(() => {
+    loadCategoriesFromAPI();
+  }, [loadCategoriesFromAPI]);
 
-      const nextCategories = prev.categories.filter(c => c !== categoryId);
+  // Load reports from API on component mount
+  useEffect(() => {
+    loadReportsFromAPI();
+  }, [loadReportsFromAPI]);
 
-      // Remove all reports belonging to the deleted category.
-      // Also catch legacy items that only stored typeName.
-      const nextReports = prev.items.filter(r => {
-        const byId = r.typeId && r.typeId !== categoryId;
-        const byName = (r.typeName || '').trim().toLowerCase() !== deletedName;
-        return byId && byName;
-      });
+  // Remove localStorage save effect - data will come from API
+  // useEffect(() => {
+  //   writeReports(data);
+  // }, [data]);
 
-      // Persist atomically
-      saveReportsAndCategories(nextReports, nextCategories);
-
-      // Fix active tab
-      const nextActive = nextCategories[0] || null;
-
-      return { ...prev, categories: nextCategories, items: nextReports, activeCategoryId: nextActive };
+  const visibleItems = useMemo(() => {
+    if (!activeCategoryId) return [];
+    
+    console.log('🔍 Debug - All reports:', data.items);
+    console.log('🔍 Debug - Active category ID:', activeCategoryId);
+    
+    const filtered = data.items.filter(item => {
+      // Filter by report_category_id (numeric ID from API)
+      return item.report_category_id === activeCategoryId;
     });
     
-    // Update active category
-    setActiveCategoryId(prevActive => {
-      if (prevActive === categoryId) {
-        const nextCategories = data.categories.filter(c => c !== categoryId);
-        return nextCategories[0] || null;
-      }
-      return prevActive;
-    });
-  }, [data.categories]);
+    console.log('🔍 Debug - Filtered reports:', filtered);
+    return filtered;
+  }, [data.items, activeCategoryId]);
 
-  const handleAddCategory = useCallback((name) => {
+  const handleAddCategory = useCallback(async (name) => {
     const trimmedName = name.trim();
-    if (trimmedName && !data.categories.includes(trimmedName)) {
-      const updatedData = addCategory(trimmedName);
-      setData(updatedData);
-      setIsCategoryModalOpen(false);
+    if (trimmedName && !data.categories.some(cat => cat.title === trimmedName)) {
+      setCreatingCategory(true);
+      try {
+        await reportCategoriesService.createReportCategory({
+          title: trimmedName,
+          status: 1
+        });
+        
+        // Refresh categories from API (this will handle shimmer loading)
+        await refreshCategories();
+        
+        // Don't close modal here - let the component handle it
+      } catch (error) {
+        console.error('Error creating report category:', error);
+        throw error; // Re-throw to be handled by the component
+      } finally {
+        setCreatingCategory(false);
+      }
     }
-  }, [data.categories]);
+  }, [data.categories, refreshCategories]);
 
-  const handleDeleteCategory = useCallback((name) => {
-    setCategoryToDelete(name);
+  const handleDeleteCategory = useCallback((id) => {
+    setCategoryToDelete(id);
     setConfirmModalOpen(true);
   }, []);
 
-  const handleConfirmDelete = useCallback(() => {
-    if (categoryToDelete) {
-      deleteCategoryCascade(categoryToDelete);
-      setConfirmModalOpen(false);
-      setCategoryToDelete(null);
+  const resetCreatingCategory = useCallback(() => {
+    setCreatingCategory(false);
+  }, []);
+
+  const handleEditCategory = useCallback((id) => {
+    const category = data.categories.find(cat => cat.id === id);
+    if (category) {
+      setEditingCategory(category);
+      setIsCategoryModalOpen(true);
     }
-  }, [categoryToDelete, deleteCategoryCascade]);
+  }, [data.categories]);
+
+  const handleUpdateCategory = useCallback(async (newName) => {
+    if (editingCategory && newName.trim().length >= 3) {
+      setCreatingCategory(true);
+      try {
+        await reportCategoriesService.updateReportCategory(editingCategory.id, {
+          title: newName.trim(),
+          status: editingCategory.status
+        });
+        
+        // Refresh categories from API (this will handle shimmer loading)
+        await refreshCategories();
+        
+        // Don't close modal here - let the component handle it
+      } catch (error) {
+        console.error('Error updating report category:', error);
+        throw error; // Re-throw to be handled by the component
+      } finally {
+        setCreatingCategory(false);
+      }
+    }
+  }, [editingCategory, refreshCategories]);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (categoryToDelete) {
+      try {
+        await reportCategoriesService.deleteReportCategory(categoryToDelete);
+        
+        // Refresh categories from API
+        await refreshCategories();
+        
+        // Switch to first remaining category if current was deleted
+        if (activeCategoryId === categoryToDelete) {
+          const remainingCategories = data.categories.filter(cat => cat.id !== categoryToDelete);
+          if (remainingCategories.length > 0) {
+            setActiveCategoryId(remainingCategories[0].id);
+          } else {
+            setActiveCategoryId(null);
+          }
+        }
+        
+        setConfirmModalOpen(false);
+        setCategoryToDelete(null);
+      } catch (error) {
+        console.error('Error deleting report category:', error);
+      }
+    }
+  }, [categoryToDelete, activeCategoryId, data.categories, refreshCategories]);
 
   const openCreateReportModal = useCallback(() => {
     setEditingReport(null);
@@ -98,48 +447,162 @@ export function useReportsState() {
     setEditingReport(null);
   }, []);
 
-  const createOrUpdateReport = useCallback((payload) => {
-    const updatedData = upsertReport(payload);
-    setData(updatedData);
-    setIsReportModalOpen(false);
-    setEditingReport(null);
-  }, []);
+  const createOrUpdateReport = useCallback(async (reportData) => {
+    try {
+      if (editingReport) {
+        // Update existing report
+        await reportsService.updateReport(editingReport.id, reportData);
+      } else {
+        // Create new report
+        await reportsService.createReport(reportData);
+      }
+      
+      // Refresh reports from API
+      await refreshReports();
+      
+      setIsReportModalOpen(false);
+      setEditingReport(null);
+    } catch (error) {
+      console.error('Error creating/updating report:', error);
+      throw error; // Re-throw to be handled by the component
+    }
+  }, [editingReport, refreshReports]);
 
-  const onDeleteReport = useCallback((id) => {
-    const updatedData = deleteReport(id);
-    setData(updatedData);
-    // TODO BACKEND: DELETE /api/reports/:id
-  }, []);
+  const onDeleteReport = useCallback(async (id) => {
+    try {
+      console.log('🔍 Debug - Deleting report with ID:', id);
+      await reportsService.deleteReport(id);
+      console.log('✅ Debug - Report deleted successfully from server');
+      
+      // Refresh reports from API
+      await refreshReports();
+      console.log('✅ Debug - Reports refreshed from API');
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      throw error; // Re-throw to be handled by the component
+    }
+  }, [refreshReports]);
 
-  const downloadReport = useCallback((report) => {
-    if (report.fileUrl) {
-      // Create temporary anchor for download
-      const link = document.createElement('a');
-      link.href = report.fileUrl;
-      link.download = report.title;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+  const downloadReport = useCallback(async (report) => {
+    console.log('🔍 Debug - Download report data:', report);
+    
+    // Try different field names for file URL
+    const fileUrl = report.fileUrl || report.file || report.file_url;
+    const fileName = report.title || report.name || 'report';
+    
+    if (fileUrl) {
+      console.log('✅ Debug - Downloading file:', fileUrl, 'as:', fileName);
+      
+      try {
+        // Get token for authenticated download
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('❌ Debug - No token found for authenticated download');
+          // Fallback to direct download
+          const link = document.createElement('a');
+          link.href = fileUrl;
+          link.download = fileName;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          return;
+        }
+        
+        // Fetch file with authorization header
+        console.log('🔍 Debug - Fetching file with token...');
+        const response = await fetch(fileUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/pdf,application/octet-stream,*/*'
+          }
+        });
+        
+        if (!response.ok) {
+          console.error('❌ Debug - Download failed:', response.status, response.statusText);
+          // Fallback to direct download
+          const link = document.createElement('a');
+          link.href = fileUrl;
+          link.download = fileName;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          return;
+        }
+        
+        // Get file blob
+        const blob = await response.blob();
+        console.log('✅ Debug - File blob received:', blob.size, 'bytes');
+        
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        console.log('✅ Debug - Download completed successfully');
+        
+      } catch (error) {
+        console.error('❌ Debug - Download error:', error);
+        // Fallback to direct download
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = fileName;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
     } else {
-      console.info('Download report', report.id);
+      console.warn('❌ Debug - No file URL found for download:', {
+        fileUrl: report.fileUrl,
+        file: report.file,
+        file_url: report.file_url,
+        report: report
+      });
     }
   }, []);
 
-  const formatDate = useCallback((iso) => {
+  const formatDate = useCallback((dateString) => {
     try {
-      const d = new Date(iso);
-      return d.toLocaleDateString('en-US', { 
+      if (!dateString) return '';
+      
+      // Handle both ISO format and YYYY-MM-DD format
+      let date;
+      if (dateString.includes('T')) {
+        // ISO format: "2025-01-27T10:30:00Z"
+        date = new Date(dateString);
+      } else {
+        // YYYY-MM-DD format: "2025-01-27"
+        date = new Date(dateString + 'T00:00:00');
+      }
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date:', dateString);
+        return dateString || '';
+      }
+      
+      return date.toLocaleDateString('en-US', { 
         year: 'numeric', 
         month: 'short', 
         day: 'numeric' 
       });
-    } catch {
-      return iso || '';
+    } catch (error) {
+      console.warn('Error formatting date:', dateString, error);
+      return dateString || '';
     }
   }, []);
 
   const seedDemoReports = useCallback(() => {
+    // TODO: Remove demo data seeding - will use API data
+    
     const demoData = {
       categories: ['Annual Report', 'Other Reports'], 
       items: [
@@ -159,7 +622,6 @@ export function useReportsState() {
     };
 
     setData(demoData);
-    writeReports(demoData);
     
     // Set first category as active
     if (demoData.categories.length > 0) {
@@ -179,11 +641,18 @@ export function useReportsState() {
     editingReport,
     confirmModalOpen,
     categoryToDelete,
+    categoriesLoading,
+    creatingCategory,
+    editingCategory,
+    setEditingCategory,
     setActiveCategory: setActiveCategoryId,
     handleAddCategory,
     handleDeleteCategory,
+    resetCreatingCategory,
+    handleEditCategory,
+    handleUpdateCategory,
     handleConfirmDelete,
-    deleteCategoryCascade,
+    refreshCategories,
     openCreateReportModal,
     openEditReportModal,
     closeReportModal,
@@ -194,6 +663,10 @@ export function useReportsState() {
     seedDemoReports,
     setIsCategoryModalOpen,
     setConfirmModalOpen,
-    setCategoryToDelete
+    setCategoryToDelete,
+    // New reports-related exports
+    reportsLoading,
+    refreshReports,
+    loadReportsFromAPI
   };
 }

@@ -1036,29 +1036,132 @@
   width: 100%;
 }
 
+// Mobile Newsletter Skeleton Styles (NEW STRUCTURE)
+.newsletter-card-skeleton-mobile {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.newsletter-card-skeleton-mobile__text-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.newsletter-card-skeleton-mobile__title {
+  height: 24px;
+  background-color: #e5e7eb; // Same gray as other skeletons
+  border-radius: 4px;
+  width: 85%;
+  position: relative;
+  overflow: hidden;
+}
+
+.newsletter-card-skeleton-mobile__subtitle {
+  height: 16px;
+  background-color: #e5e7eb; // Same gray as other skeletons
+  border-radius: 4px;
+  width: 70%;
+  position: relative;
+  overflow: hidden;
+}
+
+.newsletter-card-skeleton-mobile__date {
+  height: 14px;
+  background-color: #e5e7eb; // Same gray as other skeletons
+  border-radius: 4px;
+  width: 45%;
+  position: relative;
+  overflow: hidden;
+}
+
+.newsletter-card-skeleton-mobile__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.newsletter-card-skeleton-mobile__button-left {
+  width: 36px;
+  height: 36px;
+  background-color: #e5e7eb; // Light gray for left button
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.newsletter-card-skeleton-mobile__button-middle {
+  flex: 1;
+  height: 36px;
+  background-color: #e5e7eb; // Light gray for middle button
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  max-width: 200px;
+}
+
+.newsletter-card-skeleton-mobile__button-right {
+  width: 36px;
+  height: 36px;
+  background-color: #e5e7eb; // Same gray as other skeletons
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+// Shimmer animation for mobile skeleton
+.newsletter-card-skeleton-mobile__title::before,
+.newsletter-card-skeleton-mobile__subtitle::before,
+.newsletter-card-skeleton-mobile__date::before,
+.newsletter-card-skeleton-mobile__button-left::before,
+.newsletter-card-skeleton-mobile__button-middle::before,
+.newsletter-card-skeleton-mobile__button-right::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
 // Responsive adjustments for newsletter skeletons
 @media (max-width: 768px) {
-  .newsletter-card-skeleton__content {
-    padding: 15px;
-    gap: 15px;
+  // Hide desktop skeleton on mobile
+  .newsletter-card-skeleton {
+    display: none;
   }
   
-  .newsletter-card-skeleton__right {
-    gap: 8px;
+  // Show mobile skeleton on mobile
+  .newsletter-card-skeleton-mobile {
+    display: flex;
+  }
+}
+
+@media (min-width: 769px) {
+  // Hide mobile skeleton on desktop
+  .newsletter-card-skeleton-mobile {
+    display: none;
   }
   
-  .newsletter-card-skeleton__button-small {
-    width: 28px;
-    height: 28px;
-  }
-  
-  .newsletter-card-skeleton__button-medium {
-    width: 100px;
-    height: 28px;
-  }
-  
-  .newsletter-card-skeleton__button-large {
-    width: 120px;
-    height: 28px;
+  // Show desktop skeleton on desktop
+  .newsletter-card-skeleton {
+    display: block;
   }
 }

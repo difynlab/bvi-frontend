@@ -19,7 +19,7 @@ const NewsletterPDFDocument = ({ newsletter }) => {
 
   // Función para obtener la fecha correcta
   const getPublishedDate = (newsletter) => {
-    return newsletter.createdAt || newsletter.publishDate || 'Date not available';
+    return newsletter.data?.created_at || newsletter.createdAt || newsletter.created_at || newsletter.publishDate || new Date();
   };
 
   // Función para obtener un fileName seguro
