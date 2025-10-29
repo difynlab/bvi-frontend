@@ -252,6 +252,20 @@ select.settings-input {
   }
 }
 
+.app-form__success-banner {
+  background-color: #d4edda;
+  border: 1px solid #28a745;
+  color: #155724;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  
+  strong {
+    font-weight: 600;
+  }
+}
+
 // Contact row - two fields in single flex row
 .settings-contact-row {
   display: flex;

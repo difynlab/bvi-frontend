@@ -24,7 +24,9 @@ export default function Settings() {
     setConfirmPassword,
     canSave,
     save,
-    errorMessage
+    errorMessage,
+    isSaving,
+    successMessage
   } = useSettingsForm();
 
   const cur = usePasswordVisibility(false);
@@ -46,14 +48,28 @@ export default function Settings() {
           <h2 className="settings-card-title">General Details</h2>
 
           <div className="settings-field">
-            <label className="settings-label">User Name<span className="settings-req">*</span></label>
-            <input
-              className="settings-input"
-              type="text"
-              value={form.name}
-              onChange={(e) => onChange('name', e.target.value)}
-              placeholder="Name"
-            />
+            <div className="settings-contact-row">
+              <div className="settings-contact-field">
+                <label className="settings-label">First Name<span className="settings-req">*</span></label>
+                <input
+                  className="settings-input"
+                  type="text"
+                  value={form.firstName}
+                  onChange={(e) => onChange('firstName', e.target.value)}
+                  placeholder="First Name"
+                />
+              </div>
+              <div className="settings-contact-field">
+                <label className="settings-label">Last Name<span className="settings-req">*</span></label>
+                <input
+                  className="settings-input"
+                  type="text"
+                  value={form.lastName}
+                  onChange={(e) => onChange('lastName', e.target.value)}
+                  placeholder="Last Name"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="settings-field">
@@ -266,8 +282,22 @@ export default function Settings() {
               <strong>Error:</strong> {errorMessage}
             </div>
           )}
-          <button type="submit" className="settings-save-btn" disabled={!canSave}>
-            Save Changes
+          {successMessage && (
+            <div
+              className="app-form__success-banner"
+              role="alert"
+              aria-live="assertive"
+              tabIndex={-1}
+            >
+              <strong>Success:</strong> {successMessage}
+            </div>
+          )}
+          <button 
+            type="submit" 
+            className="settings-save-btn" 
+            disabled={!canSave || isSaving}
+          >
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
           
           <button 

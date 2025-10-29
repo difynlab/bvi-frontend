@@ -295,7 +295,7 @@ const Dashboard = () => {
           </div>
 
           <div className="qa-actions">
-            <NavLink to="/settings" className="qa-secondary-btn">Update Profile</NavLink>
+            <NavLink to="/profile" className="qa-secondary-btn">Update Profile</NavLink>
             <NavLink to="/legislation" className="qa-secondary-btn">Contact Support</NavLink>
           </div>
         </div>

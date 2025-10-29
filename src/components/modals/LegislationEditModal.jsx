@@ -4,6 +4,9 @@ import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import RichTextEditor from '../editor/RichTextEditor';
 import { isValidUrl } from '../../helpers/urlValidation';
 import ModalLifecycleLock from './ModalLifecycleLock';
+import { pdf } from '@react-pdf/renderer';
+import LegislationPDFDocument from '../pdf/LegislationPDFDocument';
+import legislationService from '../../services/legislationService';
 import '../../styles/components/LegislationEditModal.scss';
 
 const LegislationEditModal = ({ isOpen, onClose, onSave, existingAttachments = [] }) => {
@@ -14,6 +17,7 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, existingAttachments = [
   const [fileName, setFileName] = useState('');
   const [errors, setErrors] = useState({});
   const [missingRequired, setMissingRequired] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const bannerRef = useRef(null);
   
   const fileInputRef = useRef(null);
@@ -85,10 +89,8 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, existingAttachments = [
   const handleLinkChange = (e) => {
     const value = e.target.value;
     setLinkUrl(value);
-    
-    if (value && !isValidUrl(value)) {
-      setErrors(prev => ({ ...prev, link: 'Please enter a valid URL' }));
-    } else {
+    // No mostrar error mientras escribe, solo limpiar si es válido
+    if (!value || isValidUrl(value)) {
       setErrors(prev => ({ ...prev, link: '' }));
     }
   };
@@ -101,16 +103,23 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, existingAttachments = [
     }
   };
 
-  // Required fields validation
-  const REQUIRED = [
-    { key: 'description', label: 'Description', test: () => (description || '').trim().length > 0 },
-    { key: 'file', label: 'File Upload', test: () => !!selectedFile },
-    { key: 'link', label: 'Link URL', test: () => (linkUrl || '').trim().length > 0 && isValidUrl(linkUrl) }
-  ];
-
-  // Validation function
+  // Validation function - link siempre requerido, description O file requerido
   const validateRequired = () => {
-    const missing = REQUIRED.filter(r => !r.test()).map(r => r.label);
+    const missing = [];
+    
+    // Link siempre es requerido
+    if (!linkUrl.trim() || !isValidUrl(linkUrl)) {
+      missing.push('Link URL');
+    }
+    
+    // Description O File debe estar presente (al menos uno)
+    const hasDescription = (description || '').trim().length > 0;
+    const hasFile = !!selectedFile;
+    
+    if (!hasDescription && !hasFile) {
+      missing.push('Description or File Upload');
+    }
+    
     setMissingRequired(missing);
     return missing.length === 0;
   };
@@ -123,62 +132,86 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, existingAttachments = [
   const validateForm = () => {
     const newErrors = {};
     
-    if (!description.trim()) {
-      newErrors.description = 'Description is required';
-    }
-    
-    if (!selectedFile) {
-      newErrors.file = 'File upload is required';
-    }
-    
+    // Link siempre requerido
     if (!linkUrl.trim()) {
       newErrors.link = 'Link URL is required';
     } else if (!isValidUrl(linkUrl)) {
       newErrors.link = 'Please enter a valid URL';
     }
     
+    // Description O File requerido (al menos uno)
+    const hasDescription = (description || '').trim().length > 0;
+    const hasFile = !!selectedFile;
+    
+    if (!hasDescription && !hasFile) {
+      newErrors.descriptionOrFile = 'Debe ingresar al menos una descripción o un archivo PDF';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validateRequired()) {
       bannerRef.current?.focus();
       return;
     }
 
-    // Generate automatic title based on existing attachments
-    const generateSupportDocumentTitle = (attachments) => {
-      if (!attachments || attachments.length === 0) {
-        return 'Support Document 1';
-      }
+    setIsSubmitting(true);
 
-      // Extract numbers from existing titles
-      const numbers = attachments
-        .map(attachment => {
-          const match = attachment.title?.match(/Support Document (\d+)/i);
-          return match ? parseInt(match[1], 10) : 0;
-        })
-        .filter(num => num > 0);
+    try {
+      // Si no se adjunta archivo, NO generar PDF: enviar files[] vacío
+      const fileToSend = selectedFile ? selectedFile : null;
 
-      // Find the highest number
-      const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
-      
-      return `Support Document ${maxNumber + 1}`;
-    };
+      // Preparar datos para enviar al backend
+      const backendData = {
+        description: description.trim(),
+        link: linkUrl.trim(),
+        files: fileToSend ? [fileToSend] : []
+      };
 
-    const newAttachment = {
-      id: `attachment-${Date.now()}`,
-      title: generateSupportDocumentTitle(existingAttachments),
-      descriptionHTML: description,
-      fileUrl: selectedFile ? URL.createObjectURL(selectedFile) : '',
-      fileName: fileName,
-      linkUrl: linkUrl,
-      createdAt: new Date().toISOString()
-    };
+      // Enviar al backend
+      await legislationService.updateLegislation(backendData);
 
-    onSave(newAttachment);
-    handleClose();
+      // Si es exitoso, actualizar estado local
+      // Generate automatic title based on existing attachments
+      const generateSupportDocumentTitle = (attachments) => {
+        if (!attachments || attachments.length === 0) {
+          return 'Support Document 1';
+        }
+
+        const numbers = attachments
+          .map(attachment => {
+            const match = attachment.title?.match(/Support Document (\d+)/i);
+            return match ? parseInt(match[1], 10) : 0;
+          })
+          .filter(num => num > 0);
+
+        const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
+        return `Support Document ${maxNumber + 1}`;
+      };
+
+      const newAttachment = {
+        id: `attachment-${Date.now()}`,
+        title: generateSupportDocumentTitle(existingAttachments),
+        descriptionHTML: description,
+        fileUrl: fileToSend ? URL.createObjectURL(fileToSend) : '',
+        fileName: fileToSend ? fileToSend.name : fileName,
+        linkUrl: linkUrl,
+        createdAt: new Date().toISOString()
+      };
+
+      onSave(newAttachment);
+      handleClose();
+    } catch (error) {
+      console.error('Error updating legislation:', error);
+      setErrors({ 
+        submit: error.message || 'Error al actualizar legislación. Por favor intente nuevamente.' 
+      });
+      bannerRef.current?.focus();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
@@ -236,10 +269,13 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, existingAttachments = [
             {errors.description && (
               <div className="error-message">{errors.description}</div>
             )}
+            {errors.descriptionOrFile && (
+              <div className="error-message">{errors.descriptionOrFile}</div>
+            )}
           </div>
 
           <div className="form-group">
-            <label>File Upload<span className="req-star" aria-hidden="true">*</span></label>
+            <label>File Upload<span className="req-star" aria-hidden="true">*</span> <span className="optional-text">(optional if description is provided)</span></label>
             <div
               className={`dropzone ${isDragOver ? 'drag-over' : ''}`}
               onDragOver={handleDragOver}
@@ -294,12 +330,24 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, existingAttachments = [
               <strong>Please fill all required fields:</strong> {missingRequired.join(', ')}
             </div>
           )}
+          {errors.submit && (
+            <div
+              className="app-form__error-banner"
+              role="alert"
+              aria-live="assertive"
+              tabIndex={-1}
+              ref={bannerRef}
+            >
+              <strong>Error:</strong> {errors.submit}
+            </div>
+          )}
           <button
             type="button"
             className="btn update-now-btn"
             onClick={handleSave}
+            disabled={isSubmitting}
           >
-            Update Now
+            {isSubmitting ? 'Updating...' : 'Update Now'}
           </button>
         </div>
       </div>

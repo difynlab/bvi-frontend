@@ -268,7 +268,7 @@ const SideNav = () => {
         <div className="nav-footer-desktop">
           <NavLink to="/profile" className={`nav-item ${isAnimated ? 'nav-item-animate--11' : 'nav-item-hidden'}`} {...navItemGuard}>
             <i className="bi bi-gear"></i>
-            <span className="nav-label">Profile</span>
+            <span className="nav-label">Settings</span>
           </NavLink>
       
           <button 

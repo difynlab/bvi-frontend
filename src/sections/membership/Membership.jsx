@@ -55,7 +55,7 @@ const Membership = () => {
                 </div>
               </div>
               <div className="profile-actions">
-                <NavLink to="/settings" className="edit-link">Edit Profile</NavLink>
+                <NavLink to="/profile" className="edit-link">Edit Profile</NavLink>
               </div>
             </Card>
 

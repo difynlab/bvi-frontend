@@ -41,6 +41,10 @@ export async function registerUser(userData) {
     return await response.json()
   } catch (error) {
     console.error('Register API error:', error)
+    // Handle network errors (server down, CORS, etc.)
+    if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+      throw new Error('Communication with server failed, please try again')
+    }
     throw error
   }
 }
@@ -76,6 +80,10 @@ export async function loginUser(credentials) {
     return await response.json()
   } catch (error) {
     console.error('Login API error:', error)
+    // Handle network errors (server down, CORS, etc.)
+    if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+      throw new Error('Communication with server failed, please try again.')
+    }
     throw error
   }
 }

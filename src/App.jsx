@@ -112,7 +112,7 @@ function App() {
             </RouteGuard>
           }></Route>
 
-          <Route path='/settings' element={
+          <Route path='/profile' element={
             <RouteGuard requireAuth>
               <MainLayout>
                 <Settings />

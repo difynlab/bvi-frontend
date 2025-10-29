@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { getProfile, setProfile } from '../helpers/profileStorage';
 import { getSession } from '../helpers/authStorage';
 import { useAuth } from '../context/useAuth';
+import { updateProfile } from '../services/profileService';
 
 export function useSettingsForm() {
   const ctx = useAuth();
@@ -11,23 +12,71 @@ export function useSettingsForm() {
     return ctx?.user || getSession() || {};
   }, [ctx?.user]);
   
+  // Helper to extract phone components from unified phone string
+  const extractPhoneComponents = useCallback((unifiedPhone, defaultCode = '+54') => {
+    if (!unifiedPhone) return { code: defaultCode, number: '' };
+    
+    const phoneStr = unifiedPhone.toString().replace(/\s+/g, '');
+    // Try to match common country codes like +54, +1, etc. (1-3 digits after +)
+    const countryCodeMatch = phoneStr.match(/^(\+?\d{1,3})/);
+    
+    if (countryCodeMatch) {
+      const code = countryCodeMatch[1].startsWith('+') ? countryCodeMatch[1] : `+${countryCodeMatch[1]}`;
+      const number = phoneStr.replace(/^\+?\d{1,3}/, '');
+      return { code, number };
+    }
+    
+    // If no code found, assume default code and use entire string as number
+    return { code: defaultCode, number: phoneStr };
+  }, []);
+
   // Get profile data with defaults from registration
   const profileData = useMemo(() => {
     return currentUser.id ? getProfile(currentUser) || {} : {};
   }, [currentUser]);
   
+  // Extract phone components if user has unified phone from registration
+  const userPhone = currentUser.phone || '';
+  
   // Merge user data with profile data, using registration data as defaults
-  const baseUser = useMemo(() => ({
-    name: profileData.name || `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || '',
-    email: profileData.email || currentUser.email || '',
-    countryCode: profileData.countryCode || '+54',
-    phoneNumber: profileData.phoneNumber || currentUser.phoneNumber || '',
-    dateFormat: profileData.dateFormat || 'MM/DD/YYYY',
-    timeZone: profileData.timeZone || 'EST',
-    country: profileData.country || 'Argentina',
-    language: profileData.language || 'English (Default)',
-    profilePicture: profileData.profilePicture || ''
-  }), [profileData, currentUser]);
+  // Support both snake_case (from backend) and camelCase (from profile storage)
+  const baseUser = useMemo(() => {
+    // First name: try profile, then snake_case from backend, then camelCase from backend
+    const firstName = profileData.firstName || 
+                     currentUser.first_name || 
+                     currentUser.firstName || 
+                     '';
+    
+    // Last name: try profile, then snake_case from backend, then camelCase from backend
+    const lastName = profileData.lastName || 
+                    currentUser.last_name || 
+                    currentUser.lastName || 
+                    '';
+    
+    // Email: try profile, then currentUser email
+    const email = profileData.email || currentUser.email || '';
+    
+    // Phone: extract from unified phone if exists, otherwise use profile data
+    const phoneData = userPhone 
+      ? extractPhoneComponents(userPhone, profileData.countryCode || '+54')
+      : {
+          code: profileData.countryCode || '+54',
+          number: profileData.phoneNumber || ''
+        };
+    
+    return {
+      firstName,
+      lastName,
+      email,
+      countryCode: phoneData.code,
+      phoneNumber: phoneData.number,
+      dateFormat: profileData.dateFormat || 'MM/DD/YYYY',
+      timeZone: profileData.timeZone || 'EST',
+      country: profileData.country || 'Argentina',
+      language: profileData.language || 'English (Default)',
+      profilePicture: profileData.profilePicture || ''
+    };
+  }, [profileData, currentUser, extractPhoneComponents, userPhone]);
   
   const [form, setForm] = useState(baseUser);
   const [dirty, setDirty] = useState(false);
@@ -37,22 +86,26 @@ export function useSettingsForm() {
   const [profilePreview, setProfilePreview] = useState(baseUser.profilePicture || '');
   const [selectedFile, setSelectedFile] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const requiredOk = useMemo(() => {
     // Check if any required fields are being changed
-    const nameChanged = form.name !== baseUser.name;
+    const firstNameChanged = form.firstName !== baseUser.firstName;
+    const lastNameChanged = form.lastName !== baseUser.lastName;
     const emailChanged = form.email !== baseUser.email;
     const countryCodeChanged = form.countryCode !== baseUser.countryCode;
     const phoneChanged = form.phoneNumber !== baseUser.phoneNumber;
     const profilePictureChanged = form.profilePicture !== baseUser.profilePicture;
     
     // If only profile picture is being changed, allow it
-    if (profilePictureChanged && !nameChanged && !emailChanged && !countryCodeChanged && !phoneChanged) {
+    if (profilePictureChanged && !firstNameChanged && !lastNameChanged && !emailChanged && !countryCodeChanged && !phoneChanged) {
       return true;
     }
     
     // Otherwise, validate required fields
-    return Boolean(form.name?.trim()) && 
+    return Boolean(form.firstName?.trim()) && 
+           Boolean(form.lastName?.trim()) && 
            Boolean(form.email?.trim()) && 
            String(form.countryCode || '').length > 0;
   }, [form, baseUser]);
@@ -128,80 +181,157 @@ export function useSettingsForm() {
     setNewPassword(''); 
     setConfirmPassword('');
     setSelectedFile(null);
+    setErrorMessage('');
   }, []);
 
-  const save = useCallback(() => {
-    if (!canSave || !currentUser.id) return;
+  const save = useCallback(async () => {
+    if (!canSave || !currentUser.id || isSaving) return;
     
-    // Validate email format if changed
-    if (form.email && form.email !== baseUser.email) {
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i
-      if (!emailPattern.test(form.email)) {
-        console.error('Invalid email format')
-        return
+    setIsSaving(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    
+    try {
+      // Validate email format (email no se puede cambiar pero se envía igual)
+      if (form.email) {
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+        if (!emailPattern.test(form.email)) {
+          setErrorMessage('Invalid email format');
+          setIsSaving(false);
+          return;
+        }
       }
-    }
-    
-    // Validate phone number if present (digits only)
-    if (form.phoneNumber && form.phoneNumber !== baseUser.phoneNumber) {
-      const digitsOnly = form.phoneNumber.replace(/[^0-9]/g, '')
-      if (digitsOnly && (digitsOnly.length < 8 || digitsOnly.length > 15)) {
-        console.error('Invalid phone number format')
-        return
+      
+      // Validate phone number if present
+      if (form.phoneNumber) {
+        const digitsOnly = form.phoneNumber.replace(/[^0-9]/g, '');
+        if (digitsOnly && (digitsOnly.length < 8 || digitsOnly.length > 15)) {
+          setErrorMessage('Phone number must be between 8 and 15 digits');
+          setIsSaving(false);
+          return;
+        }
       }
+      
+      // Prepare settings data for backend API
+      const settingsData = {
+        first_name: form.firstName?.trim() || '',
+        last_name: form.lastName?.trim() || '',
+        email: form.email?.toLowerCase().trim() || '', // Email no se puede cambiar pero se envía
+        countryCode: form.countryCode || '+54',
+        phoneNumber: form.phoneNumber?.trim() || '',
+        profilePicture: form.profilePicture || null,
+        // Preferences (solo frontend, no se envían al backend)
+        dateFormat: form.dateFormat || 'MM/DD/YYYY',
+        timeZone: form.timeZone || 'EST',
+        country: form.country || 'Argentina',
+        language: form.language || 'English (Default)',
+      };
+      
+      // Add password fields if all are present
+      if (currentPassword && newPassword && confirmPassword) {
+        settingsData.currentPassword = currentPassword;
+        settingsData.newPassword = newPassword;
+        settingsData.confirmPassword = confirmPassword;
+      }
+      
+      // Get current profile picture to compare if it changed
+      const currentProfilePicture = baseUser.profilePicture || '';
+      
+      // Call backend API to update profile
+      const updatedProfileData = await updateProfile(null, settingsData, currentProfilePicture);
+      
+      // Helper to extract phone components from unified phone string
+      const extractPhoneComponents = (unifiedPhone, currentCode) => {
+        if (!unifiedPhone) return { code: currentCode || '+54', number: '' };
+        
+        const phoneStr = unifiedPhone.toString().replace(/\s+/g, '');
+        // Try to match common country codes like +54, +1, etc.
+        const countryCodeMatch = phoneStr.match(/^(\+?\d{1,3})/);
+        
+        if (countryCodeMatch) {
+          const code = countryCodeMatch[1].startsWith('+') ? countryCodeMatch[1] : `+${countryCodeMatch[1]}`;
+          const number = phoneStr.replace(/^\+?\d{1,3}/, '');
+          return { code, number };
+        }
+        
+        // If no code found, assume current code and use entire string as number
+        return { code: currentCode || '+54', number: phoneStr };
+      };
+
+      // Extract phone components if backend returned unified phone
+      const phoneComponents = updatedProfileData?.phone 
+        ? extractPhoneComponents(updatedProfileData.phone, form.countryCode)
+        : { code: form.countryCode || '+54', number: form.phoneNumber?.trim() || '' };
+
+      // Update local state with backend response if available
+      const localProfileUpdate = {
+        firstName: updatedProfileData?.first_name || form.firstName?.trim() || '',
+        lastName: updatedProfileData?.last_name || form.lastName?.trim() || '',
+        email: updatedProfileData?.email || form.email?.toLowerCase().trim() || '',
+        countryCode: phoneComponents.code,
+        phoneNumber: phoneComponents.number,
+        profilePicture: updatedProfileData?.profile_picture_url || 
+                        updatedProfileData?.image_url || 
+                        form.profilePicture || '',
+        dateFormat: form.dateFormat || 'MM/DD/YYYY',
+        timeZone: form.timeZone || 'EST',
+        country: form.country || 'Argentina',
+        language: form.language || 'English (Default)',
+      };
+      
+      // Update AuthContext with new data
+      if (ctx?.updateProfile) {
+        await ctx.updateProfile({
+          firstName: localProfileUpdate.firstName,
+          lastName: localProfileUpdate.lastName,
+          email: localProfileUpdate.email,
+          phoneNumber: localProfileUpdate.phoneNumber,
+          profilePicture: localProfileUpdate.profilePicture,
+        });
+      }
+      
+      // Save preferences to localStorage (dateFormat, timeZone, country, language)
+      setProfile(currentUser, localProfileUpdate);
+      
+      // Reset form state
+      resetAfterSave(localProfileUpdate);
+      
+      // Show success message
+      setSuccessMessage('Profile updated successfully');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setErrorMessage(error.message || 'Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
-    
-    // Build partial from current inputs: firstName, lastName, email (lowercased), phoneNumber (trimmed)
-    const partial = {}
-    
-    // Extract firstName and lastName from name field
-    const nameParts = (form.name || '').trim().split(' ')
-    if (nameParts.length > 0) {
-      partial.firstName = nameParts[0]?.trim() || ''
-    }
-    if (nameParts.length > 1) {
-      partial.lastName = nameParts.slice(1).join(' ').trim() || ''
-    }
-    
-    // Add other fields if they have values
-    if (form.email) {
-      partial.email = form.email.toLowerCase().trim()
-    }
-    if (form.phoneNumber) {
-      partial.phoneNumber = form.phoneNumber.trim()
-    }
-    
-    // Add profile picture if it has changed
-    const imagePreviewUrl = form.profilePicture || ''
-    const imageFileName = selectedFile?.name || ''
-    if (imagePreviewUrl !== baseUser.profilePicture) {
-      // Save the actual image data for display, but handle storage carefully
-      partial.profilePicture = imagePreviewUrl
-      partial.profilePictureFileName = imageFileName
-    }
-    
-    // Update AuthContext with partial - this will handle persistence
-    if (ctx?.updateProfile) {
-      ctx.updateProfile(partial);
-    }
-    
-    // Also save to profile storage for additional settings
-    const updatedProfile = {
-      ...form,
-      profilePicture: form.profilePicture || '',
-    };
-    setProfile(currentUser, updatedProfile);
-    
-    resetAfterSave(updatedProfile);
-  }, [canSave, currentUser.id, form, selectedFile, baseUser, ctx, resetAfterSave]);
+  }, [canSave, currentUser.id, isSaving, form, selectedFile, baseUser, ctx, resetAfterSave, currentPassword, newPassword, confirmPassword]);
 
   // Initialize form when user data changes
   useEffect(() => {
+    // Extract phone components if user has unified phone from registration
+    const userPhoneStr = currentUser.phone || '';
+    const phoneComponents = userPhoneStr 
+      ? extractPhoneComponents(userPhoneStr, profileData.countryCode || '+54')
+      : {
+          code: profileData.countryCode || '+54',
+          number: profileData.phoneNumber || ''
+        };
+    
+    // Support both snake_case (from backend) and camelCase (from profile)
     const newBaseUser = {
-      name: profileData.name || `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || '',
+      firstName: profileData.firstName || 
+                 currentUser.first_name || 
+                 currentUser.firstName || 
+                 '',
+      lastName: profileData.lastName || 
+                currentUser.last_name || 
+                currentUser.lastName || 
+                '',
       email: profileData.email || currentUser.email || '',
-      countryCode: profileData.countryCode || '+54',
-      phoneNumber: profileData.phoneNumber || currentUser.phoneNumber || '',
+      countryCode: phoneComponents.code,
+      phoneNumber: phoneComponents.number,
       dateFormat: profileData.dateFormat || 'MM/DD/YYYY',
       timeZone: profileData.timeZone || 'EST',
       country: profileData.country || 'Argentina',
@@ -211,7 +341,17 @@ export function useSettingsForm() {
     
     setForm(newBaseUser);
     setProfilePreview(newBaseUser.profilePicture || '');
-  }, [currentUser.id, currentUser.firstName, currentUser.lastName, currentUser.email, currentUser.phoneNumber, profileData]);
+  }, [
+    currentUser.id, 
+    currentUser.first_name, 
+    currentUser.firstName,
+    currentUser.last_name, 
+    currentUser.lastName, 
+    currentUser.email, 
+    currentUser.phone,
+    profileData,
+    extractPhoneComponents
+  ]);
 
   return {
     form, 
@@ -232,5 +372,7 @@ export function useSettingsForm() {
     canSave, 
     save,
     errorMessage,
+    isSaving,
+    successMessage,
   };
 }

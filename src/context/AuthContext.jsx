@@ -114,7 +114,12 @@ export const AuthProvider = ({ children }) => {
       return true
     } catch (apiError) {
       console.error('API registration failed:', apiError.message)
-      setError(apiError.message || 'Registration failed')
+      // Handle network errors with user-friendly message
+      let errorMessage = apiError.message || 'Registration failed'
+      if (errorMessage === 'Failed to fetch' || errorMessage.includes('fetch')) {
+        errorMessage = 'Communication with server failed, please try again'
+      }
+      setError(errorMessage)
       return false
     } finally {
       setLoading(false)
@@ -164,7 +169,12 @@ export const AuthProvider = ({ children }) => {
       return true
     } catch (apiError) {
       console.error('API login failed:', apiError.message)
-      setError({ type: 'general', message: apiError.message || 'Login failed' })
+      // Handle network errors with user-friendly message
+      let errorMessage = apiError.message || 'Login failed'
+      if (errorMessage === 'Failed to fetch' || errorMessage.includes('fetch')) {
+        errorMessage = 'Communication with server failed, please try again'
+      }
+      setError({ type: 'general', message: errorMessage })
       return false
     } finally {
       setLoading(false)
