@@ -96,6 +96,8 @@ export const useNewslettersState = () => {
         // Alternative structure
         newslettersData = response.newsletters
       }
+      
+      
         setNewsletters(newslettersData)
       } catch (error) {
         // Only log non-404 errors

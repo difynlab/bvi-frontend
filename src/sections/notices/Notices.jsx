@@ -241,6 +241,7 @@ export const Notices = () => {
   const [editorKey, setEditorKey] = useState(0)
   const [missingRequired, setMissingRequired] = useState([])
   const [pdfGenerationError, setPdfGenerationError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const bannerRef = useRef(null)
 
   // Required fields validation
@@ -389,6 +390,9 @@ export const Notices = () => {
       return;
     }
 
+    // Set loading state
+    setIsSubmitting(true)
+
     // Clear any previous PDF generation errors
     setPdfGenerationError('')
 
@@ -446,12 +450,16 @@ export const Notices = () => {
       if (error.message && (error.message.includes('PDF') || error.message.includes('renderer'))) {
         setPdfGenerationError('Failed to generate PDF. Please try again.')
         bannerRef.current?.focus()
+        setIsSubmitting(false)
         return
       }
       
       // Handle other errors
       setPdfGenerationError(`Error: ${error.message}`)
       bannerRef.current?.focus()
+    } finally {
+      // Reset loading state
+      setIsSubmitting(false)
     }
   }
 
@@ -968,9 +976,10 @@ export const Notices = () => {
                   <button 
                     type="submit" 
                     className="upload-now-btn"
+                    disabled={isSubmitting}
                     onClick={() => console.log('🔘 Submit button clicked')}
                   >
-                    Upload Now
+                    {isSubmitting ? 'Loading...' : (editingNotice ? 'Update' : 'Upload Now')}
                   </button>
                 </div>
               </form>

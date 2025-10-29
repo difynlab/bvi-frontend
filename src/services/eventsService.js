@@ -74,9 +74,6 @@ class EventsService {
   async getEvents(pagination = 6, page = 1) {
     try {
       const url = `${this.baseURL}/events?pagination=${pagination}&page=${page}`
-      console.log('=== FETCHING EVENTS ===')
-      console.log('URL:', url)
-      console.log('Headers:', this.getHeaders(true))
       
       const response = await fetch(url, {
         method: 'GET',
@@ -108,23 +105,16 @@ class EventsService {
 
   async createEvent(eventData) {
     try {
-      console.log('=== CREATE EVENT DEBUG ===')
-      console.log('Raw eventData received:', eventData)
-      console.log('EventData type:', typeof eventData)
-      console.log('EventData keys:', Object.keys(eventData))
       
       const formData = new FormData()
       
       // Agregar todos los campos del evento al FormData
       Object.keys(eventData).forEach(key => {
         const value = eventData[key]
-        console.log(`Processing field: ${key}, type: ${typeof value}, value:`, value)
         
         if (value !== null && value !== undefined && value !== '') {
           formData.append(key, value)
-          console.log(`✅ Added to FormData: ${key} =`, value)
         } else {
-          console.log(`❌ Skipped empty field: ${key} =`, value)
         }
       })
 

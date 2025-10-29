@@ -67,7 +67,6 @@ export default function Reports() {
 
   // Memoize initialReport to prevent recreation on every render
   const initialReport = useMemo(() => {
-    console.log('🔍 Debug - Editing report:', editingReport);
     return editingReport || null;
   }, [editingReport?.id]);
 
@@ -168,12 +167,6 @@ export default function Reports() {
   const activeCategoryData = useMemo(
     () => {
       const activeCat = categories.find(cat => cat.id === activeTabId);
-      console.log('🔍 Debug - Active category data:', {
-        activeTabId,
-        categories: categories.length,
-        activeCat,
-        title: activeCat?.title
-      });
       return activeCat || null;
     },
     [categories, activeTabId]
@@ -247,21 +240,16 @@ export default function Reports() {
           .filter(cat => cat.status === 1)
           .map(cat => cat.title);
 
-        console.log('🔍 Debug - Categories from API:', categories);
-        console.log('🔍 Debug - Active categories:', activeCategories);
-        console.log('🔍 Debug - Selected typeId:', reportForm.form.typeId);
 
         // Check if selected category exists in active categories
         const currentId = reportForm.form.typeId && activeCategories.includes(reportForm.form.typeId)
           ? reportForm.form.typeId
           : '';
 
-        console.log('🔍 Debug - Current ID found:', currentId);
 
         if (!currentId) {
           // If form had legacy typeName equal to active name, try fallback
           const byName = activeCategories.find(n => n.toLowerCase() === (reportForm.form.typeId || '').trim().toLowerCase());
-          console.log('🔍 Debug - Fallback byName found:', byName);
           if (!byName) {
             // Show error in banner instead of resetting field
             setReportError('Selected category is no longer available. Please choose another category.');
@@ -285,9 +273,6 @@ export default function Reports() {
           report_category_id: categoryId  // Send the numeric ID, not the title
         };
         
-        console.log('🔍 Debug - Final payload:', payload);
-        console.log('🔍 Debug - Category ID:', categoryId);
-        console.log('🔍 Debug - Category title:', catName);
         
         await createOrUpdateReport(payload);
       } catch (error) {
@@ -522,7 +507,6 @@ export default function Reports() {
         ) : (
           <div className="reports-list">
             {visibleItems.map(r => {
-              console.log('🔍 Debug - Report item data:', r);
               return (
               <article key={r.id} className="report-item">
                 <div className="report-info">
@@ -794,23 +778,13 @@ export default function Reports() {
                       <span className="existing-file-indicator"> (Existing file)</span>
                     )}
                   </p>
-                  {console.log('🔍 Debug - File display data:', {
-                    fileName: reportForm.form.fileName,
-                    imagePreviewUrl: reportForm.form.imagePreviewUrl,
-                    hasFile: !!reportForm.form.file,
-                    mode: editingReport ? 'edit' : 'add',
-                    editingReport: editingReport,
-                    fileUrl: editingReport?.file_url,
-                    fileNameFromAPI: editingReport?.file_name
-                  })}
                   {reportForm.form.imagePreviewUrl && (
                     <div className="image-preview">
                       <img 
                         src={reportForm.form.imagePreviewUrl} 
                         alt="Preview" 
-                        onLoad={() => console.log('✅ Debug - Image loaded successfully:', reportForm.form.imagePreviewUrl)}
+                        onLoad={() => {}}
                         onError={(e) => {
-                          console.log('❌ Debug - Image failed to load (CORS?):', reportForm.form.imagePreviewUrl);
                           e.target.classList.add('image-preview-hidden');
                         }}
                       />

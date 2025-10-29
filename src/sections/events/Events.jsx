@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/useAuth'
 import { can } from '../../auth/acl'
 import { useEvents } from '../../hooks/useEvents'
-import { useEventForm } from '../../hooks/useEventForm'
+import { useEventForm, EVENT_TYPE_OPTIONS } from '../../hooks/useEventForm'
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose'
 import { useTitleMarquee } from '../../hooks/useTitleMarquee'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
@@ -38,6 +38,11 @@ export const Events = () => {
 
   const eventForm = useEventForm()
 
+  // Get event type label for display
+  const getEventTypeLabel = (eventType) => {
+    const option = EVENT_TYPE_OPTIONS.find(opt => opt.value === eventType?.toLowerCase())
+    return option ? option.label : 'Event'
+  }
 
   // Register modal states to disable SideNav gestures
   const isAnyModalOpen = isModalOpen || isRegisterModalOpen || isConfirmDeleteOpen || isSuccessDeleteOpen
@@ -283,7 +288,7 @@ export const Events = () => {
                   <div className="event-content">
                     <div className="event-header">
                       <span className={`event-type ${event.eventType.toLowerCase()}`}>
-                        {event.eventType}
+                        {getEventTypeLabel(event.eventType)}
                       </span>
                       <span className="event-date">{formatDate(event.date)}</span>
                     </div>
@@ -301,7 +306,7 @@ export const Events = () => {
                     <div className="event-details">
                       <div className="event-time">
                         <span className="icon"><i className="bi bi-clock"></i></span>
-                        {formatTime(event.startTime)} - {formatTime(event.endTime)} {event.timeZone}
+                        {formatTime(event.startTime)} - {formatTime(event.endTime)} ({formatTimezone(event.timeZone)})
                       </div>
                       <div className="event-location">
                         <span className="icon"><i className="bi bi-geo-alt"></i></span>
@@ -512,6 +517,12 @@ export const Events = () => {
     const ampm = hour >= 12 ? 'PM' : 'AM'
     const displayHour = hour % 12 || 12
     return `${displayHour}:${minutes} ${ampm}`
+  }
+
+  const formatTimezone = (timezone) => {
+    // Extract only the UTC±XX:XX part from the full timezone string
+    const match = timezone.match(/UTC[±−+]\d{2}:\d{2}/)
+    return match ? match[0] : timezone
   }
 
   const formatDate = (dateString) => {
@@ -728,7 +739,7 @@ export const Events = () => {
                       name="eventType"
                       value={eventForm.form.eventType}
                       onChange={handleInputChange}
-                      options={eventForm.EVENT_TYPES.map(type => ({ value: type, label: type }))}
+                      options={eventForm.EVENT_TYPE_OPTIONS}
                       placeholder="Select event type"
                     />
                   </div>
@@ -870,7 +881,7 @@ export const Events = () => {
                       </div>
                       <div className="register-event-detail">
                         <span className="icon"><i className="bi bi-clock"></i></span>
-                        {formatTime(registeringEvent.startTime)} - {formatTime(registeringEvent.endTime)} {registeringEvent.timeZone}
+                        {formatTime(registeringEvent.startTime)} - {formatTime(registeringEvent.endTime)} ({formatTimezone(registeringEvent.timeZone)})
                       </div>
                       <div className="register-event-detail">
                         <span className="icon"><i className="bi bi-geo-alt"></i></span>

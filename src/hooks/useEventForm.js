@@ -75,16 +75,21 @@ const fromItem = (item) => {
 }
 
 const TIME_ZONES = [
-  'UTC',
-  'GMT',
-  'GMT-3',
-  'GMT+1'
+  'UTC−08:00',
+  'UTC−06:00',
+  'UTC−03:00',
+  'UTC±00:00',
+  'UTC+01:00',
+  'UTC+03:00',
+  'UTC+05:30',
+  'UTC+09:00',
+  'UTC+12:00'
 ]
 
-const EVENT_TYPES = [
-  'conference',
-  'webinar',
-  'workshop'
+const EVENT_TYPE_OPTIONS = [
+  { label: 'Conference', value: 'conference' },
+  { label: 'Webinar', value: 'webinar' },
+  { label: 'Workshop', value: 'workshop' }
 ]
 
 const REPEAT_OPTIONS = [
@@ -96,6 +101,8 @@ const REPEAT_OPTIONS = [
   { label: 'Custom...', value: 'custom' }
 ]
 
+export { EVENT_TYPE_OPTIONS }
+
 export const useEventForm = () => {
   // Reference to store original item data for rollback
   const originalRef = useRef(null)
@@ -106,7 +113,7 @@ export const useEventForm = () => {
     date: '',
     startTime: '09:00',
     endTime: '17:00',
-    timeZone: 'UTC',
+    timeZone: 'UTC±00:00 — Greenwich Mean Time',
     eventType: 'conference',
     repeat: 'na',
     description: '',
@@ -399,7 +406,7 @@ export const useEventForm = () => {
     normalizeRecurrence,
     stripHtml,
     TIME_ZONES,
-    EVENT_TYPES,
+    EVENT_TYPE_OPTIONS,
     REPEAT_OPTIONS
   }
 }

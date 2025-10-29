@@ -490,6 +490,19 @@
               color: #4B5563;
               font-size: 12px;
             }
+
+            &.empty-newsletters {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              height: 100%;
+              background-color: white;
+              opacity: 0.8;
+              font-weight: 300;
+              font-size: 1rem;
+              color: #666;
+              text-align: center;
+            }
           }
         }
       }
@@ -532,7 +545,7 @@
               max-width: 95%;
             }
             &.empty-newsletters {
-              min-height: 100px;
+              height: 100%;
               background-color: white;
               display: flex;
               align-items: center;
@@ -572,4 +585,168 @@
     }
   }
 
+}
+
+// Shimmer loader styles for events
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.shimmer-item {
+  background: linear-gradient(90deg, #f8f9fa 25%, #f1f3f4 50%, #f8f9fa 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2.5s infinite;
+  border-radius: 8px;
+  padding: 0.75rem 0;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.shimmer-bullet {
+  background: linear-gradient(90deg, #f0f0f0 25%, #f5f5f5 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2.5s infinite;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.shimmer-title {
+  background: linear-gradient(90deg, #f0f0f0 25%, #f5f5f5 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2.5s infinite;
+  height: 20px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  width: 70%;
+}
+
+.shimmer-meta {
+  background: linear-gradient(90deg, #f0f0f0 25%, #f5f5f5 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2.5s infinite;
+  height: 16px;
+  border-radius: 4px;
+  width: 50%;
+}
+
+// Shimmer loader styles for notices
+.shimmer-notice-item {
+  background: linear-gradient(90deg, #f8f9fa 25%, #f1f3f4 50%, #f8f9fa 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2.5s infinite;
+  border-radius: 8px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  padding: 15px 10px;
+  margin-bottom: 0;
+  height: 97.5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0;
+  border-left: 4px solid #e9ecef;
+}
+
+.shimmer-badge {
+  background: linear-gradient(90deg, #f0f0f0 25%, #f5f5f5 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2.5s infinite;
+  border-radius: 12px;
+  height: 20px;
+  width: 60px;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.shimmer-urgent {
+  border-left-color: #dc3545 !important;
+}
+
+.shimmer-new {
+  border-left-color: #007bff !important;
+}
+
+.shimmer-timestamp {
+  background: linear-gradient(90deg, #f0f0f0 25%, #f5f5f5 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2.5s infinite;
+  height: 16px;
+  border-radius: 4px;
+  width: 80px;
+  display: inline-block;
+}
+
+.shimmer-notice-title {
+  background: linear-gradient(90deg, #f0f0f0 25%, #f5f5f5 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2.5s infinite;
+  height: 20px;
+  border-radius: 4px;
+  margin: 8px 0;
+  width: 60%;
+}
+
+.shimmer-notice-description {
+  background: linear-gradient(90deg, #f0f0f0 25%, #f5f5f5 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2.5s infinite;
+  height: 16px;
+  border-radius: 4px;
+  width: 90%;
+}
+
+// Shimmer loader styles for newsletters
+.shimmer-newsletter-item {
+  background: linear-gradient(90deg, #f8f9fa 25%, #f1f3f4 50%, #f8f9fa 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2.5s infinite;
+  border-radius: 10px;
+  padding: 15px 20px;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.shimmer-newsletter-title {
+  background: linear-gradient(90deg, #f0f0f0 25%, #f5f5f5 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2.5s infinite;
+  height: 20px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  width: 70%;
+}
+
+.shimmer-newsletter-description {
+  background: linear-gradient(90deg, #f0f0f0 25%, #f5f5f5 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2.5s infinite;
+  height: 16px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  width: 85%;
+}
+
+.shimmer-newsletter-date {
+  background: linear-gradient(90deg, #f0f0f0 25%, #f5f5f5 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 2.5s infinite;
+  height: 14px;
+  border-radius: 4px;
+  width: 50%;
 }

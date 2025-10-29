@@ -230,40 +230,32 @@ export function useReportsState() {
 
   // Function to refresh reports (called after create/update/delete)
   const refreshReports = useCallback(async () => {
-    console.log('🔍 Debug - refreshReports called, clearing cache...');
     
     // Clear cache to force API call
     clearReportsCache();
     
     // Immediately update local state to remove deleted items
     setData(prev => ({ ...prev, items: [] }));
-    console.log('✅ Debug - Local state cleared, reports array is now empty');
     
     setShouldReloadReports(true);
-    console.log('✅ Debug - shouldReloadReports set to true');
   }, []);
 
   // Load reports from API function
   const loadReportsFromAPI = useCallback(async () => {
-    console.log('🔍 Debug - loadReportsFromAPI called');
     
     // Check cache first for immediate display
     const cachedReports = getCachedReports();
-    console.log('🔍 Debug - Cached reports found:', cachedReports?.length || 0);
     
     if (cachedReports) {
       setData(prev => ({ ...prev, items: cachedReports }));
-      console.log('✅ Debug - Set data from cache:', cachedReports.length, 'reports');
       
       // Check if cache is still fresh (less than 5 minutes old)
       const cacheData = JSON.parse(localStorage.getItem(REPORTS_CACHE_KEY));
       const cacheAge = Date.now() - cacheData.timestamp;
       const isCacheFresh = cacheAge < CACHE_EXPIRY_TIME;
       
-      console.log('🔍 Debug - Cache age:', cacheAge, 'ms, is fresh:', isCacheFresh);
       
       if (isCacheFresh) {
-        console.log('✅ Debug - Cache is fresh, skipping API call');
         return; // Skip API call if cache is fresh
       }
     }
@@ -284,8 +276,6 @@ export function useReportsState() {
         setData(prev => ({ ...prev, items: dataArray }));
         setCachedReports(dataArray);
         
-        console.log('✅ Debug - Reports loaded from API:', dataArray.length, 'reports');
-        console.log('✅ Debug - Reports data:', dataArray);
       }
     } catch (error) {
       if (error.message.includes('No data found')) {
@@ -332,15 +322,12 @@ export function useReportsState() {
   const visibleItems = useMemo(() => {
     if (!activeCategoryId) return [];
     
-    console.log('🔍 Debug - All reports:', data.items);
-    console.log('🔍 Debug - Active category ID:', activeCategoryId);
     
     const filtered = data.items.filter(item => {
       // Filter by report_category_id (numeric ID from API)
       return item.report_category_id === activeCategoryId;
     });
     
-    console.log('🔍 Debug - Filtered reports:', filtered);
     return filtered;
   }, [data.items, activeCategoryId]);
 
@@ -470,13 +457,10 @@ export function useReportsState() {
 
   const onDeleteReport = useCallback(async (id) => {
     try {
-      console.log('🔍 Debug - Deleting report with ID:', id);
       await reportsService.deleteReport(id);
-      console.log('✅ Debug - Report deleted successfully from server');
       
       // Refresh reports from API
       await refreshReports();
-      console.log('✅ Debug - Reports refreshed from API');
     } catch (error) {
       console.error('Error deleting report:', error);
       throw error; // Re-throw to be handled by the component
@@ -484,14 +468,12 @@ export function useReportsState() {
   }, [refreshReports]);
 
   const downloadReport = useCallback(async (report) => {
-    console.log('🔍 Debug - Download report data:', report);
     
     // Try different field names for file URL
     const fileUrl = report.fileUrl || report.file || report.file_url;
     const fileName = report.title || report.name || 'report';
     
     if (fileUrl) {
-      console.log('✅ Debug - Downloading file:', fileUrl, 'as:', fileName);
       
       try {
         // Get token for authenticated download
@@ -510,7 +492,6 @@ export function useReportsState() {
         }
         
         // Fetch file with authorization header
-        console.log('🔍 Debug - Fetching file with token...');
         const response = await fetch(fileUrl, {
           method: 'GET',
           headers: {
@@ -534,7 +515,6 @@ export function useReportsState() {
         
         // Get file blob
         const blob = await response.blob();
-        console.log('✅ Debug - File blob received:', blob.size, 'bytes');
         
         // Create download link
         const url = window.URL.createObjectURL(blob);
@@ -546,7 +526,6 @@ export function useReportsState() {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
         
-        console.log('✅ Debug - Download completed successfully');
         
       } catch (error) {
         console.error('❌ Debug - Download error:', error);

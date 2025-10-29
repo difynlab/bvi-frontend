@@ -96,9 +96,6 @@ class NoticesService {
 
     try {
       const url = `${this.baseURL}/notices`
-      console.log('=== FETCHING NOTICES ===')
-      console.log('URL:', url)
-      console.log('Headers:', this.getHeaders(true))
       
       const response = await fetch(url, {
         method: 'GET',
@@ -150,23 +147,16 @@ class NoticesService {
 
   async createNotice(noticeData) {
     try {
-      console.log('=== CREATE NOTICE DEBUG ===')
-      console.log('Raw noticeData received:', noticeData)
-      console.log('NoticeData type:', typeof noticeData)
-      console.log('NoticeData keys:', Object.keys(noticeData))
       
       const formData = new FormData()
       
       // Agregar todos los campos del notice al FormData
       Object.keys(noticeData).forEach(key => {
         const value = noticeData[key]
-        console.log(`Processing field: ${key}, type: ${typeof value}, value:`, value)
         
         if (value !== null && value !== undefined && value !== '') {
           formData.append(key, value)
-          console.log(`✅ Added to FormData: ${key} =`, value)
         } else {
-          console.log(`❌ Skipped empty field: ${key} =`, value)
         }
       })
 
