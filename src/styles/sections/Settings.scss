@@ -1,6 +1,8 @@
 // Settings page styles - ONLY class-based selectors with settings-* naming convention
 .settings-container { 
   padding: 30px; 
+  // Prevent horizontal scroll if any child overflows
+  overflow-x: hidden;
 }
 
 .settings-header-title { 
@@ -9,11 +11,11 @@
 
 .settings-grid { 
   display: grid; 
-  gap: 20px; 
+  gap: 0px; 
 }
 
 .settings-card { 
-  border-radius: 12px; 
+  border-radius: 12px;
 }
 
 
@@ -23,8 +25,101 @@
   font-size: 16px;
 }
 
+// General details two-column layout (fields + profile picture)
+.settings-general-details {
+  .settings-general-row {
+    display: flex;
+    gap: 24px;
+    align-items: stretch;
+  }
+
+  .settings-general-col {
+    flex: 1;
+    min-width: 0; // prevent overflow from long content
+  }
+
+  .settings-image-col {
+    max-width: 220px;
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .settings-image-col .image-upload {
+    width: 100%;
+    height: 100%;
+  }
+
+  // Make image upload circular within Settings only
+  .settings-image-col {
+    justify-content: flex-start;
+    .image-upload-dropzone {
+      width: 200px;
+      height: 200px;
+      max-width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 100px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .image-upload {
+      justify-content: flex-start;
+      .image-upload-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+    }
+    .image-upload-preview {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+    }
+
+    .image-upload-preview-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 20px;
+    }
+
+    .image-upload-clear-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      z-index: 2;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border-radius: 50%;
+    }
+  }
+}
+
+// Mobile stacking: show image first, then fields vertically
+@media (max-width: 768px) {
+  .settings-general-details {
+    .settings-general-row {
+      flex-direction: column;
+      gap: 16px;
+    }
+    .settings-image-col {
+      order: 0; // Image on top
+      align-self: center; // center horizontally
+    }
+    .settings-general-col {
+      order: 1; // Fields below image
+    }
+  }
+}
+
 .image-inputs-row {
   display: flex;
+  display: none;
   gap: 30px;
   align-items: center;
   .settings-card-title {
@@ -35,10 +130,13 @@
     height: 100%;
   }
 }
-.settings-field { 
-  margin-bottom: 16px; 
+.settings-card { 
   .image-upload {
-    width: 350px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     &-header {
       display: flex;
       flex-direction: column;
@@ -74,11 +172,13 @@
     }
     &-dropzone {
       width: 100%;
+      max-width: 350px;
     }
     &-preview {
       padding: 20px 0;
       &-img {
-        max-width: 300px;
+        max-width: 100%;
+        height: auto;
         max-height: 100%;
         object-fit: cover;
         border-radius: 8px;
@@ -102,6 +202,40 @@
   font-size: 0.875rem;
   box-sizing: border-box;
   transition: border-color 0.2s;
+}
+
+// Style react-phone-number-input to match settings inputs
+.settings-phone-input {
+  width: 100%;
+  .PhoneInput {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .PhoneInputCountry {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding-left: 8px;
+  }
+  .PhoneInputCountrySelect {
+    border: none;
+    background: transparent;
+  }
+  .PhoneInputInput {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+  }
+  .PhoneInputInput:focus {
+    outline: none;
+    border: 1px solid #686868;
+  }
 }
 
 .settings-input:focus {
@@ -271,6 +405,7 @@ select.settings-input {
   display: flex;
   gap: 20px;
   align-items: flex-end;
+  margin-bottom: 20px;
 }
 
 .settings-contact-field {
@@ -379,8 +514,7 @@ select.settings-input {
     }
   }
 
-  .settings-field {
-    margin-bottom: 20px;
+  .settings-card {
 
     .image-upload {
       width: 100%;
@@ -464,6 +598,7 @@ select.settings-input {
     height: 56px;
     font-size: 16px;
     margin-top: 24px;
+    display: none;
   }
 }
 

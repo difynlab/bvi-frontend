@@ -5,6 +5,20 @@
   padding: 30px;
   padding-right: 130px;
   min-height: 100vh;
+
+  // Admin view: reduce padding-right
+  &.admin-view-page {
+    padding-right: 30px;
+  }
+
+  // Mobile adjustments
+  @media (max-width: 768px) {
+    padding: 15px;
+    
+    &.admin-view-page {
+      padding-right: 15px;
+    }
+  }
 }
 
 .membership-container {
@@ -43,7 +57,6 @@
 .membership {
   display: grid;
   grid-template-columns: 3fr 2fr;
-  gap: 30px;
   min-height: 100vh;
   background-color: $light_grey;
 
@@ -52,6 +65,331 @@
     gap: 24px;
   }
 }
+
+/* Admin view: single column layout */
+.membership.admin-view {
+  grid-template-columns: 1fr;
+}
+
+// Filter Section Styles
+.card-header-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.members-table-filters {
+  display: flex;
+  position: relative;
+  width: 100%;
+}
+
+.filter-controls {
+  display: flex;
+  min-width: 100%;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.filter-btn-wrapper {
+  position: relative;
+}
+
+.filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #262626;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  i {
+    font-size: 16px;
+  }
+
+  &:hover {
+    border-color: #9ca3af;
+    background-color: #f9fafb;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+}
+
+.filter-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 16px;
+  font-size: 13px;
+  color: #1e40af;
+
+  .filter-tag-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    margin: 0;
+    background: none;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    color: #1e40af;
+    transition: background-color 0.2s ease;
+
+    i {
+      font-size: 12px;
+    }
+
+    &:hover {
+      background-color: #dbeafe;
+    }
+
+    &:focus {
+      outline: none;
+      background-color: #dbeafe;
+    }
+  }
+}
+
+.filter-clear-all {
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #6b7280;
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover {
+    color: #374151;
+  }
+
+  &:focus {
+    outline: none;
+    color: #374151;
+  }
+}
+
+.filter-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 1000;
+  min-width: 240px;
+  width: 100%;
+  max-width: 300px;
+  background-color: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.filter-submenu {
+  border-bottom: 1px solid #e5e7eb;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.filter-submenu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #262626;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  i {
+    font-size: 12px;
+    color: #6b7280;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover {
+    background-color: #f9fafb;
+  }
+
+  &:focus {
+    outline: none;
+    background-color: #f9fafb;
+  }
+}
+
+.filter-submenu-content {
+  padding: 8px 16px 12px;
+  background-color: #f9fafb;
+}
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 14px;
+  color: #262626;
+
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #3b82f6;
+  }
+
+  span {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  &:hover {
+    color: #1e40af;
+  }
+}
+
+// Search Input Styles
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  margin-left: auto;
+  min-width: 250px;
+  max-width: 400px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 8px 40px 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #262626;
+  background-color: #fff;
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+  }
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.2s ease;
+
+  i {
+    font-size: 14px;
+  }
+
+  &:hover {
+    color: #262626;
+  }
+
+  &:focus {
+    outline: none;
+    color: #262626;
+  }
+}
+
+.search-btn {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.2s ease;
+
+  i {
+    font-size: 16px;
+  }
+
+  &:hover {
+    color: #262626;
+  }
+
+  &:focus {
+    outline: none;
+    color: #262626;
+  }
+}
+
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.search-no-results {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #6b7280;
+  text-align: center;
+}
+
 
 .membership-left {
   display: flex;
@@ -66,6 +404,22 @@
   transition: box-shadow 0.2s ease;
   position: relative;
   box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.2);
+
+  // No overflow scroll needed
+  &.member-details-section {
+    overflow: visible;
+  }
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 15px;
+  padding-bottom: 0;
+  gap: 16px;
 }
 
 .card-title {
@@ -73,12 +427,12 @@
   font-weight: 500;
   color: #262626;
   margin: 0;
-  padding: 15px;
-  padding-bottom: 0;
+  flex: 1;
 }
 
 .card-content {
   padding: 15px;
+  padding-top: 0;
   height: fit-content;
 }
 
@@ -133,7 +487,8 @@
 }
 
 .table-container {
-  overflow-x: auto;
+  width: 100%;
+  overflow: visible;
 }
 
 .data-table {
@@ -154,19 +509,145 @@
     color: #262626;
     font-size: 14px;
     letter-spacing: 0.05em;
+    line-height: 1.4;
   }
 
   td {
     padding: 16px 8px;
     border-bottom: 1px solid #f3f4f6;
     color: #6b7280;
+    line-height: 1.4;
   }
 
   tbody tr {
     transition: background-color 0.2s ease;
 
     &:hover {
-      background-color: #f9fafb;
+      background-color: #e4e4e4;
+    }
+
+    &:nth-child(odd) {
+      background-color: #ffffff;
+    }
+
+    &:nth-child(even) {
+      background-color: #f4f4f4;
+    }
+  }
+
+  &.admin-table {
+    width: 100%;
+    min-width: 600px;
+    table-layout: auto;
+
+    th.sortable {
+      -webkit-user-select: none;
+      user-select: none;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: #f9fafb;
+      }
+
+      i {
+        font-size: 12px;
+        vertical-align: middle;
+        opacity: 0.8;
+      }
+    }
+
+    th, td {
+      white-space: nowrap;
+    }
+
+    @media (min-width: 769px) {
+      th {
+        padding: 12px 20px;
+      }
+
+      td {
+        padding: 12px 20px;
+      }
+    }
+    tbody tr {
+      transition: background-color 0.2s ease;
+  
+      &:hover {
+        background-color: #e4e4e4;
+      }
+    }
+
+    // ID column - adapt to content width
+    th:nth-child(1), td:nth-child(1) {
+      width: auto;
+      min-width: 40px;
+      max-width: 60px;
+      white-space: nowrap;
+    }
+
+    // Actions column - adapt to content width
+    th:nth-child(8), td:nth-child(8) {
+      width: auto;
+      min-width: 100px; /* Minimum width for actions buttons */
+      white-space: nowrap;
+    }
+  }
+}
+
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-start;
+}
+
+.action-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  border-radius: 4px;
+
+  i {
+    font-size: 16px;
+    color: #6b7280;
+    transition: color 0.2s ease;
+  }
+
+  &:hover {
+    background-color: #f3f4f6;
+    
+    i {
+      color: #262626;
+    }
+  }
+
+  &.action-btn--edit {
+    &:hover i {
+      color: #262626;
+    }
+  }
+
+  &.action-btn--delete {
+    &:hover i {
+      color: $vivid_red;
+    }
+  }
+
+  &.action-btn--details {
+    color: #6b7280;
+    font-weight: 500;
+    border: 1px solid #e5e7eb;
+    padding: 5px;
+    
+    &:hover {
+      color: #262626;
+      background-color: #f3f4f6;
     }
   }
 }
@@ -190,16 +671,6 @@
   animation: spin 5s linear infinite;
 }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
 .receipt-link,
 .download-link {
   color: #6b7280;
@@ -208,7 +679,6 @@
   transition: color 0.2s ease;
 
   &:hover {
-    color: color.adjust($vivid_blue, $lightness: -10%);
     text-decoration: none;
   }
 }
@@ -275,16 +745,6 @@
       height: 100%;
       object-fit: cover;
     }
-  }
-
-  .gold-text {
-    font-family: 'Georgia', serif;
-    font-size: 24px;
-    font-weight: bold;
-    color: #92400e;
-    margin-bottom: 4px;
-    position: relative;
-    z-index: 1;
   }
 
   .member-text {
@@ -515,7 +975,7 @@
 @media (max-width: 768px) {
 
   .membership-page {
-    padding: 20px;
+    padding: 15px;
     width: 100%;
 
     .card {
@@ -532,52 +992,168 @@
   }
 
   .card-title {
-    font-size: 20px;
-    line-height: 28px;
-    padding: 15px 10px;
+    font-size: 18px;
+    line-height: 24px;
+    padding: 12px 10px;
+    margin-bottom: 0;
   }
 
   .card-content {
-    padding: 15px;
-  }
-
-  .table-container {
-    overflow-x: hidden; /* No horizontal scroll needed */
-    width: 100%;
+    padding: 10px;
   }
 
   .data-table {
-    font-size: 0.75rem;
-    width: 100%;
-    table-layout: fixed; /* Force equal column distribution */
-
-    th {
-      padding: 8px 4px;
-      font-size: 0.7rem;
-      font-weight: 600;
-      text-align: center;
-      word-wrap: break-word;
-      white-space: normal;
-      overflow: hidden;
-    }
-
-    td {
-      padding: 8px 4px;
-      text-align: center;
-      word-wrap: break-word;
-      white-space: normal;
-      overflow: hidden;
-      font-size: 0.7rem;
-    }
-
-    /* Specific column widths for better mobile layout */
-    th:nth-child(1), td:nth-child(1) { width: 30%; } /* Date/ID */
-    th:nth-child(2), td:nth-child(2) { width: 20%; } /* Amount/Name */
-    th:nth-child(3), td:nth-child(3) { width: 30%; } /* Status/Type - More space for "Pending" */
-    th:nth-child(4), td:nth-child(4) { width: 20%; } /* Receipt */
-
-    td.status-pending {
+    font-size: 0.7rem;
+    
+    // Regular tables (4 columns) - keep fixed layout for mobile
+    &:not(.admin-table) {
       width: 100%;
+      table-layout: fixed;
+
+      th {
+        padding: 6px 4px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-align: center;
+        word-wrap: break-word;
+        white-space: normal;
+        overflow: hidden;
+        line-height: 1.2;
+      }
+
+      td {
+        padding: 6px 4px;
+        text-align: center;
+        word-wrap: break-word;
+        white-space: normal;
+        overflow: hidden;
+        font-size: 0.65rem;
+        line-height: 1.2;
+      }
+
+      /* Specific column widths for better mobile layout */
+      th:nth-child(1), td:nth-child(1) { width: 30%; } /* Date/ID */
+      th:nth-child(2), td:nth-child(2) { width: 20%; } /* Amount/Name */
+      th:nth-child(3), td:nth-child(3) { width: 30%; } /* Status/Type - More space for "Pending" */
+      th:nth-child(4), td:nth-child(4) { width: 20%; } /* Receipt */
+
+      td.status-pending {
+        width: 100%;
+      }
+    }
+
+    // Admin table - mobile adjustments (compact)
+    &.admin-table {
+      table-layout: auto; // Keep auto layout to adapt to content
+      width: auto;
+      min-width: auto;
+      
+      th {
+        padding: 6px 6px;
+        font-size: 0.65rem;
+        line-height: 1.2;
+      }
+
+      td {
+        padding: 6px 6px;
+        font-size: 0.65rem;
+        line-height: 1.2;
+      }
+
+      // ID column in mobile - even more compact
+      th:nth-child(1), td:nth-child(1) {
+        width: 1%;
+        max-width: 50px;
+        padding: 6px 4px;
+        box-sizing: border-box;
+      }
+
+      // Hide Name column in mobile
+      th:nth-child(2), td:nth-child(2) { /* Name */
+        display: none;
+      }
+
+      // Email (MAIL) column in mobile - adapt to content width
+      th:nth-child(3), td:nth-child(3) { /* Email/MAIL */
+        width: auto;
+        max-width: 150px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 6px 4px;
+        box-sizing: border-box;
+      }
+
+      // Hide Phone, Role columns in mobile
+      th:nth-child(4), td:nth-child(4) { /* Phone */
+        display: none;
+      }
+      th:nth-child(5), td:nth-child(5) { /* Role */
+        display: none;
+      }
+
+      // Status column in mobile - show it
+      th:nth-child(6), td:nth-child(6) { /* Status */
+        width: auto;
+        max-width: 80px;
+        white-space: nowrap;
+        padding: 6px 4px;
+        box-sizing: border-box;
+      }
+
+      // Hide Created column in mobile
+      th:nth-child(7), td:nth-child(7) { /* Created */
+        display: none;
+      }
+
+      // Actions column in mobile - adapt to content (4th visible column after hiding 4-7)
+      th:nth-child(8), td:nth-child(8) { /* Actions */
+        width: 1%;
+        white-space: nowrap;
+        padding: 6px 4px;
+        box-sizing: border-box;
+      }
+      
+      // Actions column header specifically - make it more compact
+      th:nth-child(8) { /* Actions header */
+        width: 1%;
+        padding: 6px 8px;
+        text-align: center;
+        box-sizing: border-box;
+      }
+      
+      // Actions cells - ensure they only take the space of their content
+      td:nth-child(8) { /* Actions cells */
+        width: 1%;
+        max-width: 120px; /* Max width based on 3 buttons + gaps */
+      }
+    }
+  }
+
+  // Admin table actions mobile
+  .table-actions {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 4px;
+    justify-content: flex-start;
+    width: max-content;
+    display: inline-flex;
+    margin: 0;
+  }
+
+  .action-btn {
+    padding: 2px 4px;
+    font-size: 0.6rem;
+    min-height: auto;
+
+    i {
+      font-size: 10px;
+    }
+
+    &.action-btn--details {
+      font-size: 0.55rem;
+      padding: 2px 4px;
+      border-width: 1px;
     }
   }
 
@@ -602,7 +1178,11 @@
   .member-details-section {
     .card-content {
       padding: 0;
-      overflow: hidden;
+      overflow: visible;
+    }
+
+    .table-container {
+      overflow: visible;
     }
     .status-pending {
       display: flex;
@@ -686,8 +1266,511 @@
   }
 }
 
+// Pagination Styles (similar to Events)
+.members-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px;
+  margin-top: 20px;
+  border-top: 1px solid #eaeaea;
+}
+
+.prev-btn,
+.next-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background-color: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #262626;
+
+  i {
+    font-size: 18px;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: #f9fafb;
+    border-color: #9ca3af;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #f9fafb;
+  }
+}
+
+.page-counter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #262626;
+}
+
 @media (max-width: 400px) {
   .membership-page {
     padding: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 15px;
+    padding: 0;
+  }
+
+  .card-title {
+    width: 100%;
+  }
+
+  .card-header-actions {
+    width: 100%;
+  }
+
+  .members-table-filters {
+    width: 100%;
+  }
+
+  .filter-controls {
+    gap: 10px;
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .filter-btn-wrapper {
+    width: 100%;
+    order: 2;
+  }
+
+  .filter-btn {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    justify-content: center;
+  }
+
+  .search-input-wrapper {
+    order: 1;
+  }
+
+  .filter-tags {
+    order: 3;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .filter-tag {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .filter-dropdown {
+    min-width: auto;
+    width: 100%;
+    max-width: none;
+    left: 0;
+    right: 0;
+  }
+
+  .filter-submenu-header {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .filter-submenu-content {
+    padding: 6px 14px 10px;
+  }
+
+  .filter-checkbox {
+    padding: 6px 0;
+    font-size: 13px;
+  }
+
+  .search-input-wrapper {
+    min-width: auto;
+    max-width: none;
+    width: 100%;
+  }
+
+  .search-input {
+    font-size: 16px; // Prevent zoom on iOS
+    padding: 8px 40px 8px 12px;
+  }
+}
+
+// Admin Tabs Styles (similar to Subscription)
+.membership-admin-tabs {
+  display: flex;
+  border-bottom: 1px solid #eaeaea;
+  min-height: 42px; // Fixed height to prevent layout shift
+}
+
+.membership-admin-tab {
+  padding: 8px 15px; // Reduced padding
+  width: 100%;
+  text-wrap: nowrap;
+  background: none;
+  font-size: 0.9rem;
+  border: 0;
+  border-bottom: 2px solid #e0e0e0;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  height: 42px; // Fixed height
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    border-bottom-color: #d0d0d0;
+  }
+}
+
+.membership-admin-tab.active {
+  border-bottom-color: var(--vivid_red, #e53935);
+  font-weight: 500;
+}
+
+.membership-admin-tab-container {
+  min-height: 100dvh;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; // Align content to the start, not center
+}
+
+.membership-admin-panel {
+  width: 100%; // Ensure panel takes full width
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; // Align content to the start
+}
+
+.membership-admin-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.membership-admin-card {
+  background-color: rgba(27, 114, 255, 0.15);
+  border: 1px solid #e9eefc;
+  border-radius: 12px;
+  padding: 40px 20px;
+  height: fit-content;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: rgba(27, 114, 255, 0.20);
+  }
+}
+
+.membership-admin-card__icon {
+  width: 100%;
+  height: 40px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+  i {
+    font-size: 40px;
+    color: var(--vivid_blue, #104394);
+  }
+}
+
+.membership-admin-card__title {
+  font-weight: 400;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.membership-admin-card__text {
+  text-align: center;
+  margin-bottom: 25px;
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+.membership-admin-card__link {
+  display: block;
+  text-align: center;
+  margin-top: auto;
+  color: var(--vivid_blue, #104394);
+  text-decoration: none;
+}
+
+.membership-admin-edit-btn {
+  background: #262626;
+  color: #fff;
+  padding: 10px 25px;
+  border: 0;
+  border-radius: 8px;
+  height: 55px;
+  display: block;
+  margin: 24px auto 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background: #1a1a1a;
+  }
+}
+
+// Mobile styles for admin tabs
+@media (max-width: 768px) {
+  .membership-admin-tabs {
+    flex-direction: column;
+    border-bottom: none;
+    min-height: auto;
+  }
+
+  .membership-admin-tab {
+    border-bottom: 1px solid #eaeaea;
+    border-left: 3px solid transparent;
+    padding: 12px 15px;
+    text-align: left;
+    height: auto;
+    min-height: 44px;
+
+    &.active {
+      border-left-color: var(--vivid_red, #e53935);
+      border-bottom-color: #eaeaea;
+      background: #f9fafb;
+    }
+  }
+
+  .membership-admin-cards {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .membership-admin-edit-btn {
+    width: 100%;
+  }
+}
+
+// Membership Plans styles (replicated from Subscription)
+.membership-admin-tab-container {
+  .membership-plans {
+    width: 100%; // Ensure full width
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; // Align to start
+    
+    .plans-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-start; // Align cards to start, not center
+      width: 100%;
+      height: 100%;
+    }
+
+    .plan-card {
+      width: 32%;
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: box-shadow 0.3s ease;
+
+      // Disable text selection
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+
+      // Remove text selection highlight
+      -webkit-tap-highlight-color: transparent;
+
+      &:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+    }
+
+    .plan-header {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-bottom: 1px solid #e9ecef;
+      &.basic {
+        background-color: var(--vivid_red, #e53935);
+        .plan-title {
+          color: #fff;
+        }
+      }
+      &.silver {
+        background-color: var(--vivid_blue, #104394);
+        .plan-title {
+          color: #fff;
+        }
+      }
+      &.gold {
+        background-color: #ffd900;
+      }
+    }
+
+    .plan-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #262626;
+    }
+
+    .plan-content {
+      padding: 20px;
+    }
+
+    .plan-section {
+      margin-bottom: 20px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    .plan-section-title {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #495057;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .plan-section-text {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #495057;
+    }
+
+    .plan-perks {
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
+
+      li {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #495057;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .check-icon {
+          margin-right: 8px;
+          color: #28a745;
+          font-size: 16px;
+        }
+      }
+    }
+
+    @media (max-width: 768px) {
+      .plans-container {
+        margin: 16px 0;
+        flex-direction: column;
+        gap: 30px;
+        height: fit-content;
+        p {
+          font-size: 14px;
+        }
+      }
+      
+      .plan-header {
+        padding: 16px;
+      }
+      
+      .plan-card {
+        width: 100%;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        &:hover {
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+      }
+      .plan-title {
+        font-size: 20px;
+      }
+
+      .plan-content {
+        padding: 16px;
+      }
+
+      .plan-section {
+        margin-bottom: 16px;
+      }
+
+      .plan-section-title {
+        font-size: 13px;
+      }
+
+      .plan-section-text {
+        font-size: 13px;
+      }
+
+      .plan-perks li {
+        font-size: 13px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .plans-container {
+        margin: 12px 0;
+      }
+
+      .plan-header {
+        padding: 12px;
+      }
+
+      .plan-title {
+        font-size: 18px;
+      }
+
+      .plan-content {
+        padding: 12px;
+      }
+
+      .plan-section {
+        margin-bottom: 12px;
+      }
+
+      .plan-section-title {
+        font-size: 12px;
+      }
+
+      .plan-section-text {
+        font-size: 12px;
+      }
+
+      .plan-perks li {
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+    }
   }
 }

@@ -286,7 +286,9 @@ const SideNav = () => {
           <NavLink to="/profile" className={`user-profile ${isAnimated ? 'nav-item-animate--13' : 'nav-item-hidden'}`} {...navItemGuard}>
             <div className="user-avatar" aria-hidden={false}>
               {(() => {
-                const avatarSrc = user?.profilePictureUrl || user?.profilePicture || '';
+                // TO DO CHANGE IMAGES: when server image handling is finalized, reconsider priority/order
+                // Prioritize local storage dataURL first to avoid broken remote URLs; fallback to backend URL
+                const avatarSrc = user?.profilePicture || user?.profilePictureUrl || '';
                 return avatarSrc ? (
                   <img className="user-avatar-img" src={avatarSrc} alt={`${user?.first_name || 'Member'} profile`} />
                 ) : (
@@ -306,7 +308,8 @@ const SideNav = () => {
           <NavLink to="/profile" className={`user-profile ${isAnimated ? 'nav-item-animate--11' : 'nav-item-hidden'}`} {...navItemGuard}>
             <div className="user-avatar" aria-hidden={false}>
               {(() => {
-                const avatarSrc = user?.profilePictureUrl || user?.profilePicture || '';
+                // TO DO CHANGE IMAGES: when server image handling is finalized, reconsider priority/order
+                const avatarSrc = user?.profilePicture || user?.profilePictureUrl || '';
                 return avatarSrc ? (
                   <img className="user-avatar-img" src={avatarSrc} alt={`${user?.first_name || 'Member'} profile`} />
                 ) : (
@@ -322,7 +325,7 @@ const SideNav = () => {
 
           <NavLink to="/profile" className={`nav-item ${isAnimated ? 'nav-item-animate--12' : 'nav-item-hidden'}`} {...navItemGuard}>
             <i className="bi bi-gear"></i>
-            <span className="nav-label">Settings</span>
+            <span className="nav-label">Profile</span>
           </NavLink>
       
           <button 

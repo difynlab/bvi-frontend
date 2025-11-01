@@ -15,19 +15,37 @@ export function useSettingsForm() {
   // Helper to extract phone components from unified phone string
   const extractPhoneComponents = useCallback((unifiedPhone, defaultCode = '+54') => {
     if (!unifiedPhone) return { code: defaultCode, number: '' };
-    
-    const phoneStr = unifiedPhone.toString().replace(/\s+/g, '');
-    // Try to match common country codes like +54, +1, etc. (1-3 digits after +)
-    const countryCodeMatch = phoneStr.match(/^(\+?\d{1,3})/);
-    
-    if (countryCodeMatch) {
-      const code = countryCodeMatch[1].startsWith('+') ? countryCodeMatch[1] : `+${countryCodeMatch[1]}`;
-      const number = phoneStr.replace(/^\+?\d{1,3}/, '');
-      return { code, number };
+
+    const raw = unifiedPhone.toString().replace(/\s+/g, '');
+    const phoneDigits = raw.replace(/\D/g, '');
+    const codeStr = (defaultCode || '').toString();
+    const codeDigits = codeStr.replace(/\D/g, '');
+
+    // Case 1: starts with +<code>
+    if (raw.startsWith('+')) {
+      const match = raw.match(/^(\+\d{1,3})(.*)$/);
+      if (match) {
+        return { code: match[1], number: (match[2] || '').trim() };
+      }
     }
-    
-    // If no code found, assume default code and use entire string as number
-    return { code: defaultCode, number: phoneStr };
+
+    // Case 2: unified phone starts with known code digits (e.g., 549..., 54..., 1..)
+    if (codeDigits && phoneDigits.startsWith(codeDigits)) {
+      const number = phoneDigits.slice(codeDigits.length);
+      return { code: codeStr, number };
+    }
+
+    // Case 3: if code has an extra trailing '9' (AR mobile pattern 54 vs 549), try without it
+    if (codeDigits?.endsWith('9')) {
+      const baseCode = codeDigits.slice(0, -1);
+      if (baseCode && phoneDigits.startsWith(baseCode)) {
+        const number = phoneDigits.slice(baseCode.length);
+        return { code: codeStr, number };
+      }
+    }
+
+    // Fallback: treat as local number, keep provided default code
+    return { code: codeStr || '+54', number: phoneDigits };
   }, []);
 
   // Get profile data with defaults from registration
@@ -37,6 +55,11 @@ export function useSettingsForm() {
   
   // Extract phone components if user has unified phone from registration
   const userPhone = currentUser.phone || '';
+  const ensurePlus = useCallback((val) => {
+    if (!val) return '';
+    const s = String(val).trim();
+    return s.startsWith('+') ? s : `+${s}`;
+  }, []);
   
   // Merge user data with profile data, using registration data as defaults
   // Support both snake_case (from backend) and camelCase (from profile storage)
@@ -70,13 +93,16 @@ export function useSettingsForm() {
       email,
       countryCode: phoneData.code,
       phoneNumber: phoneData.number,
+      phoneE164: ensurePlus(
+        profileData.phoneE164 || currentUser.phone || (phoneData.code.replace(/\s+/g,'') + phoneData.number)
+      ),
       dateFormat: profileData.dateFormat || 'MM/DD/YYYY',
       timeZone: profileData.timeZone || 'EST',
       country: profileData.country || 'Argentina',
       language: profileData.language || 'English (Default)',
       profilePicture: profileData.profilePicture || ''
     };
-  }, [profileData, currentUser, extractPhoneComponents, userPhone]);
+  }, [profileData, currentUser, extractPhoneComponents, userPhone, ensurePlus]);
   
   const [form, setForm] = useState(baseUser);
   const [dirty, setDirty] = useState(false);
@@ -107,7 +133,7 @@ export function useSettingsForm() {
     return Boolean(form.firstName?.trim()) && 
            Boolean(form.lastName?.trim()) && 
            Boolean(form.email?.trim()) && 
-           String(form.countryCode || '').length > 0;
+           (String(form.countryCode || '').length > 0 || Boolean(form.phoneE164));
   }, [form, baseUser]);
 
   const wantsPasswordChange = useMemo(() => 
@@ -202,14 +228,11 @@ export function useSettingsForm() {
         }
       }
       
-      // Validate phone number if present
-      if (form.phoneNumber) {
-        const digitsOnly = form.phoneNumber.replace(/[^0-9]/g, '');
-        if (digitsOnly && (digitsOnly.length < 8 || digitsOnly.length > 15)) {
-          setErrorMessage('Phone number must be between 8 and 15 digits');
-          setIsSaving(false);
-          return;
-        }
+      // Optional: basic guard if neither phoneE164 nor phoneNumber present
+      if (!form.phoneE164 && !form.phoneNumber) {
+        setErrorMessage('Phone number is required');
+        setIsSaving(false);
+        return;
       }
       
       // Prepare settings data for backend API
@@ -219,6 +242,7 @@ export function useSettingsForm() {
         email: form.email?.toLowerCase().trim() || '', // Email no se puede cambiar pero se envía
         countryCode: form.countryCode || '+54',
         phoneNumber: form.phoneNumber?.trim() || '',
+        phoneE164: form.phoneE164 || '',
         profilePicture: form.profilePicture || null,
         // Preferences (solo frontend, no se envían al backend)
         dateFormat: form.dateFormat || 'MM/DD/YYYY',
@@ -243,19 +267,31 @@ export function useSettingsForm() {
       // Helper to extract phone components from unified phone string
       const extractPhoneComponents = (unifiedPhone, currentCode) => {
         if (!unifiedPhone) return { code: currentCode || '+54', number: '' };
-        
-        const phoneStr = unifiedPhone.toString().replace(/\s+/g, '');
-        // Try to match common country codes like +54, +1, etc.
-        const countryCodeMatch = phoneStr.match(/^(\+?\d{1,3})/);
-        
-        if (countryCodeMatch) {
-          const code = countryCodeMatch[1].startsWith('+') ? countryCodeMatch[1] : `+${countryCodeMatch[1]}`;
-          const number = phoneStr.replace(/^\+?\d{1,3}/, '');
-          return { code, number };
+
+        const raw = unifiedPhone.toString().replace(/\s+/g, '');
+        const phoneDigits = raw.replace(/\D/g, '');
+        const codeStr = (currentCode || '+54').toString();
+        const codeDigits = codeStr.replace(/\D/g, '');
+
+        if (raw.startsWith('+')) {
+          const match = raw.match(/^(\+\d{1,3})(.*)$/);
+          if (match) {
+            return { code: match[1], number: (match[2] || '').trim() };
+          }
         }
-        
-        // If no code found, assume current code and use entire string as number
-        return { code: currentCode || '+54', number: phoneStr };
+
+        if (codeDigits && phoneDigits.startsWith(codeDigits)) {
+          return { code: codeStr, number: phoneDigits.slice(codeDigits.length) };
+        }
+
+        if (codeDigits?.endsWith('9')) {
+          const baseCode = codeDigits.slice(0, -1);
+          if (baseCode && phoneDigits.startsWith(baseCode)) {
+            return { code: codeStr, number: phoneDigits.slice(baseCode.length) };
+          }
+        }
+
+        return { code: codeStr, number: phoneDigits };
       };
 
       // Extract phone components if backend returned unified phone
@@ -270,6 +306,7 @@ export function useSettingsForm() {
         email: updatedProfileData?.email || form.email?.toLowerCase().trim() || '',
         countryCode: phoneComponents.code,
         phoneNumber: phoneComponents.number,
+        phoneE164: ensurePlus(updatedProfileData?.phone || form.phoneE164 || ''),
         profilePicture: updatedProfileData?.profile_picture_url || 
                         updatedProfileData?.image_url || 
                         form.profilePicture || '',
@@ -332,6 +369,9 @@ export function useSettingsForm() {
       email: profileData.email || currentUser.email || '',
       countryCode: phoneComponents.code,
       phoneNumber: phoneComponents.number,
+      phoneE164: ensurePlus(
+        profileData.phoneE164 || currentUser.phone || (String(phoneComponents.code).replace(/\s+/g,'') + String(phoneComponents.number))
+      ),
       dateFormat: profileData.dateFormat || 'MM/DD/YYYY',
       timeZone: profileData.timeZone || 'EST',
       country: profileData.country || 'Argentina',
@@ -350,7 +390,8 @@ export function useSettingsForm() {
     currentUser.email, 
     currentUser.phone,
     profileData,
-    extractPhoneComponents
+    extractPhoneComponents,
+    ensurePlus
   ]);
 
   return {

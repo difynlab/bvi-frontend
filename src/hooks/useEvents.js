@@ -270,8 +270,20 @@ export const useEvents = () => {
       const response = await eventsService.deleteEvent(id)
       
       if (response.http_status === 200) {
-        setEvents(prev => prev.filter(e => e.id !== id))
         clearEventsCache()
+        
+        // Calculate what page we should be on after deletion
+        const remainingItems = pagination.total - 1
+        const totalPages = Math.ceil(remainingItems / pagination.per_page)
+        
+        // If current page would be empty, go to previous page
+        let pageToLoad = pagination.current_page
+        if (pagination.current_page > totalPages && totalPages > 0) {
+          pageToLoad = totalPages
+        }
+        
+        // Reload events from the appropriate page to maintain 6 items per page
+        loadEvents(pageToLoad, true)
         
         // Notificación de evento eliminado deshabilitada
         // if (eventToDelete) {
@@ -288,7 +300,7 @@ export const useEvents = () => {
     } finally {
       setLoading(false)
     }
-  }, [events, addNotification])
+  }, [events, addNotification, pagination, loadEvents])
 
   const refreshEvents = useCallback(() => {
     loadEvents(pagination.current_page, true)

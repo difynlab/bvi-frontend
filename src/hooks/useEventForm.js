@@ -61,7 +61,7 @@ const fromItem = (item) => {
     date: item.date || '',
     startTime: item.startTime || '',
     endTime: item.endTime || '',
-    timeZone: item.timeZone || 'UTC',
+    timeZone: item.timeZone || 'UTC±00:00 — Greenwich',
     eventType: item.eventType || 'conference',
     repeat: repeat,
     description: item.description || '',
@@ -75,15 +75,16 @@ const fromItem = (item) => {
 }
 
 const TIME_ZONES = [
-  'UTC−08:00',
-  'UTC−06:00',
-  'UTC−03:00',
-  'UTC±00:00',
-  'UTC+01:00',
-  'UTC+03:00',
-  'UTC+05:30',
-  'UTC+09:00',
-  'UTC+12:00'
+  'UTC−08:00 — Pacific',
+  'UTC−06:00 — Central',
+  'UTC−03:00 — South America',
+  'UTC±00:00 — Greenwich',
+  'UTC+01:00 — Central Europe',
+  'UTC+03:00 — Moscow',
+  'UTC+05:30 — India',
+  'UTC+08:00 — East Asia',
+  'UTC+09:00 — Japan',
+  'UTC+12:00 — Oceania'
 ]
 
 const EVENT_TYPE_OPTIONS = [
@@ -113,7 +114,7 @@ export const useEventForm = () => {
     date: '',
     startTime: '09:00',
     endTime: '17:00',
-    timeZone: 'UTC±00:00 — Greenwich Mean Time',
+    timeZone: 'UTC±00:00 — Greenwich',
     eventType: 'conference',
     repeat: 'na',
     description: '',

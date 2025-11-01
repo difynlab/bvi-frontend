@@ -21,12 +21,13 @@ export function useCurrentUser() {
     try {
       const { user } = useAuthHook();
       if (user) {
+        const normalizedRole = (user.role || 'member').toString().toLowerCase();
         return {
           name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || '',
           email: user.email || '',
           firstName: user.firstName || '',
           lastName: user.lastName || '',
-          role: user.role || 'member',
+          role: normalizedRole,
           permissions: user.permissions || [],
           id: user.id || '',
           phoneNumber: user.phoneNumber || ''
@@ -39,12 +40,13 @@ export function useCurrentUser() {
   
   return useMemo(() => {
     const fallback = getCurrentUserFromStorage();
+    const normalizedRole = (fallback.role || 'member').toString().toLowerCase();
     return {
       name: fallback.name,
       email: fallback.email,
       firstName: '',
       lastName: '',
-      role: 'member',
+      role: normalizedRole,
       permissions: [],
       id: '',
       phoneNumber: ''

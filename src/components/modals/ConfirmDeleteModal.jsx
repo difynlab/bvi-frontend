@@ -5,7 +5,10 @@ import ModalLifecycleLock from './ModalLifecycleLock'
 export const ConfirmDeleteModal = ({
   isOpen,
   onClose,
-  onConfirm
+  onConfirm,
+  message,
+  isDeleting = false,
+  errorMessage = ''
 }) => {
   const modalBackdropClose = useModalBackdropClose(onClose)
   const deleteButtonRef = useRef(null)
@@ -32,8 +35,8 @@ export const ConfirmDeleteModal = ({
   if (!isOpen) return null
 
   const handleConfirm = () => {
+    // Don't close modal here - let parent handle it after successful delete
     onConfirm()
-    onClose()
   }
 
   return (
@@ -67,14 +70,26 @@ export const ConfirmDeleteModal = ({
 
         <div className="confirm-modal-content">
           <p>
-            Deleting this file record will erase all the data from the system permanently. This action cannot be reversed.
+            {message || 'Are you sure you want to delete this item? This action cannot be reversed.'}
           </p>
+
+          {errorMessage && (
+            <div
+              className="app-form__error-banner"
+              role="alert"
+              aria-live="assertive"
+              tabIndex={-1}
+            >
+              <strong>Error:</strong> {errorMessage}
+            </div>
+          )}
 
           <div className="form-actions">
             <button
               type="button"
               onClick={onClose}
               className="cancel-button"
+              disabled={isDeleting}
             >
               Cancel
             </button>
@@ -83,8 +98,9 @@ export const ConfirmDeleteModal = ({
               onClick={handleConfirm}
               className="delete-button"
               ref={deleteButtonRef}
+              disabled={isDeleting}
             >
-              <i className="bi bi-trash"></i>Confirm Deletion
+              <i className="bi bi-trash"></i>{isDeleting ? 'Deleting...' : 'Delete'}
             </button>
           </div>
         </div>

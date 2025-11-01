@@ -1,4 +1,6 @@
 import React from 'react';
+import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 import { useSettingsForm } from '../../hooks/useSettingsForm';
 import { usePasswordVisibility } from '../../hooks/usePasswordVisibility';
 import { useAuth } from '../../context/useAuth';
@@ -47,7 +49,10 @@ export default function Settings() {
         <section className="settings-card settings-general-details">
           <h2 className="settings-card-title">General Details</h2>
 
-          <div className="settings-field">
+          {/* Row: Left (fields) + Right (profile picture) */}
+          <div className="settings-general-row">
+            <div className="settings-general-col">
+              <div className="settings-field">
             <div className="settings-contact-row">
               <div className="settings-contact-field">
                 <label className="settings-label">First Name<span className="settings-req">*</span></label>
@@ -70,59 +75,51 @@ export default function Settings() {
                 />
               </div>
             </div>
-          </div>
-
-          <div className="settings-field">
-            <div className="settings-contact-row">
-              <div className="settings-contact-field">
-                <label className="settings-label">Email Address<span className="settings-req">*</span></label>
-                <input
-                  className="settings-input settings-input--disabled"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => onChange('email', e.target.value)}
-                  placeholder="Email"
-                  disabled
-                />
               </div>
-              <div className="settings-contact-field settings-contact-field--phone-group">
-                <label className="settings-label">Contact Number<span className="settings-req">*</span></label>
-                <div className="settings-phone-group">
-                  <input
-                    className="settings-input settings-input--country-code"
-                    type="number"
-                    value={form.countryCode}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Prevent negative numbers
-                      if (value === '' || (parseInt(value) >= 0 && !isNaN(parseInt(value)))) {
-                        onChange('countryCode', value);
-                      }
-                    }}
-                    placeholder="+54"
-                    min="0"
-                  />
-                  <input
-                    className="settings-input"
-                    type="tel"
-                    value={form.phoneNumber}
-                    onChange={(e) => onChange('phoneNumber', e.target.value)}
-                    placeholder="Phone"
-                  />
+
+              <div className="settings-field">
+                <div className="settings-contact-row">
+                  <div className="settings-contact-field">
+                    <label className="settings-label">Email Address<span className="settings-req">*</span></label>
+                    <input
+                      className="settings-input settings-input--disabled"
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => onChange('email', e.target.value)}
+                      placeholder="Email"
+                      disabled
+                    />
+                  </div>
+                  <div className="settings-contact-field settings-contact-field--phone-group">
+                    <label className="settings-label">Contact Number<span className="settings-req">*</span></label>
+                    <div className="settings-phone-group">
+                      <PhoneInput
+                        international
+                        defaultCountry="AR"
+                        value={form.phoneE164}
+                        onChange={(val) => onChange('phoneE164', val || '')}
+                        className="settings-phone-input"
+                        placeholder="Enter phone number"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
+
+            <div className="settings-image-col">
+              <ImageUpload
+                onFileSelect={onSelectFile}
+                selectedFile={selectedFile}
+                preview={profilePreview}
+                accept="image/*"
+                errorMessage={errorMessage}
+                onError={onImageError}
+              />
             </div>
           </div>
 
           <div className="settings-field image-inputs-row">
-            <ImageUpload
-              onFileSelect={onSelectFile}
-              selectedFile={selectedFile}
-              preview={profilePreview}
-              accept="image/*"
-              errorMessage={errorMessage}
-              onError={onImageError}
-            />
             {/* TODO BACKEND: upload to backend and store remote URL; hydrate on load */}
             <section className="settings-card settings-preferences">
               <div className="settings-field">
@@ -282,6 +279,13 @@ export default function Settings() {
               <strong>Error:</strong> {errorMessage}
             </div>
           )}
+          <button 
+            type="submit" 
+            className="settings-save-btn" 
+            disabled={!canSave || isSaving}
+          >
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
           {successMessage && (
             <div
               className="app-form__success-banner"
@@ -292,13 +296,6 @@ export default function Settings() {
               <strong>Success:</strong> {successMessage}
             </div>
           )}
-          <button 
-            type="submit" 
-            className="settings-save-btn" 
-            disabled={!canSave || isSaving}
-          >
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </button>
           
           <button 
             type="button" 

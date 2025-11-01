@@ -5,6 +5,7 @@ import { getSession, saveSession, clearSession, clearAllAuthData, getUsers, setU
 import { setProfile, getProfile, ensureProfile } from '../helpers/profileStorage'
 import { uploadAvatar } from '../api/avatarApi'
 import { registerUser, loginUser, logoutUser, getCurrentSession } from '../api/authApi'
+import { getProfile as fetchBackendProfile } from '../services/profileService'
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -27,6 +28,44 @@ export const AuthProvider = ({ children }) => {
     }
     
     return composed
+  }
+
+  // Merge backend profile into current user
+  const mergeBackendProfile = async (baseUser) => {
+    try {
+      // Fetch profile using token in storage
+      const backend = await fetchBackendProfile()
+      const data = backend || {}
+
+      // Map fields from backend response
+      const mapped = {
+        ...baseUser,
+        id: data.id ?? baseUser.id,
+        first_name: data.first_name ?? baseUser.first_name,
+        last_name: data.last_name ?? baseUser.last_name,
+        email: data.email ?? baseUser.email,
+        phone: data.phone ?? baseUser.phone,
+        role: data.role ?? baseUser.role,
+        // TO DO CHANGE IMAGES: prefer original_image from backend; fallback to blurred; then local
+        profilePictureUrl: data.original_image || data.blurred_image || baseUser.profilePictureUrl || baseUser.profilePicture || '',
+      }
+
+      // Persist mapped pieces needed across reloads
+      setProfile(mapped, {
+        profilePicture: mapped.profilePicture || '',
+        profilePictureUrl: mapped.profilePictureUrl || '',
+        first_name: mapped.first_name || '',
+        last_name: mapped.last_name || '',
+        userName: mapped.userName || `${mapped.first_name || ''} ${mapped.last_name || ''}`.trim(),
+        phone: mapped.phone || '',
+      })
+
+      // Update session
+      saveSession(mapped)
+      setUser(mapped)
+    } catch (e) {
+      // Swallow errors to avoid breaking UI if backend unreachable
+    }
   }
 
   // Try to sync avatar to backend
@@ -56,6 +95,8 @@ export const AuthProvider = ({ children }) => {
         
         setIsAuthenticated(true)
         setUser(session)
+        // Fetch backend profile to get server image URLs and latest data
+        mergeBackendProfile(session)
       }
     } catch (error) {
       console.error('Error loading session from localStorage:', error)
@@ -108,9 +149,11 @@ export const AuthProvider = ({ children }) => {
 
       saveSession(sessionUser)
       setUser(sessionUser)
+      // Fetch backend profile to update picture URL and latest fields
+      mergeBackendProfile(sessionUser)
       setIsAuthenticated(true)
 
-      console.log('API Registration successful:', sessionUser)
+      
       return true
     } catch (apiError) {
       console.error('API registration failed:', apiError.message)
@@ -163,9 +206,11 @@ export const AuthProvider = ({ children }) => {
 
       saveSession(sessionUser)
       setUser(sessionUser)
+      // Fetch backend profile to update picture URL and latest fields
+      mergeBackendProfile(sessionUser)
       setIsAuthenticated(true)
 
-      console.log('API Login successful:', sessionUser)
+      
       return true
     } catch (apiError) {
       console.error('API login failed:', apiError.message)
@@ -227,7 +272,7 @@ export const AuthProvider = ({ children }) => {
       setUser(sessionUser)
       setIsAuthenticated(true)
 
-      console.log('Google login successful:', sessionUser)
+      
       return true
     } catch (err) {
       console.error('Google login failed', err)
@@ -244,9 +289,9 @@ export const AuthProvider = ({ children }) => {
       logoutUser(user.token).catch(error => {
         // This is expected if token is expired/invalid
         if (error.message.includes('Unauthenticated')) {
-          console.log('Token was already expired/invalid, proceeding with local logout')
+          
         } else {
-          console.warn('API logout failed:', error.message)
+          
         }
         // Continue with local logout even if API fails
       })
@@ -260,7 +305,7 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false)
     setError(null)
 
-    console.log('User logged out successfully')
+    
   }
 
   // TODO TEMPORARY: role toggle function for testing only. REMOVE before production.
@@ -283,19 +328,19 @@ export const AuthProvider = ({ children }) => {
   // TEMPORARY: Debug function to clear all registered members (REMOVE before production)
   const clearAllUsers = () => {
     const users = getUsers()
-    console.log('Clearing users:', users)
+    
     localStorage.removeItem('bvi.auth.users')
     localStorage.removeItem('bvi.auth.session')
     setUser(null)
     setIsAuthenticated(false)
     setError(null)
-    console.log('All users cleared. You can now register with any email.')
+    
   }
 
   // TEMPORARY: Debug function to show all registered members (REMOVE before production)
   const showRegisteredUsers = () => {
     const users = getUsers()
-    console.log('Currently registered members:', users.map(u => ({ email: u.email, role: u.role })))
+    
     return users
   }
 
@@ -316,21 +361,7 @@ export const AuthProvider = ({ children }) => {
         next.last_name = lastName;
       }
 
-      // If avatar dataURL present, try backend upload
-      if (partial?.profilePicture) {
-        const { synced, url } = await trySyncAvatarToBackend(next, partial.profilePicture);
-        if (synced && url) {
-          next = {
-            ...next,
-            profilePictureUrl: url,
-            profilePictureSync: 'synced',
-            // keep dataURL as backup or clear it to save space:
-            // profilePicture: '', // optional optimization
-          };
-        } else {
-          next = { ...next, profilePictureSync: API_BASE ? 'pending' : 'pending' };
-        }
-      }
+      // Avatar sync disabled: profile image updates are handled only from profile page/backend
 
       // Persist per-user profile and session
       setProfile(next, {
@@ -348,7 +379,7 @@ export const AuthProvider = ({ children }) => {
         saveSession(next); // existing helper // TODO BACKEND
       } catch (error) {
         if (error.name === 'QuotaExceededError') {
-          console.warn('localStorage quota exceeded, trying to compress image')
+          
 
           // Try to compress the image if it exists
           if (next.profilePicture && next.profilePicture.startsWith('data:image')) {
@@ -389,15 +420,15 @@ export const AuthProvider = ({ children }) => {
                   try {
                     saveSession(compressedNext)
                     setUser(compressedNext)
-                    console.log('Successfully saved compressed image')
+                    
                   } catch (compressedError) {
-                    console.warn('Even compressed image too large, removing image')
+                    
                     const { profilePicture, ...nextWithoutImage } = next
                     saveSession(nextWithoutImage)
                     setUser(nextWithoutImage)
                   }
                 } catch (compressionError) {
-                  console.warn('Image compression failed, removing image')
+                  
                   const { profilePicture, ...nextWithoutImage } = next
                   saveSession(nextWithoutImage)
                   setUser(nextWithoutImage)
@@ -405,7 +436,7 @@ export const AuthProvider = ({ children }) => {
               }
 
               img.onerror = () => {
-                console.warn('Image loading failed, removing image')
+                
                 const { profilePicture, ...nextWithoutImage } = next
                 saveSession(nextWithoutImage)
                 setUser(nextWithoutImage)
@@ -414,7 +445,7 @@ export const AuthProvider = ({ children }) => {
               img.src = next.profilePicture
               return
             } catch (compressionError) {
-              console.warn('Image compression failed, removing image')
+              
             }
           }
 

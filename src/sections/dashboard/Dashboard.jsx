@@ -179,7 +179,7 @@ const Dashboard = () => {
                   <div className="item-content">
                     <div className="item-title">{event.title || 'Event'}</div>
                     <div className="item-meta">
-                      {getEventTypeLabel(event.eventType)}{event.date ? ` · ${event.date}` : ''}{event.startTime ? ` · ${event.startTime}` : ''}{event.timeZone ? ` ${formatTimezone(event.timeZone)}` : ''}
+                      {getEventTypeLabel(event.eventType)}{event.date ? ` · ${event.date}` : ''}{event.startTime ? ` · ${event.startTime}` : ''}{event.timeZone ? ` ${event.timeZone}` : ''}
                     </div>
                   </div>
                 </li>

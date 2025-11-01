@@ -306,7 +306,7 @@ export const Events = () => {
                     <div className="event-details">
                       <div className="event-time">
                         <span className="icon"><i className="bi bi-clock"></i></span>
-                        {formatTime(event.startTime)} - {formatTime(event.endTime)} ({formatTimezone(event.timeZone)})
+                        {formatTime(event.startTime)} - {formatTime(event.endTime)} {event.timeZone}
                       </div>
                       <div className="event-location">
                         <span className="icon"><i className="bi bi-geo-alt"></i></span>
@@ -352,8 +352,7 @@ export const Events = () => {
                 <i className="bi bi-chevron-left"></i>
               </button>
               <div className="page-counter">
-                <span>{pagination.current_page} of {pagination.last_page}</span>
-                <small>({pagination.total} total events)</small>
+                <span>{pagination.current_page} / {pagination.last_page}</span>
               </div>
               <button 
                 className="next-btn"
@@ -711,6 +710,10 @@ export const Events = () => {
                       value={eventForm.form.timeZone}
                       onChange={handleInputChange}
                       options={eventForm.TIME_ZONES.map(tz => ({ value: tz, label: tz }))}
+                      formatDisplay={(opt) => {
+                        const match = opt.label.match(/UTC[±−+]\d{2}:\d{2}/)
+                        return match ? match[0] : opt.label
+                      }}
                       placeholder="Select time zone"
                     />
                   </div>
@@ -881,7 +884,7 @@ export const Events = () => {
                       </div>
                       <div className="register-event-detail">
                         <span className="icon"><i className="bi bi-clock"></i></span>
-                        {formatTime(registeringEvent.startTime)} - {formatTime(registeringEvent.endTime)} ({formatTimezone(registeringEvent.timeZone)})
+                        {formatTime(registeringEvent.startTime)} - {formatTime(registeringEvent.endTime)} {registeringEvent.timeZone}
                       </div>
                       <div className="register-event-detail">
                         <span className="icon"><i className="bi bi-geo-alt"></i></span>

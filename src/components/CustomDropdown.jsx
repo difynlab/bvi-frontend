@@ -12,7 +12,9 @@ const CustomDropdown = ({
   disabled = false,
   variant = "default", // "default" or "wysiwyg"
   actionLabel,
-  onAction
+  onAction,
+  // Optional formatter for how the selected value is displayed in the trigger
+  formatDisplay
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -79,7 +81,9 @@ const CustomDropdown = ({
   }
 
   const selectedOption = options.find(option => option.value === value)
-  const displayValue = selectedOption ? selectedOption.label : placeholder
+  const displayValue = selectedOption 
+    ? (typeof formatDisplay === 'function' ? formatDisplay(selectedOption) : selectedOption.label)
+    : placeholder
 
   return (
     <div 

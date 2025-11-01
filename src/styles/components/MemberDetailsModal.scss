@@ -1,0 +1,597 @@
+@use '../vars' as *;
+
+.member-details-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.member-details-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 90%;
+  max-height: 90vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.member-details-modal-header,
+.member-details-modal-content {
+  padding: 0 30px;
+}
+
+.member-details-modal-header {
+  padding-top: 30px;
+}
+
+.member-details-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-top: 0;
+  padding-bottom: 30px;
+  
+  // Hide scrollbar but keep scrolling functionality
+  scrollbar-width: none; // Firefox
+  -ms-overflow-style: none; // IE and Edge
+  
+  &::-webkit-scrollbar {
+    display: none; // Chrome, Safari, Opera
+  }
+}
+
+// Payment History Table
+.member-payment-history {
+  margin-top: 40px;
+  width: 100%;
+
+  .member-payment-history-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #262626;
+    margin: 0 0 20px 0;
+  }
+}
+
+// Import table styles from membership
+.table-container {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  thead {
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px 10px 0 0;
+  }
+
+  th {
+    padding: 16px 8px;
+    text-align: left;
+    font-weight: 600;
+    color: #262626;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+  }
+
+  td {
+    padding: 16px 8px;
+    border-bottom: 1px solid #f3f4f6;
+    color: #6b7280;
+  }
+
+  tbody tr {
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: #f9fafb;
+    }
+  }
+}
+
+.receipt-link {
+  color: #6b7280;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: $vivid_blue;
+    text-decoration: none;
+  }
+}
+
+.processing-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: $vivid_red;
+  font-weight: 500;
+  font-size: 0.875rem;
+
+  i {
+    font-size: 14px;
+    animation: spin 1s linear infinite;
+  }
+}
+
+.pending-text {
+  color: $vivid_red;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.member-details-modal .close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+
+  &:hover {
+    color: #374151;
+    background-color: #f3f4f6;
+  }
+}
+
+.member-details-modal-header {
+  margin-bottom: 30px;
+  border-bottom: 1px solid #e5e7eb;
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    gap: 10px;
+    padding-bottom: 10px;
+  }
+
+  .member-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #262626;
+    margin: 0;
+  }
+
+  .member-details-id {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: white;
+
+    &.active {
+      background-color: $vivid_blue;
+    }
+
+    &.inactive {
+      background-color: $vivid_red;
+    }
+  }
+}
+
+.member-details-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.member-details-columns {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 30px;
+  align-items: start;
+}
+
+.member-details-image-column {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12px; // Align with first detail row padding
+}
+
+.member-details-image,
+.member-details-image-placeholder {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.member-details-image {
+  object-fit: cover;
+}
+
+.member-details-image-placeholder {
+  i {
+    font-size: 3rem;
+    color: #9ca3af;
+  }
+}
+
+.member-details-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.member-detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.member-detail-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  flex-shrink: 0;
+
+  i {
+    font-size: 18px;
+    color: #6b7280;
+  }
+}
+
+.member-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.member-detail-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.member-detail-value {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #6b7280;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  width: 100%;
+  font-family: inherit;
+  cursor: default;
+  min-height: 1.5rem;
+  display: inline-block;
+  line-height: 1.5rem;
+
+  &:read-only {
+    cursor: default;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  &:not(:read-only) {
+    cursor: text;
+    -webkit-user-select: text;
+    user-select: text;
+
+    &:focus {
+      outline: none;
+      background-color: #f9fafb;
+      border-radius: 4px;
+      padding: 2px 4px;
+      margin: -2px -4px;
+    }
+  }
+}
+
+.member-detail-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0px 10px;
+  border-radius: 20px;
+  width: fit-content;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  line-height: 1.5rem;
+  min-height: 1.5rem;
+
+  &.active {
+    background-color: $vivid_blue;
+  }
+
+  &.inactive {
+    background-color: $vivid_red;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .member-details-modal {
+    width: 95%;
+    padding: 20px;
+  }
+
+  .member-details-modal-header {
+    h2 {
+      font-size: 1.25rem;
+    }
+
+    .member-name {
+      font-size: 0.875rem;
+    }
+  }
+
+  .member-details-columns {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .member-detail-row {
+    gap: 12px;
+    padding: 10px 0;
+  }
+
+  .member-detail-icon {
+    width: 36px;
+    height: 36px;
+
+    i {
+      font-size: 16px;
+    }
+  }
+
+  .member-detail-label {
+    font-size: 0.8rem;
+  }
+
+  .member-detail-value {
+    font-size: 0.875rem;
+  }
+}
+
+.member-details-modal-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 20px 30px;
+  border-top: 1px solid #e5e7eb;
+  background: white;
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.member-details-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+
+  i {
+    font-size: 16px;
+  }
+
+  &.member-details-btn--edit {
+    background-color: #f3f4f6;
+    color: #262626;
+
+    &:hover:not(:disabled) {
+      background-color: #e5e7eb;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &.member-details-btn--delete {
+    background-color: $vivid_red;
+    color: white;
+
+    &:hover {
+      background-color: darken($vivid_red, 10%);
+    }
+  }
+}
+
+// Success and error banners
+.app-form__success-banner {
+  background-color: #d4edda;
+  border: 1px solid #28a745;
+  color: #155724;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 14px;
+  text-align: center;
+  width: fit-content;
+  
+  strong {
+    font-weight: 600;
+  }
+}
+
+.app-form__error-banner {
+  background-color: #f8d7da;
+  border: 1px solid #dc3545;
+  color: #721c24;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 14px;
+  text-align: center;
+  width: fit-content;
+  
+  strong {
+    font-weight: 600;
+  }
+}
+
+// Responsive adjustments for footer
+@media (max-width: 768px) {
+  .member-details-modal-header,
+  .member-details-modal-content {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .member-details-modal-header {
+    padding-top: 20px;
+  }
+
+  .member-details-modal-content {
+    padding-bottom: 20px;
+  }
+
+  .member-details-columns {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .member-details-image-column {
+    justify-content: center;
+    padding-top: 0;
+  }
+
+  .member-details-image,
+  .member-details-image-placeholder {
+    width: 100px;
+    height: 100px;
+  }
+
+  .member-details-image-placeholder {
+    i {
+      font-size: 2.5rem;
+    }
+  }
+
+  .member-details-modal-footer {
+    padding: 15px 20px;
+    flex-direction: column;
+    gap: 10px;
+
+    .member-details-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  // Payment History Table Mobile
+  .table-container {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  .data-table {
+    font-size: 0.75rem;
+    width: 100%;
+    table-layout: fixed;
+
+    th {
+      padding: 8px 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-align: center;
+      word-wrap: break-word;
+      white-space: normal;
+      overflow: hidden;
+    }
+
+    td {
+      padding: 8px 4px;
+      text-align: center;
+      word-wrap: break-word;
+      white-space: normal;
+      overflow: hidden;
+      font-size: 0.7rem;
+    }
+
+    // Specific column widths for better mobile layout
+    th:nth-child(1), td:nth-child(1) { width: 25%; } /* Date */
+    th:nth-child(2), td:nth-child(2) { width: 25%; } /* Status */
+    th:nth-child(3), td:nth-child(3) { width: 25%; } /* Amount */
+    th:nth-child(4), td:nth-child(4) { width: 25%; } /* Receipt */
+  }
+
+  .receipt-link,
+  .pending-text {
+    font-size: 0.65rem;
+    padding: 2px 4px;
+  }
+
+  .member-payment-history {
+    .member-payment-history-title {
+      font-size: 0.875rem;
+      margin-bottom: 12px;
+    }
+  }
+}

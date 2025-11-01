@@ -2,10 +2,10 @@ import React, { useState, useRef, useCallback } from 'react';
 import { fileToCompressedDataUrl } from '../utils/imageCompression';
 import '../styles/components/ImageUpload.scss';
 
-export default function ImageUpload({ 
-  onFileSelect, 
-  selectedFile, 
-  preview, 
+export default function ImageUpload({
+  onFileSelect,
+  selectedFile,
+  preview,
   accept = "image/*",
   className = "",
   errorMessage = "",
@@ -18,7 +18,7 @@ export default function ImageUpload({
   const handleFile = useCallback(async (file) => {
     if (file && file.type.startsWith('image/')) {
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-      
+
       if (file.size > maxSize) {
         // Call error callback if provided
         if (onError) {
@@ -26,13 +26,13 @@ export default function ImageUpload({
         }
         return;
       }
-      
+
       setFileName(file.name);
-      
+
       try {
         // Compress the image automatically
         const compressedDataUrl = await fileToCompressedDataUrl(file);
-        
+
         // Create a blob from the compressed data URL
         const response = await fetch(compressedDataUrl);
         const blob = await response.blob();
@@ -40,7 +40,7 @@ export default function ImageUpload({
           type: 'image/jpeg',
           lastModified: Date.now()
         });
-        
+
         onFileSelect(compressedFile);
       } catch (error) {
         console.error('Error compressing image:', error);
@@ -63,7 +63,7 @@ export default function ImageUpload({
   const handleDrop = useCallback((e) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       handleFile(files[0]);
@@ -92,12 +92,10 @@ export default function ImageUpload({
   return (
     <div className={`image-upload ${className}`}>
       <div className="image-upload-header">
-        <label className="image-upload-label">
-          Profile Picture<span className="image-upload-required">*</span>
-        </label>
+
         <div className="image-upload-buttons">
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="image-upload-choose-btn"
             onClick={handleChooseFile}
           >
@@ -106,7 +104,7 @@ export default function ImageUpload({
         </div>
       </div>
 
-      <div 
+      <div
         className={`image-upload-dropzone dropzone-surface ${isDragOver ? 'image-upload-dropzone--dragover' : ''}`}
         data-has-file={Boolean(preview)}
         title={fileName || undefined}
@@ -118,8 +116,8 @@ export default function ImageUpload({
         {preview ? (
           <div className="image-upload-preview">
             <img src={preview} alt="Preview" className="image-upload-preview-img" />
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="image-upload-clear-btn"
               onClick={(e) => {
                 e.stopPropagation();
@@ -138,12 +136,7 @@ export default function ImageUpload({
           </div>
         )}
       </div>
-      <div 
-            className="image-upload-status"
-            title={fileName || undefined}
-          >
-            {fileName || 'No File Chosen'}
-          </div>
+
 
       {errorMessage && (
         <div className="error-message">

@@ -241,15 +241,17 @@ export async function updateProfile(
       settingsData.profilePicture.startsWith('data:');
 
     // Build backend payload
-    const backendData = {
-      first_name: settingsData.first_name || settingsData.firstName || '',
-      last_name: settingsData.last_name || settingsData.lastName || '',
-      email: settingsData.email || '',
-      phone: combinePhoneNumber(
-        settingsData.countryCode || '',
-        settingsData.phoneNumber || ''
-      ),
-    };
+  const backendData = {
+    first_name: settingsData.first_name || settingsData.firstName || '',
+    last_name: settingsData.last_name || settingsData.lastName || '',
+    email: settingsData.email || '',
+    phone: (settingsData.phoneE164 && settingsData.phoneE164.trim())
+      ? settingsData.phoneE164.trim()
+      : combinePhoneNumber(
+          settingsData.countryCode || '',
+          settingsData.phoneNumber || ''
+        ),
+  };
 
     // Add password fields only if all are present
     if (hasPasswordFields) {
