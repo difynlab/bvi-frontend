@@ -368,12 +368,21 @@ export const MemberDetailsModal = ({
                   <input
                     type="text"
                     className="member-detail-value"
-                    value={isEditing ? `${editData.firstName || ''} ${editData.lastName || ''}`.trim() : fullName}
+                    value={isEditing ? `${editData.firstName || ''} ${editData.lastName || ''}` : fullName}
                     readOnly={!isEditing}
                     onChange={(e) => {
-                      const parts = e.target.value.split(' ');
-                      handleInputChange('firstName', parts[0] || '');
-                      handleInputChange('lastName', parts.slice(1).join(' ') || '');
+                      const fullValue = e.target.value;
+                      // Find the first space to split firstName and lastName
+                      const firstSpaceIndex = fullValue.indexOf(' ');
+                      if (firstSpaceIndex === -1) {
+                        // No space found, everything is firstName
+                        handleInputChange('firstName', fullValue);
+                        handleInputChange('lastName', '');
+                      } else {
+                        // Split at first space
+                        handleInputChange('firstName', fullValue.substring(0, firstSpaceIndex));
+                        handleInputChange('lastName', fullValue.substring(firstSpaceIndex + 1));
+                      }
                     }}
                   />
                 </div>
