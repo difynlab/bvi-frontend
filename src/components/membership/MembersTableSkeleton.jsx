@@ -29,6 +29,9 @@ export default function MembersTableSkeleton({ rows = 5 }) {
               <Skeleton height={16} width={100} />
             </td>
             <td>
+              <Skeleton height={16} width={100} />
+            </td>
+            <td>
               <Skeleton height={32} width={120} borderRadius={4} />
             </td>
           </tr>

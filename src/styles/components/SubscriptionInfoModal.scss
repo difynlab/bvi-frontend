@@ -1,3 +1,6 @@
+@use '../vars' as *;
+@use 'sass:color';
+
 .subscription-info-modal-overlay {
   position: fixed;
   top: 0;
@@ -133,6 +136,49 @@
   gap: 8px;
 }
 
+.subscription-info-modal__save-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.subscription-info-modal__save-btn,
+.subscription-info-modal__discard-btn {
+  padding: 10px 24px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px;
+}
+
+.subscription-info-modal__save-btn {
+  background-color: #262626;
+  color: #fff;
+
+  &:hover {
+    background-color: color.adjust(#262626, $lightness: -10%);
+  }
+}
+
+.subscription-info-modal__discard-btn {
+  background-color: #f3f4f6;
+  color: #374151;
+
+  &:hover {
+    background-color: #e5e7eb;
+  }
+}
+
 .subscription-info-modal__body {
   margin-top: 16px;
 }
@@ -192,6 +238,16 @@
     min-height: 0;
   }
 
+  .subscription-info-modal__save-actions {
+    flex-direction: column;
+    width: 100%;
+    
+    .subscription-info-modal__save-btn,
+    .subscription-info-modal__discard-btn {
+      width: 100%;
+    }
+  }
+
   .subscription-info-modal-overlay .subscription-upload-modal-overlay .subscription-upload-modal {
     flex: 0;
     display: flex;
@@ -248,6 +304,16 @@
 
   .subscription-info-modal__image {
     min-height: 0;
+  }
+
+  .subscription-info-modal__save-actions {
+    flex-direction: column;
+    width: 100%;
+    
+    .subscription-info-modal__save-btn,
+    .subscription-info-modal__discard-btn {
+      width: 100%;
+    }
   }
 
   .subscription-info-modal-overlay .subscription-upload-modal-overlay .subscription-upload-modal {

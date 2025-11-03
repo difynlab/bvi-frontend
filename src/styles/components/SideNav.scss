@@ -6,6 +6,8 @@
   top: 30px;
   align-self: flex-start;
   width: 250px;
+  min-width: 250px;
+  max-width: 250px;
   background-color: #262626;
   border-radius: 15px;
   display: flex;
@@ -276,7 +278,9 @@
   .side-nav {
     flex: 0;
     background: #262626;
-    width: 170px;
+    width: 170px !important;
+    min-width: 170px !important;
+    max-width: 170px !important;
     margin: 0;
     height: 100dvh;
     padding: 10px 0;

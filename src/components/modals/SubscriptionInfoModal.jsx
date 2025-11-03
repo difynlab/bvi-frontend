@@ -87,6 +87,14 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
     onClose();
   };
 
+  const handleSaveDirect = () => {
+    if (infoKey && imgSrc) {
+      localStorage.setItem(`subscription-image-${infoKey}`, imgSrc);
+    }
+    // TODO BACKEND: Save the changes here
+    setOriginalImgSrc(imgSrc);
+  };
+
   const handleDiscard = () => {
     if (infoKey) {
       localStorage.removeItem(`subscription-image-${infoKey}`);
@@ -96,6 +104,15 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
     setOriginalImgSrc(defaultImg);
     setConfirmOpen(false);
     onClose();
+  };
+
+  const handleDiscardDirect = () => {
+    if (infoKey) {
+      localStorage.removeItem(`subscription-image-${infoKey}`);
+    }
+    const defaultImg = MAP[infoKey] ? MAP[infoKey].img : '';
+    setImgSrc(defaultImg);
+    setOriginalImgSrc(defaultImg);
   };
 
   const modalBackdropClose = useModalBackdropClose(handleCloseAttempt);
@@ -150,15 +167,36 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
         </div>
 
         {isAdmin && (
-          <div className="subscription-info-modal__actions">
-            <button
-              type="button"
-              className="subscription-info-modal__update-btn"
-              onClick={openUpload}
-            >
-              <i className="bi bi-plus" aria-hidden="true"></i> Update Now
-            </button>
-          </div>
+          <>
+            <div className="subscription-info-modal__actions">
+              <button
+                type="button"
+                className="subscription-info-modal__update-btn"
+                onClick={openUpload}
+              >
+                <i className="bi bi-plus" aria-hidden="true"></i> Update Now
+              </button>
+            </div>
+            
+            {hasUnsavedChanges() && (
+              <div className="subscription-info-modal__save-actions">
+                <button
+                  type="button"
+                  className="subscription-info-modal__discard-btn"
+                  onClick={handleDiscardDirect}
+                >
+                  Discard Changes
+                </button>
+                <button
+                  type="button"
+                  className="subscription-info-modal__save-btn"
+                  onClick={handleSaveDirect}
+                >
+                  Save Changes
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

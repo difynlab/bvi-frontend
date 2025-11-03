@@ -56,8 +56,8 @@ const Membership = () => {
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   
   // Sorting state
-  const [sortBy, setSortBy] = useState(null); // 'id' | 'name' | 'email' | 'created' | 'role' | 'status' | 'phone' | null
-  const [sortOrder, setSortOrder] = useState('desc'); // 'desc' | 'asc'
+  const [sortBy, setSortBy] = useState('updated'); // 'id' | 'name' | 'email' | 'created' | 'updated' | 'role' | 'status' | 'phone' | null
+  const [sortOrder, setSortOrder] = useState('desc'); // 'desc' | 'asc' (desc = más recientes primero para dates)
   
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
@@ -226,6 +226,18 @@ const Membership = () => {
     }
   };
 
+  // Handle sort by Updated
+  const handleSortByUpdated = () => {
+    if (sortBy === 'updated') {
+      // Toggle order if already sorting by Updated
+      setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+    } else {
+      // Start sorting by Updated descending (más reciente primero)
+      setSortBy('updated');
+      setSortOrder('desc');
+    }
+  };
+
   // Handle sort by Role
   const handleSortByRole = () => {
     if (sortBy === 'role') {
@@ -358,6 +370,14 @@ const Membership = () => {
       members = [...members].sort((a, b) => {
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
         const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        
+        // 'desc' = más reciente primero (mayor fecha), 'asc' = más lejana primero (menor fecha)
+        return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+      });
+    } else if (sortBy === 'updated') {
+      members = [...members].sort((a, b) => {
+        const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+        const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
         
         // 'desc' = más reciente primero (mayor fecha), 'asc' = más lejana primero (menor fecha)
         return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
@@ -587,7 +607,7 @@ const Membership = () => {
               {adminActiveTab === 'Member List' && (
                 <section key="member-list" className="membership-admin-panel membership-admin-panel--member-list">
                   <Card 
-                title="Members" 
+                title="List of all members" 
                 className="member-details-section"
                 headerActions={
                   <div className="members-table-filters" ref={filterRef}>
@@ -862,6 +882,18 @@ const Membership = () => {
                             style={{ marginLeft: '4px', opacity: sortBy === 'created' ? 1 : 0 }}
                           ></i>
                         </th>
+                        <th 
+                          scope="col"
+                          className="sortable"
+                          onClick={handleSortByUpdated}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          Updated
+                          <i 
+                            className={`bi bi-chevron-${sortBy === 'updated' ? (sortOrder === 'desc' ? 'down' : 'up') : 'down'}`} 
+                            style={{ marginLeft: '4px', opacity: sortBy === 'updated' ? 1 : 0 }}
+                          ></i>
+                        </th>
                         <th scope="col"></th>
                       </tr>
                     </thead>
@@ -870,7 +902,7 @@ const Membership = () => {
                     ) : filteredMembers.length === 0 ? (
                       <tbody>
                         <tr>
-                          <td colSpan="8">No users found</td>
+                          <td colSpan="9">No users found</td>
                         </tr>
                       </tbody>
                     ) : (
@@ -884,6 +916,7 @@ const Membership = () => {
                             <td>{m.role || '—'}</td>
                             <td>{m.status !== undefined && m.status !== null ? (Number(m.status) === 1 ? 'Active' : 'Inactive') : '—'}</td>
                             <td>{m.created_at ? new Date(m.created_at).toLocaleDateString('en-US') : '—'}</td>
+                            <td>{m.updated_at ? new Date(m.updated_at).toLocaleDateString('en-US') : '—'}</td>
                             <td>
                               <div className="table-actions">
                                 <button
@@ -1000,7 +1033,7 @@ const Membership = () => {
 
               {adminActiveTab === 'Membership Plans' && (
                 <section key="membership-plans" className="membership-admin-panel membership-admin-panel--plans">
-                  <MembershipPlans key="plans-component" />
+                  <MembershipPlans key="plans-component" isAdmin={true} />
                 </section>
               )}
             </div>

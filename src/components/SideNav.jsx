@@ -194,6 +194,9 @@ const SideNav = () => {
   // Display name logic: use only first name for display
   const displayName = user?.first_name || 'Member'
   const role = user?.role || 'member'
+  
+  // Hide subscription link for admin users (admins should not see subscription link at all)
+  const isAdmin = user?.role === 'admin'
 
   return (
     <>
@@ -247,10 +250,12 @@ const SideNav = () => {
           <span className="nav-label">Membership</span>
         </NavLink>
 
-        <NavLink to="/subscription" className={`nav-item ${isAnimated ? 'nav-item-animate--7' : 'nav-item-hidden'}`} {...navItemGuard}>
-          <i className="bi bi-person-check"></i>
-          <span className="nav-label">Subscription</span>
-        </NavLink>
+        {!isAdmin && (
+          <NavLink to="/subscription" className={`nav-item ${isAnimated ? 'nav-item-animate--7' : 'nav-item-hidden'}`} {...navItemGuard}>
+            <i className="bi bi-person-check"></i>
+            <span className="nav-label">Subscription</span>
+          </NavLink>
+        )}
 
         <NavLink to="/legislation" className={`nav-item ${isAnimated ? 'nav-item-animate--8' : 'nav-item-hidden'}`} {...navItemGuard}>
           <i className="bi bi-book"></i>

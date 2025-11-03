@@ -59,6 +59,7 @@
   grid-template-columns: 3fr 2fr;
   min-height: 100vh;
   background-color: $light_grey;
+  gap: 30px;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -397,43 +398,46 @@
   gap: 30px;
 }
 
-.card {
-  background: white;
-  border-radius: 10px;
-  overflow: hidden;
-  transition: box-shadow 0.2s ease;
-  position: relative;
-  box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.2);
+.membership-container {
 
-  // No overflow scroll needed
-  &.member-details-section {
-    overflow: visible;
+  .card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+    position: relative;
+    box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.2);
+  
+    // No overflow scroll needed
+    &.member-details-section {
+      width: 100%;
+    }
   }
-}
-
-.card-header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  padding: 15px;
-  padding-bottom: 0;
-  gap: 16px;
-}
-
-.card-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #262626;
-  margin: 0;
-  flex: 1;
-}
-
-.card-content {
-  padding: 15px;
-  padding-top: 0;
-  height: fit-content;
+  
+  .card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 15px;
+    padding-bottom: 0;
+    gap: 16px;
+  }
+  
+  .card-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #262626;
+    margin: 0;
+    flex: 1;
+  }
+  
+  .card-content {
+    padding: 15px;
+    padding-top: 0;
+    height: fit-content;
+  }
 }
 
 .profile-section {
@@ -586,7 +590,7 @@
     }
 
     // Actions column - adapt to content width
-    th:nth-child(8), td:nth-child(8) {
+    th:nth-child(9), td:nth-child(9) {
       width: auto;
       min-width: 100px; /* Minimum width for actions buttons */
       white-space: nowrap;
@@ -1052,12 +1056,14 @@
         padding: 6px 6px;
         font-size: 0.65rem;
         line-height: 1.2;
+        text-align: left;
       }
 
       td {
         padding: 6px 6px;
         font-size: 0.65rem;
         line-height: 1.2;
+        text-align: left;
       }
 
       // ID column in mobile - even more compact
@@ -1106,8 +1112,13 @@
         display: none;
       }
 
-      // Actions column in mobile - adapt to content (4th visible column after hiding 4-7)
-      th:nth-child(8), td:nth-child(8) { /* Actions */
+      // Hide Updated column in mobile
+      th:nth-child(8), td:nth-child(8) { /* Updated */
+        display: none;
+      }
+
+      // Actions column in mobile - adapt to content (4th visible column after hiding 4-8)
+      th:nth-child(9), td:nth-child(9) { /* Actions */
         width: 1%;
         white-space: nowrap;
         padding: 6px 4px;
@@ -1115,15 +1126,15 @@
       }
       
       // Actions column header specifically - make it more compact
-      th:nth-child(8) { /* Actions header */
+      th:nth-child(9) { /* Actions header */
         width: 1%;
         padding: 6px 8px;
-        text-align: center;
+        text-align: left;
         box-sizing: border-box;
       }
       
       // Actions cells - ensure they only take the space of their content
-      td:nth-child(8) { /* Actions cells */
+      td:nth-child(9) { /* Actions cells */
         width: 1%;
         max-width: 120px; /* Max width based on 3 buttons + gaps */
       }
@@ -1614,6 +1625,10 @@
       background-color: #f8f9fa;
       padding: 20px;
       border-bottom: 1px solid #e9ecef;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
       &.basic {
         background-color: var(--vivid_red, #e53935);
         .plan-title {
@@ -1636,6 +1651,80 @@
       font-size: 18px;
       font-weight: 600;
       color: #262626;
+      flex: 1;
+    }
+
+    .plan-title-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 18px;
+      font-weight: 600;
+      font-family: inherit;
+      background-color: white;
+      color: #262626;
+      transition: border-color 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+    }
+
+    .plan-edit-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background-color: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      i {
+        font-size: 16px;
+      }
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.4);
+      }
+    }
+
+    .plan-close-edit-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      background-color: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+
+      i {
+        font-size: 18px;
+      }
+
+      &:hover:not(:disabled) {
+        background-color: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.4);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
     }
 
     .plan-content {
@@ -1688,6 +1777,170 @@
           color: #28a745;
           font-size: 16px;
         }
+      }
+    }
+
+    // Editing styles
+    .plan-section-title-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: inherit;
+      background-color: white;
+      color: #495057;
+      margin-bottom: 8px;
+      transition: border-color 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+    }
+
+    .plan-section-text-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1.5;
+      font-family: inherit;
+      background-color: white;
+      color: #495057;
+      resize: vertical;
+      transition: border-color 0.2s ease;
+      overflow: hidden;
+
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+    }
+
+    .plan-perks-editable {
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .plan-perk-editable-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    .plan-perk-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1.5;
+      font-family: inherit;
+      background-color: white;
+      color: #495057;
+      transition: border-color 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+    }
+
+    .plan-perk-delete-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      background-color: #fee2e2;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      color: #dc2626;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+
+      i {
+        font-size: 16px;
+      }
+
+      &:hover {
+        background-color: #fecaca;
+        border-color: #fca5a5;
+      }
+    }
+
+    .plan-add-perk-btn {
+      margin-top: 12px;
+      padding: 8px 16px;
+      background-color: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      color: #374151;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+
+      &:hover {
+        background-color: #e5e7eb;
+        border-color: #d1d5db;
+      }
+    }
+
+    .plan-save-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .plan-save-btn,
+    .plan-cancel-btn {
+      padding: 10px 24px;
+      border: 0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 120px;
+    }
+
+    .plan-save-btn {
+      background-color: #262626;
+      color: #fff;
+
+      &:hover {
+        background-color: color.adjust(#262626, $lightness: -10%);
+      }
+    }
+
+    .plan-cancel-btn {
+      background-color: #f3f4f6;
+      color: #374151;
+
+      &:hover {
+        background-color: #e5e7eb;
       }
     }
 
