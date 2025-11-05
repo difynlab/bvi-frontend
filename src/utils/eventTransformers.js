@@ -7,6 +7,7 @@ const FIELD_MAPPINGS = {
     startTime: 'start_time',
     endTime: 'end_time',
     repeat: 'repeat',
+    shortDescription: 'short_description',
     description: 'content',
     location: 'location',
     register_link: 'register_link',
@@ -280,8 +281,7 @@ export const transformToBackend = (frontendEvent, isUpdate = false, existingThum
     VALUE_MAPPINGS
   )
 
-  // Remove short_description as it doesn't exist in backend
-  delete baseData.short_description
+  // short_description is now included in the mapping above
 
   // Handle thumbnail
   if (isUpdate) {
@@ -436,6 +436,11 @@ export const transformFromBackend = (backendEvent) => {
   
   frontendEvent.timeZone = backendEvent.timeZone || 'UTC'
   frontendEvent.recurrence = backendEvent.recurrence || null
+  
+  // Ensure shortDescription is set (it should be mapped from short_description, but add fallback)
+  if (!frontendEvent.shortDescription && backendEvent.short_description) {
+    frontendEvent.shortDescription = backendEvent.short_description
+  }
 
   return frontendEvent
 }

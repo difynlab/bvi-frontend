@@ -132,8 +132,12 @@
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  width: 150px;
+  width: 100px;
   gap: 8px;
+
+  i {
+    font-size: 25px;
+  }
 }
 
 .subscription-info-modal__save-actions {

@@ -103,21 +103,23 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, existingAttachments = [
     }
   };
 
-  // Validation function - link siempre requerido, description O file requerido
+  // Validation function - todos opcionales, pero al menos uno debe estar presente
   const validateRequired = () => {
     const missing = [];
     
-    // Link siempre es requerido
-    if (!linkUrl.trim() || !isValidUrl(linkUrl)) {
-      missing.push('Link URL');
-    }
-    
-    // Description O File debe estar presente (al menos uno)
+    // Verificar que al menos uno de los 3 campos esté presente
     const hasDescription = (description || '').trim().length > 0;
     const hasFile = !!selectedFile;
+    const hasLink = linkUrl.trim().length > 0;
     
-    if (!hasDescription && !hasFile) {
-      missing.push('Description or File Upload');
+    // Si hay un link, debe ser válido
+    if (hasLink && !isValidUrl(linkUrl)) {
+      missing.push('Link URL must be a valid URL');
+    }
+    
+    // Al menos uno de los 3 debe estar presente
+    if (!hasDescription && !hasFile && !hasLink) {
+      missing.push('At least one field (Description, File Upload, or Link Upload) is required');
     }
     
     setMissingRequired(missing);
@@ -132,19 +134,19 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, existingAttachments = [
   const validateForm = () => {
     const newErrors = {};
     
-    // Link siempre requerido
-    if (!linkUrl.trim()) {
-      newErrors.link = 'Link URL is required';
-    } else if (!isValidUrl(linkUrl)) {
+    // Verificar que al menos uno de los 3 campos esté presente
+    const hasDescription = (description || '').trim().length > 0;
+    const hasFile = !!selectedFile;
+    const hasLink = linkUrl.trim().length > 0;
+    
+    // Si hay un link, debe ser válido
+    if (hasLink && !isValidUrl(linkUrl)) {
       newErrors.link = 'Please enter a valid URL';
     }
     
-    // Description O File requerido (al menos uno)
-    const hasDescription = (description || '').trim().length > 0;
-    const hasFile = !!selectedFile;
-    
-    if (!hasDescription && !hasFile) {
-      newErrors.descriptionOrFile = 'Debe ingresar al menos una descripción o un archivo PDF';
+    // Al menos uno de los 3 debe estar presente
+    if (!hasDescription && !hasFile && !hasLink) {
+      newErrors.descriptionOrFile = 'At least one field (Description, File Upload, or Link Upload) is required';
     }
     
     setErrors(newErrors);
@@ -259,7 +261,7 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, existingAttachments = [
 
         <div className="legislation-edit-modal__body">
           <div className="form-group">
-            <label>Description<span className="req-star" aria-hidden="true">*</span></label>
+            <label>Description</label>
             <RichTextEditor
               initialHtml=""
               onChange={handleDescriptionChange}
@@ -275,7 +277,7 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, existingAttachments = [
           </div>
 
           <div className="form-group">
-            <label>File Upload<span className="req-star" aria-hidden="true">*</span> <span className="optional-text">(optional if description is provided)</span></label>
+            <label>File Upload</label>
             <div
               className={`dropzone ${isDragOver ? 'drag-over' : ''}`}
               onDragOver={handleDragOver}
@@ -304,7 +306,7 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, existingAttachments = [
           </div>
 
           <div className="form-group">
-            <label>Link Upload<span className="req-star" aria-hidden="true">*</span></label>
+            <label>Link Upload</label>
             <input
               type="url"
               value={linkUrl}
@@ -347,7 +349,7 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, existingAttachments = [
             onClick={handleSave}
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Updating...' : 'Update Now'}
+            {isSubmitting ? 'Updating...' : 'Submit'}
           </button>
         </div>
       </div>

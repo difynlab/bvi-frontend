@@ -19,14 +19,22 @@
   border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   width: calc(100dvw - 350px);
-  min-height: 80vh;
-  overflow: hidden;
+  max-height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
   padding: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+
+  // Hide scrollbar but keep scroll functionality
+  scrollbar-width: none; // Firefox
+  -ms-overflow-style: none; // IE and Edge
+
+  &::-webkit-scrollbar {
+    display: none; // Chrome, Safari, Opera
+  }
 }
 
 .subscription-upload-modal__close {
@@ -49,8 +57,10 @@
 }
 
 .subscription-upload-modal__header {
-  text-align: center;
-  margin-bottom: 20px;
+  text-align: left;
+  margin-bottom: 24px;
+  width: 100%;
+  align-self: flex-start;
 }
 
 .subscription-upload-modal__title {
@@ -69,8 +79,62 @@
 }
 
 .subscription-upload-modal__body {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+}
+
+.subscription-upload-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.subscription-upload-modal__field .subscription-upload-modal__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin: 0;
+}
+
+.subscription-upload-modal__input {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1f2937;
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+}
+
+.subscription-upload-modal__input:focus {
+  outline: none;
+  border-color: #e93125;
+}
+
+.subscription-upload-modal__textarea {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1f2937;
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+  resize: none;
+  overflow-y: hidden;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+.subscription-upload-modal__textarea:focus {
+  outline: none;
+  border-color: #e93125;
 }
 
 .subscription-upload-modal__dropzone {
@@ -192,7 +256,9 @@
 .subscription-upload-modal__footer {
   display: flex;
   justify-content: center;
-  margin-top: 24px;
+  margin-top: auto;
+  padding-top: 24px;
+  width: 100%;
 }
 
 .subscription-upload-modal__update {

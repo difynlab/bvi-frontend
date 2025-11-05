@@ -64,6 +64,7 @@ const fromItem = (item) => {
     timeZone: item.timeZone || 'UTC±00:00 — Greenwich',
     eventType: item.eventType || 'conference',
     repeat: repeat,
+    shortDescription: item.shortDescription || item.short_description || '',
     description: item.description || '',
     location: item.location || '',
     register_link: item.register_link || '',
@@ -98,8 +99,8 @@ const REPEAT_OPTIONS = [
   { label: 'Daily',     value: 'daily' },
   { label: 'Weekly',    value: 'weekly' },
   { label: 'Monthly',   value: 'monthly' },
-  { label: 'Yearly',    value: 'annually' },
-  { label: 'Custom...', value: 'custom' }
+  { label: 'Yearly',    value: 'annually' }
+  // TO DO backend: { label: 'Custom...', value: 'custom' }
 ]
 
 export { EVENT_TYPE_OPTIONS }
@@ -117,6 +118,7 @@ export const useEventForm = () => {
     timeZone: 'UTC±00:00 — Greenwich',
     eventType: 'conference',
     repeat: 'na',
+    shortDescription: '',
     description: '',
     location: '',
     register_link: '',
@@ -230,6 +232,15 @@ export const useEventForm = () => {
       errors.push('Title must be at least 3 characters long.')
     }
     
+    // Short Description validation
+    if (!form.shortDescription.trim()) {
+      errors.push('Short description is required.')
+    } else if (form.shortDescription.trim().length < 3) {
+      errors.push('Short description must be at least 3 characters long.')
+    } else if (form.shortDescription.trim().length > 120) {
+      errors.push('Short description must not exceed 120 characters.')
+    }
+    
     // Content/Description validation
     const contentText = editorText.trim()
     if (!contentText) {
@@ -331,8 +342,8 @@ export const useEventForm = () => {
       timeZone: form.timeZone,
       eventType: form.eventType,
       repeat: form.repeat,
+      shortDescription: form.shortDescription,
       description: editorText,
-      shortDescription: editorText, // Agregar shortDescription
       editorHtml: editorHtml,
       location: form.location,
       register_link: form.register_link,

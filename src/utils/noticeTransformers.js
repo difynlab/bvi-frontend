@@ -228,6 +228,24 @@ export const transformFromBackend = (backendNotice) => {
     frontendNotice.description = backendNotice.description || ''
   }
 
+  // Handle file URL from backend - the PDF file URL
+  if (backendNotice.file) {
+    // If it's already a full URL, use it directly
+    if (typeof backendNotice.file === 'string' && (backendNotice.file.startsWith('http://') || backendNotice.file.startsWith('https://'))) {
+      frontendNotice.fileUrl = backendNotice.file
+    } else {
+      // Build the file URL from the base path
+      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+      const apiBaseURL = baseURL.replace('/api', '')
+      frontendNotice.fileUrl = `${apiBaseURL}/storage/notices/${backendNotice.file}`
+    }
+  } else if (backendNotice.file_name) {
+    // Alternative field name for file
+    const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+    const apiBaseURL = baseURL.replace('/api', '')
+    frontendNotice.fileUrl = `${apiBaseURL}/storage/notices/${backendNotice.file_name}`
+  }
+
   return frontendNotice
 }
 

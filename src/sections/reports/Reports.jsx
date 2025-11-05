@@ -78,6 +78,7 @@ export default function Reports() {
   const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false);
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const [reportError, setReportError] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Effect to preload category name when editing
   useEffect(() => {
@@ -276,7 +277,6 @@ export default function Reports() {
         
         await createOrUpdateReport(payload);
       } catch (error) {
-        console.error('Error submitting report:', error);
         setReportError(`Error: ${error.message || 'Failed to save report'}`);
       } finally {
         setIsSubmittingReport(false);
@@ -293,14 +293,27 @@ export default function Reports() {
   }
 
   const handleConfirmDeleteReport = async () => {
-    if (reportToDelete) {
-      try {
+    try {
+      if (reportToDelete) {
+        setIsDeleting(true);
+        
+        // Wait for delete to complete successfully
         await onDeleteReport(reportToDelete.id);
+        
+        // Close confirmation modal first
+        setIsReportDeleteConfirmOpen(false);
         setReportToDelete(null);
+        setIsDeleting(false);
+        
+        // Then show success modal
         setIsSuccessDeleteOpen(true);
-      } catch (error) {
-        console.error('Error deleting report:', error);
       }
+    } catch (error) {
+      alert('An error occurred while deleting the report');
+      // Close confirmation modal even on error
+      setIsReportDeleteConfirmOpen(false);
+      setReportToDelete(null);
+      setIsDeleting(false);
     }
   };
 
@@ -311,7 +324,6 @@ export default function Reports() {
         // Show success modal after successful deletion
         setIsSuccessDeleteOpen(true);
       } catch (error) {
-        console.error('Error deleting category:', error);
         // Don't show success modal if there was an error
       }
     }
@@ -831,7 +843,7 @@ export default function Reports() {
                   className="upload-now-btn"
                   disabled={isSubmittingReport}
                 >
-                  {isSubmittingReport ? 'Loading...' : 'Upload Now'}
+                  {isSubmittingReport ? 'Loading...' : 'Submit'}
                 </button>
               </div>
             </form>
@@ -887,6 +899,7 @@ export default function Reports() {
           setReportToDelete(null)
         }}
         onConfirm={handleConfirmDeleteReport}
+        isDeleting={isDeleting}
       />
 
       <SuccessDeleteModal

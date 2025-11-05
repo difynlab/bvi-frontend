@@ -65,9 +65,49 @@ const Membership = () => {
   // Admin tabs state
   const [adminActiveTab, setAdminActiveTab] = useState('Member List');
   const [openInfo, setOpenInfo] = useState(null); // 'eligibility' | 'benefits' | 'payment' | null
+  const [cardDataRefresh, setCardDataRefresh] = useState(0); // Force re-render when data changes
   
   // Admin tabs definition
   const adminTabs = ['Member List', 'Important Info', 'Membership Plans'];
+
+  // Helper function to get saved card data
+  const getCardData = (key) => {
+    const MAP = {
+      eligibility: {
+        title: 'Membership Eligibility',
+        subtitle: 'Eligibility to membership of BVI Finance shall be limited to the companies, firms, entities, bodies and associations',
+        img: '/images/membership-elegibility.png'
+      },
+      benefits: {
+        title: 'Membership Benefits',
+        subtitle: 'BVI Finance provides three membership benefit packages tailored to the specific needs of its various member categories.',
+        img: '/images/membership-benefits.png'
+      },
+      payment: {
+        title: 'Payment Details',
+        subtitle: 'View essential payment information, including account name, and required proof of payment to be uploaded when submitting payments.',
+        img: '/images/payment-details.png'
+      }
+    };
+
+    try {
+      const savedData = localStorage.getItem(`subscription-data-${key}`);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        return {
+          title: parsed.title || MAP[key]?.title || '',
+          subtitle: parsed.subtitle || MAP[key]?.subtitle || ''
+        };
+      }
+    } catch (e) {
+      console.error('Error parsing saved data:', e);
+    }
+    
+    return {
+      title: MAP[key]?.title || '',
+      subtitle: MAP[key]?.subtitle || ''
+    };
+  };
   
   useEffect(() => {
     const checkMobile = () => {
@@ -989,14 +1029,14 @@ const Membership = () => {
               )}
 
               {adminActiveTab === 'Important Info' && (
-                <section key="important-info" className="membership-admin-panel membership-admin-panel--important">
+                <section key={`important-info-${cardDataRefresh}`} className="membership-admin-panel membership-admin-panel--important">
                   <div className="membership-admin-cards">
                     {/* Membership Eligibility Card */}
                     <div className="membership-admin-card" onClick={() => setOpenInfo('eligibility')}>
                       <div className="membership-admin-card__icon" aria-hidden="true"><i className="bi bi-people"></i></div>
-                      <h3 className="membership-admin-card__title">Membership Eligibility</h3>
+                      <h3 className="membership-admin-card__title">{getCardData('eligibility').title}</h3>
                       <p className="membership-admin-card__text">
-                        Eligibility to membership of BVI Finance shall be limited to the companies, firms, entities, bodies and associations
+                        {getCardData('eligibility').subtitle}
                       </p>
                       <a href="#" className="membership-admin-card__link">Edit Details</a>
                     </div>
@@ -1004,9 +1044,9 @@ const Membership = () => {
                     {/* Membership Benefits Card */}
                     <div className="membership-admin-card" onClick={() => setOpenInfo('benefits')}>
                       <div className="membership-admin-card__icon" aria-hidden="true"><i className="bi bi-patch-check"></i></div>
-                      <h3 className="membership-admin-card__title">Membership Benefits</h3>
+                      <h3 className="membership-admin-card__title">{getCardData('benefits').title}</h3>
                       <p className="membership-admin-card__text">
-                        BVI Finance provides three membership benefit packages tailored to the specific needs of its various member categories.
+                        {getCardData('benefits').subtitle}
                       </p>
                       <a href="#" className="membership-admin-card__link">Edit Details</a>
                     </div>
@@ -1014,25 +1054,13 @@ const Membership = () => {
                     {/* Payment Details Card */}
                     <div className="membership-admin-card" onClick={() => setOpenInfo('payment')}>
                       <div className="membership-admin-card__icon" aria-hidden="true"><i className="bi bi-credit-card"></i></div>
-                      <h3 className="membership-admin-card__title">Payment Details</h3>
+                      <h3 className="membership-admin-card__title">{getCardData('payment').title}</h3>
                       <p className="membership-admin-card__text">
-                        View essential payment information, including account name, and required proof of payment to be uploaded when submitting payments.
+                        {getCardData('payment').subtitle}
                       </p>
                       <a href="#" className="membership-admin-card__link">Edit Details</a>
                     </div>
                   </div>
-
-                  {/* Centered Action Button */}
-                  <button 
-                    type="button" 
-                    className="membership-admin-edit-btn"
-                    onClick={() => {
-                      // Navigate to subscription page (or handle as needed)
-                      window.location.href = '/subscription?tab=General Details';
-                    }}
-                  >
-                    Edit Membership Form
-                  </button>
                 </section>
               )}
 
@@ -1116,38 +1144,7 @@ const Membership = () => {
               </div>
             </Card>
 
-            <Card title="Member Details" className="member-details-section">
-              <div className="table-container">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">ID</th>
-                      <th scope="col">Name</th>
-                      <th scope="col">Type</th>
-                      <th scope="col">Receipt</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {memberDetails.map((member) => (
-                      <tr key={member.id}>
-                        <td>{member.id}</td>
-                        <td>{member.name}</td>
-                        <td>{member.membershipType}</td>
-                        <td>
-                          <a href={member.receiptUrl} className="download-link">
-                            {isMobile ? (
-                              <i className="bi bi-download"></i>
-                            ) : (
-                              'Download'
-                            )}
-                          </a>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
+
           </div>
 
           <div className="membership-right">
@@ -1272,7 +1269,10 @@ const Membership = () => {
           />
           <SubscriptionInfoModal
             isOpen={!!openInfo}
-            onClose={() => setOpenInfo(null)}
+            onClose={() => {
+              setOpenInfo(null);
+              setCardDataRefresh(prev => prev + 1); // Refresh card data
+            }}
             infoKey={openInfo}
           />
         </>

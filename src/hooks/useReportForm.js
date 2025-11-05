@@ -17,8 +17,6 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
     if (isOpen) {
       if (mode === 'edit' && initialReport) {
         // Populate form with existing report data from API
-        console.log('🔍 Debug - Populating form with report data:', initialReport);
-        
         // Find the category title from the report_category_id
         const category = categories.find(cat => cat.id === initialReport.report_category_id);
         const categoryTitle = category ? category.title : '';
@@ -44,21 +42,6 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
           fileName: fileName,                                // Extracted filename
           imagePreviewUrl: imagePreviewUrl,                  // File URL for preview
           file: null // For edit mode, we don't need a File object, just fileName and imagePreviewUrl
-        });
-        
-        console.log('🔍 Debug - Form populated with:', {
-          title: initialReport.name || '',
-          typeId: categoryTitle,
-          linkUrl: initialReport.link || '',
-          fileName: fileName,
-          imagePreviewUrl: imagePreviewUrl,
-          categoryId: initialReport.report_category_id,
-          foundCategory: category,
-          hasExistingFile: !!(fileName || imagePreviewUrl),
-          apiFileField: initialReport.file,
-          apiFileNameField: initialReport.file_name,
-          apiFileUrlField: initialReport.file_url,
-          extractedFileName: fileName
         });
       } else {
         // Reset form for new report
@@ -111,50 +94,32 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
   const validate = useCallback(() => {
     const newErrors = {};
 
-    console.log('🔍 Debug - Validating form with data:', form);
-
     // Validate title
     if (!form.title.trim()) {
       newErrors.title = 'Report title is required';
-      console.log('❌ Validation error - Title is empty');
     } else if (form.title.trim().length < 3) {
       newErrors.title = 'Report title must be at least 3 characters long';
-      console.log('❌ Validation error - Title too short:', form.title.trim().length, 'chars');
-    } else {
-      console.log('✅ Validation passed - Title:', form.title.trim());
     }
 
     // Validate typeId
     if (!form.typeId) {
       newErrors.typeId = 'Report type is required';
-      console.log('❌ Validation error - Type is empty');
-    } else {
-      console.log('✅ Validation passed - Type:', form.typeId);
     }
 
     // Validate linkUrl
     if (!form.linkUrl.trim()) {
       newErrors.linkUrl = 'Link is required';
-      console.log('❌ Validation error - Link is empty');
     } else if (form.linkUrl.trim().length < 3) {
       newErrors.linkUrl = 'Link must be at least 3 characters long';
-      console.log('❌ Validation error - Link too short:', form.linkUrl.trim().length, 'chars');
     } else if (!isValidUrl(form.linkUrl.trim())) {
       newErrors.linkUrl = 'Please enter a valid URL';
-      console.log('❌ Validation error - Invalid URL:', form.linkUrl.trim());
-    } else {
-      console.log('✅ Validation passed - Link:', form.linkUrl.trim());
     }
 
     // Validate file
     if (!form.file && !form.fileName) {
       newErrors.file = 'File is required';
-      console.log('❌ Validation error - No file selected');
-    } else {
-      console.log('✅ Validation passed - File:', form.fileName || 'existing file');
     }
 
-    console.log('🔍 Debug - Validation result:', newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [form]);
@@ -190,7 +155,6 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
       file: null
     });
     setErrors({});
-    console.log('🔍 Debug - Form reset');
   }, []);
 
   return {

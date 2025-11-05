@@ -230,14 +230,8 @@ const MembershipPlans = ({ isAdmin = false }) => {
         <div className="plan-content">
           {/* Description Section */}
           <div className="plan-section">
+             <h4 className="plan-section-title">{plan.descriptionTitle}</h4>
             {isEditing ? (
-              <>
-                <input
-                  type="text"
-                  className="plan-section-title-input"
-                  value={plan.descriptionTitle}
-                  onChange={(e) => updatePlanField(planKey, 'descriptionTitle', e.target.value)}
-                />
                 <textarea
                   className="plan-section-text-input"
                   value={plan.descriptionText}
@@ -245,25 +239,15 @@ const MembershipPlans = ({ isAdmin = false }) => {
                   onInput={(e) => autoResizeTextarea(e.target)}
                   style={{ minHeight: 'fit-content' }}
                 />
-              </>
             ) : (
-              <>
-                <h4 className="plan-section-title">{plan.descriptionTitle}</h4>
                 <p className="plan-section-text">{plan.descriptionText}</p>
-              </>
             )}
           </div>
 
           {/* Eligibility Criteria Section */}
           <div className="plan-section">
+             <h4 className="plan-section-title">{plan.eligibilityTitle}</h4>
             {isEditing ? (
-              <>
-                <input
-                  type="text"
-                  className="plan-section-title-input"
-                  value={plan.eligibilityTitle}
-                  onChange={(e) => updatePlanField(planKey, 'eligibilityTitle', e.target.value)}
-                />
                 <textarea
                   className="plan-section-text-input"
                   value={plan.eligibilityText}
@@ -271,25 +255,16 @@ const MembershipPlans = ({ isAdmin = false }) => {
                   onInput={(e) => autoResizeTextarea(e.target)}
                   style={{ minHeight: 'fit-content' }}
                 />
-              </>
             ) : (
-              <>
-                <h4 className="plan-section-title">{plan.eligibilityTitle}</h4>
                 <p className="plan-section-text">{plan.eligibilityText}</p>
-              </>
             )}
           </div>
 
           {/* Perks Section */}
           <div className="plan-section">
+             <h4 className="plan-section-title">{plan.perksTitle}</h4>
             {isEditing ? (
               <>
-                <input
-                  type="text"
-                  className="plan-section-title-input"
-                  value={plan.perksTitle}
-                  onChange={(e) => updatePlanField(planKey, 'perksTitle', e.target.value)}
-                />
                 <ul className="plan-perks plan-perks-editable">
                   {plan.perks.map((perk, index) => (
                     <li key={index} className="plan-perk-editable-item">
@@ -319,8 +294,6 @@ const MembershipPlans = ({ isAdmin = false }) => {
                 </button>
               </>
             ) : (
-              <>
-                <h4 className="plan-section-title">{plan.perksTitle}</h4>
                 <ul className="plan-perks">
                   {plan.perks.map((perk, index) => (
                     <li key={index}>
@@ -328,7 +301,6 @@ const MembershipPlans = ({ isAdmin = false }) => {
                     </li>
                   ))}
                 </ul>
-              </>
             )}
           </div>
 

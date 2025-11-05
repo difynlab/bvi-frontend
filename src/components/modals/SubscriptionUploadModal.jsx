@@ -1,17 +1,47 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import '../../styles/components/SubscriptionUploadModal.scss';
 
-const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm }) => {
+const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm, initialTitle = '', initialDescription = '', initialImage = '' }) => {
   const [dragActive, setDragActive] = useState(false);
-  const [previewDataUrl, setPreviewDataUrl] = useState('');
+  const [title, setTitle] = useState(initialTitle);
+  const [description, setDescription] = useState(initialDescription);
+  const [previewDataUrl, setPreviewDataUrl] = useState(initialImage);
   const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
   
   const modalBackdropClose = useModalBackdropClose(onClose);
   
   useBodyScrollLock(isOpen);
+
+  // Reset form when modal opens/closes or initial values change
+  useEffect(() => {
+    if (isOpen) {
+      setTitle(initialTitle);
+      setDescription(initialDescription);
+      setPreviewDataUrl(initialImage);
+      setErrorMessage('');
+    }
+  }, [isOpen, initialTitle, initialDescription, initialImage]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [description]);
+
+  // Check if there are changes
+  const hasChanges = () => {
+    return (
+      title !== initialTitle ||
+      description !== initialDescription ||
+      previewDataUrl !== initialImage
+    );
+  };
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -48,16 +78,17 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm }) => {
       
       if (file.size > maxSize) {
         setErrorMessage('Image size must not exceed 5MB')
-        setPreviewDataUrl('')
         return;
       }
       
       const reader = new FileReader();
       reader.onload = () => {
         setPreviewDataUrl(reader.result);
-        setErrorMessage('')
+        setErrorMessage('');
       };
       reader.readAsDataURL(file);
+    } else {
+      setErrorMessage('Please upload an image file');
     }
   };
 
@@ -72,10 +103,18 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm }) => {
     fileInputRef.current?.click();
   };
 
-  const handleUpdate = () => {
-    if (previewDataUrl) {
-      onConfirm(previewDataUrl);
+  const handleSaveChanges = () => {
+    if (hasChanges()) {
+      onConfirm({
+        title,
+        description,
+        image: previewDataUrl
+      });
     }
+  };
+
+  const handleDescriptionChange = (e) => {
+    setDescription(e.target.value);
   };
 
   if (!isOpen) return null;
@@ -105,11 +144,40 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm }) => {
         </button>
 
         <header className="subscription-upload-modal__header">
-          <h2 className="subscription-upload-modal__title">Upload New Resource</h2>
-          <p className="subscription-upload-modal__subtitle">Please upload the new file here</p>
+          <h2 className="subscription-upload-modal__title">Edit Membership Info</h2>
         </header>
 
         <div className="subscription-upload-modal__body">
+          {/* Title Input */}
+          <div className="subscription-upload-modal__field">
+            <label htmlFor="card-title" className="subscription-upload-modal__label">Title</label>
+            <input
+              id="card-title"
+              type="text"
+              className="subscription-upload-modal__input"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter card title"
+            />
+          </div>
+
+          {/* Description Textarea */}
+          <div className="subscription-upload-modal__field">
+            <label htmlFor="card-description" className="subscription-upload-modal__label">Description</label>
+            <textarea
+              id="card-description"
+              ref={textareaRef}
+              className="subscription-upload-modal__textarea"
+              value={description}
+              onChange={handleDescriptionChange}
+              placeholder="Enter card description"
+              rows={3}
+            />
+          </div>
+
+          {/* Dropzone */}
+          <div className="subscription-upload-modal__field">
+            <label className="subscription-upload-modal__label">Image</label>
           {previewDataUrl ? (
             <div className="subscription-upload-modal__preview">
               <img 
@@ -146,7 +214,7 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm }) => {
                 >
                   Browse File
                 </button>
-                <p className="subscription-upload-modal__hint">Maximum file size is 200MB</p>
+                  <p className="subscription-upload-modal__hint">Maximum file size is 5MB</p>
               </div>
             </div>
           )}
@@ -159,6 +227,7 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm }) => {
             className="subscription-upload-modal__file"
             aria-hidden="true"
           />
+          </div>
         </div>
 
         <div className="subscription-upload-modal__footer">
@@ -172,14 +241,15 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm }) => {
               <strong>Error:</strong> {errorMessage}
             </div>
           )}
+          {hasChanges() && (
           <button
             type="button"
             className="subscription-upload-modal__update"
-            onClick={handleUpdate}
-            disabled={!previewDataUrl}
+              onClick={handleSaveChanges}
           >
-            Update
+              Submit
           </button>
+          )}
         </div>
       </div>
     </div>

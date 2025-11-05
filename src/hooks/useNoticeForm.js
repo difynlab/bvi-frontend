@@ -148,22 +148,25 @@ export const useNoticeForm = () => {
   }, [])
 
   const setFileFromDrop = useCallback((file) => {
-    if (file && file.type.startsWith('image/')) {
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file && file.type === 'application/pdf') {
+      const maxSize = 15 * 1024 * 1024; // 15MB in bytes
       
       if (file.size > maxSize) {
-        setErrorMessage('Image size must not exceed 5MB')
+        setErrorMessage('PDF size must not exceed 15MB')
         // Clear any existing file data when size exceeds limit
         setForm(prev => ({ ...prev, file: null, imageFileName: '', imagePreviewUrl: '' }))
         return;
       }
       
-      setForm(prev => ({ ...prev, file, imageFileName: file.name, imagePreviewUrl: URL.createObjectURL(file) }))
+      setForm(prev => ({ ...prev, file, imageFileName: file.name, imagePreviewUrl: '' }))
       
       // Clear error when user selects a valid file
       if (errorMessage) {
         setErrorMessage('')
       }
+    } else if (file) {
+      setErrorMessage('Please upload a PDF file only.')
+      setForm(prev => ({ ...prev, file: null, imageFileName: '', imagePreviewUrl: '' }))
     }
   }, [errorMessage])
 
@@ -181,14 +184,19 @@ export const useNoticeForm = () => {
       errors.push('Please complete all required fields.')
     }
     
-    // Check image is required
-    if (!form.file && !form.imagePreviewUrl) {
-      errors.push('An image is required.')
+    // Check PDF file is required
+    if (!form.file && !form.imageFileName) {
+      errors.push('A PDF file is required.')
     }
     
-    // Check image size if file is present (max 5MB)
-    if (form.file && form.file.size > 5 * 1024 * 1024) {
-      errors.push('Image size must not exceed 5MB.')
+    // Check PDF file type
+    if (form.file && form.file.type !== 'application/pdf') {
+      errors.push('Please upload a PDF file only.')
+    }
+    
+    // Check PDF size if file is present (max 15MB)
+    if (form.file && form.file.size > 15 * 1024 * 1024) {
+      errors.push('PDF size must not exceed 15MB.')
     }
     
     // Check category exists

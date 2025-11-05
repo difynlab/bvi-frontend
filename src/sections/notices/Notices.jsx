@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { PDFDownloadLink, pdf } from '@react-pdf/renderer'
 import { useAuth } from '../../context/useAuth'
 import { can } from '../../auth/acl'
 import { useNoticesState } from '../../hooks/useNoticesState'
@@ -14,10 +13,10 @@ import NoticesTabPicker from '../../components/modals/NoticesTabPicker'
 import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock'
 import EmptyPage from '../../components/EmptyPage'
 import CustomDropdown from '../../components/CustomDropdown'
-import NoticePDFDocument from '../../components/pdf/NoticePDFDocument'
 import { loadActiveTabId, saveActiveTabId } from '../../helpers/noticesStorage'
 import { getNoticeImageFromLocalStorage, saveNoticeImageToLocalStorage } from '../../utils/noticeTransformers'
 import noticeCategoriesService from '../../services/noticeCategoriesService'
+import noticesService from '../../services/noticesService'
 import NoticesListShimmer from '../../components/notices/NoticesListShimmer'
 import '../../styles/sections/Notices.scss'
 
@@ -29,7 +28,7 @@ export const Notices = () => {
     return String(fileName).replace(/[<>:"/\\|?*]/g, '_').substring(0, 50);
   };
 
-  // Función para generar y descargar PDF dinámicamente
+  // Función para descargar PDF desde el servidor usando endpoint de la API
   const handleDownloadPDF = async (notice) => {
     const noticeId = notice.id;
     
@@ -38,7 +37,9 @@ export const Notices = () => {
     
     try {
       const fileName = `${getSafeFileName(notice)}.pdf`;
-      const blob = await pdf(<NoticePDFDocument notice={notice} />).toBlob();
+      
+      // Descargar el PDF desde el endpoint de la API
+      const blob = await noticesService.downloadNoticePDF(noticeId);
       
       // Crear enlace de descarga
       const url = URL.createObjectURL(blob);
@@ -50,7 +51,9 @@ export const Notices = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('Error downloading PDF from server:', error);
+      // Mostrar error al usuario
+      alert(`Error al descargar el PDF: ${error.message}`);
     } finally {
       // Desactivar loading para este notice específico
       setPdfLoadingStates(prev => ({ ...prev, [noticeId]: false }));
@@ -213,6 +216,7 @@ export const Notices = () => {
   const [isNoticeDeleteConfirmOpen, setIsNoticeDeleteConfirmOpen] = useState(false)
   const [noticeToDelete, setNoticeToDelete] = useState(null)
   const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const modalBackdropClose = useModalBackdropClose(() => {
     if (editingNotice) {
@@ -256,7 +260,7 @@ export const Notices = () => {
       }
     },
     { key: 'linkUrl', label: 'Upload Link', test: () => (noticeForm?.form?.linkUrl || '').trim().length > 0 },
-    { key: 'file', label: 'File Upload', test: () => !!(noticeForm?.form?.imagePreviewUrl || noticeForm?.form?.imageFileName) }
+    { key: 'file', label: 'PDF File Upload', test: () => !!(noticeForm?.form?.file || noticeForm?.form?.imageFileName) }
   ];
 
   // Validation function
@@ -306,7 +310,7 @@ export const Notices = () => {
     noticeForm?.editorHtml,
     noticeForm?.form?.description,
     noticeForm?.form?.linkUrl,
-    noticeForm?.form?.imagePreviewUrl,
+    noticeForm?.form?.file,
     noticeForm?.form?.imageFileName
   ]);
 
@@ -393,7 +397,7 @@ export const Notices = () => {
     // Set loading state
     setIsSubmitting(true)
 
-    // Clear any previous PDF generation errors
+    // Clear any previous errors
     setPdfGenerationError('')
 
     const payload = noticeForm.buildNoticeObject(editingNotice?.id)
@@ -410,51 +414,43 @@ export const Notices = () => {
     }
 
     try {
-      // STEP 1: Preserve the original image file BEFORE generating PDF
-      const originalImageFile = payload.file // This is the original image file
+      // Check if the uploaded file is a PDF
+      const uploadedFile = payload.file
       
-      // STEP 2: Save image to localStorage for immediate display (BEFORE PDF generation)
-      if (originalImageFile && originalImageFile.type.startsWith('image/')) {
-        // Generate the same temp ID that useNoticesState will use
-        const tempId = `temp_${Date.now()}_${Math.floor(Math.random() * 1000)}`
-        await saveNoticeImageToLocalStorage(tempId, originalImageFile, 'original')
+      if (uploadedFile && uploadedFile.type === 'application/pdf') {
+        // Check if PDF is too large (15MB limit)
+        const maxSize = 15 * 1024 * 1024; // 15MB in bytes
+        if (uploadedFile.size > maxSize) {
+          setPdfGenerationError('PDF size must not exceed 15MB')
+          bannerRef.current?.focus()
+          setIsSubmitting(false)
+          return
+        }
         
-        // Store the temp ID in payload for useNoticesState to use
-        payload.tempId = tempId
-      }
-      
-      // STEP 3: Generate PDF automatically
-      const pdfBlob = await pdf(<NoticePDFDocument notice={payload} />).toBlob()
-      
-      // Check if PDF is too large (10MB limit)
-      if (pdfBlob.size > 10 * 1024 * 1024) {
-        console.warn('PDF is very large:', pdfBlob.size, 'bytes')
-      }
-      
-      // STEP 4: Convert PDF blob to File object
-      const pdfFile = new File([pdfBlob], `${getSafeFileName(payload)}.pdf`, { 
-        type: 'application/pdf' 
-      })
-      
-      // STEP 5: Set up the correct files for backend
-      payload.file = pdfFile           // PDF for download
-      payload.thumbnail = originalImageFile  // Original image for thumbnail
-      
-      // Send to backend with PDF included
-      await handleUpsertNotice(payload)
-      
-    } catch (error) {
-      console.error('Error in handleSubmit:', error)
-      
-      // Check if it's a PDF generation error
-      if (error.message && (error.message.includes('PDF') || error.message.includes('renderer'))) {
-        setPdfGenerationError('Failed to generate PDF. Please try again.')
+        // Use the uploaded PDF directly - no PDF generation
+        // COMMENTED: PDF generation logic removed - using uploaded PDF directly
+        // const pdfBlob = await pdf(<NoticePDFDocument notice={payload} />).toBlob()
+        // const pdfFile = new File([pdfBlob], `${getSafeFileName(payload)}.pdf`, { 
+        //   type: 'application/pdf' 
+        // })
+        // payload.file = pdfFile
+        
+        payload.file = uploadedFile
+        
+        // Send to backend with PDF included
+        await handleUpsertNotice(payload)
+      } else {
+        // If no PDF file, show error
+        setPdfGenerationError('Please upload a PDF file.')
         bannerRef.current?.focus()
         setIsSubmitting(false)
         return
       }
       
-      // Handle other errors
+    } catch (error) {
+      console.error('Error in handleSubmit:', error)
+      
+      // Handle errors
       setPdfGenerationError(`Error: ${error.message}`)
       bannerRef.current?.focus()
     } finally {
@@ -517,15 +513,34 @@ export const Notices = () => {
     const notice = visibleItems.find(n => n.id === noticeId)
     if (notice && can(user, 'notices:delete')) {
       setNoticeToDelete(notice)
+      setIsDeleting(false)
       setIsNoticeDeleteConfirmOpen(true)
     }
   }
 
-  const handleConfirmDeleteNotice = () => {
-    if (noticeToDelete) {
-      handleDeleteNotice(noticeToDelete.id)
+  const handleConfirmDeleteNotice = async () => {
+    try {
+      if (noticeToDelete) {
+        setIsDeleting(true)
+        
+        // Wait for delete to complete successfully
+        await handleDeleteNotice(noticeToDelete.id)
+        
+        // Close confirmation modal first
+        setIsNoticeDeleteConfirmOpen(false)
+        setNoticeToDelete(null)
+        setIsDeleting(false)
+        
+        // Then show success modal
+        setIsSuccessDeleteOpen(true)
+      }
+    } catch (error) {
+      console.error('Error in handleConfirmDeleteNotice:', error)
+      alert('An error occurred while deleting the notice')
+      // Close confirmation modal even on error
+      setIsNoticeDeleteConfirmOpen(false)
       setNoticeToDelete(null)
-      setIsSuccessDeleteOpen(true)
+      setIsDeleting(false)
     }
   }
 
@@ -757,41 +772,42 @@ export const Notices = () => {
                           disabled={pdfLoadingStates[notice.id]}
                           onClick={() => handleDownloadPDF(notice)}
                         >
-                          {pdfLoadingStates[notice.id] ? 'Generating...' : 'Download Notice'}
+                          {pdfLoadingStates[notice.id] ? 'Downloading...' : 'Download Notice'}
                         </button>
                       </div>
                     </div>
-                    <div className="notice-image-container">
-                      {/* Imagen borrosa para carga rápida */}
-                      <img 
-                        src={getNoticeBlurredImage(notice)} 
-                        alt={notice.title || 'Notice image'}
-                        className="notice-image-blurred"
-                        onError={(e) => {
-                          e.target.style.display = 'none'
-                        }}
-                      />
-                      {/* Imagen principal de alta calidad */}
-                      <img 
-                        src={getNoticeImage(notice)} 
-                        alt={notice.title || 'Notice image'}
-                        className="notice-image-original"
-                        loading="lazy"
-                        onLoad={(e) => {
-                          // Agregar clase loaded y ocultar imagen borrosa
-                          e.target.classList.add('loaded')
-                          const blurredImg = e.target.parentElement.querySelector('.notice-image-blurred')
-                          if (blurredImg) {
-                            blurredImg.style.opacity = '0'
-                            setTimeout(() => {
-                              blurredImg.style.display = 'none'
-                            }, 300)
-                          }
-                        }}
-                        onError={(e) => {
-                          e.target.style.display = 'none'
-                        }}
-                      />
+                    <div className="notice-preview-container">
+                      <div className="notice-preview-card">
+                        {/* Header */}
+                        <div className="notice-preview-header">
+                          <h2 className="notice-preview-title">Official Notice</h2>
+                          <p className="notice-preview-subtitle">Here's what's happening with your membership</p>
+                        </div>
+                        
+                        {/* Content section */}
+                        <div className="notice-preview-content">
+                          <div className="notice-preview-info">
+                            <div className="notice-preview-field">
+                              <span className="notice-preview-label">Category:</span>
+                              <span className="notice-preview-value">
+                                {categories.find(cat => cat.id === notice.noticeType)?.name || 'Not specified'}
+                              </span>
+                            </div>
+                            <div className="notice-preview-field">
+                              <span className="notice-preview-label">Date:</span>
+                              <span className="notice-preview-value">
+                                {formatDate(notice.createdAt || notice.createdAtISO || notice.publishDate)}
+                              </span>
+                            </div>
+                            <div className="notice-preview-field">
+                              <span className="notice-preview-label">Link:</span>
+                              <span className="notice-preview-value">
+                                {notice.linkUrl || 'No link provided'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <span className="notice-date">Published: {formatDate(notice.createdAt || notice.publishDate)}</span>
 
@@ -853,7 +869,7 @@ export const Notices = () => {
                   } else {
                     noticeForm.reset()
                   }
-                  setPdfGenerationError('') // Clear PDF generation errors when closing modal
+                  setPdfGenerationError('') // Clear errors when closing modal
                   closeNoticeModal()
                 }}
               >
@@ -917,10 +933,11 @@ export const Notices = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="file">Upload File<span className="req-star" aria-hidden="true">*</span></label>
+                  <label htmlFor="file">Upload PDF File<span className="req-star" aria-hidden="true">*</span></label>
+                  <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>Maximum size 15MB</p>
                   <div
                     className="file-upload-area dropzone-surface"
-                    data-has-file={Boolean(noticeForm.form.imagePreviewUrl)}
+                    data-has-file={Boolean(noticeForm.form.file || noticeForm.form.imageFileName)}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
@@ -929,7 +946,7 @@ export const Notices = () => {
                       type="file"
                       id="file"
                       name="file"
-                      accept="image/*"
+                      accept="application/pdf"
                       onChange={handleFileInputChange}
                       className="hidden-file-input"
                     />
@@ -939,9 +956,10 @@ export const Notices = () => {
                     <p className="file-status">
                       {noticeForm.form.imageFileName || 'No file chosen'}
                     </p>
-                    {noticeForm.form.imagePreviewUrl && (
-                      <div className="image-preview">
-                        <img src={noticeForm.form.imagePreviewUrl} alt="Preview" />
+                    {noticeForm.form.imageFileName && noticeForm.form.imageFileName.toLowerCase().endsWith('.pdf') && (
+                      <div className="file-preview">
+                        <i className="bi bi-file-pdf" style={{ fontSize: '3rem', color: '#dc3545' }}></i>
+                        <p>{noticeForm.form.imageFileName}</p>
                       </div>
                     )}
                   </div>
@@ -968,7 +986,7 @@ export const Notices = () => {
                       )}
                       {pdfGenerationError && (
                         <div>
-                          <strong>PDF Generation Error:</strong> {pdfGenerationError}
+                          <strong>Error:</strong> {pdfGenerationError}
                         </div>
                       )}
                     </div>
@@ -979,7 +997,7 @@ export const Notices = () => {
                     disabled={isSubmitting}
                     onClick={() => console.log('🔘 Submit button clicked')}
                   >
-                    {isSubmitting ? 'Loading...' : (editingNotice ? 'Update' : 'Upload Now')}
+                    {isSubmitting ? 'Loading...' : (editingNotice ? 'Update' : 'Submit')}
                   </button>
                 </div>
               </form>
@@ -1106,8 +1124,10 @@ export const Notices = () => {
         onClose={() => {
           setIsNoticeDeleteConfirmOpen(false)
           setNoticeToDelete(null)
+          setIsDeleting(false)
         }}
         onConfirm={handleConfirmDeleteNotice}
+        isDeleting={isDeleting}
       />
 
       <SuccessDeleteModal

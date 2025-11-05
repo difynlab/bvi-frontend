@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { GoogleLogin } from '@react-oauth/google'
+// TO DO CHANGE BACKEND: import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../../context/useAuth'
 import { useLoginForm } from '../../hooks/useLoginForm'
 import '../../styles/sections/Login.scss'
 
 export const Login = () => {
-  const { login, loginWithGoogle, error: authError } = useAuth()
+  const { login, /* TO DO CHANGE BACKEND: loginWithGoogle, */ error: authError } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [showPassword, setShowPassword] = useState(false)
@@ -117,7 +117,8 @@ export const Login = () => {
     handleFormSubmit()
   }
 
-  const handleGoogleSuccess = async (credentialResponse) => {
+  // TO DO CHANGE BACKEND: Google login functionality
+  /* const handleGoogleSuccess = async (credentialResponse) => {
     const credential = credentialResponse?.credential || ''
     if (!credential) {
       handleGoogleError()
@@ -140,7 +141,7 @@ export const Login = () => {
   const handleGoogleError = () => {
     console.log('Google login failed')
     alert('Google login failed')
-  }
+  } */
 
   return (
     <div className="auth-page">
@@ -222,8 +223,8 @@ export const Login = () => {
                 />
                 <span>Remember password</span>
               </label>
-              <NavLink to="/forget-password" className="forget-link">
-                Forget Password?
+              <NavLink to="/forgot-password" className="forget-link">
+                Forgot Password?
               </NavLink>
             </div>
 
@@ -231,7 +232,8 @@ export const Login = () => {
               <button type="submit" className="auth-footer-cta" disabled={isSubmitting}>
                 {isSubmitting ? 'Logging in...' : 'Login Now'}
               </button>
-              <div className="auth-google google-login-container">
+              {/* TO DO CHANGE BACKEND: Google login component */}
+              {/* <div className="auth-google google-login-container">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
@@ -239,7 +241,7 @@ export const Login = () => {
                   size="large"
                   text="continue_with"
                 />
-              </div>
+              </div> */}
               <p className='auth-footer-already'>
                 Don't have an account? <NavLink to={'/register'}>Sign Up here</NavLink>
               </p>

@@ -28,18 +28,31 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   
-  const getDefaultImage = () => {
-    return infoKey && MAP[infoKey] ? MAP[infoKey].img : '';
+  const getDefaultData = () => {
+    if (!infoKey || !MAP[infoKey]) return { title: '', subtitle: '', img: '' };
+    return MAP[infoKey];
   };
 
-  const getSavedImage = () => {
-    if (!infoKey) return '';
-    const savedImage = localStorage.getItem(`subscription-image-${infoKey}`);
-    return savedImage || (MAP[infoKey] ? MAP[infoKey].img : '');
+  const getSavedData = () => {
+    if (!infoKey) return getDefaultData();
+    try {
+      const savedData = localStorage.getItem(`subscription-data-${infoKey}`);
+      if (savedData) {
+        return JSON.parse(savedData);
+      }
+    } catch (e) {
+      console.error('Error parsing saved data:', e);
+    }
+    return getDefaultData();
   };
   
-  const [imgSrc, setImgSrc] = useState(getSavedImage());
-  const [originalImgSrc, setOriginalImgSrc] = useState(getSavedImage());
+  const savedData = getSavedData();
+  const [title, setTitle] = useState(savedData.title);
+  const [subtitle, setSubtitle] = useState(savedData.subtitle);
+  const [imgSrc, setImgSrc] = useState(savedData.img);
+  const [originalTitle, setOriginalTitle] = useState(savedData.title);
+  const [originalSubtitle, setOriginalSubtitle] = useState(savedData.subtitle);
+  const [originalImgSrc, setOriginalImgSrc] = useState(savedData.img);
   const [isUploadOpen, setUploadOpen] = useState(false);
   const [isConfirmOpen, setConfirmOpen] = useState(false);
   
@@ -47,26 +60,66 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
 
   useEffect(() => {
     if (infoKey && MAP[infoKey]) {
-      const savedImage = getSavedImage();
-      setImgSrc(savedImage);
-      setOriginalImgSrc(savedImage);
+      const data = getSavedData();
+      setTitle(data.title);
+      setSubtitle(data.subtitle);
+      setImgSrc(data.img);
+      setOriginalTitle(data.title);
+      setOriginalSubtitle(data.subtitle);
+      setOriginalImgSrc(data.img);
     }
   }, [infoKey]);
 
   const openUpload = () => setUploadOpen(true);
   const closeUpload = () => setUploadOpen(false);
   
-  const handleUploaded = (dataUrl) => {
-    if (dataUrl) {
-      setImgSrc(dataUrl);
-      // TODO BACKEND: POST /api/subscription/resources (upload)
-      // TODO BACKEND: Replace Data URL with remote URL from the server response
+  const handleUploaded = (data) => {
+    if (data) {
+      // data can be either the old format (just a string) or the new format (object)
+      if (typeof data === 'string') {
+        // Old format - just image
+        setImgSrc(data);
+        setOriginalImgSrc(data);
+        if (infoKey && data) {
+          localStorage.setItem(`subscription-image-${infoKey}`, data);
+        }
+      } else {
+        // New format - object with title, description, image
+        const newTitle = data.title || title;
+        const newSubtitle = data.description || subtitle;
+        const newImage = data.image || imgSrc;
+        
+        setTitle(newTitle);
+        setSubtitle(newSubtitle);
+        setImgSrc(newImage);
+        setOriginalTitle(newTitle);
+        setOriginalSubtitle(newSubtitle);
+        setOriginalImgSrc(newImage);
+        
+        // Save to localStorage
+        if (infoKey) {
+          const dataToSave = {
+            title: newTitle,
+            subtitle: newSubtitle,
+            img: newImage
+          };
+          localStorage.setItem(`subscription-data-${infoKey}`, JSON.stringify(dataToSave));
+          // Also keep the old format for backward compatibility
+          if (newImage) {
+            localStorage.setItem(`subscription-image-${infoKey}`, newImage);
+          }
+        }
+      }
     }
     closeUpload();
   };
 
   const hasUnsavedChanges = () => {
-    return isAdmin && imgSrc !== originalImgSrc;
+    return isAdmin && (
+      imgSrc !== originalImgSrc ||
+      title !== originalTitle ||
+      subtitle !== originalSubtitle
+    );
   };
 
   const handleCloseAttempt = () => {
@@ -78,48 +131,76 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
   };
 
   const handleSave = () => {
-    if (infoKey && imgSrc) {
-      localStorage.setItem(`subscription-image-${infoKey}`, imgSrc);
+    if (infoKey) {
+      const dataToSave = {
+        title,
+        subtitle,
+        img: imgSrc
+      };
+      localStorage.setItem(`subscription-data-${infoKey}`, JSON.stringify(dataToSave));
+      // Also keep the old format for backward compatibility
+      if (imgSrc) {
+        localStorage.setItem(`subscription-image-${infoKey}`, imgSrc);
+      }
     }
-    // TODO BACKEND: Save the changes here
+    setOriginalTitle(title);
+    setOriginalSubtitle(subtitle);
     setOriginalImgSrc(imgSrc);
     setConfirmOpen(false);
     onClose();
   };
 
   const handleSaveDirect = () => {
-    if (infoKey && imgSrc) {
-      localStorage.setItem(`subscription-image-${infoKey}`, imgSrc);
+    if (infoKey) {
+      const dataToSave = {
+        title,
+        subtitle,
+        img: imgSrc
+      };
+      localStorage.setItem(`subscription-data-${infoKey}`, JSON.stringify(dataToSave));
+      // Also keep the old format for backward compatibility
+      if (imgSrc) {
+        localStorage.setItem(`subscription-image-${infoKey}`, imgSrc);
+      }
     }
-    // TODO BACKEND: Save the changes here
+    setOriginalTitle(title);
+    setOriginalSubtitle(subtitle);
     setOriginalImgSrc(imgSrc);
   };
 
   const handleDiscard = () => {
     if (infoKey) {
+      localStorage.removeItem(`subscription-data-${infoKey}`);
       localStorage.removeItem(`subscription-image-${infoKey}`);
     }
-    const defaultImg = MAP[infoKey] ? MAP[infoKey].img : '';
-    setImgSrc(defaultImg);
-    setOriginalImgSrc(defaultImg);
+    const defaultData = getDefaultData();
+    setTitle(defaultData.title);
+    setSubtitle(defaultData.subtitle);
+    setImgSrc(defaultData.img);
+    setOriginalTitle(defaultData.title);
+    setOriginalSubtitle(defaultData.subtitle);
+    setOriginalImgSrc(defaultData.img);
     setConfirmOpen(false);
     onClose();
   };
 
   const handleDiscardDirect = () => {
     if (infoKey) {
+      localStorage.removeItem(`subscription-data-${infoKey}`);
       localStorage.removeItem(`subscription-image-${infoKey}`);
     }
-    const defaultImg = MAP[infoKey] ? MAP[infoKey].img : '';
-    setImgSrc(defaultImg);
-    setOriginalImgSrc(defaultImg);
+    const defaultData = getDefaultData();
+    setTitle(defaultData.title);
+    setSubtitle(defaultData.subtitle);
+    setImgSrc(defaultData.img);
+    setOriginalTitle(defaultData.title);
+    setOriginalSubtitle(defaultData.subtitle);
+    setOriginalImgSrc(defaultData.img);
   };
 
   const modalBackdropClose = useModalBackdropClose(handleCloseAttempt);
 
   if (!isOpen || !infoKey || !MAP[infoKey]) return null;
-
-  const { title, subtitle } = MAP[infoKey];
 
   return (
     <div
@@ -174,7 +255,7 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
                 className="subscription-info-modal__update-btn"
                 onClick={openUpload}
               >
-                <i className="bi bi-plus" aria-hidden="true"></i> Update Now
+                <i className="bi bi-pencil-square" aria-hidden="true"></i> Edit
               </button>
             </div>
             
@@ -205,6 +286,9 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
           isOpen={isUploadOpen}
           onClose={closeUpload}
           onConfirm={handleUploaded}
+          initialTitle={title}
+          initialDescription={subtitle}
+          initialImage={imgSrc}
         />
       )}
 

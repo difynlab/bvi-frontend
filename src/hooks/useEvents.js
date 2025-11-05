@@ -121,8 +121,8 @@ export const useEvents = () => {
     try {
       const response = await eventsService.getEvents(pagination.per_page, page)
       
-      if (response.http_status === 200 && response.data) {
-        const transformedEvents = response.data.data.map(transformFromBackend)
+      if ((response.http_status === 200 || response.http_status === 404) && response.data) {
+        const transformedEvents = response.data.data ? response.data.data.map(transformFromBackend) : []
         const sortedEvents = sortEventsByDate(transformedEvents)
         
         const eventsData = {
@@ -137,6 +137,7 @@ export const useEvents = () => {
         
         setEvents(sortedEvents)
         setPagination(eventsData.pagination)
+        setError(null) // Clear any previous errors
         
         if (page === 1) {
           setCachedEvents(eventsData)
@@ -145,7 +146,7 @@ export const useEvents = () => {
     } catch (err) {
       if (err.message.includes('No data found')) {
         setEvents([])
-        setError('No data found')
+        setError(null) // Don't set error for no data found
       } else {
         console.error('Error loading events:', err)
         setError(err.message)
@@ -205,10 +206,19 @@ export const useEvents = () => {
           eventTime: `${eventWithImages.startTime} - ${eventWithImages.endTime}`,
           eventLocation: eventWithImages.location
         })
+        
+        return { success: true, response }
+      } else {
+        // Error response from server
+        const errorMessage = response.message || `Error: HTTP ${response.http_status}`
+        setError(errorMessage)
+        return { success: false, error: errorMessage, response }
       }
     } catch (err) {
       console.error('Error creating event:', err)
-      setError(err.message)
+      const errorMessage = err.message || 'An error occurred while creating the event'
+      setError(errorMessage)
+      return { success: false, error: errorMessage }
     } finally {
       setLoading(false)
     }
@@ -246,10 +256,19 @@ export const useEvents = () => {
         //   title: 'Event Updated',
         //   message: `"${updatedEvent.title}" has been updated successfully`
         // })
+        
+        return { success: true, response }
+      } else {
+        // Error response from server
+        const errorMessage = response.message || `Error: HTTP ${response.http_status}`
+        setError(errorMessage)
+        return { success: false, error: errorMessage, response }
       }
     } catch (err) {
       console.error('Error updating event:', err)
-      setError(err.message)
+      const errorMessage = err.message || 'An error occurred while updating the event'
+      setError(errorMessage)
+      return { success: false, error: errorMessage }
     } finally {
       setLoading(false)
     }
@@ -261,7 +280,6 @@ export const useEvents = () => {
 
     try {
       // TODO PRODUCTION: CHANGE IMAGES - Remove image from localStorage when deleting event
-      console.log('🗑️ Removing event image from localStorage')
       removeEventImageFromLocalStorage(id)
       
       // Obtener el evento antes de eliminarlo para la notificación

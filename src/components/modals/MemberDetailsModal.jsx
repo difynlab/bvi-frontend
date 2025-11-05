@@ -561,14 +561,6 @@ export const MemberDetailsModal = ({
             </div>
           )}
           <button
-            className="member-details-btn member-details-btn--edit"
-            onClick={isEditing ? handleSaveChanges : handleEditClick}
-            disabled={isEditing && (!hasChanges || isLoading)}
-          >
-            <i className="bi bi-pencil-square"></i>
-            {isLoading ? 'Loading...' : (isEditing ? 'Save Changes' : 'Edit Info')}
-          </button>
-          <button
             className="member-details-btn member-details-btn--delete"
             onClick={() => {
               if (onDeleteMember && currentMember) {
@@ -578,6 +570,14 @@ export const MemberDetailsModal = ({
           >
             <i className="bi bi-exclamation-triangle"></i>
             Delete Member
+          </button>
+          <button
+            className="member-details-btn member-details-btn--edit"
+            onClick={isEditing ? handleSaveChanges : handleEditClick}
+            disabled={isEditing && (!hasChanges || isLoading)}
+          >
+            <i className="bi bi-pencil-square"></i>
+            {isLoading ? 'Loading...' : (isEditing ? 'Save Changes' : 'Edit Info')}
           </button>
         </div>
       </div>

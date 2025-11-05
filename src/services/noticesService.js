@@ -145,6 +145,24 @@ class NoticesService {
     }
   }
 
+  async downloadNoticePDF(noticeId) {
+    try {
+      const response = await fetch(`${this.baseURL}/notices/${noticeId}/download`, {
+        method: 'GET',
+        headers: this.getHeaders(false) // No incluir Content-Type para binarios
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error al descargar el PDF: ${response.status} ${response.statusText}`)
+      }
+
+      return await response.blob()
+    } catch (error) {
+      console.error('Error downloading notice PDF:', error)
+      throw error
+    }
+  }
+
   async createNotice(noticeData) {
     try {
       

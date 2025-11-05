@@ -78,7 +78,7 @@ const Dashboard = () => {
           originalDescription: nl.description // Keep original for reference
         }
       } catch (error) {
-        console.warn('Failed to parse newsletter description JSON:', error)
+        // Silently handle JSON parse errors
       }
     }
     

@@ -40,8 +40,6 @@ class ReportsService {
         } else if (data.http_status === 400) {
           const errorMessage = data.message || 'Error de validación'
           const validationErrors = data.errors ? Object.values(data.errors).flat().join(', ') : ''
-          console.log('400 Bad Request details:', data)
-          console.log('Validation errors:', data.errors)
           throw new Error(`${errorMessage}${validationErrors ? ': ' + validationErrors : ''}`)
         } else if (data.http_status === 422) {
           const errorMessage = data.message || 'Errores de validación'
@@ -49,8 +47,6 @@ class ReportsService {
           throw new Error(`${errorMessage}${validationErrors ? ': ' + validationErrors : ''}`)
         } else if (data.http_status === 500) {
           const errorMessage = data.message || data.error || 'Error interno del servidor'
-          console.error('500 Server Error details:', data)
-          console.error('Full error response:', JSON.stringify(data, null, 2))
           throw new Error(`${errorMessage} (Error 500)`)
         } else if (data.http_status === 404) {
           // Return empty data instead of throwing error for 404
@@ -122,8 +118,6 @@ class ReportsService {
         }
       }
       
-      // Only log other errors
-      console.error('Error fetching reports:', error)
       throw error
     } finally {
       // Restore original console.error
@@ -140,7 +134,6 @@ class ReportsService {
 
       return await this.handleResponse(response)
     } catch (error) {
-      console.error('Error fetching report:', error)
       throw error
     }
   }
@@ -169,25 +162,14 @@ class ReportsService {
         body: formData
       })
 
-      
-      const responseClone = new Response(responseText, {
-        status: response.status,
-        statusText: response.statusText,
-        headers: response.headers
-      })
-      
-      return await this.handleResponse(responseClone)
+      return await this.handleResponse(response)
     } catch (error) {
-      console.error('Error creating report:', error)
       throw error
     }
   }
 
   async updateReport(id, reportData) {
     try {
-      console.log('Report ID:', id)
-      console.log('Raw reportData received:', reportData)
-      
       const formData = new FormData()
       
       // Agregar todos los campos del report al FormData
@@ -201,15 +183,6 @@ class ReportsService {
         }
       })
 
-      console.log('FormData contents:')
-      for (let [key, value] of formData.entries()) {
-        if (value instanceof File) {
-          console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`)
-        } else {
-          console.log(`${key}:`, value)
-        }
-      }
-
       const response = await fetch(`${this.baseURL}/reports/${id}`, {
         method: 'POST',
         headers: this.getHeaders(false), // false = no incluir Content-Type para FormData
@@ -218,7 +191,6 @@ class ReportsService {
 
       return await this.handleResponse(response)
     } catch (error) {
-      console.error('Error updating report:', error)
       throw error
     }
   }
@@ -233,7 +205,6 @@ class ReportsService {
       const result = await this.handleResponse(response);
       return result;
     } catch (error) {
-      console.error('Error deleting report:', error)
       throw error
     }
   }

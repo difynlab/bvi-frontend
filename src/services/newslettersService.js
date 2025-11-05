@@ -40,8 +40,6 @@ class NewslettersService {
         } else if (data.http_status === 400) {
           const errorMessage = data.message || 'Error de validación'
           const validationErrors = data.errors ? Object.values(data.errors).flat().join(', ') : ''
-          console.log('400 Bad Request details:', data)
-          console.log('Validation errors:', data.errors)
           throw new Error(`${errorMessage}${validationErrors ? ': ' + validationErrors : ''}`)
         } else if (data.http_status === 422) {
           const errorMessage = data.message || 'Errores de validación'
@@ -86,9 +84,6 @@ class NewslettersService {
   async getNewsletters(pagination = 6, page = 1) {
     try {
       const url = `${this.baseURL}/newsletters?pagination=${pagination}&page=${page}`
-      console.log('=== FETCHING NEWSLETTERS ===')
-      console.log('URL:', url)
-      console.log('Headers:', this.getHeaders(true))
       
       const response = await fetch(url, {
         method: 'GET',
@@ -120,54 +115,25 @@ class NewslettersService {
 
   async createNewsletter(newsletterData) {
     try {
-      console.log('=== CREATE NEWSLETTER DEBUG ===')
-      console.log('Raw newsletterData received:', newsletterData)
-      console.log('NewsletterData type:', typeof newsletterData)
-      console.log('NewsletterData keys:', Object.keys(newsletterData))
-      
       const formData = new FormData()
       
       // Agregar todos los campos del newsletter al FormData
       Object.keys(newsletterData).forEach(key => {
         const value = newsletterData[key]
-        console.log(`Processing field: ${key}, type: ${typeof value}, value:`, value)
         
         if (value !== null && value !== undefined && value !== '') {
           formData.append(key, value)
-          console.log(`✅ Added to FormData: ${key} =`, value)
-        } else {
-          console.log(`❌ Skipped empty field: ${key} =`, value)
         }
       })
-
-      console.log('FormData contents:')
-      for (let [key, value] of formData.entries()) {
-        if (value instanceof File) {
-          console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`)
-        } else {
-          console.log(`${key}:`, value)
-        }
-      }
-
-      console.log('Headers being sent:', this.getHeaders(false))
-      console.log('Token being used:', this.getToken() ? 'Present' : 'Missing')
-      console.log('Base URL:', this.baseURL)
 
       const response = await fetch(`${this.baseURL}/newsletters`, {
         method: 'POST',
         headers: this.getHeaders(false), // false = no incluir Content-Type para FormData
         body: formData
       })
-
-      console.log('Response status:', response.status)
-      console.log('Response ok:', response.ok)
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
-      
-      // Log response body for debugging
-      const responseText = await response.text()
-      console.log('Response body:', responseText)
       
       // Create a new response object for handleResponse
+      const responseText = await response.text()
       const responseClone = new Response(responseText, {
         status: response.status,
         statusText: response.statusText,

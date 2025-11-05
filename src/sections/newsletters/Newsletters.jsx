@@ -94,6 +94,7 @@ const Newsletters = () => {
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
   const [newsletterToDelete, setNewsletterToDelete] = useState(null)
   const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false)
@@ -255,11 +256,29 @@ const Newsletters = () => {
     }
   }
 
-  const handleConfirmDelete = () => {
-    if (newsletterToDelete) {
-      deleteNewsletter(newsletterToDelete.id)
-      setNewsletterToDelete(null)
-      setIsSuccessDeleteOpen(true)
+  const handleConfirmDelete = async () => {
+    try {
+      if (newsletterToDelete) {
+        setIsDeleting(true);
+        
+        // Wait for delete to complete successfully
+        await deleteNewsletter(newsletterToDelete.id);
+        
+        // Close confirmation modal first
+        setIsConfirmDeleteOpen(false);
+        setNewsletterToDelete(null);
+        setIsDeleting(false);
+        
+        // Then show success modal
+        setIsSuccessDeleteOpen(true);
+      }
+    } catch (error) {
+      console.error('Error in handleConfirmDelete:', error);
+      alert('An error occurred while deleting the newsletter');
+      // Close confirmation modal even on error
+      setIsConfirmDeleteOpen(false);
+      setNewsletterToDelete(null);
+      setIsDeleting(false);
     }
   }
 
@@ -542,7 +561,7 @@ const Newsletters = () => {
                     </div>
                   )}
                   <button type="submit" className="upload-now-btn">
-                    Upload Now
+                    Submit
                   </button>
                 </div>
               </form>
@@ -559,6 +578,7 @@ const Newsletters = () => {
           setNewsletterToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
       />
 
       <SuccessDeleteModal

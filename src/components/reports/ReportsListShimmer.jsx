@@ -7,6 +7,8 @@ const ReportsListShimmer = () => {
       <ReportCardShimmer />
       <ReportCardShimmer />
       <ReportCardShimmer />
+      <ReportCardShimmer />
+      <ReportCardShimmer />
     </div>
   )
 }

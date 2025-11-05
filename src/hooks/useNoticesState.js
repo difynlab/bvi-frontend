@@ -470,6 +470,12 @@ export const useNoticesState = () => {
         
         // Remove image from localStorage
         removeNoticeImageFromLocalStorage(id, 'all')
+        
+        return { success: true, response }
+      } else {
+        // Error response from server
+        const errorMessage = response.message || `Error: HTTP ${response.http_status}`
+        throw new Error(errorMessage)
       }
     } catch (error) {
       console.error('Error deleting notice:', error)

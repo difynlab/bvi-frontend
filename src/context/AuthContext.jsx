@@ -114,7 +114,6 @@ export const AuthProvider = ({ children }) => {
     try {
       const { firstName, lastName, email, phoneNumber, password } = payload
 
-      // Require API for registration
       if (!API_BASE) {
         setError('API not configured. Registration unavailable.')
         return false

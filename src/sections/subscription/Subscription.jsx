@@ -173,15 +173,6 @@ const Subscription = () => {
                 <a href="#" className="subscription-card__link">View Details</a>
               </div>
             </div>
-
-            {/* Centered Action Button */}
-            <button 
-              type="button" 
-              className="subscription-edit-btn"
-              onClick={() => setTab('General Details')}
-            >
-              Edit Membership Form
-            </button>
           </section>
         )}
 

@@ -20,13 +20,31 @@
   }
 
   label .req-star {
-    position: absolute;
-    top: 0;
-    right: 0;
+    margin-left: 4px;
     color: $vivid_red;
     font-size: 0.85em;
     line-height: 1;
     pointer-events: none;
+  }
+
+  .label-with-counter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 6px;
+  }
+
+  .label-with-counter .character-count {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: #6b7280;
+    white-space: nowrap;
+  }
+
+  .label-with-counter .character-count .character-count-exceeded {
+    color: $vivid_red;
+    font-weight: 500;
   }
 }
 
@@ -795,6 +813,27 @@
 
   .form-group input:focus,
   .form-group select:focus {
+    outline: none;
+    border-color: $vivid_blue;
+  }
+
+  .short-description-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    box-sizing: border-box;
+    resize: none;
+    overflow: hidden;
+    min-height: 44px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    font-family: inherit;
+  }
+
+  .short-description-textarea:focus {
     outline: none;
     border-color: $vivid_blue;
   }

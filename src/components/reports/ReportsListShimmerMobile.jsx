@@ -7,6 +7,8 @@ const ReportsListShimmerMobile = () => {
       <ReportCardShimmerMobile />
       <ReportCardShimmerMobile />
       <ReportCardShimmerMobile />
+      <ReportCardShimmerMobile />
+      <ReportCardShimmerMobile />
     </div>
   )
 }

@@ -479,7 +479,6 @@ export function useReportsState() {
         // Get token for authenticated download
         const token = localStorage.getItem('token');
         if (!token) {
-          console.error('❌ Debug - No token found for authenticated download');
           // Fallback to direct download
           const link = document.createElement('a');
           link.href = fileUrl;
@@ -501,7 +500,6 @@ export function useReportsState() {
         });
         
         if (!response.ok) {
-          console.error('❌ Debug - Download failed:', response.status, response.statusText);
           // Fallback to direct download
           const link = document.createElement('a');
           link.href = fileUrl;
@@ -528,7 +526,6 @@ export function useReportsState() {
         
         
       } catch (error) {
-        console.error('❌ Debug - Download error:', error);
         // Fallback to direct download
         const link = document.createElement('a');
         link.href = fileUrl;
@@ -538,13 +535,6 @@ export function useReportsState() {
         link.click();
         document.body.removeChild(link);
       }
-    } else {
-      console.warn('❌ Debug - No file URL found for download:', {
-        fileUrl: report.fileUrl,
-        file: report.file,
-        file_url: report.file_url,
-        report: report
-      });
     }
   }, []);
 

@@ -191,8 +191,10 @@ const SideNav = () => {
     // TODO BACKEND: Invalidate server session/token before redirect
   };
 
-  // Display name logic: use only first name for display
-  const displayName = user?.first_name || 'Member'
+  // Display name logic: use full name (first name + last name) for display
+  const firstName = user?.first_name || ''
+  const lastName = user?.last_name || ''
+  const displayName = `${firstName} ${lastName}`.trim() || 'Member'
   const role = user?.role || 'member'
   
   // Hide subscription link for admin users (admins should not see subscription link at all)
@@ -302,8 +304,16 @@ const SideNav = () => {
               })()}
             </div>
             <div className="profile-info">
-              <h3 className="user-name">{displayName}</h3>
-              <p className="user-role">{role === 'admin' ? 'Administrator' : 'Member'}</p>
+              <h3 className="user-name">
+                {firstName && lastName ? (
+                  <>
+                    <span className="user-first-name">{firstName}</span>
+                    <span className="user-last-name">{lastName}</span>
+                  </>
+                ) : (
+                  displayName
+                )}
+              </h3>
             </div>
           </NavLink>
         </div>
@@ -323,8 +333,16 @@ const SideNav = () => {
               })()}
             </div>
             <div className="profile-info">
-              <h3 className="user-name">{displayName}</h3>
-              <p className="user-role">{role === 'admin' ? 'Administrator' : 'Member'}</p>
+              <h3 className="user-name">
+                {firstName && lastName ? (
+                  <>
+                    <span className="user-first-name">{firstName}</span>
+                    <span className="user-last-name">{lastName}</span>
+                  </>
+                ) : (
+                  displayName
+                )}
+              </h3>
             </div>
           </NavLink>
 

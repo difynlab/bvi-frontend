@@ -61,7 +61,6 @@ class ReportCategoriesService {
     
     try {
       const jsonResponse = await response.json()
-      console.log('🔍 ReportCategoriesService - Raw JSON response:', jsonResponse)
       return jsonResponse
     } catch (parseError) {
       throw new Error('Error al procesar la respuesta del servidor')

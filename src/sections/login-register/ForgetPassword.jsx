@@ -96,7 +96,7 @@ export const ForgetPassword = () => {
     <div className="forget-password-page">
       <div className="forget-password-container">
         <div className="forget-password-content">
-          <h1 className="forget-password-title">Forgot your password</h1>
+          <h1 className="forget-password-title">Forgot your password?</h1>
           <p className="forget-password-subtitle">
             Don't worry! Resetting your password is easy. Just type in the email<span>you registered to Warehouse Exchange.</span>
           </p>

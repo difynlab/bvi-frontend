@@ -35,6 +35,7 @@ export const Events = () => {
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
   const [eventToDelete, setEventToDelete] = useState(null)
   const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const eventForm = useEventForm()
 
@@ -55,14 +56,16 @@ export const Events = () => {
   const REQUIRED = [
     { key: 'title', label: 'Event Title', test: () => (eventForm?.form?.title || '').trim().length > 0 },
     { key: 'date', label: 'Date', test: () => !!eventForm?.form?.date },
+    { key: 'shortDescription', label: 'Short description', test: () => (eventForm?.form?.shortDescription || '').trim().length > 0 },
     {
-      key: 'description', label: 'Description', test: () => {
+      key: 'description', label: 'Content', test: () => {
         const htmlValue = eventForm?.editorHtml || eventForm?.form?.description || '';
         const html = typeof htmlValue === 'string' ? htmlValue : (htmlValue?.html || '');
         const text = html.replace(/<[^>]+>/g, '').trim();
         return text.length > 0;
       }
     },
+    { key: 'location', label: 'Location', test: () => (eventForm?.form?.location || '').trim().length > 0 },
     { key: 'register_link', label: 'Registration Link', test: () => (eventForm?.form?.register_link || '').trim().length > 0 },
     { key: 'file', label: 'File Upload', test: () => !!(eventForm?.form?.imagePreviewUrl || eventForm?.form?.imageFileName) }
   ];
@@ -82,8 +85,10 @@ export const Events = () => {
   }, [
     eventForm?.form?.title,
     eventForm?.form?.date,
+    eventForm?.form?.shortDescription,
     eventForm?.editorHtml,
     eventForm?.form?.description,
+    eventForm?.form?.location,
     eventForm?.form?.register_link,
     eventForm?.form?.imagePreviewUrl,
     eventForm?.form?.imageFileName
@@ -110,6 +115,18 @@ export const Events = () => {
     if (isModalOpen && eventForm.form.repeat === 'custom' && !isCustomRecurrenceOpen) {
     }
   }, [isModalOpen, eventForm.form.repeat, isCustomRecurrenceOpen])
+
+  // Auto-resize textarea when modal opens or value changes
+  useEffect(() => {
+    if (isModalOpen) {
+      const textarea = document.getElementById('shortDescription')
+      if (textarea) {
+        textarea.style.height = 'auto'
+        textarea.style.height = textarea.scrollHeight + 'px'
+      }
+    }
+  }, [isModalOpen, eventForm.form.shortDescription])
+
   const registerModalBackdropClose = useModalBackdropClose(() => setIsRegisterModalOpen(false))
 
   const titleMarquee = useTitleMarquee()
@@ -139,9 +156,8 @@ export const Events = () => {
   }
 
   const getEventDescriptionParagraphs = (event) => {
-    // Con la nueva implementación, event.description ya contiene el texto plano del primer párrafo
-    // event.editorHtml contiene el HTML completo para el modal
-    return event.description || '';
+    // Use shortDescription for the event card display
+    return event.shortDescription || '';
   }
 
   const truncateText = (text, maxLength = 110) => {
@@ -542,7 +558,7 @@ export const Events = () => {
     return eventForm.validate(modalMode === 'edit')
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     try {
       e.preventDefault()
       if (!validateRequired()) { bannerRef.current?.focus(); return; }
@@ -554,18 +570,31 @@ export const Events = () => {
         return; 
       }
 
+      // Clear any previous error messages
+      eventForm.setErrorMessage('')
+
+      let result
       if (modalMode === 'create') {
         const newEvent = eventForm.buildEventObject()
-        createEvent(newEvent)
+        result = await createEvent(newEvent)
       } else if (modalMode === 'edit' && editingEventId) {
         const updatedEvent = eventForm.buildEventObject(editingEventId)
-        updateEvent(updatedEvent)
+        result = await updateEvent(updatedEvent)
       }
 
-      closeModal()
+      // Only close modal if the operation was successful
+      if (result && result.success) {
+        closeModal()
+      } else if (result && result.error) {
+        // Show error in banner
+        eventForm.setErrorMessage(result.error)
+        bannerRef.current?.focus()
+      }
     } catch (error) {
       console.error('Error in handleSubmit:', error)
-      alert('An error occurred while saving the event')
+      const errorMessage = error.message || 'An error occurred while saving the event'
+      eventForm.setErrorMessage(errorMessage)
+      bannerRef.current?.focus()
     }
   }
 
@@ -583,6 +612,7 @@ export const Events = () => {
       const event = events.find(e => e.id === eventId)
       if (event && can(user, 'events:delete')) {
         setEventToDelete(event)
+        setIsDeleting(false)
         setIsConfirmDeleteOpen(true)
       }
     } catch (error) {
@@ -591,16 +621,29 @@ export const Events = () => {
     }
   }
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     try {
       if (eventToDelete) {
-        deleteEvent(eventToDelete.id)
+        setIsDeleting(true)
+        
+        // Wait for delete to complete successfully
+        await deleteEvent(eventToDelete.id)
+        
+        // Close confirmation modal first
+        setIsConfirmDeleteOpen(false)
         setEventToDelete(null)
+        setIsDeleting(false)
+        
+        // Then show success modal
         setIsSuccessDeleteOpen(true)
       }
     } catch (error) {
       console.error('Error in handleConfirmDelete:', error)
       alert('An error occurred while deleting the event')
+      // Close confirmation modal even on error
+      setIsConfirmDeleteOpen(false)
+      setEventToDelete(null)
+      setIsDeleting(false)
     }
   }
 
@@ -749,7 +792,36 @@ export const Events = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="description">Description<span className="req-star" aria-hidden="true">*</span></label>
+                  <div className="label-with-counter">
+                    <label htmlFor="shortDescription">
+                      Short description<span className="req-star" aria-hidden="true">*</span>
+                    </label>
+                    <span className="character-count">
+                      <span className={eventForm.form.shortDescription && eventForm.form.shortDescription.length > 115 ? 'character-count-exceeded' : ''}>
+                        {(eventForm.form.shortDescription || '').length}
+                      </span>
+                      /115
+                    </span>
+                  </div>
+                  <textarea
+                    id="shortDescription"
+                    name="shortDescription"
+                    value={eventForm.form.shortDescription}
+                    onChange={(e) => {
+                      handleInputChange(e)
+                      // Auto-resize textarea
+                      e.target.style.height = 'auto'
+                      e.target.style.height = e.target.scrollHeight + 'px'
+                    }}
+                    placeholder="Enter short description"
+                    rows={1}
+                    required
+                    className="short-description-textarea"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="description">Content<span className="req-star" aria-hidden="true">*</span></label>
                   <RichTextEditor
                     docId={modalMode === 'edit' ? editingEventId : 'new'}
                     initialHTML={eventForm.editorHtml}
@@ -759,7 +831,7 @@ export const Events = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="location">Location</label>
+                  <label htmlFor="location">Location<span className="req-star" aria-hidden="true">*</span></label>
                   <input
                     type="text"
                     id="location"
@@ -767,6 +839,7 @@ export const Events = () => {
                     value={eventForm.form.location}
                     onChange={handleInputChange}
                     placeholder="Enter event location"
+                    required
                   />
                 </div>
 
@@ -839,7 +912,7 @@ export const Events = () => {
                     className="upload-now-btn"
                     disabled={eventForm.errorMessage ? true : false}
                   >
-                    Upload Now
+                    Submit
                   </button>
                 </div>
               </form>
@@ -924,8 +997,10 @@ export const Events = () => {
         onClose={() => {
           setIsConfirmDeleteOpen(false)
           setEventToDelete(null)
+          setIsDeleting(false)
         }}
         onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
       />
 
       <SuccessDeleteModal

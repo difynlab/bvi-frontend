@@ -828,10 +828,6 @@
 
       // Remove text selection highlight
       -webkit-tap-highlight-color: transparent;
-
-      &:hover {
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-      }
     }
 
     .plan-header {

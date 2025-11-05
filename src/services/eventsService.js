@@ -40,8 +40,6 @@ class EventsService {
         } else if (data.http_status === 400) {
           const errorMessage = data.message || 'Error de validación'
           const validationErrors = data.errors ? Object.values(data.errors).flat().join(', ') : ''
-          console.log('400 Bad Request details:', data)
-          console.log('Validation errors:', data.errors)
           throw new Error(`${errorMessage}${validationErrors ? ': ' + validationErrors : ''}`)
         } else if (data.http_status === 422) {
           const errorMessage = data.message || 'Errores de validación'
@@ -52,13 +50,37 @@ class EventsService {
           console.error('500 Server Error details:', data)
           console.error('Full error response:', JSON.stringify(data, null, 2))
           throw new Error(`${errorMessage} (Error 500)`)
+        } else if (data.http_status === 404) {
+          // Return empty data instead of throwing error for 404
+          return {
+            http_status: 404,
+            message: 'No events found',
+            data: {
+              data: [],
+              current_page: 1,
+              last_page: 1,
+              per_page: 6,
+              total: 0
+            }
+          }
         } else {
           const errorMessage = data.message || data.error || `Error del servidor: ${response.status}`
           throw new Error(errorMessage)
         }
       } catch (parseError) {
         if (response.status === 404) {
-          throw new Error('No data found')
+          // Return empty data instead of throwing error for 404
+          return {
+            http_status: 404,
+            message: 'No events found',
+            data: {
+              data: [],
+              current_page: 1,
+              last_page: 1,
+              per_page: 6,
+              total: 0
+            }
+          }
         }
         throw new Error(`Error del servidor: ${response.status} ${response.statusText}`)
       }
@@ -72,6 +94,34 @@ class EventsService {
   }
 
   async getEvents(pagination = 6, page = 1) {
+    // Temporarily override console methods to suppress 404 messages
+    const originalConsoleError = console.error
+    const originalConsoleWarn = console.warn
+    const originalConsoleLog = console.log
+    
+    const suppress404 = (...args) => {
+      // Don't log 404 errors
+      const message = args[0]?.toString() || ''
+      if (message.includes('404') || message.includes('Not Found')) {
+        return
+      }
+    }
+    
+    console.error = (...args) => {
+      suppress404(...args)
+      originalConsoleError.apply(console, args)
+    }
+    
+    console.warn = (...args) => {
+      suppress404(...args)
+      originalConsoleWarn.apply(console, args)
+    }
+    
+    console.log = (...args) => {
+      suppress404(...args)
+      originalConsoleLog.apply(console, args)
+    }
+
     try {
       const url = `${this.baseURL}/events?pagination=${pagination}&page=${page}`
       
@@ -80,12 +130,46 @@ class EventsService {
         headers: this.getHeaders(true)
       })
 
+      // Handle 404 silently - return empty data without logging
+      if (response.status === 404) {
+        return {
+          http_status: 404,
+          message: 'No events found',
+          data: {
+            data: [],
+            current_page: 1,
+            last_page: 1,
+            per_page: pagination,
+            total: 0
+          }
+        }
+      }
+
       return await this.handleResponse(response)
     } catch (error) {
-      if (!error.message.includes('No data found')) {
-        console.error('Error fetching events:', error)
+      // Suppress 404 errors completely - don't log them
+      if (error.message && (error.message.includes('404') || error.message.includes('Not Found'))) {
+        return {
+          http_status: 404,
+          message: 'No events found',
+          data: {
+            data: [],
+            current_page: 1,
+            last_page: 1,
+            per_page: pagination,
+            total: 0
+          }
+        }
       }
+      
+      // Only log other errors
+      originalConsoleError('Error fetching events:', error)
       throw error
+    } finally {
+      // Restore original console methods
+      console.error = originalConsoleError
+      console.warn = originalConsoleWarn
+      console.log = originalConsoleLog
     }
   }
 
@@ -118,32 +202,14 @@ class EventsService {
         }
       })
 
-      console.log('FormData contents:')
-      for (let [key, value] of formData.entries()) {
-        if (value instanceof File) {
-          console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`)
-        } else {
-          console.log(`${key}:`, value)
-        }
-      }
-
-      console.log('Headers being sent:', this.getHeaders(false))
-      console.log('Token being used:', this.getToken() ? 'Present' : 'Missing')
-      console.log('Base URL:', this.baseURL)
-
       const response = await fetch(`${this.baseURL}/events`, {
         method: 'POST',
         headers: this.getHeaders(false), // false = no incluir Content-Type para FormData
         body: formData
       })
-
-      console.log('Response status:', response.status)
-      console.log('Response ok:', response.ok)
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
       
-      // Log response body for debugging
+      // Get response body for handleResponse
       const responseText = await response.text()
-      console.log('Response body:', responseText)
       
       // Create a new response object for handleResponse
       const responseClone = new Response(responseText, {
