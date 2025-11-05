@@ -143,6 +143,10 @@ export const Register = () => {
 
   return (
     <div className="auth-page">
+      <div className="auth-bg-triangle-left"> 
+      </div>
+      <div className="auth-bg-triangle-right"> 
+      </div>
       <div className="auth-container register-container">
         <div className="auth-left" aria-hidden>
           <img
@@ -151,6 +155,9 @@ export const Register = () => {
           />
         </div>
         <div className="auth-right">
+          <div className="auth-logo">
+            <img src="/BVI-logo.png" alt="BVI Finance Logo" />
+          </div>
           <h1 className="auth-title">Registration Form</h1>
           <p className="auth-subtitle">
             Fill out this quick form and get started with your complete experience
@@ -198,6 +205,7 @@ export const Register = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="auth-input"
+                  autoComplete="email"
                 />
                 {formErrors.email && <div className="register-error"><span className="error">{formErrors.email}</span></div>}
               </div>
@@ -211,6 +219,7 @@ export const Register = () => {
                   value={formValues.phoneNumber}
                   onChange={handleChange}
                   className="auth-input"
+                  autoComplete="tel"
                 />
                 {formErrors.phoneNumber && <div className="register-error"><span className="error">{formErrors.phoneNumber}</span></div>}
               </div>
@@ -230,6 +239,7 @@ export const Register = () => {
                     aria-invalid={Boolean(formErrors.password)}
                     aria-describedby={formErrors.password ? 'password-errors' : undefined}
                     className="auth-input"
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
@@ -260,6 +270,7 @@ export const Register = () => {
                     value={formValues.confirmPassword}
                     onChange={handleChange}
                     className="auth-input"
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"

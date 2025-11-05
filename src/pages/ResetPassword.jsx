@@ -101,10 +101,12 @@ const ResetPassword = () => {
 
   return (
     <div className="reset-password-page">
+      <div className="auth-bg-triangle-left"></div>
+      <div className="auth-bg-triangle-right"></div>
       <div className="reset-password-container">
-        <h1 className="reset-password-title">
-          Reset Password
-        </h1>
+        <div className="auth-logo">
+          <img src="/BVI-logo.png" alt="BVI Finance Logo" />
+        </div>
 
         <form onSubmit={handleSubmit} className="reset-password-form">
 

@@ -1,0 +1,208 @@
+@use '../vars' as *;
+
+// Estilos compartidos entre Login y Register
+
+.auth-page {
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  .auth-bg-triangle-left {
+    position: absolute;
+    bottom: -200px;
+    left: -200px;
+    width: 0;
+    height: 0;
+    border-left: 400px solid transparent;
+    border-right: 600px solid transparent;
+    border-bottom: 800px solid $vivid_blue;
+    z-index: 1;
+    rotate: 40deg;
+    opacity: 0.2;
+  }
+  .auth-bg-triangle-right {
+    position: absolute;
+    top: 0;
+    right: -400px;
+    width: 0;
+    height: 0;
+    border-left: 400px solid transparent;
+    border-right: 570px solid transparent;
+    border-bottom: 800px solid $vivid_red;
+    z-index: 1;
+    opacity: 0.1;
+    rotate: 180deg;
+  }
+}
+
+.auth-container {
+  height: calc(100dvh - 160px);
+  width: calc(100dvw - 160px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 80px;
+}
+
+.auth-left img {
+  width: 100%;
+  object-fit: cover;
+  height: 100%;
+  border-radius: 5px;
+}
+
+.auth-left {
+  object-fit: cover;
+  height: 100%;
+  width: 45%;
+  z-index: 2;
+}
+
+.auth-right {
+  display: flex;
+  flex-direction: column;
+  z-index: 2;
+  width: 40%;
+}
+
+.auth-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24px;
+  
+  img {
+    max-width: 200px;
+    height: auto;
+    object-fit: contain;
+  }
+}
+
+.auth-title {
+  margin: 0 0 8px;
+  font-size: 24px;
+  text-align: center;
+  font-weight: normal;
+  color: #0f172a;
+}
+
+.auth-subtitle {
+  margin: 0 0 28px;
+  color: #475569;
+  text-align: center;
+  
+  span {
+    width: 100%;
+    display: block;
+  }
+}
+
+.auth-footer {
+  width: 100%;
+  
+  &-cta {
+    height: 55px;
+    width: 100%;
+    font-size: 14px;
+    border-radius: 10px;
+    background: #262626;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    
+    &:hover {
+      filter: brightness(1.05);
+    }
+  }
+  
+  &-google {
+    margin-top: 20px;
+    width: 100%;
+    border: 1px solid #25252520;
+    height: 40px;
+    border-radius: 5px;
+    background-color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #334155;
+
+    &:hover {
+      background-color: $light_grey;
+    }
+  }
+
+  .google-login-container {
+    margin-top: 20px;
+    width: 100%;
+    
+    div[role="button"] {
+      width: 100% !important;
+      height: 45px !important;
+      border-radius: 5px !important;
+      border: 1px solid #25252520 !important;
+      background-color: #fff !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      max-width: none !important;
+      
+      > div {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        width: auto !important;
+        margin: 0 auto !important;
+      }
+      
+      svg {
+        margin: 0 !important;
+      }
+      
+      span {
+        margin: 0 !important;
+        text-align: center !important;
+      }
+      
+      &:hover {
+        background-color: $light_grey !important;
+        box-shadow: none !important;
+      }
+      
+      &:focus {
+        box-shadow: none !important;
+      }
+    }
+  }
+
+  &-already {
+    text-align: center;
+    color: #64748b;
+    margin-top: 10px;
+
+    a {
+      text-decoration: none;
+      color: rgb(52, 52, 200);
+    }
+  }
+}
+
+.auth-error {
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  right: 0;
+  
+  .error {
+    color: $vivid_red;
+    font-size: 12px;
+  }
+}
+

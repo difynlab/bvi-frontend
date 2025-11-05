@@ -145,6 +145,10 @@ export const Login = () => {
 
   return (
     <div className="auth-page">
+      <div className="auth-bg-triangle-left"> 
+      </div>
+      <div className="auth-bg-triangle-right"> 
+      </div>
       <div className="auth-container login-container">
         <div className="auth-left" aria-hidden>
           <img
@@ -163,6 +167,9 @@ export const Login = () => {
               {authError.message}
             </div>
           )}
+          <div className="auth-logo">
+            <img src="/BVI-logo.png" alt="BVI Finance Logo" />
+          </div>
           <h1 className="auth-title">Login Your Account</h1>
           <p className="auth-subtitle">
             Log in with your data that you entered during your registration
@@ -179,6 +186,7 @@ export const Login = () => {
                 value={email}
                 onChange={handleEmailChange}
                 className="auth-input"
+                autoComplete="username"
               />
               {emailError && <div className="form-error"><span className="error">{emailError}</span></div>}
             </div>
@@ -196,6 +204,7 @@ export const Login = () => {
                   aria-invalid={Boolean(passwordError)}
                   aria-describedby={passwordError ? 'password-errors' : undefined}
                   className="auth-input"
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"

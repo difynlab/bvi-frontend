@@ -66,6 +66,8 @@ export const ForgetPassword = () => {
   if (isEmailSent) {
     return (
       <div className="forget-password-page">
+        <div className="auth-bg-triangle-left"></div>
+        <div className="auth-bg-triangle-right"></div>
         <div className="forget-password-container">
           <div className="success-message">
             <h1 className="success-title">Check Your Email</h1>
@@ -94,8 +96,13 @@ export const ForgetPassword = () => {
 
   return (
     <div className="forget-password-page">
+      <div className="auth-bg-triangle-left"></div>
+      <div className="auth-bg-triangle-right"></div>
       <div className="forget-password-container">
         <div className="forget-password-content">
+          <div className="auth-logo">
+            <img src="/BVI-logo.png" alt="BVI Finance Logo" />
+          </div>
           <h1 className="forget-password-title">Forgot your password?</h1>
           <p className="forget-password-subtitle">
             Don't worry! Resetting your password is easy. Just type in the email<span>you registered to Warehouse Exchange.</span>
