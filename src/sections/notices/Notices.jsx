@@ -28,7 +28,7 @@ export const Notices = () => {
     return String(fileName).replace(/[<>:"/\\|?*]/g, '_').substring(0, 50);
   };
 
-  // Función para descargar PDF desde el servidor usando endpoint de la API
+  // Función para descargar PDF desde la URL del archivo subido por el usuario
   const handleDownloadPDF = async (notice) => {
     const noticeId = notice.id;
     
@@ -38,20 +38,29 @@ export const Notices = () => {
     try {
       const fileName = `${getSafeFileName(notice)}.pdf`;
       
-      // Descargar el PDF desde el endpoint de la API
-      const blob = await noticesService.downloadNoticePDF(noticeId);
-      
-      // Crear enlace de descarga
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      // Si el notice tiene fileUrl, descargar directamente desde esa URL
+      if (notice.fileUrl) {
+        const link = document.createElement('a');
+        link.href = notice.fileUrl;
+        link.download = fileName;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // Si no hay fileUrl, intentar descargar desde el endpoint de la API
+        const blob = await noticesService.downloadNoticePDF(noticeId);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
     } catch (error) {
-      console.error('Error downloading PDF from server:', error);
+      console.error('Error downloading PDF:', error);
       // Mostrar error al usuario
       alert(`Error al descargar el PDF: ${error.message}`);
     } finally {
@@ -265,12 +274,9 @@ export const Notices = () => {
 
   // Validation function
   function validateRequired() {
-    console.log('🔍 validateRequired called')
     const missing = REQUIRED.filter(r => !r.test()).map(r => r.label);
-    console.log('🔍 Missing required fields:', missing)
     setMissingRequired(missing);
     const isValid = missing.length === 0;
-    console.log('🔍 Validation result:', isValid ? 'PASS' : 'FAIL')
     return isValid;
   }
 
@@ -934,7 +940,7 @@ export const Notices = () => {
 
                 <div className="form-group">
                   <label htmlFor="file">Upload PDF File<span className="req-star" aria-hidden="true">*</span></label>
-                  <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>Maximum size 15MB</p>
+                  <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>Only PDF files are supported. Maximum file size: 15 MB.</p>
                   <div
                     className="file-upload-area dropzone-surface"
                     data-has-file={Boolean(noticeForm.form.file || noticeForm.form.imageFileName)}
@@ -955,11 +961,37 @@ export const Notices = () => {
                     </label>
                     <p className="file-status">
                       {noticeForm.form.imageFileName || 'No file chosen'}
+                      {editingNotice && noticeForm.form.imageFileName && (
+                        <span className="existing-file-indicator"> (Existing file)</span>
+                      )}
                     </p>
-                    {noticeForm.form.imageFileName && noticeForm.form.imageFileName.toLowerCase().endsWith('.pdf') && (
+                    {noticeForm.form.imagePreviewUrl && (
+                      <div className="image-preview">
+                        <img 
+                          src={noticeForm.form.imagePreviewUrl} 
+                          alt="Preview" 
+                          onLoad={() => {}}
+                          onError={(e) => {
+                            e.target.classList.add('image-preview-hidden');
+                          }}
+                        />
+                      </div>
+                    )}
+                    {noticeForm.form.imageFileName && noticeForm.form.imageFileName.toLowerCase().endsWith('.pdf') && !noticeForm.form.imagePreviewUrl && (
                       <div className="file-preview">
                         <i className="bi bi-file-pdf" style={{ fontSize: '3rem', color: '#dc3545' }}></i>
                         <p>{noticeForm.form.imageFileName}</p>
+                      </div>
+                    )}
+                    {editingNotice && noticeForm.form.imageFileName && (
+                      <div className="existing-file-info">
+                        <p className="file-info-text">
+                          <i className="bi bi-file-earmark-pdf" style={{marginRight: '8px', color: '#dc2626'}}></i>
+                          Current file: <strong>{noticeForm.form.imageFileName}</strong>
+                        </p>
+                        <p className="file-info-note">
+                          Select a new file to replace the existing one, or leave empty to keep the current file.
+                        </p>
                       </div>
                     )}
                   </div>
@@ -995,7 +1027,6 @@ export const Notices = () => {
                     type="submit" 
                     className="upload-now-btn"
                     disabled={isSubmitting}
-                    onClick={() => console.log('🔘 Submit button clicked')}
                   >
                     {isSubmitting ? 'Loading...' : (editingNotice ? 'Update' : 'Submit')}
                   </button>

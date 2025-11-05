@@ -226,6 +226,24 @@ export const transformFromBackend = (backendNewsletter) => {
     frontendNewsletter.description = backendNewsletter.description || ''
   }
 
+  // Handle file URL from backend - the PDF file URL
+  if (backendNewsletter.file) {
+    // If it's already a full URL, use it directly
+    if (typeof backendNewsletter.file === 'string' && (backendNewsletter.file.startsWith('http://') || backendNewsletter.file.startsWith('https://'))) {
+      frontendNewsletter.fileUrl = backendNewsletter.file
+    } else {
+      // Build the file URL from the base path
+      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+      const apiBaseURL = baseURL.replace('/api', '')
+      frontendNewsletter.fileUrl = `${apiBaseURL}/storage/newsletters/${backendNewsletter.file}`
+    }
+  } else if (backendNewsletter.file_name) {
+    // Alternative field name for file
+    const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+    const apiBaseURL = baseURL.replace('/api', '')
+    frontendNewsletter.fileUrl = `${apiBaseURL}/storage/newsletters/${backendNewsletter.file_name}`
+  }
+
   return frontendNewsletter
 }
 

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { PDFDownloadLink, pdf } from '@react-pdf/renderer'
 import { useAuth } from '../../context/useAuth'
 import { can } from '../../auth/acl'
 import { useNewslettersState } from '../../hooks/useNewslettersState'
@@ -11,8 +10,6 @@ import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal'
 import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal'
 import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock'
 import EmptyPage from '../../components/EmptyPage'
-import NewsletterPDFDocument from '../../components/pdf/NewsletterPDFDocument'
-import { getNewsletterImageFromLocalStorage } from '../../utils/newsletterTransformers'
 import NewsletterListShimmer from '../../components/newsletters/NewsletterListShimmer'
 import '../../styles/sections/Newsletters.scss'
 
@@ -31,7 +28,7 @@ const Newsletters = () => {
     return String(fileName).replace(/[<>:"/\\|?*]/g, '_').substring(0, 50);
   };
 
-  // Función para generar y descargar PDF dinámicamente
+  // Función para descargar PDF desde la URL del archivo subido por el usuario
   const handleDownloadPDF = async (newsletter) => {
     const newsletterId = newsletter.id;
     
@@ -39,33 +36,24 @@ const Newsletters = () => {
     setPdfLoadingStates(prev => ({ ...prev, [newsletterId]: true }));
     
     try {
-      // Parse description JSON to extract HTML for PDF
-      let newsletterForPDF = { ...newsletter };
-      if (newsletter.description && typeof newsletter.description === 'string') {
-        try {
-          const parsed = JSON.parse(newsletter.description);
-          if (parsed.descriptionHtml) {
-            newsletterForPDF.descriptionHtml = parsed.descriptionHtml;
-          }
-        } catch (error) {
-          console.warn('Could not parse description JSON:', error);
-        }
-      }
-      
       const fileName = `${getSafeFileName(newsletter)}.pdf`;
-      const blob = await pdf(<NewsletterPDFDocument newsletter={newsletterForPDF} />).toBlob();
       
-      // Crear enlace de descarga
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      // Si el newsletter tiene fileUrl, descargar directamente desde esa URL
+      if (newsletter.fileUrl) {
+        const link = document.createElement('a');
+        link.href = newsletter.fileUrl;
+        link.download = fileName;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // Si no hay fileUrl, mostrar error
+        alert('No PDF file available for download');
+      }
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('Error downloading PDF:', error);
+      alert(`Error al descargar el PDF: ${error.message}`);
     } finally {
       // Desactivar loading para este newsletter específico
       setPdfLoadingStates(prev => ({ ...prev, [newsletterId]: false }));
@@ -437,7 +425,7 @@ const Newsletters = () => {
                         disabled={pdfLoadingStates[newsletter.id]}
                         onClick={() => handleDownloadPDF(newsletter)}
                       >
-                        {pdfLoadingStates[newsletter.id] ? 'Generating...' : 'Download PDF'}
+                        {pdfLoadingStates[newsletter.id] ? 'Downloading...' : 'Download PDF'}
                       </button>
                     )}
                   </div>
@@ -519,6 +507,7 @@ const Newsletters = () => {
 
                 <div className="form-group">
                   <label htmlFor="file">Upload File<span className="req-star" aria-hidden="true">*</span></label>
+                  <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>Only PDF files are supported. Maximum file size: 15 MB.</p>
                   <div
                     className="file-upload-area dropzone-surface"
                     data-has-file={Boolean(form.imagePreviewUrl)}
@@ -531,7 +520,7 @@ const Newsletters = () => {
                       type="file"
                       id="file"
                       name="file"
-                      accept="image/*"
+                      accept="application/pdf"
                       onChange={setFileFromInput}
                       className="hidden-file-input"
                     />
@@ -540,10 +529,31 @@ const Newsletters = () => {
                     </label>
                     <p className="file-status">
                       {form.imageFileName || 'No file chosen'}
+                      {editingNewsletter && form.imageFileName && (
+                        <span className="existing-file-indicator"> (Existing file)</span>
+                      )}
                     </p>
                     {form.imagePreviewUrl && (
                       <div className="image-preview">
-                        <img src={form.imagePreviewUrl} alt="Preview" />
+                        <img 
+                          src={form.imagePreviewUrl} 
+                          alt="Preview" 
+                          onLoad={() => {}}
+                          onError={(e) => {
+                            e.target.classList.add('image-preview-hidden');
+                          }}
+                        />
+                      </div>
+                    )}
+                    {editingNewsletter && form.imageFileName && (
+                      <div className="existing-file-info">
+                        <p className="file-info-text">
+                          <i className="bi bi-file-earmark-pdf" style={{marginRight: '8px', color: '#dc2626'}}></i>
+                          Current file: <strong>{form.imageFileName}</strong>
+                        </p>
+                        <p className="file-info-note">
+                          Select a new file to replace the existing one, or leave empty to keep the current file.
+                        </p>
                       </div>
                     )}
                   </div>

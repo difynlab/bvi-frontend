@@ -109,6 +109,40 @@
   object-fit: cover;
 }
 
+.image-preview-hidden {
+  display: none;
+}
+
+.file-status {
+  .existing-file-indicator {
+    color: #059669;
+    font-weight: 500;
+    font-style: italic;
+  }
+}
+
+.existing-file-info {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 6px;
+  
+  .file-info-text {
+    margin: 0 0 8px 0;
+    font-size: 0.9rem;
+    color: #0c4a6e;
+    display: flex;
+    align-items: center;
+  }
+  
+  .file-info-note {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #075985;
+  }
+}
+
 .error-message {
   background: rgba(233, 49, 37, 0.1);
   color: $vivid_red;

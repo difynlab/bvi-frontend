@@ -772,6 +772,7 @@ export default function Reports() {
 
               <div className="form-group">
                 <label htmlFor="file">File Upload</label>
+                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>Only PDF files are supported. Maximum file size: 15 MB.</p>
                 <div className="file-upload-area">
                   <input
                     type="file"

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { readNewsletters, setNewsletters as persistNewsletters, getMockNewsletters, upsertNewsletter, deleteNewsletter } from '../helpers/newslettersStorage'
 import newslettersApi from '../api/newslettersApi'
-import { saveNewsletterImageToLocalStorage } from '../utils/newsletterTransformers'
+import { saveNewsletterImageToLocalStorage, transformFromBackend } from '../utils/newsletterTransformers'
 
 // Generate Newsletter seeds with recent dates (≤7 days old)
 const generateNewsletterSeeds = () => {
@@ -97,8 +97,10 @@ export const useNewslettersState = () => {
         newslettersData = response.newsletters
       }
       
+      // Transform newsletters from backend format to frontend format
+      const transformedNewsletters = newslettersData.map(newsletter => transformFromBackend(newsletter))
       
-        setNewsletters(newslettersData)
+        setNewsletters(transformedNewsletters)
       } catch (error) {
         // Only log non-404 errors
         if (!error.message.includes('No newsletters found') && !error.message.includes('No data found')) {
@@ -122,14 +124,15 @@ export const useNewslettersState = () => {
       // Enviar al backend
       const response = await newslettersApi.create(newsletterObj)
       
-      // Actualizar lista local - extraer solo los datos del newsletter
-      const newsletterData = response.data || response
-      setNewsletters(prev => [...prev, newsletterData])
+      // Actualizar lista local - extraer solo los datos del newsletter y transformar
+      const backendNewsletter = response.data || response
+      const transformedNewsletter = transformFromBackend(backendNewsletter)
+      setNewsletters(prev => [...prev, transformedNewsletter])
       
       // Guardar imagen en localStorage con el ID del backend para PDF
-      if (newsletterObj.thumbnail && newsletterData.id) {
+      if (newsletterObj.thumbnail && transformedNewsletter.id) {
         try {
-          await saveNewsletterImageToLocalStorage(newsletterData.id, newsletterObj.thumbnail)
+          await saveNewsletterImageToLocalStorage(transformedNewsletter.id, newsletterObj.thumbnail)
         } catch (error) {
           console.warn('⚠️ Could not save image to localStorage (quota exceeded), PDF will work without image:', error)
         }
@@ -156,11 +159,12 @@ export const useNewslettersState = () => {
       // Enviar al backend
       const response = await newslettersApi.update(id, newsletterObj)
       
-      // Extraer los datos del newsletter de la respuesta
-      const updatedNewsletter = response.data || response
+      // Extraer los datos del newsletter de la respuesta y transformar
+      const backendNewsletter = response.data || response
+      const transformedNewsletter = transformFromBackend(backendNewsletter)
       
       // Actualizar lista local
-      setNewsletters(prev => prev.map(nl => nl.id === id ? updatedNewsletter : nl))
+      setNewsletters(prev => prev.map(nl => nl.id === id ? transformedNewsletter : nl))
       
       // Guardar nueva imagen en localStorage con el ID del backend para PDF
       if (newsletterObj.thumbnail && id) {

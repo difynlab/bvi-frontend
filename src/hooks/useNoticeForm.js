@@ -38,15 +38,32 @@ const deepClone = (obj) => {
 }
 
 // Utility to build form state from item
-const fromItem = (item) => ({
-  fileName: item.fileName || '',
-  noticeType: item.noticeType || '',
-  description: item.description || '',
-  imageFileName: item.imageFileName || '',
-  imagePreviewUrl: item.imagePreviewUrl || '',
-  file: null,
-  linkUrl: item.linkUrl || ''
-})
+const fromItem = (item) => {
+  // Extract filename from fileUrl if imageFileName is not available
+  let imageFileName = item.imageFileName || '';
+  let imagePreviewUrl = item.imagePreviewUrl || '';
+  
+  // If there's a fileUrl from backend, use it as preview URL
+  if (item.fileUrl && !imagePreviewUrl) {
+    imagePreviewUrl = item.fileUrl;
+    
+    // Extract filename from URL if imageFileName is not available
+    if (!imageFileName) {
+      const urlParts = item.fileUrl.split('/');
+      imageFileName = urlParts[urlParts.length - 1] || '';
+    }
+  }
+  
+  return {
+    fileName: item.fileName || '',
+    noticeType: item.noticeType || '',
+    description: item.description || '',
+    imageFileName: imageFileName,
+    imagePreviewUrl: imagePreviewUrl,
+    file: null,
+    linkUrl: item.linkUrl || ''
+  };
+}
 
 export const useNoticeForm = () => {
   // Reference to store original item data for rollback

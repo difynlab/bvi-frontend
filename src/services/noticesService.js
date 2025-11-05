@@ -178,31 +178,13 @@ class NoticesService {
         }
       })
 
-      console.log('FormData contents:')
-      for (let [key, value] of formData.entries()) {
-        if (value instanceof File) {
-          console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`)
-        } else {
-          console.log(`${key}:`, value)
-        }
-      }
-
-      console.log('Headers being sent:', this.getHeaders(false))
-      console.log('Token being used:', this.getToken() ? 'Present' : 'Missing')
-      console.log('Base URL:', this.baseURL)
-
       const response = await fetch(`${this.baseURL}/notices`, {
         method: 'POST',
         headers: this.getHeaders(false), 
         body: formData
       })
-
-      console.log('Response status:', response.status)
-      console.log('Response ok:', response.ok)
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
       
       const responseText = await response.text()
-      console.log('Response body:', responseText)
       
       const responseClone = new Response(responseText, {
         status: response.status,
