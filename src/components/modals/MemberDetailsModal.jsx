@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import ModalLifecycleLock from './ModalLifecycleLock';
 import membersService from '../../services/membersService';
+import CustomDropdown from '../CustomDropdown';
+import { RenewMembershipModal } from './RenewMembershipModal';
 import '../../styles/components/MemberDetailsModal.scss';
 
 export const MemberDetailsModal = ({
@@ -20,6 +22,7 @@ export const MemberDetailsModal = ({
   const [errorMessage, setErrorMessage] = useState('');
   const [fetchError, setFetchError] = useState('');
   const [currentMember, setCurrentMember] = useState(member);
+  const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
 
   const modalBackdropClose = useModalBackdropClose(onClose);
 
@@ -114,6 +117,37 @@ export const MemberDetailsModal = ({
     );
   }, [currentMember, editData]);
 
+  // Build full image URL from server
+  const buildProfileImageUrl = useCallback((imagePath) => {
+    if (!imagePath) return null;
+    
+    // Si ya es una URL completa, devolverla tal como está
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    
+    // Construir URL completa desde el servidor
+    const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+    const apiBaseURL = baseURL.replace('/api', '');
+    return `${apiBaseURL}/storage/profiles/${imagePath}`;
+  }, []);
+
+  // Get profile image URL from member data (consumed from server)
+  const profileImageUrl = useMemo(() => {
+    if (!currentMember) return null;
+    
+    // Try different possible field names from backend
+    const imagePath = currentMember.profile_picture_url || 
+                     currentMember.image_url || 
+                     currentMember.profile_picture ||
+                     currentMember.image ||
+                     null;
+    
+    if (!imagePath) return null;
+    
+    return buildProfileImageUrl(imagePath);
+  }, [currentMember, buildProfileImageUrl]);
+
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -167,56 +201,60 @@ export const MemberDetailsModal = ({
     }
   };
 
-  // Prepare payment data: use currentMember.payments if available, otherwise use mock data
-  const getPaymentHistory = () => {
-    // Check if currentMember.payments exists and has data
-    if (currentMember && currentMember.payments && Array.isArray(currentMember.payments) && currentMember.payments.length > 0) {
-      // Map API payment data to table format
-      return currentMember.payments.map((payment) => ({
-        id: payment.id || null,
-        date: formatPaymentDate(payment.date || payment.created_at || payment.payment_date),
-        status: payment.status || '—',
-        amount: formatPaymentAmount(payment.amount || payment.total),
-        receipt: payment.receipt || payment.receipt_url || null,
-        isPending: payment.status?.toLowerCase() === 'pending' || payment.status === 'Pending'
-      }));
+  // Helper to format payment status from backend (0, 1, 2) to display text
+  const formatPaymentStatus = (status) => {
+    if (status === undefined || status === null) return '—';
+    
+    // Handle numeric status (0, 1, 2)
+    if (typeof status === 'number') {
+      if (status === 0) return 'Pending';
+      if (status === 1) return 'Paid';
+      if (status === 2) return 'Cancelled';
+      return '—';
     }
+    
+    // Handle string status (fallback)
+    if (typeof status === 'string') {
+      const lowerStatus = status.toLowerCase();
+      if (lowerStatus === 'pending' || lowerStatus === '0') return 'Pending';
+      if (lowerStatus === 'paid' || lowerStatus === '1') return 'Paid';
+      if (lowerStatus === 'cancelled' || lowerStatus === '2') return 'Cancelled';
+      return status; // Return as-is if not recognized
+    }
+    
+    return '—';
+  };
 
-    // Mock data (to be replaced when API provides payments)
-    return [
-      {
-        id: null,
-        date: '01/15/2024',
-        status: 'Paid',
-        amount: '$299.00',
-        receipt: 'download',
-        isPending: false
-      },
-      {
-        id: null,
-        date: '12/15/2023',
-        status: 'Paid',
-        amount: '$299.00',
-        receipt: 'download',
-        isPending: false
-      },
-      {
-        id: null,
-        date: '11/15/2023',
-        status: 'Pending',
-        amount: '$299.00',
-        receipt: null,
-        isPending: true
-      },
-      {
-        id: null,
-        date: '10/15/2023',
-        status: 'Paid',
-        amount: '$299.00',
-        receipt: 'download',
-        isPending: false
+  // Prepare payment data from API response
+  const getPaymentHistory = () => {
+    if (!currentMember) return [];
+
+    const paymentsSource = (() => {
+      if (Array.isArray(currentMember.payments)) return currentMember.payments;
+      if (Array.isArray(currentMember.payment_history)) return currentMember.payment_history;
+      if (currentMember.payments && Array.isArray(currentMember.payments.data)) {
+        return currentMember.payments.data;
       }
-    ];
+      return [];
+    })();
+
+    if (paymentsSource.length === 0) return [];
+
+    return paymentsSource.map((payment) => {
+      const statusValue = payment?.status !== undefined && payment?.status !== null
+        ? Number(payment.status)
+        : null;
+      const formattedStatus = formatPaymentStatus(payment?.status);
+
+      return {
+        id: payment?.id || null,
+        date: formatPaymentDate(payment?.date || payment?.created_at || payment?.payment_date),
+        status: formattedStatus,
+        amount: formatPaymentAmount(payment?.amount || payment?.total),
+        receipt: payment?.receipt || payment?.receipt_url || null,
+        isPending: statusValue === 0 || formattedStatus === 'Pending'
+      };
+    });
   };
 
   const paymentHistory = getPaymentHistory();
@@ -345,13 +383,19 @@ export const MemberDetailsModal = ({
           )}
           <div className="member-details-columns">
             <div className="member-details-image-column">
-              {currentMember.image ? (
+              {profileImageUrl ? (
                 <img 
-                  src={currentMember.image} 
+                  src={profileImageUrl} 
                   alt={fullName}
                   className="member-details-image"
+                  onError={(e) => {
+                    // Fallback to placeholder if image fails to load
+                    e.target.style.display = 'none';
+                    e.target.nextElementSibling?.classList.remove('hidden');
+                  }}
                 />
-              ) : (
+              ) : null}
+              {!profileImageUrl && (
                 <div className="member-details-image-placeholder">
                   <i className="bi bi-person-fill"></i>
                 </div>
@@ -429,13 +473,19 @@ export const MemberDetailsModal = ({
                 <div className="member-detail-info">
                   <span className="member-detail-label">Status:</span>
                   {isEditing ? (
-                    <input
-                      type="text"
-                      className="member-detail-value"
-                      value={editData.status}
-                      readOnly={false}
-                      onChange={(e) => handleInputChange('status', e.target.value)}
-                    />
+                    <div style={{ width: '100%', maxWidth: '200px' }}>
+                      <CustomDropdown
+                        name="status"
+                        value={editData.status}
+                        onChange={(e) => handleInputChange('status', e.target.value)}
+                        options={[
+                          { value: 'Active', label: 'Active' },
+                          { value: 'Inactive', label: 'Inactive' }
+                        ]}
+                        placeholder="Select Status"
+                        className="member-detail-status-dropdown"
+                      />
+                    </div>
                   ) : (
                     <span className={`member-detail-status-badge ${isActive ? 'active' : 'inactive'}`}>
                       {currentMember.status !== undefined && currentMember.status !== null
@@ -494,7 +544,7 @@ export const MemberDetailsModal = ({
                   {paymentHistory.length === 0 ? (
                     <tr>
                       <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>
-                        No payment history available
+                        No payments yet
                       </td>
                     </tr>
                   ) : (
@@ -560,6 +610,7 @@ export const MemberDetailsModal = ({
               <strong>Success:</strong> {successMessage}
             </div>
           )}
+          
           <button
             className="member-details-btn member-details-btn--delete"
             onClick={() => {
@@ -572,6 +623,15 @@ export const MemberDetailsModal = ({
             Delete Member
           </button>
           <button
+            className="member-details-btn member-details-btn--renew"
+            onClick={() => {
+              setIsRenewModalOpen(true);
+            }}
+          >
+            <i className="bi bi-arrow-repeat"></i>
+            Renew
+          </button>
+          <button
             className="member-details-btn member-details-btn--edit"
             onClick={isEditing ? handleSaveChanges : handleEditClick}
             disabled={isEditing && (!hasChanges || isLoading)}
@@ -581,6 +641,32 @@ export const MemberDetailsModal = ({
           </button>
         </div>
       </div>
+
+      <RenewMembershipModal
+        isOpen={isRenewModalOpen}
+        onClose={() => setIsRenewModalOpen(false)}
+        member={currentMember}
+        onRenewed={async () => {
+          // Refresh member data after renewal
+          if (currentMember && currentMember.id) {
+            try {
+              const updatedMemberResponse = await membersService.getMember(currentMember.id);
+              if (updatedMemberResponse && updatedMemberResponse.data) {
+                setCurrentMember(updatedMemberResponse.data);
+              } else if (updatedMemberResponse && !updatedMemberResponse.data && updatedMemberResponse.id) {
+                setCurrentMember(updatedMemberResponse);
+              }
+            } catch (fetchError) {
+              console.error('Error fetching updated member:', fetchError);
+            }
+          }
+          
+          // Refresh members list in parent component if callback provided
+          if (onMemberUpdated && typeof onMemberUpdated === 'function') {
+            onMemberUpdated();
+          }
+        }}
+      />
     </div>
   );
 };

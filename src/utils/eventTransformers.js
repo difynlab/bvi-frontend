@@ -385,31 +385,15 @@ export const transformFromBackend = (backendEvent) => {
     VALUE_MAPPINGS
   )
 
-  // TODO PRODUCTION: CHANGE IMAGES - Use server URLs instead of localStorage
+  // Use server URLs for images (no localStorage)
   // Handle new image structure with blurred and original thumbnails
-  // PRIORITY: localStorage first, then server URLs
-  const eventId = backendEvent.id
+  const originalThumbnail = cleanImageUrl(buildImageUrl(backendEvent.original_thumbnail || backendEvent.thumbnail))
+  frontendEvent.original_thumbnail = originalThumbnail
+  frontendEvent.imagePreviewUrl = cleanImageUrl(buildImageUrl(backendEvent.thumbnail))
   
-  // Try to get images from localStorage first (PRIORITY)
-  const localStorageOriginal = getImageFromLocalStorage(eventId, 'original')
-  const localStorageBlurred = getImageFromLocalStorage(eventId, 'blurred')
-  
-  // Always prioritize localStorage over server URLs
-  if (localStorageOriginal) {
-    frontendEvent.original_thumbnail = localStorageOriginal
-    frontendEvent.imagePreviewUrl = localStorageOriginal
-  } else {
-    // Fallback to server URLs only if localStorage doesn't have the image
-    frontendEvent.original_thumbnail = cleanImageUrl(buildImageUrl(backendEvent.original_thumbnail || backendEvent.thumbnail))
-    frontendEvent.imagePreviewUrl = cleanImageUrl(buildImageUrl(backendEvent.thumbnail))
-  }
-  
-  if (localStorageBlurred) {
-    frontendEvent.blurred_thumbnail = localStorageBlurred
-  } else {
-    // Fallback to server URLs
-    frontendEvent.blurred_thumbnail = cleanImageUrl(buildBlurredImageUrl(backendEvent.blurred_thumbnail))
-  }
+  // Use blurred thumbnail if available, otherwise fallback to original (CSS will apply blur effect)
+  const blurredThumbnail = cleanImageUrl(buildBlurredImageUrl(backendEvent.blurred_thumbnail))
+  frontendEvent.blurred_thumbnail = blurredThumbnail || originalThumbnail
   
   // Parse JSON content if it exists, otherwise use legacy fields
   if (backendEvent.content) {

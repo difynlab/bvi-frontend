@@ -21,6 +21,8 @@ const Legislation = () => {
   // Estado local para attachments que vienen del backend (NO localStorage)
   const [attachments, setAttachments] = useState([]);
   const [isLoadingAttachments, setIsLoadingAttachments] = useState(true);
+  // Estado para datos completos de la legislación (para el modal)
+  const [legislationData, setLegislationData] = useState(null);
 
   // Cargar attachments desde el index del backend
   useEffect(() => {
@@ -35,14 +37,29 @@ const Legislation = () => {
 
         // Si el backend trae archivos, mapear a attachments con títulos generados
         const files = Array.isArray(apiData?.files) ? apiData.files : [];
-        files.forEach((fileUrl, idx) => {
+        files.forEach((fileItem, idx) => {
+          // El backend puede retornar fileItem como objeto { title, file } o como string (URL)
+          let fileUrl, fileName, title;
+          
+          if (typeof fileItem === 'object' && fileItem !== null) {
+            fileUrl = fileItem.file || fileItem.fileUrl || '';
+            fileName = fileUrl.split('/').pop() || `document-${idx + 1}.pdf`;
+            title = fileItem.title || `Support Document ${idx + 1}`;
+          } else if (typeof fileItem === 'string') {
+            fileUrl = fileItem;
+            fileName = fileUrl.split('/').pop() || `document-${idx + 1}.pdf`;
+            title = `Support Document ${idx + 1}`;
+          } else {
+            return; // Skip invalid items
+          }
+          
           built.push({
             id: `api-attachment-${idx + 1}`,
-            title: `Support Document ${idx + 1}`,
+            title: title,
             descriptionHTML: apiData?.description || '',
             fileUrl: fileUrl,
-            fileName: fileUrl.split('/').pop() || undefined,
-            linkUrl: apiData?.link || '',
+            fileName: fileName,
+            linkUrl: apiData?.link || (apiData?.links && Array.isArray(apiData.links) && apiData.links.length > 0 ? apiData.links[0] : ''),
             createdAt: apiData?.updated_at || apiData?.created_at || new Date().toISOString()
           });
         });
@@ -61,9 +78,18 @@ const Legislation = () => {
         }
 
         setAttachments(built);
+        
+        // Guardar datos completos para el modal
+        setLegislationData({
+          description: apiData?.description || '',
+          files: files,
+          link: apiData?.link || (apiData?.links && Array.isArray(apiData.links) && apiData.links.length > 0 ? apiData.links[0] : ''),
+          links: apiData?.links || []
+        });
       } catch (error) {
         console.error('Failed to load legislation from API:', error);
         setAttachments([]); // En caso de error, lista vacía
+        setLegislationData(null);
       } finally {
         setIsLoadingAttachments(false);
       }
@@ -82,7 +108,7 @@ const Legislation = () => {
     setIsModalOpen(false);
   };
 
-  const handleSaveAttachment = async (newAttachment) => {
+  const handleSaveAttachment = async () => {
     // Recargar desde el backend después de guardar para tener los datos actualizados
     // El backend ya guardó, así que refrescamos para obtener la respuesta del servidor
     try {
@@ -91,14 +117,29 @@ const Legislation = () => {
 
       const built = [];
       const files = Array.isArray(apiData?.files) ? apiData.files : [];
-      files.forEach((fileUrl, idx) => {
+      files.forEach((fileItem, idx) => {
+        // El backend puede retornar fileItem como objeto { title, file } o como string (URL)
+        let fileUrl, fileName, title;
+        
+        if (typeof fileItem === 'object' && fileItem !== null) {
+          fileUrl = fileItem.file || fileItem.fileUrl || '';
+          fileName = fileUrl.split('/').pop() || `document-${idx + 1}.pdf`;
+          title = fileItem.title || `Support Document ${idx + 1}`;
+        } else if (typeof fileItem === 'string') {
+          fileUrl = fileItem;
+          fileName = fileItem.split('/').pop() || `document-${idx + 1}.pdf`;
+          title = `Support Document ${idx + 1}`;
+        } else {
+          return; // Skip invalid items
+        }
+        
         built.push({
           id: `api-attachment-${idx + 1}`,
-          title: `Support Document ${idx + 1}`,
+          title: title,
           descriptionHTML: apiData?.description || '',
           fileUrl: fileUrl,
-          fileName: fileUrl.split('/').pop() || undefined,
-          linkUrl: apiData?.link || '',
+          fileName: fileName,
+          linkUrl: apiData?.link || (apiData?.links && Array.isArray(apiData.links) && apiData.links.length > 0 ? apiData.links[0] : ''),
           createdAt: apiData?.updated_at || apiData?.created_at || new Date().toISOString()
         });
       });
@@ -116,6 +157,14 @@ const Legislation = () => {
       }
 
       setAttachments(built);
+      
+      // Actualizar datos completos para el modal
+      setLegislationData({
+        description: apiData?.description || '',
+        files: files,
+        link: apiData?.link || (apiData?.links && Array.isArray(apiData.links) && apiData.links.length > 0 ? apiData.links[0] : ''),
+        links: apiData?.links || []
+      });
     } catch (error) {
       console.error('Failed to reload attachments after save:', error);
     }
@@ -346,7 +395,7 @@ const Legislation = () => {
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSave={handleSaveAttachment}
-        existingAttachments={attachments}
+        initialData={legislationData}
       />
 
       {/* Confirm Delete Attachment Modal */}

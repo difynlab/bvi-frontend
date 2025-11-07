@@ -38,6 +38,13 @@ export const AuthProvider = ({ children }) => {
       const data = backend || {}
 
       // Map fields from backend response
+      // Get profile picture URL from server (only server URLs, never base64)
+      const profilePictureUrl = data.profile_picture_url || 
+                               data.image_url || 
+                               data.original_image || 
+                               data.blurred_image || 
+                               '';
+      
       const mapped = {
         ...baseUser,
         id: data.id ?? baseUser.id,
@@ -46,14 +53,15 @@ export const AuthProvider = ({ children }) => {
         email: data.email ?? baseUser.email,
         phone: data.phone ?? baseUser.phone,
         role: data.role ?? baseUser.role,
-        // TO DO CHANGE IMAGES: prefer original_image from backend; fallback to blurred; then local
-        profilePictureUrl: data.original_image || data.blurred_image || baseUser.profilePictureUrl || baseUser.profilePicture || '',
+        profilePictureUrl: profilePictureUrl,
+        profilePicture: profilePictureUrl, // Only server URL, never base64
       }
 
       // Persist mapped pieces needed across reloads
+      // Only save server URLs, never save base64 to localStorage
       setProfile(mapped, {
-        profilePicture: mapped.profilePicture || '',
-        profilePictureUrl: mapped.profilePictureUrl || '',
+        profilePicture: profilePictureUrl, // Only server URL
+        profilePictureUrl: profilePictureUrl,
         first_name: mapped.first_name || '',
         last_name: mapped.last_name || '',
         userName: mapped.userName || `${mapped.first_name || ''} ${mapped.last_name || ''}`.trim(),
@@ -363,8 +371,13 @@ export const AuthProvider = ({ children }) => {
       // Avatar sync disabled: profile image updates are handled only from profile page/backend
 
       // Persist per-user profile and session
+      // Only save server URLs, never save base64 images to localStorage
+      const profilePictureToSave = (next.profilePicture && !next.profilePicture.startsWith('data:')) 
+        ? next.profilePicture 
+        : (next.profilePictureUrl || '');
+      
       setProfile(next, {
-        profilePicture: next.profilePicture || '',
+        profilePicture: profilePictureToSave, // Only server URL, never base64
         profilePictureUrl: next.profilePictureUrl || '',
         profilePictureSync: next.profilePictureSync || '',
         first_name: next.first_name || '',
@@ -378,73 +391,26 @@ export const AuthProvider = ({ children }) => {
         saveSession(next); // existing helper // TODO BACKEND
       } catch (error) {
         if (error.name === 'QuotaExceededError') {
-          
-
-          // Try to compress the image if it exists
-          if (next.profilePicture && next.profilePicture.startsWith('data:image')) {
+          // Don't try to compress base64 images - they should not be saved to localStorage
+          // If quota exceeded, remove image data and only keep URL
+          if (next.profilePicture && next.profilePicture.startsWith('data:')) {
+            // Remove base64 image, only keep URL if available
+            const { profilePicture, ...nextWithoutImage } = next
+            const nextWithUrlOnly = {
+              ...nextWithoutImage,
+              profilePicture: next.profilePictureUrl || '',
+              profilePictureUrl: next.profilePictureUrl || ''
+            }
+            
             try {
-              // Create a compressed version of the image
-              const canvas = document.createElement('canvas')
-              const ctx = canvas.getContext('2d')
-              const img = new Image()
-
-              img.onload = () => {
-                try {
-                  // Set canvas size to a smaller dimension (max 200x200)
-                  const maxSize = 200
-                  let { width, height } = img
-
-                  if (width > height) {
-                    if (width > maxSize) {
-                      height = (height * maxSize) / width
-                      width = maxSize
-                    }
-                  } else {
-                    if (height > maxSize) {
-                      width = (width * maxSize) / height
-                      height = maxSize
-                    }
-                  }
-
-                  canvas.width = width
-                  canvas.height = height
-
-                  // Draw and compress with lower quality
-                  ctx.drawImage(img, 0, 0, width, height)
-                  const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6) // 60% quality
-
-                  // Try to save the compressed version
-                  const compressedNext = { ...next, profilePicture: compressedDataUrl }
-
-                  try {
-                    saveSession(compressedNext)
-                    setUser(compressedNext)
-                    
-                  } catch (compressedError) {
-                    
-                    const { profilePicture, ...nextWithoutImage } = next
-                    saveSession(nextWithoutImage)
-                    setUser(nextWithoutImage)
-                  }
-                } catch (compressionError) {
-                  
-                  const { profilePicture, ...nextWithoutImage } = next
-                  saveSession(nextWithoutImage)
-                  setUser(nextWithoutImage)
-                }
-              }
-
-              img.onerror = () => {
-                
-                const { profilePicture, ...nextWithoutImage } = next
-                saveSession(nextWithoutImage)
-                setUser(nextWithoutImage)
-              }
-
-              img.src = next.profilePicture
-              return
+              saveSession(nextWithUrlOnly)
+              setUser(nextWithUrlOnly)
+              return true
             } catch (compressionError) {
-              
+              // If still fails, remove image completely
+              saveSession(nextWithoutImage)
+              setUser(nextWithoutImage)
+              return true
             }
           }
 

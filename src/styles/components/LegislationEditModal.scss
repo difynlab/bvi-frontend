@@ -122,6 +122,100 @@
   margin: 0;
 }
 
+.file-hint {
+  color: #999;
+  font-size: 0.85rem;
+  margin: 8px 0 0 0;
+}
+
+.files-list {
+  margin-bottom: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.file-item-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 6px;
+  gap: $spacing-md;
+  
+  .file-item-info {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: 8px;
+    
+    i {
+      font-size: 1.2rem;
+      color: #dc2626;
+      flex-shrink: 0;
+    }
+    
+    .file-item-details {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+      
+      .file-title-input {
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        background: white;
+        
+        &:focus {
+          outline: none;
+          border-color: #104394;
+          box-shadow: 0 0 0 2px rgba(16, 67, 148, 0.1);
+        }
+        
+        &::placeholder {
+          color: #999;
+        }
+      }
+      
+      .file-name {
+        font-size: 0.85rem;
+        color: #075985;
+        word-break: break-all;
+      }
+    }
+  }
+  
+  .file-remove-btn {
+    background: none;
+    border: none;
+    color: #dc2626;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: rgba(220, 38, 38, 0.1);
+    }
+    
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+    }
+  }
+}
+
 .form-input {
   width: 100%;
   padding: $spacing-sm $spacing-md;

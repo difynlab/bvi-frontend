@@ -110,6 +110,7 @@ const ResetPassword = () => {
 
         <form onSubmit={handleSubmit} className="reset-password-form">
 
+        <h1 className="reset-password-title">Reset Your Password</h1>
           <div className="form-group">
             <label
               htmlFor="email"
@@ -152,6 +153,7 @@ const ResetPassword = () => {
                 aria-invalid={Boolean(errors.newPassword)}
                 aria-describedby={errors.newPassword ? 'newPassword-errors' : undefined}
                 disabled={isPasswordReset}
+                autoComplete="new-password"
               />
               <button
                 type="button"
@@ -186,6 +188,7 @@ const ResetPassword = () => {
                 onChange={handleChange}
                 className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
                 placeholder="Confirm new password"
+                autoComplete="new-password"
                 aria-invalid={Boolean(errors.confirmPassword)}
                 aria-describedby={errors.confirmPassword ? 'confirmPassword-errors' : undefined}
                 disabled={isPasswordReset}

@@ -167,6 +167,17 @@ class MembersService {
     })
     return await this.handleResponse(response)
   }
+
+  // POST /members/{id}/renew
+  async renewMember(id, data) {
+    const url = `${this.baseURL}/members/${id}/renew`
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: this.getHeaders(true), // Include Content-Type: application/json
+      body: JSON.stringify(data)
+    })
+    return await this.handleResponse(response)
+  }
 }
 
 export default new MembersService()

@@ -29,7 +29,7 @@ const Membership = () => {
   const [pagination, setPagination] = useState({
     current_page: 1,
     last_page: 1,
-    per_page: 20,
+    per_page: 10,
     total: 0
   });
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -61,6 +61,9 @@ const Membership = () => {
   
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
+  
+  // Track if page change was manual (to prevent useEffect from overriding)
+  const manualPageChangeRef = useRef(false);
   
   // Admin tabs state
   const [adminActiveTab, setAdminActiveTab] = useState('Member List');
@@ -167,19 +170,20 @@ const Membership = () => {
     setIsSearchDropdownOpen(false);
   };
 
-  // Admin: fetch members list function
-  const fetchMembers = async (page = 1, forceRefresh = false) => {
+  // Admin: fetch members list function - fetch ALL members at once
+  const fetchMembers = async (forceRefresh = false) => {
     if (!isAdmin(user)) return;
     setAdminLoading(true);
     setAdminError('');
     try {
-      const res = await membersService.getMembers({ pagination: 20, page });
+      // Fetch all members (use a high pagination limit to get all)
+      const res = await membersService.getMembers({ pagination: 1000, page: 1 });
       if (res && res.http_status === 404) {
         setAdminMembers([]);
         setPagination({
           current_page: 1,
           last_page: 1,
-          per_page: 20,
+          per_page: 10,
           total: 0
         });
         return;
@@ -188,22 +192,19 @@ const Membership = () => {
       const list = Array.isArray(payload.data) ? payload.data : [];
       setAdminMembers(list);
       
-      // Update pagination state
-      if (payload.current_page !== undefined) {
-        setPagination({
-          current_page: payload.current_page || 1,
-          last_page: payload.last_page || 1,
-          per_page: payload.per_page || 20,
-          total: payload.total || 0
-        });
-      }
+      // Reset to first page when fetching all members
+      setPagination(prev => ({
+        ...prev,
+        current_page: 1,
+        total: list.length
+      }));
     } catch (e) {
       setAdminError(e.message || 'Failed to load members');
       setAdminMembers([]);
       setPagination({
         current_page: 1,
         last_page: 1,
-        per_page: 20,
+        per_page: 10,
         total: 0
       });
     } finally {
@@ -211,10 +212,20 @@ const Membership = () => {
     }
   };
 
-  // Handle page change
+  // Handle page change (client-side pagination only)
   const changePage = (page) => {
-    if (page >= 1 && page <= pagination.last_page) {
-      fetchMembers(page, true);
+    if (page >= 1) {
+      manualPageChangeRef.current = true;
+      setPagination(prev => ({
+        ...prev,
+        current_page: page
+      }));
+      // Reset flag after state update completes
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          manualPageChangeRef.current = false;
+        }, 0);
+      });
     }
   };
 
@@ -316,7 +327,7 @@ const Membership = () => {
 
   // Admin: load members list on mount
   useEffect(() => {
-    fetchMembers(1);
+    fetchMembers();
   }, [user]);
 
   // Filter and search members
@@ -480,6 +491,44 @@ const Membership = () => {
     return members;
   }, [adminMembers, activeFilters, searchTerm, sortBy, sortOrder]);
   
+  // Client-side pagination: paginate filtered members
+  const paginatedMembers = useMemo(() => {
+    const perPage = 10;
+    const startIndex = (pagination.current_page - 1) * perPage;
+    const endIndex = startIndex + perPage;
+    return filteredMembers.slice(startIndex, endIndex);
+  }, [filteredMembers, pagination.current_page]);
+  
+  // Update pagination state based on filtered members
+  useEffect(() => {
+    // Don't update if user just manually changed the page
+    if (manualPageChangeRef.current) {
+      return;
+    }
+    
+    const perPage = 10;
+    const totalFiltered = filteredMembers.length;
+    const lastPage = Math.max(1, Math.ceil(totalFiltered / perPage));
+    
+    setPagination(prev => {
+      // Only update if last_page or total changed, or if current page is beyond last page
+      if (prev.last_page === lastPage && prev.total === totalFiltered && prev.current_page <= lastPage) {
+        return prev; // No change needed
+      }
+      
+      // Reset to page 1 if current page is beyond last page
+      const currentPage = prev.current_page > lastPage ? 1 : prev.current_page;
+      
+      return {
+        ...prev,
+        current_page: currentPage,
+        last_page: lastPage,
+        per_page: perPage,
+        total: totalFiltered
+      };
+    });
+  }, [filteredMembers.length]);
+  
   // Check if search has no results
   const hasSearchNoResults = searchTerm.trim() && filteredMembers.length === 0;
 
@@ -589,7 +638,7 @@ const Membership = () => {
       setIsSuccessDeleteOpen(true);
       
       // Refresh members list after showing success
-      await fetchMembers(pagination.current_page, true);
+      await fetchMembers(true);
       
       // Clear member to delete after a delay
       setTimeout(() => {
@@ -937,8 +986,8 @@ const Membership = () => {
                         <th scope="col"></th>
                       </tr>
                     </thead>
-                    {adminLoading ? (
-                      <MembersTableSkeleton rows={5} />
+                    {adminLoading && adminMembers.length === 0 ? (
+                      <MembersTableSkeleton rows={10} />
                     ) : filteredMembers.length === 0 ? (
                       <tbody>
                         <tr>
@@ -947,7 +996,7 @@ const Membership = () => {
                       </tbody>
                     ) : (
                       <tbody>
-                        {filteredMembers.map((m) => {
+                        {paginatedMembers.map((m) => {
                           const fullName = `${m.first_name || ''} ${m.last_name || ''}`.trim() || '—';
                           const email = m.email || '—';
                           const phone = m.phone || '—';
@@ -999,14 +1048,13 @@ const Membership = () => {
                   </table>
                 </div>
                 
-                {/* Pagination */}
+                {/* Pagination - identical to Events, positioned bottom right */}
                 {!adminLoading && filteredMembers.length > 0 && pagination.last_page > 1 && (
-                  <div className="members-pagination">
+                  <div className="events-pagination">
                     <button 
                       className="prev-btn"
                       onClick={() => changePage(pagination.current_page - 1)}
                       disabled={pagination.current_page <= 1}
-                      aria-label="Previous page"
                     >
                       <i className="bi bi-chevron-left"></i>
                     </button>
@@ -1017,13 +1065,11 @@ const Membership = () => {
                       className="next-btn"
                       onClick={() => changePage(pagination.current_page + 1)}
                       disabled={pagination.current_page >= pagination.last_page}
-                      aria-label="Next page"
                     >
                       <i className="bi bi-chevron-right"></i>
                     </button>
                   </div>
                 )}
-                
                   </Card>
                 </section>
               )}

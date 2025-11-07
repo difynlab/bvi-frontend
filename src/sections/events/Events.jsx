@@ -797,10 +797,10 @@ export const Events = () => {
                       Short description<span className="req-star" aria-hidden="true">*</span>
                     </label>
                     <span className="character-count">
-                      <span className={eventForm.form.shortDescription && eventForm.form.shortDescription.length > 115 ? 'character-count-exceeded' : ''}>
+                      <span className={eventForm.form.shortDescription && eventForm.form.shortDescription.length > 120 ? 'character-count-exceeded' : ''}>
                         {(eventForm.form.shortDescription || '').length}
                       </span>
-                      /115
+                      /120
                     </span>
                   </div>
                   <textarea

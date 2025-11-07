@@ -362,6 +362,28 @@
   }
 }
 
+.member-detail-status-dropdown {
+  width: 100%;
+  max-width: 200px;
+
+  .custom-dropdown__trigger {
+    min-height: 1.5rem;
+    padding: 2px 8px;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    background-color: white;
+
+    &:focus {
+      outline: none;
+      border-color: $vivid_blue;
+      box-shadow: 0 0 0 3px rgba(16, 67, 148, 0.1);
+    }
+  }
+}
+
 // Responsive adjustments
 @media (max-width: 768px) {
   .member-details-modal {
@@ -434,6 +456,15 @@
 
   i {
     font-size: 16px;
+  }
+
+  &.member-details-btn--renew {
+    background-color: $vivid_blue;
+    color: white;
+
+    &:hover {
+      background-color: color.adjust($vivid_blue, $lightness: -10%);
+    }
   }
 
   &.member-details-btn--edit {

@@ -41,7 +41,7 @@ function App() {
           <SkeletonThemeProvider>
             <BrowserRouter>
             <Routes>
-          <Route path='/' element={<Navigate to="/register" replace />}></Route>
+          <Route path='/' element={<Navigate to="/login" replace />}></Route>
           <Route path='/register' element={<Register />}></Route>
           <Route path='/login' element={<Login />}></Route>
           <Route path='/forgot-password' element={<ForgetPassword />}></Route>

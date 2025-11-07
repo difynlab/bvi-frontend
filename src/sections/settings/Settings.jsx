@@ -88,6 +88,7 @@ export default function Settings() {
                       onChange={(e) => onChange('email', e.target.value)}
                       placeholder="Email"
                       disabled
+                      autoComplete="username"
                     />
                   </div>
                   <div className="settings-contact-field settings-contact-field--phone-group">
@@ -95,7 +96,7 @@ export default function Settings() {
                     <div className="settings-phone-group">
                       <PhoneInput
                         international
-                        defaultCountry="AR"
+                        defaultCountry="VG"
                         value={form.phoneE164}
                         onChange={(val) => onChange('phoneE164', val || '')}
                         className="settings-phone-input"
@@ -168,7 +169,8 @@ export default function Settings() {
                       type="text"
                       value={form.country}
                       onChange={(e) => onChange('country', e.target.value)}
-                      placeholder="Argentina"
+                      placeholder="Virgin Islands, British"
+                      autoComplete="country-name"
                     />
                   </div>
                   <div className="settings-field-group">
@@ -209,6 +211,7 @@ export default function Settings() {
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="••••••••"
+                    autoComplete="current-password"
                   />
                   <button
                     className="settings-password-toggle"
@@ -230,6 +233,7 @@ export default function Settings() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="••••••••"
+                    autoComplete="new-password"
                   />
                   <button
                     className="settings-password-toggle"
@@ -251,6 +255,7 @@ export default function Settings() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
+                    autoComplete="new-password"
                   />
                   <button
                     className="settings-password-toggle"

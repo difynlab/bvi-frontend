@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { getProfile, setProfile } from '../helpers/profileStorage';
 import { getSession } from '../helpers/authStorage';
 import { useAuth } from '../context/useAuth';
 import { updateProfile } from '../services/profileService';
@@ -13,7 +12,7 @@ export function useSettingsForm() {
   }, [ctx?.user]);
   
   // Helper to extract phone components from unified phone string
-  const extractPhoneComponents = useCallback((unifiedPhone, defaultCode = '+54') => {
+  const extractPhoneComponents = useCallback((unifiedPhone, defaultCode = '+1') => {
     if (!unifiedPhone) return { code: defaultCode, number: '' };
 
     const raw = unifiedPhone.toString().replace(/\s+/g, '');
@@ -45,14 +44,9 @@ export function useSettingsForm() {
     }
 
     // Fallback: treat as local number, keep provided default code
-    return { code: codeStr || '+54', number: phoneDigits };
+    return { code: codeStr || '+1', number: phoneDigits };
   }, []);
 
-  // Get profile data with defaults from registration
-  const profileData = useMemo(() => {
-    return currentUser.id ? getProfile(currentUser) || {} : {};
-  }, [currentUser]);
-  
   // Extract phone components if user has unified phone from registration
   const userPhone = currentUser.phone || '';
   const ensurePlus = useCallback((val) => {
@@ -61,31 +55,34 @@ export function useSettingsForm() {
     return s.startsWith('+') ? s : `+${s}`;
   }, []);
   
-  // Merge user data with profile data, using registration data as defaults
-  // Support both snake_case (from backend) and camelCase (from profile storage)
+  // Get user data from server only (no localStorage)
   const baseUser = useMemo(() => {
-    // First name: try profile, then snake_case from backend, then camelCase from backend
-    const firstName = profileData.firstName || 
-                     currentUser.first_name || 
+    // First name: from backend (snake_case or camelCase)
+    const firstName = currentUser.first_name || 
                      currentUser.firstName || 
                      '';
     
-    // Last name: try profile, then snake_case from backend, then camelCase from backend
-    const lastName = profileData.lastName || 
-                    currentUser.last_name || 
+    // Last name: from backend (snake_case or camelCase)
+    const lastName = currentUser.last_name || 
                     currentUser.lastName || 
                     '';
     
-    // Email: try profile, then currentUser email
-    const email = profileData.email || currentUser.email || '';
+    // Email: from backend
+    const email = currentUser.email || '';
     
-    // Phone: extract from unified phone if exists, otherwise use profile data
+    // Phone: extract from unified phone if exists
     const phoneData = userPhone 
-      ? extractPhoneComponents(userPhone, profileData.countryCode || '+54')
+      ? extractPhoneComponents(userPhone, '+1')
       : {
-          code: profileData.countryCode || '+54',
-          number: profileData.phoneNumber || ''
+          code: '+1',
+          number: ''
         };
+    
+    // Get profile picture from server only
+    const profilePicture = currentUser.profile_picture_url || 
+                          currentUser.image_url || 
+                          currentUser.profilePictureUrl || 
+                          '';
     
     return {
       firstName,
@@ -93,16 +90,14 @@ export function useSettingsForm() {
       email,
       countryCode: phoneData.code,
       phoneNumber: phoneData.number,
-      phoneE164: ensurePlus(
-        profileData.phoneE164 || currentUser.phone || (phoneData.code.replace(/\s+/g,'') + phoneData.number)
-      ),
-      dateFormat: profileData.dateFormat || 'MM/DD/YYYY',
-      timeZone: profileData.timeZone || 'EST',
-      country: profileData.country || 'Argentina',
-      language: profileData.language || 'English (Default)',
-      profilePicture: profileData.profilePicture || ''
+      phoneE164: ensurePlus(currentUser.phone || (phoneData.code.replace(/\s+/g,'') + phoneData.number)),
+      dateFormat: 'MM/DD/YYYY', // Default value, not stored
+      timeZone: 'EST', // Default value, not stored
+      country: 'Virgin Islands, British', // Default value, not stored
+      language: 'English (Default)', // Default value, not stored
+      profilePicture: profilePicture || ''
     };
-  }, [profileData, currentUser, extractPhoneComponents, userPhone, ensurePlus]);
+  }, [currentUser, extractPhoneComponents, userPhone, ensurePlus]);
   
   const [form, setForm] = useState(baseUser);
   const [dirty, setDirty] = useState(false);
@@ -183,10 +178,13 @@ export function useSettingsForm() {
     setSelectedFile(file);
     setErrorMessage('');
     
+    // Convert to base64 only for preview and sending to server
+    // This will NOT be saved to localStorage, only sent to server
     const r = new FileReader();
     r.onload = () => { 
       const imageDataUrl = String(r.result || '');
-      setProfilePreview(imageDataUrl);
+      setProfilePreview(imageDataUrl); // For preview only
+      // Store base64 temporarily in form state (will be sent to server, not saved to localStorage)
       setForm(prev => ({ ...prev, profilePicture: imageDataUrl }));
       setDirty(true); 
     };
@@ -240,14 +238,14 @@ export function useSettingsForm() {
         first_name: form.firstName?.trim() || '',
         last_name: form.lastName?.trim() || '',
         email: form.email?.toLowerCase().trim() || '', // Email no se puede cambiar pero se envía
-        countryCode: form.countryCode || '+54',
+        countryCode: form.countryCode || '+1',
         phoneNumber: form.phoneNumber?.trim() || '',
         phoneE164: form.phoneE164 || '',
         profilePicture: form.profilePicture || null,
         // Preferences (solo frontend, no se envían al backend)
         dateFormat: form.dateFormat || 'MM/DD/YYYY',
         timeZone: form.timeZone || 'EST',
-        country: form.country || 'Argentina',
+        country: form.country || 'Virgin Islands, British',
         language: form.language || 'English (Default)',
       };
       
@@ -266,11 +264,11 @@ export function useSettingsForm() {
       
       // Helper to extract phone components from unified phone string
       const extractPhoneComponents = (unifiedPhone, currentCode) => {
-        if (!unifiedPhone) return { code: currentCode || '+54', number: '' };
+        if (!unifiedPhone) return { code: currentCode || '+1', number: '' };
 
         const raw = unifiedPhone.toString().replace(/\s+/g, '');
         const phoneDigits = raw.replace(/\D/g, '');
-        const codeStr = (currentCode || '+54').toString();
+        const codeStr = (currentCode || '+1').toString();
         const codeDigits = codeStr.replace(/\D/g, '');
 
         if (raw.startsWith('+')) {
@@ -297,9 +295,15 @@ export function useSettingsForm() {
       // Extract phone components if backend returned unified phone
       const phoneComponents = updatedProfileData?.phone 
         ? extractPhoneComponents(updatedProfileData.phone, form.countryCode)
-        : { code: form.countryCode || '+54', number: form.phoneNumber?.trim() || '' };
+        : { code: form.countryCode || '+1', number: form.phoneNumber?.trim() || '' };
 
-      // Update local state with backend response if available
+      // Get profile picture URL from server response (only server URLs, no base64)
+      const profilePictureUrl = updatedProfileData?.profile_picture_url || 
+                                updatedProfileData?.image_url || 
+                                '';
+      
+      // Only save server URL, never save base64 to localStorage
+      // If no URL from server, use empty string (don't fallback to form.profilePicture which might be base64)
       const localProfileUpdate = {
         firstName: updatedProfileData?.first_name || form.firstName?.trim() || '',
         lastName: updatedProfileData?.last_name || form.lastName?.trim() || '',
@@ -307,12 +311,10 @@ export function useSettingsForm() {
         countryCode: phoneComponents.code,
         phoneNumber: phoneComponents.number,
         phoneE164: ensurePlus(updatedProfileData?.phone || form.phoneE164 || ''),
-        profilePicture: updatedProfileData?.profile_picture_url || 
-                        updatedProfileData?.image_url || 
-                        form.profilePicture || '',
+        profilePicture: profilePictureUrl, // Only server URL, never base64
         dateFormat: form.dateFormat || 'MM/DD/YYYY',
         timeZone: form.timeZone || 'EST',
-        country: form.country || 'Argentina',
+        country: form.country || 'Virgin Islands, British',
         language: form.language || 'English (Default)',
       };
       
@@ -327,8 +329,8 @@ export function useSettingsForm() {
         });
       }
       
-      // Save preferences to localStorage (dateFormat, timeZone, country, language)
-      setProfile(currentUser, localProfileUpdate);
+      // No longer using localStorage - all data comes from server
+      // Preferences (dateFormat, timeZone, country, language) are not persisted
       
       // Reset form state
       resetAfterSave(localProfileUpdate);
@@ -350,33 +352,35 @@ export function useSettingsForm() {
     // Extract phone components if user has unified phone from registration
     const userPhoneStr = currentUser.phone || '';
     const phoneComponents = userPhoneStr 
-      ? extractPhoneComponents(userPhoneStr, profileData.countryCode || '+54')
+      ? extractPhoneComponents(userPhoneStr, '+1')
       : {
-          code: profileData.countryCode || '+54',
-          number: profileData.phoneNumber || ''
+          code: '+1',
+          number: ''
         };
     
-    // Support both snake_case (from backend) and camelCase (from profile)
+    // Get profile picture from server only
+    const profilePicture = currentUser.profile_picture_url || 
+                          currentUser.image_url || 
+                          currentUser.profilePictureUrl || 
+                          '';
+    
+    // Get data from server only (no localStorage)
     const newBaseUser = {
-      firstName: profileData.firstName || 
-                 currentUser.first_name || 
+      firstName: currentUser.first_name || 
                  currentUser.firstName || 
                  '',
-      lastName: profileData.lastName || 
-                currentUser.last_name || 
+      lastName: currentUser.last_name || 
                 currentUser.lastName || 
                 '',
-      email: profileData.email || currentUser.email || '',
+      email: currentUser.email || '',
       countryCode: phoneComponents.code,
       phoneNumber: phoneComponents.number,
-      phoneE164: ensurePlus(
-        profileData.phoneE164 || currentUser.phone || (String(phoneComponents.code).replace(/\s+/g,'') + String(phoneComponents.number))
-      ),
-      dateFormat: profileData.dateFormat || 'MM/DD/YYYY',
-      timeZone: profileData.timeZone || 'EST',
-      country: profileData.country || 'Argentina',
-      language: profileData.language || 'English (Default)',
-      profilePicture: profileData.profilePicture || ''
+      phoneE164: ensurePlus(currentUser.phone || (String(phoneComponents.code).replace(/\s+/g,'') + String(phoneComponents.number))),
+      dateFormat: 'MM/DD/YYYY', // Default value, not stored
+      timeZone: 'EST', // Default value, not stored
+      country: 'Virgin Islands, British', // Default value, not stored
+      language: 'English (Default)', // Default value, not stored
+      profilePicture: profilePicture || ''
     };
     
     setForm(newBaseUser);
@@ -389,7 +393,9 @@ export function useSettingsForm() {
     currentUser.lastName, 
     currentUser.email, 
     currentUser.phone,
-    profileData,
+    currentUser.profile_picture_url,
+    currentUser.image_url,
+    currentUser.profilePictureUrl,
     extractPhoneComponents,
     ensurePlus
   ]);

@@ -114,14 +114,14 @@ export function ensureUserDefaults(u = {}) {
     email: u.email || '',
     password: u.password || '',
     role: u.role || 'member',
-    countryCode: u.countryCode ?? '+54',
+    countryCode: u.countryCode ?? '+1',
     phone: u.phone ?? '',
     profilePicture: u.profilePicture ?? '',
     profilePictureUrl: u.profilePictureUrl ?? '',
     profilePictureSync: u.profilePictureSync ?? '',
     dateFormat: u.dateFormat || 'MM/DD/YYYY',
     timeZone: u.timeZone || 'EST',
-    country: u.country || 'Argentina',
+    country: u.country || 'Virgin Islands, British',
     language: u.language || 'English (Default)',
   };
 }

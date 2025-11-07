@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import eventsService from '../services/eventsService'
-import { transformFromBackend, transformToBackend, saveEventImageToLocalStorage, removeEventImageFromLocalStorage, getImageFromLocalStorage, removeImageFromLocalStorage } from '../utils/eventTransformers'
+import { transformFromBackend, transformToBackend } from '../utils/eventTransformers'
 import { useNotifications } from '../context/NotificationContext'
 
 const CACHE_KEY = 'events_cache'
@@ -74,8 +74,6 @@ const clearEventsCache = () => {
 const clearAllEventsData = () => {
   // Clear events cache
   localStorage.removeItem(CACHE_KEY)
-  // Clear events images
-  localStorage.removeItem('eventsImages')
   console.log('🧹 Cleared all events data from localStorage')
 }
 
@@ -165,34 +163,11 @@ export const useEvents = () => {
     setError(null)
 
     try {
-      // TODO PRODUCTION: CHANGE IMAGES - Save image to localStorage before sending to backend
-      // Generate temporary ID for localStorage storage
-      const tempId = `temp_${Date.now()}_${Math.floor(Math.random() * 1000)}`
-      if (eventData.file) {
-        await saveEventImageToLocalStorage(tempId, eventData.file)
-      }
-      
       const backendData = transformToBackend(eventData, false)
       const response = await eventsService.createEvent(backendData)
       
       if (response.http_status === 200) {
         const backendEvent = response.data
-        
-        // TODO PRODUCTION: CHANGE IMAGES - Move image from temp ID to real backend ID FIRST
-        if (eventData.file && backendEvent.id) {
-          // Get image from temp storage
-          const tempImage = getImageFromLocalStorage(tempId, 'original')
-          const tempBlurred = getImageFromLocalStorage(tempId, 'blurred')
-          
-          if (tempImage) {
-            // Save with real backend ID - WAIT for it to complete
-            await saveEventImageToLocalStorage(backendEvent.id, eventData.file)
-            // Clean up temp storage
-            removeImageFromLocalStorage(tempId, 'all')
-          }
-        }
-        
-        // NOW apply localStorage image logic to the new event (after moving the image)
         const eventWithImages = transformFromBackend(backendEvent)
         setEvents(prev => sortEventsByDate([...prev, eventWithImages]))
         clearEventsCache()
@@ -231,13 +206,6 @@ export const useEvents = () => {
     try {
       const existingEvent = events.find(e => e.id === eventData.id)
       const existingThumbnail = existingEvent?.imageFileName || existingEvent?.thumbnail || ''
-      
-      // TODO PRODUCTION: CHANGE IMAGES - Save image to localStorage before sending to backend
-      // Handle image storage for updates
-      if (eventData.file) {
-        // Save new image to localStorage for the existing event ID
-        await saveEventImageToLocalStorage(eventData.id, eventData.file)
-      }
       
       const backendData = transformToBackend(eventData, true, existingThumbnail)
       const response = await eventsService.updateEvent(eventData.id, backendData)
@@ -279,9 +247,6 @@ export const useEvents = () => {
     setError(null)
 
     try {
-      // TODO PRODUCTION: CHANGE IMAGES - Remove image from localStorage when deleting event
-      removeEventImageFromLocalStorage(id)
-      
       // Obtener el evento antes de eliminarlo para la notificación
       const eventToDelete = events.find(e => e.id === id)
       
