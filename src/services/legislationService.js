@@ -117,11 +117,6 @@ class LegislationService {
       formData.append('description', data.description)
     }
     
-    // Link (opcional)
-    if (data.link !== undefined && data.link !== null && data.link !== '') {
-      formData.append('link', data.link)
-    }
-    
     // Files (opcional) - Array de archivos PDF
     if (data.files && Array.isArray(data.files) && data.files.length > 0) {
       data.files.forEach((file, index) => {
@@ -136,11 +131,25 @@ class LegislationService {
       })
     }
     
-    // Links (opcional) - Array de strings
+    // Links (opcional) - Array de objetos { title, url }
     if (data.links && Array.isArray(data.links) && data.links.length > 0) {
-      data.links.forEach(link => {
-        if (link && link.trim() !== '') {
-          formData.append('links[]', link)
+      data.links.forEach((link) => {
+        if (!link) return
+
+        if (typeof link === 'string') {
+          const trimmed = link.trim()
+          if (trimmed) {
+            formData.append('links[]', trimmed)
+          }
+          return
+        }
+
+        const url = (link.url || '').trim()
+        const title = (link.title || '').trim()
+
+        if (url) {
+          const payload = JSON.stringify({ title, url })
+          formData.append('links[]', payload)
         }
       })
     }
