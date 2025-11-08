@@ -242,19 +242,19 @@ export const MemberDetailsModal = ({
 
     return paymentsSource.map((payment) => {
       const statusValue = payment?.status !== undefined && payment?.status !== null
-        ? Number(payment.status)
-        : null;
+          ? Number(payment.status) 
+          : null;
       const formattedStatus = formatPaymentStatus(payment?.status);
-
-      return {
+        
+        return {
         id: payment?.id || null,
         date: formatPaymentDate(payment?.date || payment?.created_at || payment?.payment_date),
-        status: formattedStatus,
+          status: formattedStatus,
         amount: formatPaymentAmount(payment?.amount || payment?.total),
         receipt: payment?.receipt || payment?.receipt_url || null,
-        isPending: statusValue === 0 || formattedStatus === 'Pending'
-      };
-    });
+          isPending: statusValue === 0 || formattedStatus === 'Pending'
+        };
+      });
   };
 
   const paymentHistory = getPaymentHistory();

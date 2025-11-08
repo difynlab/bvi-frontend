@@ -288,6 +288,24 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
     }
   };
 
+  const createFileFromExistingUrl = async (row, sanitizedFileName, displayTitle) => {
+    try {
+      const response = await fetch(row.fileUrl, { credentials: 'include' });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch existing file: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const fileType = blob.type || 'application/pdf';
+      const fileNameToUse = sanitizedFileName || row.fileName || sanitizeFileName(displayTitle || 'document');
+      return new File([blob], fileNameToUse, { type: fileType });
+    } catch (error) {
+      console.error('Error fetching existing file for submission:', error);
+      throw new Error(displayTitle
+        ? `Failed to retrieve the existing file "${displayTitle}". Please try again.`
+        : 'Failed to retrieve one of the existing files. Please try again.');
+    }
+  };
+
   const populatedFileRows = useMemo(
     () => fileRows.filter(row => row.file || row.fileUrl),
     [fileRows]
@@ -373,45 +391,52 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
     setErrors({});
 
     try {
-      // Preparar archivos nuevos (File objects) - solo los nuevos
-      const filesToSend = newFiles.map(f => {
-        const titleTrimmed = (f.title || '').trim();
-        const sanitizedName = titleTrimmed ? sanitizeFileName(titleTrimmed) : f.file.name;
-        return new File([f.file], sanitizedName, { type: f.file.type });
-      }).filter(Boolean);
+      // Preparar archivos finales para enviar (existentes + nuevos)
+      const filesToSend = [];
+      const titlesToSend = [];
+      const removedIdsSet = new Set(removedFiles);
 
-      const normalizedLinks = links
+      for (const row of fileRows) {
+        const hasContent = !!row.file || !!row.fileUrl;
+        if (!hasContent) continue;
+        if (removedIdsSet.has(row.id)) continue;
+
+        const titleTrimmed = (row.title || '').trim();
+        const titleForFallback =
+          titleTrimmed ||
+          deriveDisplayTitleFromFileName(row.fileName) ||
+          (row.isExisting ? deriveDisplayTitleFromFileName(row.fileUrl?.split('/').pop() || '') : '') ||
+          'Documento';
+        const sanitizedFileName = sanitizeFileName(titleForFallback);
+
+        if (row.file) {
+          const fileType = row.file.type || 'application/pdf';
+          const renamedFile = new File([row.file], sanitizedFileName, { type: fileType });
+          filesToSend.push(renamedFile);
+          titlesToSend.push(titleTrimmed || titleForFallback);
+        } else if (row.isExisting && row.fileUrl) {
+          const existingFile = await createFileFromExistingUrl(row, sanitizedFileName, titleForFallback);
+          filesToSend.push(existingFile);
+          titlesToSend.push(titleTrimmed || titleForFallback);
+        }
+      }
+
+      const linksToInclude = links
         .map(link => ({
           title: (link.title || '').trim(),
           url: (link.url || '').trim()
         }))
-        .filter(link => link.title || link.url);
+        .filter(link => link.title || link.url)
+        .filter(link => link.url && isValidUrl(link.url));
 
-      const linksToInclude = normalizedLinks
-        .filter(link => link.url && isValidUrl(link.url))
-        .map(link => JSON.stringify(link));
-
-      // Determinar si debemos enviar archivos:
-      // - Si hay archivos nuevos: enviar los nuevos (el backend reemplazará todos)
-      // - Si se eliminaron archivos existentes pero no hay nuevos: enviar array vacío (eliminar todos)
-      // - Si no hay cambios en archivos: no enviar el campo files (mantener existentes)
-      const hasRemovedFiles = removedFiles.length > 0;
-      const hasNewFiles = filesToSend.length > 0;
-      const noExistingFilesRemain = existingFiles.length === 0;
-      let filesToInclude = undefined;
-      if (hasNewFiles) {
-        // Hay archivos nuevos: enviar los nuevos (reemplazará todos)
-        filesToInclude = filesToSend;
-      } else if (hasRemovedFiles && noExistingFilesRemain) {
-        // Se eliminaron todos los archivos existentes: enviar array vacío
-        filesToInclude = [];
-      }
-      // Si no hay cambios en archivos, no enviamos el campo files (undefined)
-      
       // Preparar datos para enviar al backend
       const backendData = {
-        files: filesToInclude,
-        links: linksToInclude.length > 0 ? linksToInclude : undefined
+        files: filesToSend,
+        links: linksToInclude.length > 0 ? linksToInclude : undefined,
+        titles:
+          filesToSend.length > 0
+            ? titlesToSend.slice(0, filesToSend.length)
+            : (removedFiles.length > 0 && populatedFileRows.length === 0 ? [] : undefined)
       };
 
       // Enviar al backend

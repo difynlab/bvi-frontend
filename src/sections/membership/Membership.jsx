@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Card from '../../components/Card';
 import '../../styles/sections/Membership.scss';
 import { NavLink } from 'react-router-dom';
@@ -7,6 +7,26 @@ import { useAuth } from '../../context/useAuth';
 import { isAdmin } from '../../auth/acl';
 import { useMembershipData } from '../../hooks/useMembershipData';
 import membersService from '../../services/membersService';
+import importantInfoService from '../../services/importantInfoService';
+import ImportantInfoSkeleton from '../../components/subscription/ImportantInfoSkeleton';
+
+const IMPORTANT_INFO_DEFAULTS = {
+  eligibility: {
+    title: 'Membership Eligibility',
+    subtitle: 'Eligibility to membership of BVI Finance shall be limited to the companies, firms, entities, bodies and associations',
+    img: '/images/membership-elegibility.png'
+  },
+  benefits: {
+    title: 'Membership Benefits',
+    subtitle: 'BVI Finance provides three membership benefit packages tailored to the specific needs of its various member categories.',
+    img: '/images/membership-benefits.png'
+  },
+  payment: {
+    title: 'Payment Details',
+    subtitle: 'View essential payment information, including account name, and required proof of payment to be uploaded when submitting payments.',
+    img: '/images/payment-details.png'
+  }
+};
 import { MemberDetailsModal } from '../../components/modals/MemberDetailsModal';
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal';
 import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal';
@@ -73,44 +93,58 @@ const Membership = () => {
   // Admin tabs definition
   const adminTabs = ['Member List', 'Important Info', 'Membership Plans'];
 
-  // Helper function to get saved card data
-  const getCardData = (key) => {
-    const MAP = {
-      eligibility: {
-        title: 'Membership Eligibility',
-        subtitle: 'Eligibility to membership of BVI Finance shall be limited to the companies, firms, entities, bodies and associations',
-        img: '/images/membership-elegibility.png'
-      },
-      benefits: {
-        title: 'Membership Benefits',
-        subtitle: 'BVI Finance provides three membership benefit packages tailored to the specific needs of its various member categories.',
-        img: '/images/membership-benefits.png'
-      },
-      payment: {
-        title: 'Payment Details',
-        subtitle: 'View essential payment information, including account name, and required proof of payment to be uploaded when submitting payments.',
-        img: '/images/payment-details.png'
-      }
-    };
-
-    try {
-      const savedData = localStorage.getItem(`subscription-data-${key}`);
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
-        return {
-          title: parsed.title || MAP[key]?.title || '',
-          subtitle: parsed.subtitle || MAP[key]?.subtitle || ''
-        };
-      }
-    } catch (e) {
-      console.error('Error parsing saved data:', e);
+  const IMPORTANT_INFO_DEFAULTS = {
+    eligibility: {
+      title: 'Membership Eligibility',
+      subtitle: 'Eligibility to membership of BVI Finance shall be limited to the companies, firms, entities, bodies and associations',
+      img: '/images/membership-elegibility.png'
+    },
+    benefits: {
+      title: 'Membership Benefits',
+      subtitle: 'BVI Finance provides three membership benefit packages tailored to the specific needs of its various member categories.',
+      img: '/images/membership-benefits.png'
+    },
+    payment: {
+      title: 'Payment Details',
+      subtitle: 'View essential payment information, including account name, and required proof of payment to be uploaded when submitting payments.',
+      img: '/images/payment-details.png'
     }
-    
+  };
+
+  const [importantInfoData, setImportantInfoData] = useState(null);
+  const [importantInfoError, setImportantInfoError] = useState('');
+  const [importantInfoLoading, setImportantInfoLoading] = useState(false);
+
+  const getCardData = (key) => {
+    const defaults = IMPORTANT_INFO_DEFAULTS[key] || {};
+    const fromApi = importantInfoData?.[key] || {};
+
     return {
-      title: MAP[key]?.title || '',
-      subtitle: MAP[key]?.subtitle || ''
+      title: fromApi.title || defaults.title || '',
+      subtitle: fromApi.subtitle || defaults.subtitle || '',
+      img: fromApi.img || defaults.img || ''
     };
   };
+
+  const loadImportantInfo = useCallback(async () => {
+    setImportantInfoLoading(true);
+    setImportantInfoError('');
+
+    try {
+      const response = await importantInfoService.getImportantInfo();
+      if (response?.data) {
+        setImportantInfoData(response.data);
+      } else {
+        setImportantInfoData(null);
+      }
+    } catch (error) {
+      console.error('Error fetching important info:', error);
+      setImportantInfoError(error.message || 'Failed to load important info data.');
+      setImportantInfoData(null);
+    } finally {
+      setImportantInfoLoading(false);
+    }
+  }, []);
   
   useEffect(() => {
     const checkMobile = () => {
@@ -329,6 +363,15 @@ const Membership = () => {
   useEffect(() => {
     fetchMembers();
   }, [user]);
+
+  useEffect(() => {
+    loadImportantInfo();
+  }, [cardDataRefresh, loadImportantInfo]);
+
+  const handleOpenImportantInfo = (key) => {
+    if (importantInfoLoading || !importantInfoData) return;
+    setOpenInfo(key);
+  };
 
   // Filter and search members
   const filteredMembers = useMemo(() => {
@@ -1076,9 +1119,17 @@ const Membership = () => {
 
               {adminActiveTab === 'Important Info' && (
                 <section key={`important-info-${cardDataRefresh}`} className="membership-admin-panel membership-admin-panel--important">
+                  {importantInfoError && (
+                    <div className="app-form__error-banner" role="alert" aria-live="assertive">
+                      <strong>Error:</strong> {importantInfoError}
+                    </div>
+                  )}
+                  {importantInfoLoading && !importantInfoError ? (
+                    <ImportantInfoSkeleton className="membership-admin-cards" />
+                  ) : (
                   <div className="membership-admin-cards">
                     {/* Membership Eligibility Card */}
-                    <div className="membership-admin-card" onClick={() => setOpenInfo('eligibility')}>
+                    <div className="membership-admin-card" onClick={() => handleOpenImportantInfo('eligibility')}>
                       <div className="membership-admin-card__icon" aria-hidden="true"><i className="bi bi-people"></i></div>
                       <h3 className="membership-admin-card__title">{getCardData('eligibility').title}</h3>
                       <p className="membership-admin-card__text">
@@ -1088,7 +1139,7 @@ const Membership = () => {
                     </div>
 
                     {/* Membership Benefits Card */}
-                    <div className="membership-admin-card" onClick={() => setOpenInfo('benefits')}>
+                    <div className="membership-admin-card" onClick={() => handleOpenImportantInfo('benefits')}>
                       <div className="membership-admin-card__icon" aria-hidden="true"><i className="bi bi-patch-check"></i></div>
                       <h3 className="membership-admin-card__title">{getCardData('benefits').title}</h3>
                       <p className="membership-admin-card__text">
@@ -1098,7 +1149,7 @@ const Membership = () => {
                     </div>
 
                     {/* Payment Details Card */}
-                    <div className="membership-admin-card" onClick={() => setOpenInfo('payment')}>
+                    <div className="membership-admin-card" onClick={() => handleOpenImportantInfo('payment')}>
                       <div className="membership-admin-card__icon" aria-hidden="true"><i className="bi bi-credit-card"></i></div>
                       <h3 className="membership-admin-card__title">{getCardData('payment').title}</h3>
                       <p className="membership-admin-card__text">
@@ -1107,6 +1158,7 @@ const Membership = () => {
                       <a href="#" className="membership-admin-card__link">Edit Details</a>
                     </div>
                   </div>
+                  )}
                 </section>
               )}
 
@@ -1320,6 +1372,11 @@ const Membership = () => {
               setCardDataRefresh(prev => prev + 1); // Refresh card data
             }}
             infoKey={openInfo}
+            data={importantInfoData}
+            onUpdated={(data) => {
+              setImportantInfoData(data);
+              setImportantInfoError('');
+            }}
           />
         </>
       )}

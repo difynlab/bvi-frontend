@@ -122,13 +122,21 @@ class LegislationService {
       data.files.forEach((file, index) => {
         if (file instanceof File) {
           formData.append('files[]', file)
-          
+
           // Títulos correspondientes (opcional pero recomendado)
-          if (data.titles && data.titles[index]) {
-            formData.append(`titles[${index}]`, data.titles[index])
+          if (data.titles && Array.isArray(data.titles) && data.titles[index] !== undefined) {
+            const titleValue = data.titles[index]
+            if (titleValue !== undefined && titleValue !== null) {
+              formData.append('titles[]', String(titleValue))
+            }
           }
         }
       })
+    } else if (data.files && Array.isArray(data.files) && data.files.length === 0) {
+      formData.append('files', '')
+      if (data.titles && Array.isArray(data.titles) && data.titles.length === 0) {
+        formData.append('titles', '')
+      }
     }
     
     // Links (opcional) - Array de objetos { title, url }

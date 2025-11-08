@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import '../../styles/sections/Subscription.scss';
 import SubscriptionInfoModal from '../../components/modals/SubscriptionInfoModal';
 import SubscriptionTabPicker from '../../components/modals/SubscriptionTabPicker';
@@ -9,12 +9,38 @@ import CompanyDetailsForm from './CompanyDetailsForm';
 import MembershipLicenseOfficerForm from './MembershipLicenseOfficerForm';
 import MembershipPlans from './MembershipPlans';
 import ContactPersonDetails from './ContactPersonDetails';
+import importantInfoService from '../../services/importantInfoService';
+import ImportantInfoSkeleton from '../../components/subscription/ImportantInfoSkeleton';
+
+const IMPORTANT_INFO_DEFAULTS = {
+  eligibility: {
+    title: 'Membership Eligibility',
+    subtitle: 'Eligibility to membership of BVI Finance shall be limited to the companies, firms, entities, bodies and associations',
+    img: '/images/membership-elegibility.png'
+  },
+  benefits: {
+    title: 'Membership Benefits',
+    subtitle: 'BVI Finance provides three membership benefit packages tailored to the specific needs of its various member categories.',
+    img: '/images/membership-benefits.png'
+  },
+  payment: {
+    title: 'Payment Details',
+    subtitle: 'View essential payment information, including account name, and required proof of payment to be uploaded when submitting payments.',
+    img: '/images/payment-details.png'
+  }
+};
 
 const Subscription = () => {
   const [openInfo, setOpenInfo] = useState(null); // 'eligibility' | 'benefits' | 'payment' | null
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [importantInfoData, setImportantInfoData] = useState(null);
+  const [importantInfoError, setImportantInfoError] = useState('');
+  const [importantInfoLoading, setImportantInfoLoading] = useState(false);
   
-  const handleOpen = (key) => setOpenInfo(key);
+  const handleOpen = (key) => {
+    if (importantInfoLoading || !importantInfoData) return;
+    setOpenInfo(key);
+  };
   const handleClose = () => setOpenInfo(null);
 
   const getInitialTab = () => {
@@ -24,6 +50,41 @@ const Subscription = () => {
   };
 
   const { activeTab, values, errors, setField, setOfficer, toggleArray, goNext, setTab } = useSubscriptionWizard(getInitialTab());
+
+  const loadImportantInfo = useCallback(async () => {
+    setImportantInfoLoading(true);
+    setImportantInfoError('');
+
+    try {
+      const response = await importantInfoService.getImportantInfo();
+      if (response?.data) {
+        setImportantInfoData(response.data);
+      } else {
+        setImportantInfoData(null);
+      }
+    } catch (error) {
+      console.error('Error fetching important info:', error);
+      setImportantInfoError(error.message || 'Failed to load important info.');
+      setImportantInfoData(null);
+    } finally {
+      setImportantInfoLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadImportantInfo();
+  }, [loadImportantInfo]);
+
+  const getCardData = (key) => {
+    const defaults = IMPORTANT_INFO_DEFAULTS[key] || {};
+    const fromApi = importantInfoData?.[key] || {};
+
+    return {
+      title: fromApi.title || defaults.title || '',
+      subtitle: fromApi.subtitle || defaults.subtitle || '',
+      img: fromApi.img || defaults.img || ''
+    };
+  };
 
   // Define the subscription tabs (static list)
   const subscriptionTabs = [
@@ -142,13 +203,21 @@ const Subscription = () => {
       <div className="subscription-tab-container">
         {activeTab === 'Important Info' && (
           <section key="important-info" className="subscription-panel subscription-panel--important">
+            {importantInfoError && (
+              <div className="app-form__error-banner" role="alert" aria-live="assertive">
+                <strong>Error:</strong> {importantInfoError}
+              </div>
+            )}
+            {importantInfoLoading && !importantInfoError ? (
+              <ImportantInfoSkeleton className="subscription-cards" />
+            ) : (
             <div className="subscription-cards">
               {/* Membership Eligibility Card */}
               <div className="subscription-card" onClick={() => handleOpen('eligibility')}>
                 <div className="subscription-card__icon" aria-hidden="true"><i className="bi bi-people"></i></div>
-                <h3 className="subscription-card__title">Membership Eligibility</h3>
+                <h3 className="subscription-card__title">{getCardData('eligibility').title}</h3>
                 <p className="subscription-card__text">
-                  Eligibility to membership of BVI Finance shall be limited to the companies, firms, entities, bodies and associations
+                  {getCardData('eligibility').subtitle}
                 </p>
                 <a href="#" className="subscription-card__link">View Details</a>
               </div>
@@ -156,9 +225,9 @@ const Subscription = () => {
               {/* Membership Benefits Card */}
               <div className="subscription-card" onClick={() => handleOpen('benefits')}>
                 <div className="subscription-card__icon" aria-hidden="true"><i className="bi bi-patch-check"></i></div>
-                <h3 className="subscription-card__title">Membership Benefits</h3>
+                <h3 className="subscription-card__title">{getCardData('benefits').title}</h3>
                 <p className="subscription-card__text">
-                  BVI Finance provides three membership benefit packages tailored to the specific needs of its various member categories.
+                  {getCardData('benefits').subtitle}
                 </p>
                 <a href="#" className="subscription-card__link">View Details</a>
               </div>
@@ -166,13 +235,14 @@ const Subscription = () => {
               {/* Payment Details Card */}
               <div className="subscription-card" onClick={() => handleOpen('payment')}>
                 <div className="subscription-card__icon" aria-hidden="true"><i className="bi bi-credit-card"></i></div>
-                <h3 className="subscription-card__title">Payment Details</h3>
+                <h3 className="subscription-card__title">{getCardData('payment').title}</h3>
                 <p className="subscription-card__text">
-                  View essential payment information, including account name, and required proof of payment to be uploaded when submitting payments.
+                  {getCardData('payment').subtitle}
                 </p>
                 <a href="#" className="subscription-card__link">View Details</a>
               </div>
             </div>
+            )}
           </section>
         )}
 
@@ -252,6 +322,11 @@ const Subscription = () => {
         isOpen={!!openInfo}
         onClose={handleClose}
         infoKey={openInfo}
+        data={importantInfoData}
+        onUpdated={(data) => {
+          setImportantInfoData(data);
+          setImportantInfoError('');
+        }}
       />
     </div>
   );

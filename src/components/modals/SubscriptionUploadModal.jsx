@@ -2,13 +2,26 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import '../../styles/components/SubscriptionUploadModal.scss';
+import importantInfoService from '../../services/importantInfoService';
 
-const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm, initialTitle = '', initialDescription = '', initialImage = '' }) => {
+const SubscriptionUploadModal = ({
+  isOpen,
+  onClose,
+  infoKey,
+  allData,
+  defaultsMap,
+  onSuccess,
+  initialTitle = '',
+  initialDescription = '',
+  initialImage = ''
+}) => {
   const [dragActive, setDragActive] = useState(false);
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
   const [previewDataUrl, setPreviewDataUrl] = useState(initialImage);
   const [errorMessage, setErrorMessage] = useState('');
+  const [fileObject, setFileObject] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
   
@@ -23,6 +36,8 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm, initialTitle = ''
       setDescription(initialDescription);
       setPreviewDataUrl(initialImage);
       setErrorMessage('');
+      setFileObject(null);
+      setIsSubmitting(false);
     }
   }, [isOpen, initialTitle, initialDescription, initialImage]);
 
@@ -87,6 +102,7 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm, initialTitle = ''
         setErrorMessage('');
       };
       reader.readAsDataURL(file);
+      setFileObject(file);
     } else {
       setErrorMessage('Please upload an image file');
     }
@@ -103,13 +119,69 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm, initialTitle = ''
     fileInputRef.current?.click();
   };
 
-  const handleSaveChanges = () => {
-    if (hasChanges()) {
-      onConfirm({
-        title,
-        description,
-        image: previewDataUrl
-      });
+  const composePayload = () => {
+    const payload = {};
+
+    Object.entries(defaultsMap || {}).forEach(([key, defaults]) => {
+      const existing = allData?.[key] || {};
+
+      if (key === infoKey) {
+        payload[key] = {
+          title: title ?? '',
+          subtitle: description ?? ''
+        };
+
+        if (fileObject) {
+          payload[key].file = fileObject;
+        } else {
+          const fallbackImage = previewDataUrl && previewDataUrl.startsWith('data:')
+            ? previewDataUrl
+            : existing.img ?? defaults.img ?? '';
+          if (fallbackImage) {
+            payload[key].image = fallbackImage;
+          }
+        }
+      } else {
+        payload[key] = {
+          title: existing.title ?? defaults.title ?? '',
+          subtitle: existing.subtitle ?? defaults.subtitle ?? ''
+        };
+
+        const otherImage = existing.img ?? defaults.img ?? '';
+        if (otherImage) {
+          payload[key].image = otherImage;
+        }
+      }
+    });
+
+    return payload;
+  };
+
+  const handleSaveChanges = async () => {
+    if (!hasChanges() || !infoKey) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const payload = composePayload();
+      const response = await importantInfoService.updateImportantInfo(payload);
+
+      if (response?.data) {
+        if (typeof onSuccess === 'function') {
+          onSuccess(response.data);
+        }
+        onClose();
+      } else {
+        setErrorMessage('Unexpected server response. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error updating important info:', error);
+      setErrorMessage(error.message || 'Failed to update important info. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -188,7 +260,10 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm, initialTitle = ''
               <button
                 type="button"
                 className="subscription-upload-modal__remove-preview"
-                onClick={() => setPreviewDataUrl('')}
+                onClick={() => {
+                  setPreviewDataUrl('');
+                  setFileObject(null);
+                }}
                 aria-label="Remove preview"
               >
                 <i className="bi bi-x" aria-hidden="true"></i>
@@ -241,11 +316,22 @@ const SubscriptionUploadModal = ({ isOpen, onClose, onConfirm, initialTitle = ''
               <strong>Error:</strong> {errorMessage}
             </div>
           )}
+          {errorMessage && (
+            <div
+              className="app-form__error-banner"
+              role="alert"
+              aria-live="assertive"
+              tabIndex={-1}
+            >
+              <strong>Error:</strong> {errorMessage}
+            </div>
+          )}
           {hasChanges() && (
           <button
             type="button"
             className="subscription-upload-modal__update"
               onClick={handleSaveChanges}
+              disabled={isSubmitting}
           >
               Submit
           </button>

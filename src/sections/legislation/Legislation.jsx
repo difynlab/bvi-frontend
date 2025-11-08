@@ -4,8 +4,6 @@ import { useAuth } from '../../context/useAuth';
 import { can } from '../../auth/acl';
 import LegislationEditModal from '../../components/modals/LegislationEditModal';
 import LegislationDetailsSkeleton from '../../components/legislation/LegislationDetailsSkeleton';
-import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal';
-import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal';
 import { pdf } from '@react-pdf/renderer';
 import LegislationPDFDocument from '../../components/pdf/LegislationPDFDocument';
 import legislationService from '../../services/legislationService';
@@ -158,9 +156,6 @@ const Legislation = () => {
   const { legislation } = useLegislationState(); // Solo usamos legislation del localStorage (info general)
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
-  const [attachmentToDelete, setAttachmentToDelete] = useState(null);
-  const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false);
 
   // Estado local para attachments que vienen del backend (NO localStorage)
   const [attachments, setAttachments] = useState([]);
@@ -226,6 +221,12 @@ const Legislation = () => {
     setInitialDetailsSnapshot(sanitized);
     setDetailsError(null);
     setIsEditingDetails(true);
+  };
+
+  const handleCancelEditingDetails = () => {
+    setEditableDetails(rebuildStateFromSanitized(initialDetailsSnapshot));
+    setIsEditingDetails(false);
+    setDetailsError(null);
   };
 
   const handleMetaFieldChange = (fieldKey, value) => {
@@ -658,45 +659,6 @@ const Legislation = () => {
     }
   };
 
-  const handleDeleteAttachment = (attachmentId) => {
-    if (can(user, 'legislation:delete')) {
-      const attachment = attachments.find(att => att.id === attachmentId)
-      if (attachment) {
-        setAttachmentToDelete(attachment)
-        setIsConfirmDeleteOpen(true)
-      }
-    }
-  }
-
-  const handleConfirmDeleteAttachment = async () => {
-    if (!attachmentToDelete) return;
-
-    try {
-      const remainingAttachments = attachments.filter(att => att.id !== attachmentToDelete.id);
-
-      const filesToKeep = remainingAttachments
-        .filter(att => att.fileUrl && !att.fileUrl.startsWith('blob:'))
-        .map(att => ({
-          title: att.displayTitle || att.title || '',
-          fileUrl: att.fileUrl
-        }));
-
-      const payload = {
-        files: filesToKeep,
-        links: legislationData?.links || []
-      };
-
-      await legislationService.updateLegislation(payload);
-
-      setAttachments(remainingAttachments);
-      setAttachmentToDelete(null);
-      setIsSuccessDeleteOpen(true);
-    } catch (error) {
-      console.error('Failed to delete attachment:', error);
-      setAttachmentToDelete(null);
-    }
-  };
-
   return (
     <div className="legislation-container">
       {/* Header */}
@@ -707,6 +669,16 @@ const Legislation = () => {
         </div>
         {can(user, 'legislation:update') && (
           <div className="legislation-header-actions">
+            {isEditingDetails && (
+              <button
+                type="button"
+                className="legislation-cancel-edit-btn"
+                onClick={handleCancelEditingDetails}
+                aria-label="Cancel editing details"
+              >
+                <i className="bi bi-x-lg" aria-hidden="true"></i>
+              </button>
+            )}
 
             <button
               type="button"
@@ -949,13 +921,6 @@ const Legislation = () => {
                   >
                     Download PDF
                   </button>
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => handleDeleteAttachment(attachment.id)}
-                    aria-label={`Delete ${attachment.title}`}
-                  >
-                    Delete
-                  </button>
                 </div>
               </div>
             ))
@@ -969,21 +934,6 @@ const Legislation = () => {
         onClose={handleModalClose}
         onSave={handleSaveAttachment}
         initialData={legislationData}
-      />
-
-      {/* Confirm Delete Attachment Modal */}
-      <ConfirmDeleteModal
-        isOpen={isConfirmDeleteOpen}
-        onClose={() => {
-          setIsConfirmDeleteOpen(false)
-          setAttachmentToDelete(null)
-        }}
-        onConfirm={handleConfirmDeleteAttachment}
-      />
-
-      <SuccessDeleteModal
-        isOpen={isSuccessDeleteOpen}
-        onClose={() => setIsSuccessDeleteOpen(false)}
       />
 
       {/* Mobile FAB */}

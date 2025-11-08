@@ -18,6 +18,31 @@
     }
   }
 
+  .legislation-cancel-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    border: none;
+    background: #fef2f2;
+    color: #dc2626;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba(220, 38, 38, 0.4);
+      outline-offset: 2px;
+    }
+  }
+
 
 
   .legislation-edit-btn {

@@ -3,7 +3,7 @@ import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import '../../styles/components/SubscriptionConfirmModal.scss';
 
-const SubscriptionConfirmModal = ({ isOpen, onClose, onSave, onDiscard }) => {
+const SubscriptionConfirmModal = ({ isOpen, onClose, onSave, onDiscard, isSaving = false }) => {
   const modalBackdropClose = useModalBackdropClose(onClose);
   
   useBodyScrollLock(isOpen);
@@ -30,6 +30,7 @@ const SubscriptionConfirmModal = ({ isOpen, onClose, onSave, onDiscard }) => {
           className="subscription-confirm-modal__close"
           aria-label="Close"
           onClick={onClose}
+          disabled={isSaving}
         >
           <i className="bi bi-x" aria-hidden="true"></i>
         </button>
@@ -46,6 +47,7 @@ const SubscriptionConfirmModal = ({ isOpen, onClose, onSave, onDiscard }) => {
             type="button"
             className="subscription-confirm-modal__discard"
             onClick={onDiscard}
+            disabled={isSaving}
           >
             Discard
           </button>
@@ -53,6 +55,7 @@ const SubscriptionConfirmModal = ({ isOpen, onClose, onSave, onDiscard }) => {
             type="button"
             className="subscription-confirm-modal__save"
             onClick={onSave}
+            disabled={isSaving}
           >
             Save
           </button>

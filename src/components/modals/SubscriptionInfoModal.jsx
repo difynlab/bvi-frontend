@@ -3,7 +3,6 @@ import { useAuth } from '../../context/useAuth';
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import SubscriptionUploadModal from './SubscriptionUploadModal';
-import SubscriptionConfirmModal from './SubscriptionConfirmModal';
 import '../../styles/components/SubscriptionInfoModal.scss';
 
 const MAP = {
@@ -24,181 +23,78 @@ const MAP = {
   }
 };
 
-const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
+const getDefaultData = (key) => {
+  if (!key || !MAP[key]) {
+    return { title: '', subtitle: '', img: '' };
+  }
+  return MAP[key];
+};
+
+const SubscriptionInfoModal = ({ isOpen, onClose, infoKey, data, onUpdated }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  
-  const getDefaultData = () => {
-    if (!infoKey || !MAP[infoKey]) return { title: '', subtitle: '', img: '' };
-    return MAP[infoKey];
-  };
 
-  const getSavedData = () => {
-    if (!infoKey) return getDefaultData();
-    try {
-      const savedData = localStorage.getItem(`subscription-data-${infoKey}`);
-      if (savedData) {
-        return JSON.parse(savedData);
-      }
-    } catch (e) {
-      console.error('Error parsing saved data:', e);
-    }
-    return getDefaultData();
-  };
-  
-  const savedData = getSavedData();
-  const [title, setTitle] = useState(savedData.title);
-  const [subtitle, setSubtitle] = useState(savedData.subtitle);
-  const [imgSrc, setImgSrc] = useState(savedData.img);
-  const [originalTitle, setOriginalTitle] = useState(savedData.title);
-  const [originalSubtitle, setOriginalSubtitle] = useState(savedData.subtitle);
-  const [originalImgSrc, setOriginalImgSrc] = useState(savedData.img);
+  const [title, setTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
+  const [imgSrc, setImgSrc] = useState('');
   const [isUploadOpen, setUploadOpen] = useState(false);
-  const [isConfirmOpen, setConfirmOpen] = useState(false);
-  
+  const [allData, setAllData] = useState(data || null);
+
   useBodyScrollLock(isOpen);
 
   useEffect(() => {
-    if (infoKey && MAP[infoKey]) {
-      const data = getSavedData();
-      setTitle(data.title);
-      setSubtitle(data.subtitle);
-      setImgSrc(data.img);
-      setOriginalTitle(data.title);
-      setOriginalSubtitle(data.subtitle);
-      setOriginalImgSrc(data.img);
+    if (data) {
+      setAllData(data);
     }
-  }, [infoKey]);
+  }, [data]);
+
+  useEffect(() => {
+    if (!isOpen || !infoKey || !MAP[infoKey]) return;
+    const defaults = getDefaultData(infoKey);
+    const source = (data || allData || {})[infoKey] || {};
+
+    const nextTitle = source.title ?? defaults.title ?? '';
+    const nextSubtitle = source.subtitle ?? defaults.subtitle ?? '';
+    const nextImg = source.img ?? defaults.img ?? '';
+
+    setTitle(nextTitle);
+    setSubtitle(nextSubtitle);
+    setImgSrc(nextImg);
+  }, [isOpen, infoKey, data, allData]);
 
   const openUpload = () => setUploadOpen(true);
   const closeUpload = () => setUploadOpen(false);
-  
-  const handleUploaded = (data) => {
-    if (data) {
-      // data can be either the old format (just a string) or the new format (object)
-      if (typeof data === 'string') {
-        // Old format - just image
-        setImgSrc(data);
-        setOriginalImgSrc(data);
-        if (infoKey && data) {
-          localStorage.setItem(`subscription-image-${infoKey}`, data);
-        }
-      } else {
-        // New format - object with title, description, image
-        const newTitle = data.title || title;
-        const newSubtitle = data.description || subtitle;
-        const newImage = data.image || imgSrc;
-        
-        setTitle(newTitle);
-        setSubtitle(newSubtitle);
-        setImgSrc(newImage);
-        setOriginalTitle(newTitle);
-        setOriginalSubtitle(newSubtitle);
-        setOriginalImgSrc(newImage);
-        
-        // Save to localStorage
-        if (infoKey) {
-          const dataToSave = {
-            title: newTitle,
-            subtitle: newSubtitle,
-            img: newImage
-          };
-          localStorage.setItem(`subscription-data-${infoKey}`, JSON.stringify(dataToSave));
-          // Also keep the old format for backward compatibility
-          if (newImage) {
-            localStorage.setItem(`subscription-image-${infoKey}`, newImage);
-          }
-        }
-      }
+
+  const handleUploadSuccess = (updatedData) => {
+    if (!updatedData) {
+      return;
     }
+
+    setAllData(updatedData);
+
+    const defaults = getDefaultData(infoKey);
+    const current = updatedData[infoKey] || {};
+
+    const nextTitle = current.title ?? defaults.title ?? '';
+    const nextSubtitle = current.subtitle ?? defaults.subtitle ?? '';
+    const nextImg = current.img ?? defaults.img ?? '';
+
+    setTitle(nextTitle);
+    setSubtitle(nextSubtitle);
+    setImgSrc(nextImg);
+
+    if (typeof onUpdated === 'function') {
+      onUpdated(updatedData);
+    }
+
     closeUpload();
   };
 
-  const hasUnsavedChanges = () => {
-    return isAdmin && (
-      imgSrc !== originalImgSrc ||
-      title !== originalTitle ||
-      subtitle !== originalSubtitle
-    );
-  };
-
-  const handleCloseAttempt = () => {
-    if (hasUnsavedChanges()) {
-      setConfirmOpen(true);
-    } else {
-      onClose();
-    }
-  };
-
-  const handleSave = () => {
-    if (infoKey) {
-      const dataToSave = {
-        title,
-        subtitle,
-        img: imgSrc
-      };
-      localStorage.setItem(`subscription-data-${infoKey}`, JSON.stringify(dataToSave));
-      // Also keep the old format for backward compatibility
-      if (imgSrc) {
-        localStorage.setItem(`subscription-image-${infoKey}`, imgSrc);
-      }
-    }
-    setOriginalTitle(title);
-    setOriginalSubtitle(subtitle);
-    setOriginalImgSrc(imgSrc);
-    setConfirmOpen(false);
+  const handleClose = () => {
     onClose();
   };
 
-  const handleSaveDirect = () => {
-    if (infoKey) {
-      const dataToSave = {
-        title,
-        subtitle,
-        img: imgSrc
-      };
-      localStorage.setItem(`subscription-data-${infoKey}`, JSON.stringify(dataToSave));
-      // Also keep the old format for backward compatibility
-      if (imgSrc) {
-        localStorage.setItem(`subscription-image-${infoKey}`, imgSrc);
-      }
-    }
-    setOriginalTitle(title);
-    setOriginalSubtitle(subtitle);
-    setOriginalImgSrc(imgSrc);
-  };
-
-  const handleDiscard = () => {
-    if (infoKey) {
-      localStorage.removeItem(`subscription-data-${infoKey}`);
-      localStorage.removeItem(`subscription-image-${infoKey}`);
-    }
-    const defaultData = getDefaultData();
-    setTitle(defaultData.title);
-    setSubtitle(defaultData.subtitle);
-    setImgSrc(defaultData.img);
-    setOriginalTitle(defaultData.title);
-    setOriginalSubtitle(defaultData.subtitle);
-    setOriginalImgSrc(defaultData.img);
-    setConfirmOpen(false);
-    onClose();
-  };
-
-  const handleDiscardDirect = () => {
-    if (infoKey) {
-      localStorage.removeItem(`subscription-data-${infoKey}`);
-      localStorage.removeItem(`subscription-image-${infoKey}`);
-    }
-    const defaultData = getDefaultData();
-    setTitle(defaultData.title);
-    setSubtitle(defaultData.subtitle);
-    setImgSrc(defaultData.img);
-    setOriginalTitle(defaultData.title);
-    setOriginalSubtitle(defaultData.subtitle);
-    setOriginalImgSrc(defaultData.img);
-  };
-
-  const modalBackdropClose = useModalBackdropClose(handleCloseAttempt);
+  const modalBackdropClose = useModalBackdropClose(handleClose);
 
   if (!isOpen || !infoKey || !MAP[infoKey]) return null;
 
@@ -225,7 +121,7 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
           type="button"
           className="subscription-info-modal__close"
           aria-label="Close"
-          onClick={handleCloseAttempt}
+          onClick={handleClose}
         >
           <i className="bi bi-x" aria-hidden="true"></i>
         </button>
@@ -239,10 +135,10 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
 
         <div className="subscription-info-modal__body">
           {imgSrc && (
-            <img 
-              className="subscription-info-modal__image" 
-              src={imgSrc} 
-              alt="" 
+            <img
+              className="subscription-info-modal__image"
+              src={imgSrc}
+              alt=""
             />
           )}
         </div>
@@ -258,25 +154,6 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
                 <i className="bi bi-pencil-square" aria-hidden="true"></i> Edit
               </button>
             </div>
-            
-            {hasUnsavedChanges() && (
-              <div className="subscription-info-modal__save-actions">
-                <button
-                  type="button"
-                  className="subscription-info-modal__discard-btn"
-                  onClick={handleDiscardDirect}
-                >
-                  Discard Changes
-                </button>
-                <button
-                  type="button"
-                  className="subscription-info-modal__save-btn"
-                  onClick={handleSaveDirect}
-                >
-                  Save Changes
-                </button>
-              </div>
-            )}
           </>
         )}
       </div>
@@ -285,23 +162,22 @@ const SubscriptionInfoModal = ({ isOpen, onClose, infoKey }) => {
         <SubscriptionUploadModal
           isOpen={isUploadOpen}
           onClose={closeUpload}
-          onConfirm={handleUploaded}
+          infoKey={infoKey}
           initialTitle={title}
           initialDescription={subtitle}
           initialImage={imgSrc}
-        />
-      )}
-
-      {isConfirmOpen && (
-        <SubscriptionConfirmModal
-          isOpen={isConfirmOpen}
-          onClose={() => setConfirmOpen(false)}
-          onSave={handleSave}
-          onDiscard={handleDiscard}
+          allData={allData}
+          defaultsMap={MAP}
+          onSuccess={handleUploadSuccess}
         />
       )}
     </div>
   );
+};
+
+SubscriptionInfoModal.defaultProps = {
+  data: null,
+  onUpdated: null
 };
 
 export default SubscriptionInfoModal;
