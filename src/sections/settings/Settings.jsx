@@ -302,13 +302,6 @@ export default function Settings() {
             </div>
           )}
           
-          <button 
-            type="button" 
-            className="settings-toggle-role-btn"
-            onClick={toggleRole}
-          >
-            {user?.role === 'admin' ? 'Switch to Member View' : 'Switch to Admin View'}
-          </button>
         </div>
       </form>
     </div>

@@ -629,7 +629,7 @@ export const MemberDetailsModal = ({
             }}
           >
             <i className="bi bi-arrow-repeat"></i>
-            Renew
+            Renew Membership
           </button>
           <button
             className="member-details-btn member-details-btn--edit"

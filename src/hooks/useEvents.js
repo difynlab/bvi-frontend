@@ -164,6 +164,14 @@ export const useEvents = () => {
 
     try {
       const backendData = transformToBackend(eventData, false)
+
+      if (import.meta.env?.DEV) {
+        console.groupCollapsed('[Events] createEvent payload')
+        console.log('Frontend event data:', eventData)
+        console.log('Backend payload:', backendData)
+        console.groupEnd()
+      }
+
       const response = await eventsService.createEvent(backendData)
       
       if (response.http_status === 200) {
@@ -208,6 +216,14 @@ export const useEvents = () => {
       const existingThumbnail = existingEvent?.imageFileName || existingEvent?.thumbnail || ''
       
       const backendData = transformToBackend(eventData, true, existingThumbnail)
+
+      if (import.meta.env?.DEV) {
+        console.groupCollapsed('[Events] updateEvent payload')
+        console.log('Frontend event data:', eventData)
+        console.log('Backend payload:', backendData)
+        console.groupEnd()
+      }
+
       const response = await eventsService.updateEvent(eventData.id, backendData)
       
       if (response.http_status === 200) {

@@ -3,6 +3,7 @@ import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import ModalLifecycleLock from './ModalLifecycleLock';
 import membersService from '../../services/membersService';
+import membershipPlansService from '../../services/membershipPlansService';
 import CustomDropdown from '../CustomDropdown';
 import '../../styles/components/RenewMembershipModal.scss';
 
@@ -12,22 +13,27 @@ export const RenewMembershipModal = ({
   member,
   onRenewed
 }) => {
-  const [membershipType, setMembershipType] = useState('');
+  const [membershipPlanId, setMembershipPlanId] = useState('');
   const [amount, setAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [membershipPlans, setMembershipPlans] = useState([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(false);
 
   const modalBackdropClose = useModalBackdropClose(onClose);
 
   useBodyScrollLock(isOpen);
 
-  // Map membership types for display
-  const membershipTypeOptions = [
-    { value: 'standard', label: 'Basic Plan' },
-    { value: 'silver', label: 'Silver Plan' },
-    { value: 'gold', label: 'Gold Plan' }
-  ];
+  // Map membership plans for display
+  const membershipPlanOptions = useMemo(() => {
+    return membershipPlans
+      .map((plan) => ({
+        value: plan && plan.id !== undefined && plan.id !== null ? String(plan.id) : '',
+        label: plan?.title || `Plan #${plan?.id ?? ''}`
+      }))
+      .filter((option) => option.value);
+  }, [membershipPlans]);
 
   // Get last payment data to preload
   const lastPayment = useMemo(() => {
@@ -43,11 +49,15 @@ export const RenewMembershipModal = ({
     if (isOpen && member) {
       if (lastPayment) {
         // Preload from last payment
-        setMembershipType(lastPayment.membership_type || 'standard');
+        if (lastPayment.membership_plan_id !== undefined && lastPayment.membership_plan_id !== null) {
+          setMembershipPlanId(String(lastPayment.membership_plan_id));
+        } else {
+          setMembershipPlanId('');
+        }
         setAmount(lastPayment.amount ? parseFloat(lastPayment.amount).toString() : '');
       } else {
         // Default values
-        setMembershipType('standard');
+        setMembershipPlanId('');
         setAmount('');
       }
       setErrorMessage('');
@@ -58,29 +68,86 @@ export const RenewMembershipModal = ({
   // Reset form when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setMembershipType('');
+      setMembershipPlanId('');
       setAmount('');
       setErrorMessage('');
       setSuccessMessage('');
     }
   }, [isOpen]);
 
+  // Fetch membership plans when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let isMounted = true;
+
+    const fetchPlans = async () => {
+      setIsLoadingPlans(true);
+      try {
+        const response = await membershipPlansService.getMembershipPlans({ pagination: 50, page: 1 });
+
+        const extractPlansArray = (payload) => {
+          if (!payload) return [];
+          if (Array.isArray(payload)) return payload;
+          if (payload.data) return extractPlansArray(payload.data);
+          if (payload.items) return extractPlansArray(payload.items);
+          return [];
+        };
+
+        const plansArray = extractPlansArray(response);
+
+        if (isMounted) {
+          setMembershipPlans(plansArray);
+          setMembershipPlanId((currentValue) => {
+            if (currentValue) {
+              const exists = plansArray.some((plan) => String(plan?.id ?? '') === currentValue);
+              if (exists) return currentValue;
+            }
+
+            const fallbackId =
+              (lastPayment?.membership_plan_id ? String(lastPayment.membership_plan_id) : '') ||
+              (member?.membership_plan_id ? String(member.membership_plan_id) : '') ||
+              (plansArray[0] && plansArray[0].id !== undefined ? String(plansArray[0].id) : '');
+
+            return fallbackId || currentValue;
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching membership plans:', error);
+        if (isMounted) {
+          setMembershipPlans([]);
+          setErrorMessage((prev) => prev || error.message || 'Failed to load membership plans.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingPlans(false);
+        }
+      }
+    };
+
+    fetchPlans();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, member, lastPayment]);
+
   // Check if there are changes from initial values
   const hasChanges = useMemo(() => {
     if (!lastPayment) {
       // If no last payment, any value is a change
-      return membershipType !== '' || amount !== '';
+      return membershipPlanId !== '' || amount !== '';
     }
     
     const lastAmount = lastPayment.amount ? parseFloat(lastPayment.amount).toString() : '';
-    const lastType = lastPayment.membership_type || '';
+    const lastPlanId = lastPayment.membership_plan_id ? String(lastPayment.membership_plan_id) : '';
     
-    return membershipType !== lastType || amount !== lastAmount;
-  }, [membershipType, amount, lastPayment]);
+    return membershipPlanId !== lastPlanId || amount !== lastAmount;
+  }, [membershipPlanId, amount, lastPayment]);
 
   // Handle input changes
-  const handleMembershipTypeChange = (e) => {
-    setMembershipType(e.target.value);
+  const handleMembershipPlanChange = (e) => {
+    setMembershipPlanId(e.target.value);
     setErrorMessage('');
     setSuccessMessage('');
   };
@@ -100,7 +167,7 @@ export const RenewMembershipModal = ({
     if (!member || !member.id || isLoading) return;
 
     // Validate required fields
-    if (!membershipType || !amount || amount === '') {
+    if (!membershipPlanId || !amount || amount === '') {
       setErrorMessage('Membership plan and amount are required');
       return;
     }
@@ -123,7 +190,7 @@ export const RenewMembershipModal = ({
 
       // Prepare renewal data
       const renewalData = {
-        membership_type: membershipType,
+        membership_plan_id: Number(membershipPlanId),
         date: dateString,
         amount: amountNum,
         status: 1 // Default status
@@ -154,7 +221,7 @@ export const RenewMembershipModal = ({
     } finally {
       setIsLoading(false);
     }
-  }, [member, membershipType, amount, isLoading, onRenewed, onClose]);
+  }, [member, membershipPlanId, amount, isLoading, onRenewed, onClose]);
 
   // Handle ESC key
   useEffect(() => {
@@ -206,11 +273,12 @@ export const RenewMembershipModal = ({
               Membership Plan<span className="required">*</span>
             </label>
             <CustomDropdown
-              name="membershipType"
-              value={membershipType}
-              onChange={handleMembershipTypeChange}
-              options={membershipTypeOptions}
-              placeholder="Select membership plan"
+              name="membershipPlanId"
+              value={membershipPlanId}
+              onChange={handleMembershipPlanChange}
+              options={membershipPlanOptions}
+              placeholder={isLoadingPlans ? 'Loading plans...' : 'Select membership plan'}
+              disabled={isLoadingPlans}
             />
           </div>
 
@@ -264,7 +332,7 @@ export const RenewMembershipModal = ({
             <button
               className="btn btn-save"
               onClick={handleSave}
-              disabled={!hasChanges || isLoading || !membershipType || !amount}
+              disabled={!hasChanges || isLoading || !membershipPlanId || !amount}
             >
               {isLoading ? 'Saving...' : 'Save Changes'}
             </button>

@@ -752,11 +752,8 @@ export const Events = () => {
                       name="timeZone"
                       value={eventForm.form.timeZone}
                       onChange={handleInputChange}
-                      options={eventForm.TIME_ZONES.map(tz => ({ value: tz, label: tz }))}
-                      formatDisplay={(opt) => {
-                        const match = opt.label.match(/UTC[±−+]\d{2}:\d{2}/)
-                        return match ? match[0] : opt.label
-                      }}
+                      options={eventForm.TIME_ZONES}
+                      formatDisplay={(opt) => opt.value}
                       placeholder="Select time zone"
                     />
                   </div>

@@ -1,3 +1,5 @@
+import { EVENT_TIME_ZONE_OPTIONS } from '../constants/timeZones'
+
 const FIELD_MAPPINGS = {
   frontendToBackend: {
     id: 'id',
@@ -11,7 +13,8 @@ const FIELD_MAPPINGS = {
     description: 'content',
     location: 'location',
     register_link: 'register_link',
-    status: 'status'
+    status: 'status',
+    timezone: 'timezone'
   },
   backendToFrontend: {
     id: 'id',
@@ -28,7 +31,8 @@ const FIELD_MAPPINGS = {
     status: 'status',
     thumbnail: 'imageFileName',
     created_at: 'created_at',
-    updated_at: 'updated_at'
+    updated_at: 'updated_at',
+    timezone: 'timezone'
   }
 }
 
@@ -63,6 +67,38 @@ const VALUE_MAPPINGS = {
       'custom': 'custom'
     }
   }
+}
+
+const DEFAULT_TIME_ZONE_VALUE = 'UTC±00:00'
+
+const extractTimeZoneToken = (value) => {
+  if (typeof value !== 'string') return null
+  const match = value.match(/UTC(?:±|\+|-)\d{2}:\d{2}/)
+  return match ? match[0] : null
+}
+
+const normalizeBackendTimeZone = (value) => {
+  if (!value) return DEFAULT_TIME_ZONE_VALUE
+
+  const directMatch = EVENT_TIME_ZONE_OPTIONS.find(option => option.value === value)
+  if (directMatch) return directMatch.value
+
+  const labelMatch = EVENT_TIME_ZONE_OPTIONS.find(option => option.label === value)
+  if (labelMatch) return labelMatch.value
+
+  const token = extractTimeZoneToken(value)
+  if (token) {
+    const tokenMatch = EVENT_TIME_ZONE_OPTIONS.find(option => option.value === token)
+    if (tokenMatch) return tokenMatch.value
+  }
+
+  return DEFAULT_TIME_ZONE_VALUE
+}
+
+const getTimeZoneLabel = (value) => {
+  const option = EVENT_TIME_ZONE_OPTIONS.find(opt => opt.value === value)
+  if (option) return option.label
+  return value || DEFAULT_TIME_ZONE_VALUE
 }
 
 const transformObject = (source, mappings, valueMappings = {}) => {
@@ -418,7 +454,9 @@ export const transformFromBackend = (backendEvent) => {
     frontendEvent.description = backendEvent.content || ''
   }
   
-  frontendEvent.timeZone = backendEvent.timeZone || 'UTC'
+  const normalizedTimezone = normalizeBackendTimeZone(backendEvent.timezone || backendEvent.timeZone)
+  frontendEvent.timezone = normalizedTimezone
+  frontendEvent.timeZone = getTimeZoneLabel(normalizedTimezone)
   frontendEvent.recurrence = backendEvent.recurrence || null
   
   // Ensure shortDescription is set (it should be mapped from short_description, but add fallback)

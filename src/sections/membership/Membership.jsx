@@ -1049,7 +1049,14 @@ const Membership = () => {
                               <td title={fullName}>{fullName}</td>
                               <td title={email}>{email}</td>
                               <td title={phone}>{phone}</td>
-                              <td>{m.role || '—'}</td>
+                              <td title={m.role || '—'}>
+                                {(() => {
+                                  const normalizedRole = (m.role || '').toString().toLowerCase();
+                                  if (normalizedRole === 'admin') return 'A';
+                                  if (normalizedRole === 'member') return 'M';
+                                  return m.role || '—';
+                                })()}
+                              </td>
                               <td>{m.status !== undefined && m.status !== null ? (Number(m.status) === 1 ? 'Active' : 'Inactive') : '—'}</td>
                               <td>{m.created_at ? new Date(m.created_at).toLocaleDateString('en-US') : '—'}</td>
                               <td>{m.updated_at ? new Date(m.updated_at).toLocaleDateString('en-US') : '—'}</td>

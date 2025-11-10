@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { EVENT_TIME_ZONE_OPTIONS } from '../constants/timeZones'
 
 // Utility to convert plain text to minimal HTML
 const htmlFromPlain = (txt = '') => {
@@ -35,6 +36,39 @@ const deepClone = (obj) => {
   return obj
 }
 
+const TIME_ZONES = EVENT_TIME_ZONE_OPTIONS
+const DEFAULT_TIME_ZONE_VALUE = 'UTC±00:00'
+
+const extractTimeZoneToken = (value) => {
+  if (typeof value !== 'string') return null
+  const match = value.match(/UTC(?:±|\+|-)\d{2}:\d{2}/)
+  return match ? match[0] : null
+}
+
+const normalizeTimeZoneValue = (value) => {
+  if (!value) return DEFAULT_TIME_ZONE_VALUE
+
+  const directMatch = TIME_ZONES.find(option => option.value === value)
+  if (directMatch) return directMatch.value
+
+  const labelMatch = TIME_ZONES.find(option => option.label === value)
+  if (labelMatch) return labelMatch.value
+
+  const token = extractTimeZoneToken(value)
+  if (token) {
+    const tokenMatch = TIME_ZONES.find(option => option.value === token)
+    if (tokenMatch) return tokenMatch.value
+  }
+
+  return DEFAULT_TIME_ZONE_VALUE
+}
+
+const getTimeZoneLabel = (value) => {
+  const option = TIME_ZONES.find(opt => opt.value === value)
+  if (option) return option.label
+  return value || DEFAULT_TIME_ZONE_VALUE
+}
+
 // Utility to build form state from item
 const fromItem = (item) => {
   const recurrence = item.recurrence || {
@@ -61,7 +95,7 @@ const fromItem = (item) => {
     date: item.date || '',
     startTime: item.startTime || '',
     endTime: item.endTime || '',
-    timeZone: item.timeZone || 'UTC±00:00 — Greenwich',
+    timeZone: normalizeTimeZoneValue(item.timezone || item.timeZone),
     eventType: item.eventType || 'conference',
     repeat: repeat,
     shortDescription: item.shortDescription || item.short_description || '',
@@ -74,19 +108,6 @@ const fromItem = (item) => {
     recurrence: recurrence
   }
 }
-
-const TIME_ZONES = [
-  'UTC−08:00 — Pacific',
-  'UTC−06:00 — Central',
-  'UTC−03:00 — South America',
-  'UTC±00:00 — Greenwich',
-  'UTC+01:00 — Central Europe',
-  'UTC+03:00 — Moscow',
-  'UTC+05:30 — India',
-  'UTC+08:00 — East Asia',
-  'UTC+09:00 — Japan',
-  'UTC+12:00 — Oceania'
-]
 
 const EVENT_TYPE_OPTIONS = [
   { label: 'Conference', value: 'conference' },
@@ -115,7 +136,7 @@ export const useEventForm = () => {
     date: '',
     startTime: '09:00',
     endTime: '17:00',
-    timeZone: 'UTC±00:00 — Greenwich',
+    timeZone: DEFAULT_TIME_ZONE_VALUE,
     eventType: 'conference',
     repeat: 'na',
     shortDescription: '',
@@ -339,7 +360,8 @@ export const useEventForm = () => {
       date: form.date,
       startTime: form.startTime,
       endTime: form.endTime,
-      timeZone: form.timeZone,
+      timeZone: getTimeZoneLabel(normalizeTimeZoneValue(form.timeZone)),
+      timezone: normalizeTimeZoneValue(form.timeZone),
       eventType: form.eventType,
       repeat: form.repeat,
       shortDescription: form.shortDescription,

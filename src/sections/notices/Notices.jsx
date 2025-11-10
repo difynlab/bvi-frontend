@@ -269,7 +269,21 @@ export const Notices = () => {
       }
     },
     { key: 'linkUrl', label: 'Upload Link', test: () => (noticeForm?.form?.linkUrl || '').trim().length > 0 },
-    { key: 'file', label: 'PDF File Upload', test: () => !!(noticeForm?.form?.file || noticeForm?.form?.imageFileName) }
+    {
+      key: 'file',
+      label: 'PDF File Upload',
+      test: () => {
+        if (editingNotice) {
+          return !!(
+            noticeForm?.form?.file ||
+            noticeForm?.form?.imageFileName ||
+            editingNotice?.fileUrl ||
+            editingNotice?.file
+          );
+        }
+        return !!noticeForm?.form?.file;
+      }
+    }
   ];
 
   // Validation function
@@ -420,39 +434,37 @@ export const Notices = () => {
     }
 
     try {
-      // Check if the uploaded file is a PDF
+      const isEditMode = Boolean(editingNotice)
       const uploadedFile = payload.file
-      
-      if (uploadedFile && uploadedFile.type === 'application/pdf') {
-        // Check if PDF is too large (15MB limit)
-        const maxSize = 15 * 1024 * 1024; // 15MB in bytes
+      const maxSize = 15 * 1024 * 1024 // 15MB in bytes
+
+      if (uploadedFile) {
+        if (uploadedFile.type !== 'application/pdf') {
+          setPdfGenerationError('Please upload a PDF file.')
+          bannerRef.current?.focus()
+          setIsSubmitting(false)
+          return
+        }
+
         if (uploadedFile.size > maxSize) {
           setPdfGenerationError('PDF size must not exceed 15MB')
           bannerRef.current?.focus()
           setIsSubmitting(false)
           return
         }
-        
-        // Use the uploaded PDF directly - no PDF generation
-        // COMMENTED: PDF generation logic removed - using uploaded PDF directly
-        // const pdfBlob = await pdf(<NoticePDFDocument notice={payload} />).toBlob()
-        // const pdfFile = new File([pdfBlob], `${getSafeFileName(payload)}.pdf`, { 
-        //   type: 'application/pdf' 
-        // })
-        // payload.file = pdfFile
-        
+
         payload.file = uploadedFile
-        
-        // Send to backend with PDF included
+        await handleUpsertNotice(payload)
+      } else if (isEditMode) {
+        delete payload.file
         await handleUpsertNotice(payload)
       } else {
-        // If no PDF file, show error
         setPdfGenerationError('Please upload a PDF file.')
         bannerRef.current?.focus()
         setIsSubmitting(false)
         return
       }
-      
+
     } catch (error) {
       console.error('Error in handleSubmit:', error)
       

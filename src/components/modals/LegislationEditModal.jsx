@@ -83,6 +83,49 @@ const normalizeExistingFiles = (rawFiles = []) => {
     .filter(Boolean);
 };
 
+const resolveFileDownloadUrl = (rawUrl) => {
+  if (!rawUrl || typeof rawUrl !== 'string') return null;
+
+  if (/^https?:\/\//i.test(rawUrl)) {
+    return rawUrl;
+  }
+
+  const baseURL = legislationService?.baseURL || '';
+  if (!baseURL) return rawUrl;
+
+  const isBaseRelative = baseURL.startsWith('/');
+  const sanitizedBase = baseURL.endsWith('/')
+    ? baseURL.slice(0, -1)
+    : baseURL;
+
+  if (isBaseRelative && rawUrl.startsWith('/')) {
+    return rawUrl;
+  }
+
+  const sanitizedPath = rawUrl.startsWith('/')
+    ? rawUrl.slice(1)
+    : rawUrl;
+
+  return `${sanitizedBase}/${sanitizedPath}`;
+};
+
+const getDownloadHeaders = () => {
+  try {
+    const token = typeof legislationService.getToken === 'function'
+      ? legislationService.getToken()
+      : null;
+
+    if (!token) return {};
+
+    return {
+      Authorization: `Bearer ${token}`,
+    };
+  } catch (error) {
+    console.warn('LegislationEditModal.getDownloadHeaders: failed to build auth headers', error);
+    return {};
+  }
+};
+
 const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) => {
   const [links, setLinks] = useState(() => [createEmptyLink()]);
   const [fileRows, setFileRows] = useState(() => [createEmptyFileRow()]);
@@ -290,7 +333,18 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
 
   const createFileFromExistingUrl = async (row, sanitizedFileName, displayTitle) => {
     try {
-      const response = await fetch(row.fileUrl, { credentials: 'include' });
+      const downloadUrl = resolveFileDownloadUrl(row.fileUrl);
+      if (!downloadUrl) {
+        throw new Error('Missing file URL for existing attachment.');
+      }
+
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          ...getDownloadHeaders(),
+        }
+      });
       if (!response.ok) {
         throw new Error(`Failed to fetch existing file: ${response.status}`);
       }

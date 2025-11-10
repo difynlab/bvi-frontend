@@ -202,6 +202,25 @@ class EventsService {
         }
       })
 
+      if (import.meta.env?.DEV) {
+        const entries = {}
+        for (const [key, value] of formData.entries()) {
+          if (value instanceof File) {
+            entries[key] = {
+              name: value.name,
+              size: value.size,
+              type: value.type
+            }
+          } else {
+            entries[key] = value
+          }
+        }
+        console.groupCollapsed('[EventsService] createEvent FormData')
+        console.log('Raw event data:', eventData)
+        console.log('FormData entries:', entries)
+        console.groupEnd()
+      }
+
       const response = await fetch(`${this.baseURL}/events`, {
         method: 'POST',
         headers: this.getHeaders(false), // false = no incluir Content-Type para FormData
@@ -235,6 +254,25 @@ class EventsService {
           formData.append(key, eventData[key])
         }
       })
+
+      if (import.meta.env?.DEV) {
+        const entries = {}
+        for (const [key, value] of formData.entries()) {
+          if (value instanceof File) {
+            entries[key] = {
+              name: value.name,
+              size: value.size,
+              type: value.type
+            }
+          } else {
+            entries[key] = value
+          }
+        }
+        console.groupCollapsed('[EventsService] updateEvent FormData')
+        console.log('Raw event data:', eventData)
+        console.log('FormData entries:', entries)
+        console.groupEnd()
+      }
 
       const response = await fetch(`${this.baseURL}/events/${id}`, {
         method: 'POST',

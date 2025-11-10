@@ -6,6 +6,7 @@ import { setProfile, getProfile, ensureProfile } from '../helpers/profileStorage
 import { uploadAvatar } from '../api/avatarApi'
 import { registerUser, loginUser, logoutUser, getCurrentSession } from '../api/authApi'
 import { getProfile as fetchBackendProfile } from '../services/profileService'
+import { resolveProfileImageUrl } from '../utils/profileImage'
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -39,11 +40,15 @@ export const AuthProvider = ({ children }) => {
 
       // Map fields from backend response
       // Get profile picture URL from server (only server URLs, never base64)
-      const profilePictureUrl = data.profile_picture_url || 
-                               data.image_url || 
-                               data.original_image || 
-                               data.blurred_image || 
-                               '';
+      const imagePath = data.profile_picture_url ||
+                        data.image_url ||
+                        data.image ||
+                        data.profile_picture ||
+                        data.profilePicture ||
+                        data.original_image ||
+                        data.blurred_image ||
+                        '';
+      const profilePictureUrl = resolveProfileImageUrl(imagePath);
       
       const mapped = {
         ...baseUser,
@@ -372,13 +377,14 @@ export const AuthProvider = ({ children }) => {
 
       // Persist per-user profile and session
       // Only save server URLs, never save base64 images to localStorage
-      const profilePictureToSave = (next.profilePicture && !next.profilePicture.startsWith('data:')) 
-        ? next.profilePicture 
-        : (next.profilePictureUrl || '');
+      const resolvedProfilePicture = resolveProfileImageUrl(next.profilePicture || next.profilePictureUrl || '');
+      next.profilePicture = resolvedProfilePicture;
+      next.profilePictureUrl = resolvedProfilePicture;
+      const profilePictureToSave = resolvedProfilePicture;
       
       setProfile(next, {
         profilePicture: profilePictureToSave, // Only server URL, never base64
-        profilePictureUrl: next.profilePictureUrl || '',
+        profilePictureUrl: profilePictureToSave,
         profilePictureSync: next.profilePictureSync || '',
         first_name: next.first_name || '',
         last_name: next.last_name || '',
@@ -398,8 +404,8 @@ export const AuthProvider = ({ children }) => {
             const { profilePicture, ...nextWithoutImage } = next
             const nextWithUrlOnly = {
               ...nextWithoutImage,
-              profilePicture: next.profilePictureUrl || '',
-              profilePictureUrl: next.profilePictureUrl || ''
+              profilePicture: profilePictureToSave,
+              profilePictureUrl: profilePictureToSave
             }
             
             try {

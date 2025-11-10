@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { getSession } from '../helpers/authStorage';
 import { useAuth } from '../context/useAuth';
 import { updateProfile } from '../services/profileService';
+import { resolveProfileImageUrl } from '../utils/profileImage';
 
 export function useSettingsForm() {
   const ctx = useAuth();
@@ -79,10 +80,13 @@ export function useSettingsForm() {
         };
     
     // Get profile picture from server only
-    const profilePicture = currentUser.profile_picture_url || 
-                          currentUser.image_url || 
-                          currentUser.profilePictureUrl || 
-                          '';
+    const imagePath = currentUser.profile_picture_url ||
+                      currentUser.image_url ||
+                      currentUser.image ||
+                      currentUser.profilePictureUrl ||
+                      currentUser.profilePicture ||
+                      '';
+    const profilePicture = resolveProfileImageUrl(imagePath);
     
     return {
       firstName,
@@ -298,9 +302,12 @@ export function useSettingsForm() {
         : { code: form.countryCode || '+1', number: form.phoneNumber?.trim() || '' };
 
       // Get profile picture URL from server response (only server URLs, no base64)
-      const profilePictureUrl = updatedProfileData?.profile_picture_url || 
-                                updatedProfileData?.image_url || 
-                                '';
+      const updatedImagePath = updatedProfileData?.profile_picture_url ||
+                               updatedProfileData?.image_url ||
+                               updatedProfileData?.image ||
+                               updatedProfileData?.profilePicture ||
+                               '';
+      const profilePictureUrl = resolveProfileImageUrl(updatedImagePath);
       
       // Only save server URL, never save base64 to localStorage
       // If no URL from server, use empty string (don't fallback to form.profilePicture which might be base64)
@@ -326,6 +333,7 @@ export function useSettingsForm() {
           email: localProfileUpdate.email,
           phoneNumber: localProfileUpdate.phoneNumber,
           profilePicture: localProfileUpdate.profilePicture,
+          profilePictureUrl: localProfileUpdate.profilePicture,
         });
       }
       
@@ -359,10 +367,13 @@ export function useSettingsForm() {
         };
     
     // Get profile picture from server only
-    const profilePicture = currentUser.profile_picture_url || 
-                          currentUser.image_url || 
-                          currentUser.profilePictureUrl || 
-                          '';
+    const imagePath = currentUser.profile_picture_url ||
+                      currentUser.image_url ||
+                      currentUser.image ||
+                      currentUser.profilePictureUrl ||
+                      currentUser.profilePicture ||
+                      '';
+    const profilePicture = resolveProfileImageUrl(imagePath);
     
     // Get data from server only (no localStorage)
     const newBaseUser = {

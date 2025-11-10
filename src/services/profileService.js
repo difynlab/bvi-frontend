@@ -4,6 +4,8 @@
  * Uses fetch API (consistent with other services in the project)
  */
 
+import { resolveProfileImageUrl } from '../utils/profileImage';
+
 /**
  * Get token from localStorage
  * @returns {string|null} Token or null
@@ -103,6 +105,37 @@ async function handleResponse(response) {
  */
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
+function normalizeProfileData(profile) {
+  if (!profile || typeof profile !== 'object') return profile;
+
+  const imagePath =
+    profile.profile_picture_url ||
+    profile.image_url ||
+    profile.image ||
+    profile.profile_picture ||
+    profile.original_image ||
+    profile.blurred_image ||
+    '';
+
+  const resolvedImage = resolveProfileImageUrl(imagePath);
+
+  const next = { ...profile };
+
+  if (resolvedImage) {
+    if (!next.profile_picture_url) {
+      next.profile_picture_url = resolvedImage;
+    }
+    if (!next.image_url) {
+      next.image_url = resolvedImage;
+    }
+  }
+
+  next.profilePictureUrl = resolvedImage || next.profilePictureUrl || '';
+  next.profilePicture = resolvedImage || next.profilePicture || '';
+
+  return next;
+}
+
 /**
  * Convert base64 data URL to File object
  * @param {string} dataUrl - Base64 data URL (e.g., "data:image/jpeg;base64,/9j/4AAQ...")
@@ -173,10 +206,10 @@ export async function getProfile(token = null) {
 
     // Laravel returns: { message: string, data: UserProfile }
     if (data && data.data) {
-      return data.data;
+      return normalizeProfileData(data.data);
     }
 
-    return data;
+    return normalizeProfileData(data);
   } catch (error) {
     console.error('Error fetching profile:', error);
     throw error;
@@ -316,10 +349,10 @@ export async function updateProfile(
 
     // Laravel returns: { message: string, data: UserProfile }
     if (data && data.data) {
-      return data.data;
+      return normalizeProfileData(data.data);
     }
 
-    return data;
+    return normalizeProfileData(data);
   } catch (error) {
     console.error('Error updating profile:', error);
     throw error;

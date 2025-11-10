@@ -38,9 +38,9 @@ export const validateNewsletter = (form) => {
     return { ok: false, message: 'Image is required' }
   }
   
-  // Check image size if file is present (max 5MB)
-  if (form.file && form.file.size > 5 * 1024 * 1024) {
-    return { ok: false, message: 'Image size must not exceed 5MB' }
+  // Check file size if file is present (max 15MB)
+  if (form.file && form.file.size > 15 * 1024 * 1024) {
+    return { ok: false, message: 'The file must not exceed 15MB' }
   }
   
   return { ok: true, message: '' }
