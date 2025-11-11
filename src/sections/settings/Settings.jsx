@@ -9,7 +9,7 @@ import CustomDropdown from '../../components/CustomDropdown';
 import '../../styles/sections/Settings.scss';
 
 export default function Settings() {
-  const { user, toggleRole } = useAuth();
+  const { user } = useAuth();
   
   const {
     form,

@@ -275,30 +275,40 @@ export const useNoticesState = () => {
   }, [])
 
   const handleConfirmDelete = useCallback(async () => {
-    if (categoryToDelete) {
-      try {
-        await noticeCategoriesService.deleteNoticeCategory(categoryToDelete)
-        
-        // Refresh categories from API
-        await refreshCategories()
-        
-        // Switch to first remaining category if current was deleted
-        if (activeCategory === categoryToDelete) {
-          const remainingCategories = categories.filter(cat => cat.id !== categoryToDelete)
-          if (remainingCategories.length > 0) {
-            setActiveCategory(remainingCategories[0].id)
-          } else {
-            setActiveCategory('')
-          }
-        }
-        
-        setConfirmModalOpen(false)
-        setCategoryToDelete(null)
-      } catch (error) {
-        console.error('Error deleting category:', error)
+    if (!categoryToDelete) return
+
+    try {
+      await noticeCategoriesService.deleteNoticeCategory(categoryToDelete)
+
+      const updatedCategories = categories.filter(cat => cat.id !== categoryToDelete)
+      setCategories(updatedCategories)
+
+      // Persist updated cache immediately so UI stays in sync on reload
+      localStorage.setItem('bvi.notices.categoriesCache', JSON.stringify(updatedCategories))
+      localStorage.setItem('bvi.notices.categoriesLoaded', 'true')
+      localStorage.setItem('bvi.notices.categoriesFromAPI', 'true')
+
+      // Remove notices that belonged to the deleted category
+      setNotices(prevNotices => prevNotices.filter(notice => notice.noticeType !== categoryToDelete))
+
+      if (activeCategory === categoryToDelete) {
+        setActiveCategory(updatedCategories[0]?.id || '')
       }
+
+      setConfirmModalOpen(false)
+      setCategoryToDelete(null)
+
+      // Trigger a background reload to stay aligned with backend
+      setCategoriesLoaded(false)
+      setShouldReloadCategories(true)
+    } catch (error) {
+      console.error('Error deleting category:', error)
     }
-  }, [categoryToDelete, activeCategory, categories, refreshCategories])
+  }, [
+    categoryToDelete,
+    categories,
+    activeCategory
+  ])
 
   const handleEditCategory = useCallback((id) => {
     const category = categories.find(cat => cat.id === id)

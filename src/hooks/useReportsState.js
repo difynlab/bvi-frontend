@@ -394,30 +394,45 @@ export function useReportsState() {
   }, [editingCategory, refreshCategories]);
 
   const handleConfirmDelete = useCallback(async () => {
-    if (categoryToDelete) {
-      try {
-        await reportCategoriesService.deleteReportCategory(categoryToDelete);
-        
-        // Refresh categories from API
-        await refreshCategories();
-        
-        // Switch to first remaining category if current was deleted
-        if (activeCategoryId === categoryToDelete) {
-          const remainingCategories = data.categories.filter(cat => cat.id !== categoryToDelete);
-          if (remainingCategories.length > 0) {
-            setActiveCategoryId(remainingCategories[0].id);
-          } else {
-            setActiveCategoryId(null);
-          }
-        }
-        
-        setConfirmModalOpen(false);
-        setCategoryToDelete(null);
-      } catch (error) {
-        console.error('Error deleting report category:', error);
+    if (!categoryToDelete) return;
+
+    try {
+      let updatedCategories = [];
+      let filteredReports = [];
+
+      await reportCategoriesService.deleteReportCategory(categoryToDelete);
+
+      setData(prev => {
+        updatedCategories = prev.categories.filter(cat => cat.id !== categoryToDelete);
+        filteredReports = prev.items.filter(report => report.report_category_id !== categoryToDelete);
+
+        // Keep local caches in sync so the UI stays updated across navigation
+        setCachedCategories(updatedCategories);
+        setCachedReports(filteredReports);
+
+        return {
+          categories: updatedCategories,
+          items: filteredReports
+        };
+      });
+
+      if (activeCategoryId === categoryToDelete) {
+        setActiveCategoryId(updatedCategories[0]?.id || null);
       }
+
+      setConfirmModalOpen(false);
+      setCategoryToDelete(null);
+
+      // Trigger background refresh to stay aligned with backend
+      setShouldReloadCategories(true);
+      setShouldReloadReports(true);
+    } catch (error) {
+      console.error('Error deleting report category:', error);
     }
-  }, [categoryToDelete, activeCategoryId, data.categories, refreshCategories]);
+  }, [
+    categoryToDelete,
+    activeCategoryId
+  ]);
 
   const openCreateReportModal = useCallback(() => {
     setEditingReport(null);

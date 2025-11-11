@@ -11,6 +11,7 @@ import MembershipPlans from './MembershipPlans';
 import ContactPersonDetails from './ContactPersonDetails';
 import importantInfoService from '../../services/importantInfoService';
 import ImportantInfoSkeleton from '../../components/subscription/ImportantInfoSkeleton';
+import { useAuth } from '../../context/useAuth';
 
 const IMPORTANT_INFO_DEFAULTS = {
   eligibility: {
@@ -31,6 +32,7 @@ const IMPORTANT_INFO_DEFAULTS = {
 };
 
 const Subscription = () => {
+  const { user } = useAuth();
   const [openInfo, setOpenInfo] = useState(null); // 'eligibility' | 'benefits' | 'payment' | null
   const [pickerOpen, setPickerOpen] = useState(false);
   const [importantInfoData, setImportantInfoData] = useState(null);
@@ -306,7 +308,7 @@ const Subscription = () => {
 
         {activeTab === 'Membership Plans' && (
           <section key="membership-plans" className="subscription-panel subscription-panel--plans">
-            <MembershipPlans key="plans-component" />
+            <MembershipPlans key="plans-component" isAdmin={user?.role === 'admin'} />
           </section>
         )}
 

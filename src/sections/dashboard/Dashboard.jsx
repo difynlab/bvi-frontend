@@ -11,7 +11,11 @@ const Dashboard = () => {
   const { user } = useAuth()
   const { events, loading: eventsLoading } = useEvents()
   const { notices, loading: noticesLoading } = useNotices()
-  const { newsletters } = useNewslettersState()
+  const {
+    newsletters,
+    loading: newslettersLoading,
+    initialLoading: newslettersInitialLoading
+  } = useNewslettersState()
   const [, forceUpdate] = useState({})
 
   // Optional membership data - using fallbacks if no hook exists
@@ -250,7 +254,17 @@ const Dashboard = () => {
         <div className="dashboard-card newsletters-card">
           <h3 className="card-title">Latest News Letters<span className="card-newsletters-icon"><i className="bi bi-file-earmark-text"></i></span></h3>
           <div className="list">
-            {latestNewsletters.length > 0 ? (
+            {newslettersLoading || newslettersInitialLoading ? (
+              <>
+                {[1, 2].map((index) => (
+                  <div key={`newsletter-skeleton-${index}`} className="list-item shimmer-newsletter-item">
+                    <div className="item-title shimmer-newsletter-title"></div>
+                    <div className="newsletter-item-description shimmer-newsletter-description"></div>
+                    <div className="item-meta shimmer-newsletter-date"></div>
+                  </div>
+                ))}
+              </>
+            ) : latestNewsletters.length > 0 ? (
               latestNewsletters.map((newsletter) => {
                 const parsedNewsletter = parseNewsletterData(newsletter)
                 return (
@@ -262,16 +276,7 @@ const Dashboard = () => {
                 )
               })
             ) : (
-              <>
-                {/* Newsletter shimmer loaders */}
-                {[1, 2].map((index) => (
-                  <div key={`newsletter-skeleton-${index}`} className="list-item shimmer-newsletter-item">
-                    <div className="item-title shimmer-newsletter-title"></div>
-                    <div className="newsletter-item-description shimmer-newsletter-description"></div>
-                    <div className="item-meta shimmer-newsletter-date"></div>
-                  </div>
-                ))}
-              </>
+              <div className="newsletters-empty">No newsletters yet...</div>
             )}
           </div>
           <div className="card-footer">
