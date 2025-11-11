@@ -617,12 +617,13 @@ const MembershipPlans = ({ isAdmin = false }) => {
         <div className="membership-plans-header">
           <button
             type="button"
-            className="membership-plans__add-btn"
+            className="membership-plans__add-btn membership-plans__add-btn--fab"
             onClick={handleAddPlan}
             disabled={isLoading}
+            aria-label="Add plan"
           >
-            <i className="bi bi-plus-lg"></i>
-            Add Plan
+            <i className="bi bi-plus-lg" aria-hidden="true"></i>
+            <span className="membership-plans__add-btn-label">Add Plan</span>
           </button>
         </div>
       )}
@@ -661,8 +662,8 @@ const MembershipPlans = ({ isAdmin = false }) => {
                 onClick={handleAddPlan}
                 disabled={isLoading}
               >
-                <i className="bi bi-plus-lg"></i>
-                Create first plan
+                <i className="bi bi-plus-lg" aria-hidden="true"></i>
+                <span className="membership-plans__add-btn-label">Create first plan</span>
               </button>
             )}
           </div>

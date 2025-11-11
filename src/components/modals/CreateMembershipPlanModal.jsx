@@ -170,7 +170,7 @@ export const CreateMembershipPlanModal = ({
               type="text"
               value={formState.title}
               onChange={(event) => handleInputChange('title', event.target.value)}
-              placeholder="Plan Gold Premium"
+              placeholder="Gold Premium Plan"
               className="text-input"
             />
           </div>
@@ -183,7 +183,7 @@ export const CreateMembershipPlanModal = ({
               id="plan-description"
               value={formState.description}
               onChange={(event) => handleInputChange('description', event.target.value)}
-              placeholder="Plan actualizado con nuevos beneficios"
+              placeholder="Plan updated with new benefits"
               className="textarea-input"
             />
           </div>
@@ -196,7 +196,7 @@ export const CreateMembershipPlanModal = ({
               id="plan-eligibility"
               value={formState.eligibility_criteria}
               onChange={(event) => handleInputChange('eligibility_criteria', event.target.value)}
-              placeholder="Empresas con más de 100 empleados"
+              placeholder="Companies with more than 100 employees"
               className="textarea-input"
             />
           </div>
@@ -213,7 +213,7 @@ export const CreateMembershipPlanModal = ({
                     className="plan-perk-input"
                     value={perk}
                     onChange={(event) => handlePerkChange(index, event.target.value)}
-                    placeholder="Añade un beneficio"
+                    placeholder="Add a benefit"
                   />
                   <button
                     type="button"

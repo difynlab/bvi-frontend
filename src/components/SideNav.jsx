@@ -293,9 +293,7 @@ const SideNav = () => {
           <NavLink to="/profile" className={`user-profile ${isAnimated ? 'nav-item-animate--13' : 'nav-item-hidden'}`} {...navItemGuard}>
             <div className="user-avatar" aria-hidden={false}>
               {(() => {
-                // TO DO CHANGE IMAGES: when server image handling is finalized, reconsider priority/order
-                // Prioritize local storage dataURL first to avoid broken remote URLs; fallback to backend URL
-                const avatarSrc = user?.profilePicture || user?.profilePictureUrl || '';
+                const avatarSrc = user?.original_image || user?.profilePictureUrl || user?.profile_picture_url || '';
                 return avatarSrc ? (
                   <img className="user-avatar-img" src={avatarSrc} alt={`${user?.first_name || 'Member'} profile`} />
                 ) : (
@@ -323,8 +321,7 @@ const SideNav = () => {
           <NavLink to="/profile" className={`user-profile ${isAnimated ? 'nav-item-animate--11' : 'nav-item-hidden'}`} {...navItemGuard}>
             <div className="user-avatar" aria-hidden={false}>
               {(() => {
-                // TO DO CHANGE IMAGES: when server image handling is finalized, reconsider priority/order
-                const avatarSrc = user?.profilePicture || user?.profilePictureUrl || '';
+                const avatarSrc = user?.original_image || user?.profilePictureUrl || user?.profile_picture_url || '';
                 return avatarSrc ? (
                   <img className="user-avatar-img" src={avatarSrc} alt={`${user?.first_name || 'Member'} profile`} />
                 ) : (

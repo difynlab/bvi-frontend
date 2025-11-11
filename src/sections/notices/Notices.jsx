@@ -820,7 +820,18 @@ export const Notices = () => {
                             <div className="notice-preview-field">
                               <span className="notice-preview-label">Link:</span>
                               <span className="notice-preview-value">
-                                {notice.linkUrl || 'No link provided'}
+                                {typeof notice.linkUrl === 'string' && notice.linkUrl.trim() ? (
+                                  <a
+                                    href={notice.linkUrl}
+                                    className="notice-preview-link"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {notice.linkUrl}
+                                  </a>
+                                ) : (
+                                  'No link provided'
+                                )}
                               </span>
                             </div>
                           </div>

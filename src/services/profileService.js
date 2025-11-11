@@ -108,30 +108,36 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api
 function normalizeProfileData(profile) {
   if (!profile || typeof profile !== 'object') return profile;
 
-  const imagePath =
+  const originalImageRaw = profile.original_image || '';
+  const blurredImageRaw = profile.blurred_image || '';
+
+  const fallbackImagePath =
     profile.profile_picture_url ||
     profile.image_url ||
     profile.image ||
     profile.profile_picture ||
-    profile.original_image ||
-    profile.blurred_image ||
+    profile.profilePicture ||
     '';
 
-  const resolvedImage = resolveProfileImageUrl(imagePath);
+  const resolvedOriginalImage = resolveProfileImageUrl(originalImageRaw || fallbackImagePath);
+  const resolvedBlurredImage = resolveProfileImageUrl(blurredImageRaw);
 
   const next = { ...profile };
 
-  if (resolvedImage) {
-    if (!next.profile_picture_url) {
-      next.profile_picture_url = resolvedImage;
-    }
-    if (!next.image_url) {
-      next.image_url = resolvedImage;
-    }
+  if (resolvedOriginalImage) {
+    next.profile_picture_url = resolvedOriginalImage;
+    next.image_url = resolvedOriginalImage;
+    next.profilePictureUrl = resolvedOriginalImage;
+    next.profilePicture = resolvedOriginalImage;
+    next.original_image = resolvedOriginalImage;
+  } else {
+    next.profilePictureUrl = next.profilePictureUrl || '';
+    next.profilePicture = next.profilePicture || '';
   }
 
-  next.profilePictureUrl = resolvedImage || next.profilePictureUrl || '';
-  next.profilePicture = resolvedImage || next.profilePicture || '';
+  if (resolvedBlurredImage) {
+    next.blurred_image = resolvedBlurredImage;
+  }
 
   return next;
 }

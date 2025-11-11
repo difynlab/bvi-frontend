@@ -1715,6 +1715,12 @@
         font-size: 16px;
       }
 
+      .membership-plans__add-btn-label {
+        font-size: inherit;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
       &:hover {
         background-color: #0b3372;
         box-shadow: 0 4px 8px rgba(16, 67, 148, 0.25);
@@ -1727,11 +1733,19 @@
     }
     
     .plans-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 24px;
-      width: 100%;
-      align-items: stretch;
+      @supports (display: grid) {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 24px;
+        width: 100%;
+      }
+
+      @supports not (display: grid) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        width: 100%;
+      }
     }
 
     .membership-plans-empty-state {
@@ -1789,9 +1803,7 @@
     }
 
     .plan-card {
-      flex: 1 1 calc(25% - 24px);
-      min-width: 220px;
-      max-width: calc(25% - 24px);
+      min-width: 0;
       background-color: white;
       border-radius: 12px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -1836,9 +1848,9 @@
         color: #FFFFFF;
       }
       &.custom {
-        background-color: #f8f9fa;
+        background: linear-gradient(to right, #262626, #464444);
         .plan-title {
-          color: #104394;
+          color: #ffffff;
         }
       }
     }
@@ -1847,7 +1859,6 @@
       margin: 0;
       font-size: 18px;
       font-weight: 600;
-      color: #262626;
       flex: 1;
     }
 
@@ -1911,7 +1922,9 @@
 
     .plan-remove-btn {
       display: inline-flex;
+      justify-content: center;
       align-items: center;
+      width: 100%;
       gap: 8px;
       padding: 10px 16px;
       border-radius: 8px;
@@ -2154,11 +2167,18 @@
     }
 
     @media (max-width: 768px) {
+      padding-bottom: 96px;
+
       .plans-container {
         margin: 16px 0;
-        flex-direction: column;
-        gap: 30px;
+        gap: 24px;
         height: fit-content;
+        @supports (display: grid) {
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+        @supports not (display: grid) {
+          flex-direction: column;
+        }
         p {
           font-size: 14px;
         }
@@ -2170,11 +2190,54 @@
       
       .plan-card {
         width: 100%;
+        max-width: 100%;
+        flex: 0 0 auto;
+        height: auto;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         &:hover {
           box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
       }
+
+      .membership-plans-header {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .membership-plans__add-btn--fab {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 24px rgba(16, 67, 148, 0.25);
+        z-index: 1000;
+
+        i {
+          font-size: 28px;
+          margin: 0;
+          color: #fff;
+        }
+
+        .membership-plans__add-btn-label {
+          display: none;
+        }
+      }
+
+      .membership-plans__add-btn--fab:focus-visible {
+        outline: 2px solid rgba(16, 67, 148, 0.35);
+        outline-offset: 4px;
+      }
+
+      .membership-plans__add-btn--fab:hover {
+        box-shadow: 0 12px 28px rgba(16, 67, 148, 0.3);
+      }
+
       .plan-title {
         font-size: 20px;
       }
@@ -2203,6 +2266,9 @@
     @media (max-width: 480px) {
       .plans-container {
         margin: 12px 0;
+        @supports (display: grid) {
+          grid-template-columns: 1fr;
+        }
       }
 
       .plan-header {
@@ -2247,7 +2313,6 @@
       .plan-card {
         width: 100%;
         max-width: 100%;
-        flex: 1 1 100%;
       }
     }
   }

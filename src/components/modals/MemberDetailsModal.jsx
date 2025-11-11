@@ -3,9 +3,71 @@ import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import ModalLifecycleLock from './ModalLifecycleLock';
 import membersService from '../../services/membersService';
+import membershipPlansService from '../../services/membershipPlansService';
 import CustomDropdown from '../CustomDropdown';
 import { RenewMembershipModal } from './RenewMembershipModal';
 import '../../styles/components/MemberDetailsModal.scss';
+
+const extractPlanInfo = (planLike) => {
+  if (!planLike) return { id: null, title: null };
+
+  if (typeof planLike === 'string') {
+    const trimmed = planLike.trim();
+    return { id: null, title: trimmed || null };
+  }
+
+  if (typeof planLike === 'number') {
+    return { id: String(planLike), title: null };
+  }
+
+  if (typeof planLike === 'object') {
+    if (planLike.id !== undefined && planLike.id !== null) {
+      const candidateTitle =
+        planLike.title ||
+        planLike.name ||
+        planLike.plan_title ||
+        planLike.plan_name ||
+        planLike.membership_plan_title ||
+        planLike.membership_plan_name ||
+        null;
+
+      return {
+        id: String(planLike.id),
+        title: candidateTitle ? String(candidateTitle).trim() || null : null
+      };
+    }
+
+    const nestedSource =
+      (planLike.membership_plan_id && planLike.membership_plan_id !== planLike
+        ? planLike.membership_plan_id
+        : null) ??
+      (planLike.plan_id && planLike.plan_id !== planLike ? planLike.plan_id : null) ??
+      (planLike.membershipPlanId && planLike.membershipPlanId !== planLike
+        ? planLike.membershipPlanId
+        : null) ??
+      (planLike.planId && planLike.planId !== planLike ? planLike.planId : null) ??
+      null;
+
+    const nestedInfo = nestedSource ? extractPlanInfo(nestedSource) : { id: null, title: null };
+
+    const candidateTitle =
+      planLike.title ||
+      planLike.name ||
+      planLike.plan_title ||
+      planLike.plan_name ||
+      planLike.membership_plan_title ||
+      planLike.membership_plan_name ||
+      nestedInfo.title ||
+      null;
+
+    return {
+      id: nestedInfo.id,
+      title: candidateTitle ? String(candidateTitle).trim() || null : null
+    };
+  }
+
+  return { id: null, title: null };
+};
 
 export const MemberDetailsModal = ({
   isOpen,
@@ -23,6 +85,7 @@ export const MemberDetailsModal = ({
   const [fetchError, setFetchError] = useState('');
   const [currentMember, setCurrentMember] = useState(member);
   const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
+  const [plansById, setPlansById] = useState({});
 
   const modalBackdropClose = useModalBackdropClose(onClose);
 
@@ -69,6 +132,150 @@ export const MemberDetailsModal = ({
       setCurrentMember(member);
     }
   }, [isOpen, member]);
+
+  const addPlansToMap = useCallback((plans) => {
+    if (!Array.isArray(plans) || plans.length === 0) return;
+
+    setPlansById((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      plans.forEach((plan) => {
+        const { id, title } = extractPlanInfo(plan);
+        if (!id) return;
+
+        const trimmedTitle = title ? title.trim() : '';
+
+        if (!next[id]) {
+          next[id] = trimmedTitle;
+          changed = true;
+        } else if (trimmedTitle && next[id] !== trimmedTitle) {
+          next[id] = trimmedTitle;
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!currentMember) return;
+
+    const possiblePlans = [];
+
+    if (currentMember.membership_plan) {
+      possiblePlans.push(currentMember.membership_plan);
+    }
+
+    if (Array.isArray(currentMember.membership_plans)) {
+      possiblePlans.push(...currentMember.membership_plans);
+    }
+
+    if (
+      currentMember.membership_plan_id !== undefined &&
+      currentMember.membership_plan_id !== null
+    ) {
+      possiblePlans.push(currentMember.membership_plan_id);
+
+      const memberPlanInfo = extractPlanInfo(currentMember.membership_plan_id);
+      const memberPlanTitle =
+        currentMember.membership_plan_title || currentMember.membership_plan_name || null;
+
+      if (memberPlanInfo.id && memberPlanTitle) {
+        possiblePlans.push({
+          id: memberPlanInfo.id,
+          title: memberPlanTitle
+        });
+      }
+    }
+
+    const paymentsSource = (() => {
+      if (Array.isArray(currentMember.payments)) return currentMember.payments;
+      if (Array.isArray(currentMember.payment_history)) return currentMember.payment_history;
+      if (currentMember.payments && Array.isArray(currentMember.payments.data)) {
+        return currentMember.payments.data;
+      }
+      return [];
+    })();
+
+    paymentsSource.forEach((payment) => {
+      if (!payment) return;
+
+      if (payment.membership_plan) {
+        possiblePlans.push(payment.membership_plan);
+      }
+      if (payment.plan) {
+        possiblePlans.push(payment.plan);
+      }
+
+      const paymentPlanId =
+        payment.membership_plan_id ??
+        payment.plan_id ??
+        payment.membership_plan?.id ??
+        payment.plan?.id ??
+        null;
+
+      if (paymentPlanId !== undefined && paymentPlanId !== null) {
+        possiblePlans.push(paymentPlanId);
+
+        const paymentPlanInfo = extractPlanInfo(payment.membership_plan_id || paymentPlanId);
+        const indirectTitle =
+          payment.plan_name ||
+          payment.plan_title ||
+          payment.membership_plan_name ||
+          payment.membership_plan_title ||
+          payment.membership_plan?.title ||
+          payment.plan?.title ||
+          payment.membership_plan?.name ||
+          payment.plan?.name ||
+          null;
+
+        if (paymentPlanInfo.id && indirectTitle) {
+          possiblePlans.push({
+            id: paymentPlanInfo.id,
+            title: indirectTitle
+          });
+        }
+      }
+    });
+
+    addPlansToMap(possiblePlans);
+  }, [currentMember, addPlansToMap]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let isMounted = true;
+
+    const extractPlansArray = (payload) => {
+      if (!payload) return [];
+      if (Array.isArray(payload)) return payload;
+      if (payload.data) return extractPlansArray(payload.data);
+      if (payload.items) return extractPlansArray(payload.items);
+      if (payload.plans) return extractPlansArray(payload.plans);
+      return [];
+    };
+
+    const fetchPlans = async () => {
+      try {
+        const response = await membershipPlansService.getMembershipPlans({ pagination: 50, page: 1 });
+        if (!isMounted) return;
+        const plansArray = extractPlansArray(response);
+        addPlansToMap(plansArray);
+      } catch (error) {
+        if (isMounted) {
+          console.error('Error fetching membership plans:', error);
+        }
+      }
+    };
+
+    fetchPlans();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, addPlansToMap]);
 
   // Initialize edit data when currentMember changes
   useEffect(() => {
@@ -120,16 +327,19 @@ export const MemberDetailsModal = ({
   // Build full image URL from server
   const buildProfileImageUrl = useCallback((imagePath) => {
     if (!imagePath) return null;
-    
-    // Si ya es una URL completa, devolverla tal como está
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+
+    if (/^(https?:)?\/\//i.test(imagePath)) {
       return imagePath;
     }
-    
-    // Construir URL completa desde el servidor
+
     const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
     const apiBaseURL = baseURL.replace('/api', '');
-    return `${apiBaseURL}/storage/profiles/${imagePath}`;
+    const normalizedPath = imagePath.replace(/^\/+/, '');
+    const hasDirectory = normalizedPath.includes('/') || normalizedPath.toLowerCase().startsWith('storage/');
+    const defaultDirectory = 'storage/users';
+    const pathWithDirectory = hasDirectory ? normalizedPath : `${defaultDirectory}/${normalizedPath}`;
+
+    return `${apiBaseURL}/${pathWithDirectory.replace(/^\/+/, '')}`;
   }, []);
 
   // Get profile image URL from member data (consumed from server)
@@ -137,7 +347,8 @@ export const MemberDetailsModal = ({
     if (!currentMember) return null;
     
     // Try different possible field names from backend
-    const imagePath = currentMember.profile_picture_url || 
+    const imagePath = currentMember.original_image ||
+                     currentMember.profile_picture_url || 
                      currentMember.image_url || 
                      currentMember.profile_picture ||
                      currentMember.image ||
@@ -225,6 +436,48 @@ export const MemberDetailsModal = ({
     return '—';
   };
 
+  const getPaymentPlanName = (payment) => {
+    if (!payment) return '—';
+
+    const directName =
+      payment.plan_name ||
+      payment.plan_title ||
+      (typeof payment.plan === 'string' ? payment.plan : null) ||
+      payment.membership_plan_name ||
+      payment.membership_plan_title;
+
+    if (typeof directName === 'string' && directName.trim() !== '') {
+      return directName.trim();
+    }
+
+    const membershipPlanInfo = extractPlanInfo(payment.membership_plan);
+    if (membershipPlanInfo.title) return membershipPlanInfo.title;
+
+    const genericPlanInfo = extractPlanInfo(payment.plan);
+    if (genericPlanInfo.title) return genericPlanInfo.title;
+
+    const membershipPlanIdInfo = extractPlanInfo(payment.membership_plan_id);
+    if (membershipPlanIdInfo.title) return membershipPlanIdInfo.title;
+
+    const fallbackPlanId =
+      membershipPlanIdInfo.id ||
+      membershipPlanInfo.id ||
+      genericPlanInfo.id ||
+      (typeof payment.plan_id === 'number' || typeof payment.plan_id === 'string'
+        ? String(payment.plan_id)
+        : null);
+
+    if (fallbackPlanId) {
+      const mappedTitle = plansById[fallbackPlanId];
+      if (mappedTitle && mappedTitle.trim() !== '') {
+        return mappedTitle;
+      }
+      return `Plan ${fallbackPlanId}`;
+    }
+
+    return '—';
+  };
+
   // Prepare payment data from API response
   const getPaymentHistory = () => {
     if (!currentMember) return [];
@@ -242,19 +495,19 @@ export const MemberDetailsModal = ({
 
     return paymentsSource.map((payment) => {
       const statusValue = payment?.status !== undefined && payment?.status !== null
-          ? Number(payment.status) 
-          : null;
+        ? Number(payment.status) 
+        : null;
       const formattedStatus = formatPaymentStatus(payment?.status);
-        
-        return {
+
+      return {
         id: payment?.id || null,
+        plan: getPaymentPlanName(payment),
         date: formatPaymentDate(payment?.date || payment?.created_at || payment?.payment_date),
-          status: formattedStatus,
+        status: formattedStatus,
         amount: formatPaymentAmount(payment?.amount || payment?.total),
-        receipt: payment?.receipt || payment?.receipt_url || null,
-          isPending: statusValue === 0 || formattedStatus === 'Pending'
-        };
-      });
+        isPending: statusValue === 0 || formattedStatus === 'Pending'
+      };
+    });
   };
 
   const paymentHistory = getPaymentHistory();
@@ -383,23 +636,29 @@ export const MemberDetailsModal = ({
           )}
           <div className="member-details-columns">
             <div className="member-details-image-column">
-              {profileImageUrl ? (
-                <img 
-                  src={profileImageUrl} 
-                  alt={fullName}
-                  className="member-details-image"
-                  onError={(e) => {
-                    // Fallback to placeholder if image fails to load
-                    e.target.style.display = 'none';
-                    e.target.nextElementSibling?.classList.remove('hidden');
-                  }}
-                />
-              ) : null}
-              {!profileImageUrl && (
-                <div className="member-details-image-placeholder">
-                  <i className="bi bi-person-fill"></i>
-                </div>
-              )}
+              <div className="member-details-image-wrapper">
+                {profileImageUrl ? (
+                  <img 
+                    src={profileImageUrl} 
+                    alt={fullName}
+                    className="member-details-image"
+                    onError={() => {
+                      setCurrentMember(prev => prev ? {
+                        ...prev,
+                        original_image: null,
+                        profile_picture_url: null,
+                        image_url: null,
+                        image: null,
+                        profile_picture: null
+                      } : prev);
+                    }}
+                  />
+                ) : (
+                  <div className="member-details-image-placeholder">
+                    <i className="bi bi-person-fill"></i>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="member-details-column">
@@ -534,10 +793,10 @@ export const MemberDetailsModal = ({
               <table className="data-table">
                 <thead>
                   <tr>
+                    <th scope="col">Plan</th>
+                    <th scope="col">Amount</th>
                     <th scope="col">Date</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Amount</th>
-                    <th scope="col">Receipt</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -550,34 +809,14 @@ export const MemberDetailsModal = ({
                   ) : (
                     paymentHistory.map((payment, index) => (
                       <tr key={payment.id || `mock-payment-${index}`}>
+                        <td>{payment.plan || '—'}</td>
+                        <td>{payment.amount || '—'}</td>
                         <td>{payment.date || '—'}</td>
                         <td>
                           {payment.isPending ? (
                             <span className="pending-text">{payment.status}</span>
                           ) : (
                             payment.status || '—'
-                          )}
-                        </td>
-                        <td>{payment.amount || '—'}</td>
-                        <td>
-                          {payment.isPending ? (
-                            <span className="pending-text">Pending</span>
-                          ) : payment.receipt ? (
-                            <a 
-                              href={typeof payment.receipt === 'string' && payment.receipt.startsWith('http') 
-                                ? payment.receipt 
-                                : '#'} 
-                              className="receipt-link"
-                              onClick={(e) => {
-                                if (!payment.receipt || !payment.receipt.startsWith('http')) {
-                                  e.preventDefault();
-                                }
-                              }}
-                            >
-                              Download
-                            </a>
-                          ) : (
-                            '—'
                           )}
                         </td>
                       </tr>

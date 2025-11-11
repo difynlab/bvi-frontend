@@ -40,15 +40,17 @@ export const AuthProvider = ({ children }) => {
 
       // Map fields from backend response
       // Get profile picture URL from server (only server URLs, never base64)
-      const imagePath = data.profile_picture_url ||
-                        data.image_url ||
-                        data.image ||
-                        data.profile_picture ||
-                        data.profilePicture ||
-                        data.original_image ||
-                        data.blurred_image ||
-                        '';
-      const profilePictureUrl = resolveProfileImageUrl(imagePath);
+      const originalImageRaw = data.original_image ||
+                               data.profile_picture_url ||
+                               data.image_url ||
+                               data.image ||
+                               data.profile_picture ||
+                               data.profilePicture ||
+                               '';
+      const blurredImageRaw = data.blurred_image || '';
+
+      const profilePictureUrl = resolveProfileImageUrl(originalImageRaw);
+      const blurredImageUrl = resolveProfileImageUrl(blurredImageRaw);
       
       const mapped = {
         ...baseUser,
@@ -60,6 +62,8 @@ export const AuthProvider = ({ children }) => {
         role: data.role ?? baseUser.role,
         profilePictureUrl: profilePictureUrl,
         profilePicture: profilePictureUrl, // Only server URL, never base64
+        original_image: profilePictureUrl || baseUser.original_image || '',
+        blurred_image: blurredImageUrl || baseUser.blurred_image || '',
       }
 
       // Persist mapped pieces needed across reloads
@@ -67,6 +71,8 @@ export const AuthProvider = ({ children }) => {
       setProfile(mapped, {
         profilePicture: profilePictureUrl, // Only server URL
         profilePictureUrl: profilePictureUrl,
+        original_image: mapped.original_image || '',
+        blurred_image: mapped.blurred_image || '',
         first_name: mapped.first_name || '',
         last_name: mapped.last_name || '',
         userName: mapped.userName || `${mapped.first_name || ''} ${mapped.last_name || ''}`.trim(),
@@ -375,16 +381,23 @@ export const AuthProvider = ({ children }) => {
 
       // Avatar sync disabled: profile image updates are handled only from profile page/backend
 
-      // Persist per-user profile and session
-      // Only save server URLs, never save base64 images to localStorage
-      const resolvedProfilePicture = resolveProfileImageUrl(next.profilePicture || next.profilePictureUrl || '');
-      next.profilePicture = resolvedProfilePicture;
-      next.profilePictureUrl = resolvedProfilePicture;
-      const profilePictureToSave = resolvedProfilePicture;
+      // Persist per-user profile and session using server URLs only
+      const incomingOriginal = partial?.original_image || partial?.profilePictureUrl || next.original_image || '';
+      const resolvedProfilePicture = resolveProfileImageUrl(incomingOriginal);
+      next.original_image = resolvedProfilePicture || next.original_image || '';
+      next.profilePicture = resolvedProfilePicture || next.profilePicture || '';
+      next.profilePictureUrl = resolvedProfilePicture || next.profilePictureUrl || '';
+      const profilePictureToSave = next.profilePicture;
+
+      if (partial?.blurred_image !== undefined) {
+        next.blurred_image = resolveProfileImageUrl(partial.blurred_image) || '';
+      }
       
       setProfile(next, {
         profilePicture: profilePictureToSave, // Only server URL, never base64
         profilePictureUrl: profilePictureToSave,
+        original_image: next.original_image || '',
+        blurred_image: next.blurred_image || '',
         profilePictureSync: next.profilePictureSync || '',
         first_name: next.first_name || '',
         last_name: next.last_name || '',

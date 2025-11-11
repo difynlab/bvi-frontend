@@ -227,6 +227,7 @@
 
   .legislation-skeleton {
     gap: $spacing-lg;
+    padding: 0;
 
     &__shimmer {
       background: linear-gradient(90deg, #e8ecf2 20%, #d7deea 50%, #e8ecf2 80%);
@@ -319,6 +320,43 @@
       height: 16px;
       flex: 1 1 200px;
       border-radius: 6px;
+    }
+
+    @media (max-width: 768px) {
+      gap: $spacing-md;
+
+      &__meta {
+        grid-template-columns: 1fr;
+        row-gap: $spacing-xs;
+
+        .legislation-skeleton__meta-label,
+        .legislation-skeleton__meta-value {
+          width: min(220px, 100%);
+        }
+      }
+
+      &__line {
+        height: 12px;
+      }
+
+      &__list-item {
+        align-items: center;
+      }
+
+      &__bullet {
+        margin-top: 4px;
+      }
+
+      &__amendment-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: $spacing-xs;
+      }
+
+      &__amendment-text {
+        flex: 1 1 auto;
+        width: 100%;
+      }
     }
   }
 

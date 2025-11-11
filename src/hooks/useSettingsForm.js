@@ -80,7 +80,8 @@ export function useSettingsForm() {
         };
     
     // Get profile picture from server only
-    const imagePath = currentUser.profile_picture_url ||
+    const imagePath = currentUser.original_image ||
+                      currentUser.profile_picture_url ||
                       currentUser.image_url ||
                       currentUser.image ||
                       currentUser.profilePictureUrl ||
@@ -302,7 +303,8 @@ export function useSettingsForm() {
         : { code: form.countryCode || '+1', number: form.phoneNumber?.trim() || '' };
 
       // Get profile picture URL from server response (only server URLs, no base64)
-      const updatedImagePath = updatedProfileData?.profile_picture_url ||
+      const updatedImagePath = updatedProfileData?.original_image ||
+                               updatedProfileData?.profile_picture_url ||
                                updatedProfileData?.image_url ||
                                updatedProfileData?.image ||
                                updatedProfileData?.profilePicture ||
@@ -334,6 +336,8 @@ export function useSettingsForm() {
           phoneNumber: localProfileUpdate.phoneNumber,
           profilePicture: localProfileUpdate.profilePicture,
           profilePictureUrl: localProfileUpdate.profilePicture,
+          original_image: updatedProfileData?.original_image || localProfileUpdate.profilePicture,
+          blurred_image: updatedProfileData?.blurred_image || '',
         });
       }
       
@@ -367,7 +371,8 @@ export function useSettingsForm() {
         };
     
     // Get profile picture from server only
-    const imagePath = currentUser.profile_picture_url ||
+    const imagePath = currentUser.original_image ||
+                      currentUser.profile_picture_url ||
                       currentUser.image_url ||
                       currentUser.image ||
                       currentUser.profilePictureUrl ||
@@ -404,6 +409,7 @@ export function useSettingsForm() {
     currentUser.lastName, 
     currentUser.email, 
     currentUser.phone,
+    currentUser.original_image,
     currentUser.profile_picture_url,
     currentUser.image_url,
     currentUser.profilePictureUrl,

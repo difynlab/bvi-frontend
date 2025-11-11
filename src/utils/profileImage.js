@@ -23,7 +23,16 @@ export function resolveProfileImageUrl(imagePath) {
   // Ensure image path does not start with slash to avoid double slashes
   const normalizedPath = raw.replace(/^\/+/, '');
 
-  return `${backendRoot}/${normalizedPath}`;
+  // If backend sent only the filename, prepend default uploads directory (storage/users)
+  const defaultUserDir = (import.meta.env.VITE_USER_UPLOADS_PATH || 'storage/users').replace(/^\/+|\/+$/g, '');
+  const pathWithDirectory = normalizedPath.includes('/') || normalizedPath.toLowerCase().startsWith('storage/')
+    ? normalizedPath
+    : `${defaultUserDir}/${normalizedPath}`;
+
+  const sanitizedPath = pathWithDirectory.replace(/^\/+/, '');
+
+  return `${backendRoot}/${sanitizedPath}`;
 }
+
 
 

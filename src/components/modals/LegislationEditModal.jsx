@@ -135,6 +135,7 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
   const [errors, setErrors] = useState({});
   const [missingRequired, setMissingRequired] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const bannerRef = useRef(null);
   const fileInputRefs = useRef({});
   
@@ -196,6 +197,7 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
       setFileRows(normalizedExisting.length > 0 ? [...normalizedExisting] : [createEmptyFileRow()]);
       setErrors({});
       setMissingRequired([]);
+      setHasAttemptedSubmit(false);
     } else {
       setLinks([createEmptyLink()]);
       setExistingFiles([]);
@@ -204,6 +206,7 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
       setFileRows([createEmptyFileRow()]);
       setErrors({});
       setMissingRequired([]);
+      setHasAttemptedSubmit(false);
     }
   }, [isOpen, initialData]);
 
@@ -430,12 +433,13 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
 
   // Reactive validation
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && hasAttemptedSubmit) {
       validateRequired();
     }
-  }, [links, fileRows, isOpen]);
+  }, [links, fileRows, isOpen, hasAttemptedSubmit]);
 
   const handleSave = async () => {
+    setHasAttemptedSubmit(true);
     if (!validateRequired()) {
       bannerRef.current?.focus();
       return;
@@ -520,6 +524,7 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
     setRemovedFiles([]);
     setErrors({});
     setMissingRequired([]);
+    setHasAttemptedSubmit(false);
     onClose();
   };
 
