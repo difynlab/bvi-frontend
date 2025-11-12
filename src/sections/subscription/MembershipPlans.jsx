@@ -3,6 +3,8 @@ import membershipPlansService from '../../services/membershipPlansService';
 import { CreateMembershipPlanModal } from '../../components/modals/CreateMembershipPlanModal';
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal';
 import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal';
+import EmptyPage from '../../components/EmptyPage';
+import MembershipPlansSkeleton from '../../components/subscription/MembershipPlansSkeleton';
 
 const DEFAULT_SERVER_PLANS = [
   {
@@ -159,7 +161,7 @@ const sortPlans = (planA, planB) => {
 
 const MembershipPlans = ({ isAdmin = false }) => {
   const [plans, setPlans] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [actionError, setActionError] = useState('');
   const [editingPlanId, setEditingPlanId] = useState(null);
   const [editDraft, setEditDraft] = useState(null);
@@ -640,34 +642,17 @@ const MembershipPlans = ({ isAdmin = false }) => {
       )}
 
       {isLoading ? (
-        <div style={{ padding: '20px 0', color: '#6b7280', fontSize: '14px' }}>
-          Loading membership plans...
-        </div>
+        <MembershipPlansSkeleton />
       ) : plansWithDraft.length === 0 ? (
-        <div className="membership-plans-empty-state">
-          <div className="empty-state-content">
-            <div className="empty-state-icon" aria-hidden="true">
-              <i className="bi bi-layers"></i>
-            </div>
-            <h3>No membership plans yet</h3>
-            <p>
-              {isSeedingDefaults
-                ? 'Creating default membership plans...'
-                : 'Create membership plans to define the available tiers, eligibility criteria, and benefits for your members.'}
-            </p>
-            {isAdmin && !isSeedingDefaults && (
-              <button
-                type="button"
-                className="membership-plans__add-btn"
-                onClick={handleAddPlan}
-                disabled={isLoading}
-              >
-                <i className="bi bi-plus-lg" aria-hidden="true"></i>
-                <span className="membership-plans__add-btn-label">Create first plan</span>
-              </button>
-            )}
-          </div>
-        </div>
+        <EmptyPage
+          isAdmin={isAdmin}
+          title="No membership plans yet"
+          description={
+            isSeedingDefaults
+              ? 'Creating default membership plans...'
+              : 'Create membership plans to define the available tiers, eligibility criteria, and benefits for your members.'
+          }
+        />
       ) : (
         <div className="plans-container">
           {plansWithDraft.map((plan, index) => renderPlan(plan, index))}

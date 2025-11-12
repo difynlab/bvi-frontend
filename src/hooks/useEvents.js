@@ -268,21 +268,33 @@ export const useEvents = () => {
       
       const response = await eventsService.deleteEvent(id)
       
-      if (response.http_status === 200) {
-        clearEventsCache()
-        
-        // Calculate what page we should be on after deletion
-        const remainingItems = pagination.total - 1
-        const totalPages = Math.ceil(remainingItems / pagination.per_page)
-        
-        // If current page would be empty, go to previous page
+      if (response?.http_status === 200 || response?.http_status === 204) {
+        const remainingItems = Math.max(pagination.total - 1, 0)
+        const perPage = pagination.per_page || 6
+        const totalPages = remainingItems > 0 ? Math.ceil(remainingItems / perPage) : 1
+
         let pageToLoad = pagination.current_page
-        if (pagination.current_page > totalPages && totalPages > 0) {
+        if (remainingItems === 0) {
+          pageToLoad = 1
+        } else if (pageToLoad > totalPages) {
           pageToLoad = totalPages
         }
+
+        const updatedEvents = events.filter(event => event.id !== id)
+        const optimisticPagination = {
+          ...pagination,
+          current_page: pageToLoad,
+          last_page: totalPages,
+          total: remainingItems
+        }
+
+        setEvents(updatedEvents)
+        setPagination(optimisticPagination)
+
+        clearEventsCache()
         
         // Reload events from the appropriate page to maintain 6 items per page
-        loadEvents(pageToLoad, true)
+        await loadEvents(pageToLoad, true)
         
         // Notificación de evento eliminado deshabilitada
         // if (eventToDelete) {
