@@ -938,13 +938,37 @@ const Legislation = () => {
 
       {/* Mobile FAB */}
       {can(user, 'legislation:update') && (
-        <button
-          className="legislation-edit-btn legislation-edit-btn--mobile"
-          onClick={handleEditClick}
-          aria-label="Upload legislation"
-        >
-          <span className="btn-text">Upload Legislation</span>
-        </button>
+        <div className="legislation-mobile-fab">
+          {isEditingDetails && (
+            <button
+              type="button"
+              className="legislation-mobile-fab__btn legislation-mobile-fab__btn--cancel"
+              onClick={handleCancelEditingDetails}
+              aria-label="Cancel editing details"
+            >
+              <i className="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+          )}
+          <button
+            type="button"
+            className="legislation-mobile-fab__btn legislation-mobile-fab__btn--details"
+            onClick={handleDetailsButtonClick}
+            aria-label={detailsButtonLabel}
+            disabled={detailsButtonDisabled}
+          >
+            <i
+              className={`bi ${isEditingDetails ? 'bi-floppy' : 'bi-pencil-square'}`}
+              aria-hidden="true"
+            ></i>
+          </button>
+          <button
+            className="legislation-mobile-fab__btn legislation-mobile-fab__btn--upload"
+            onClick={handleEditClick}
+            aria-label="Upload legislation"
+          >
+            <i className="bi bi-plus" aria-hidden="true"></i>
+          </button>
+        </div>
       )}
     </div>
   );
