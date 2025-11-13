@@ -525,9 +525,6 @@
   transition: filter 0.2s;
 }
 
-.download-btn:hover {
-  filter: brightness(1.3);
-}
 
 
 .newsletters-modal-overlay {
@@ -969,9 +966,19 @@
   flex-shrink: 0;
 }
 
+.newsletter-card-skeleton__title-line,
+.newsletter-card-skeleton__description-line,
+.newsletter-card-skeleton__date-line,
+.newsletter-card-skeleton__button-small,
+.newsletter-card-skeleton__button-medium,
+.newsletter-card-skeleton__button-large {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
+}
+
 .newsletter-card-skeleton__title-line {
   height: 20px;
-  background-color: #e5e7eb;
   border-radius: 4px;
   width: 70%;
   position: relative;
@@ -980,7 +987,6 @@
 
 .newsletter-card-skeleton__description-line {
   height: 14px;
-  background-color: #e5e7eb;
   border-radius: 4px;
   position: relative;
   overflow: hidden;
@@ -996,7 +1002,6 @@
 
 .newsletter-card-skeleton__date-line {
   height: 12px;
-  background-color: #e5e7eb;
   border-radius: 4px;
   width: 40%;
   position: relative;
@@ -1006,7 +1011,6 @@
 .newsletter-card-skeleton__button-small {
   width: 32px;
   height: 32px;
-  background-color: #e5e7eb;
   border-radius: 4px;
   position: relative;
   overflow: hidden;
@@ -1015,7 +1019,6 @@
 .newsletter-card-skeleton__button-medium {
   width: 120px;
   height: 32px;
-  background-color: #e5e7eb;
   border-radius: 4px;
   position: relative;
   overflow: hidden;
@@ -1024,40 +1027,17 @@
 .newsletter-card-skeleton__button-large {
   width: 140px;
   height: 32px;
-  background-color: #e5e7eb;
   border-radius: 4px;
   position: relative;
   overflow: hidden;
 }
 
-// Shimmer animation
-.newsletter-card-skeleton__title-line::before,
-.newsletter-card-skeleton__description-line::before,
-.newsletter-card-skeleton__date-line::before,
-.newsletter-card-skeleton__button-small::before,
-.newsletter-card-skeleton__button-medium::before,
-.newsletter-card-skeleton__button-large::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
-  animation: shimmer 1.5s infinite;
-}
-
 @keyframes shimmer {
   0% {
-    left: -100%;
+    background-position: -200px 0;
   }
   100% {
-    left: 100%;
+    background-position: calc(200px + 100%) 0;
   }
 }
 
@@ -1088,9 +1068,19 @@
   gap: 12px;
 }
 
+.newsletter-card-skeleton-mobile__title,
+.newsletter-card-skeleton-mobile__subtitle,
+.newsletter-card-skeleton-mobile__date,
+.newsletter-card-skeleton-mobile__button-left,
+.newsletter-card-skeleton-mobile__button-middle,
+.newsletter-card-skeleton-mobile__button-right {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
+}
+
 .newsletter-card-skeleton-mobile__title {
   height: 24px;
-  background-color: #e5e7eb; // Same gray as other skeletons
   border-radius: 4px;
   width: 85%;
   position: relative;
@@ -1099,7 +1089,6 @@
 
 .newsletter-card-skeleton-mobile__subtitle {
   height: 16px;
-  background-color: #e5e7eb; // Same gray as other skeletons
   border-radius: 4px;
   width: 70%;
   position: relative;
@@ -1108,7 +1097,6 @@
 
 .newsletter-card-skeleton-mobile__date {
   height: 14px;
-  background-color: #e5e7eb; // Same gray as other skeletons
   border-radius: 4px;
   width: 45%;
   position: relative;
@@ -1125,7 +1113,6 @@
 .newsletter-card-skeleton-mobile__button-left {
   width: 36px;
   height: 36px;
-  background-color: #e5e7eb; // Light gray for left button
   border-radius: 6px;
   position: relative;
   overflow: hidden;
@@ -1135,7 +1122,6 @@
 .newsletter-card-skeleton-mobile__button-middle {
   flex: 1;
   height: 36px;
-  background-color: #e5e7eb; // Light gray for middle button
   border-radius: 6px;
   position: relative;
   overflow: hidden;
@@ -1145,33 +1131,10 @@
 .newsletter-card-skeleton-mobile__button-right {
   width: 36px;
   height: 36px;
-  background-color: #e5e7eb; // Same gray as other skeletons
   border-radius: 6px;
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
-}
-
-// Shimmer animation for mobile skeleton
-.newsletter-card-skeleton-mobile__title::before,
-.newsletter-card-skeleton-mobile__subtitle::before,
-.newsletter-card-skeleton-mobile__date::before,
-.newsletter-card-skeleton-mobile__button-left::before,
-.newsletter-card-skeleton-mobile__button-middle::before,
-.newsletter-card-skeleton-mobile__button-right::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
-  animation: shimmer 1.5s infinite;
 }
 
 // Responsive adjustments for newsletter skeletons

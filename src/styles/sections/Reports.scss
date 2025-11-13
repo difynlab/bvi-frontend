@@ -1458,9 +1458,15 @@
   margin-right: 20px;
 }
 
+.report-card-skeleton__date,
+.report-card-skeleton__title {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
+}
+
 .report-card-skeleton__date {
   height: 14px;
-  background-color: #e5e7eb;
   border-radius: 4px;
   width: 120px;
   position: relative;
@@ -1469,7 +1475,6 @@
 
 .report-card-skeleton__title {
   height: 20px;
-  background-color: #e5e7eb;
   border-radius: 4px;
   width: 60%;
   position: relative;
@@ -1489,38 +1494,22 @@
   overflow: hidden;
 }
 
+.report-card-skeleton__button {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
+}
+
 .report-card-skeleton__button--delete {
   width: 60px;
-  background-color: #e5e7eb;
 }
 
 .report-card-skeleton__button--edit {
   width: 80px;
-  background-color: #e5e7eb;
 }
 
 .report-card-skeleton__button--download {
   width: 90px;
-  background-color: #e5e7eb;
-}
-
-// Shimmer animation for all skeleton elements
-.report-card-skeleton__date::before,
-.report-card-skeleton__title::before,
-.report-card-skeleton__button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
-  animation: shimmer 1.5s infinite;
 }
 
 // Mobile Reports Shimmer Loading Styles
@@ -1550,9 +1539,15 @@
   gap: 8px;
 }
 
+.report-card-skeleton-mobile__date,
+.report-card-skeleton-mobile__title {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
+}
+
 .report-card-skeleton-mobile__date {
   height: 14px;
-  background-color: #e5e7eb;
   border-radius: 4px;
   width: 120px;
   position: relative;
@@ -1561,7 +1556,6 @@
 
 .report-card-skeleton-mobile__title {
   height: 20px;
-  background-color: #e5e7eb;
   border-radius: 4px;
   width: 70%;
   position: relative;
@@ -1580,40 +1574,21 @@
   border-radius: 6px;
   position: relative;
   overflow: hidden;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
 }
 
 .report-card-skeleton-mobile__button--delete {
   width: 60px;
-  background-color: #e5e7eb;
 }
 
 .report-card-skeleton-mobile__button--edit {
   width: 50px;
-  background-color: #e5e7eb;
 }
 
 .report-card-skeleton-mobile__button--download {
   width: 80px;
-  background-color: #e5e7eb;
-}
-
-// Shimmer animation for mobile skeleton elements
-.report-card-skeleton-mobile__date::before,
-.report-card-skeleton-mobile__title::before,
-.report-card-skeleton-mobile__button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
-  animation: shimmer 1.5s infinite;
 }
 
 // Responsive adjustments for mobile shimmer

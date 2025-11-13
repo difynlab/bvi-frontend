@@ -602,18 +602,18 @@ export default function Reports() {
                 <i className="bi bi-x-lg"></i>
               </button>
               <h2 className="reports-addcat-modal__title">
-                {editingCategory ? 'Edit Tab name' : 'Enter Tab name'}
+                {editingCategory ? 'Edit Category Name' : 'Enter Category Name'}
               </h2>
               <p className="reports-addcat-modal__subtitle">
-                {editingCategory ? 'Please update tab details' : 'Please add new tab details'}
+                {editingCategory ? 'Please update category details' : 'Please add new category details'}
               </p>
 
               <div className="form-group">
-                <label htmlFor="categoryName" className="reports-addcat-modal__label">Enter the Tab Name</label>
+                <label htmlFor="categoryName" className="reports-addcat-modal__label">Enter Title</label>
                 <input
                   type="text"
                   id="categoryName"
-                  placeholder="Please mention the name of the new tab which you want to create"
+                  placeholder="Please mention the title of the new category you want to create"
                   className="reports-addcat-modal__input"
                   value={newCategoryName}
                   onChange={(e) => {
@@ -652,7 +652,7 @@ export default function Reports() {
                   onClick={handleAddCategorySubmit}
                   disabled={creatingCategory}
                 >
-                  {creatingCategory ? 'Loading...' : (editingCategory ? 'Update' : 'Upload')}
+                  {creatingCategory ? 'Loading...' : (editingCategory ? 'Submit' : 'Upload')}
                 </button>
               </div>
             </div>

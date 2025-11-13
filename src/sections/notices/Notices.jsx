@@ -1085,18 +1085,18 @@ export const Notices = () => {
 
             <div className="notices-addcat-modal__content">
               <h2 className="notices-addcat-modal__title">
-                {editingCategory ? 'Update Tab Title' : 'Add New Tab'}
+                {editingCategory ? 'Update Category Title' : 'Add New Category'}
               </h2>
               <p className="notices-addcat-modal__subtitle">
-                {editingCategory ? 'Please update the tab name' : 'Please add new tab details'}
+                {editingCategory ? 'Please update the category name' : 'Please add new category details'}
               </p>
 
               <div className="form-group">
-                <label htmlFor="categoryName" className="notices-addcat-modal__label">Enter the Tab Name</label>
+                <label htmlFor="categoryName" className="notices-addcat-modal__label">Enter Title</label>
                 <input
                   type="text"
                   id="categoryName"
-                  placeholder={editingCategory ? "Please enter the new tab name" : "Please mention the name of the new tab which you want to create"}
+                  placeholder={editingCategory ? "Please enter the new title" : "Please mention the title of the new category which you want to create"}
                   className="notices-addcat-modal__input"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}

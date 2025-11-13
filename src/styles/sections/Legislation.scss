@@ -524,6 +524,10 @@
       }
     }
 
+    .legislation-edit-details-btn {
+      display: none;
+    }
+
     .legislation-edit-btn--desktop {
       display: none; // Hide desktop button on mobile
     }
@@ -643,8 +647,4 @@
   cursor: pointer;
   font-size: 14px;
   transition: filter 0.2s;
-}
-
-.download-btn:hover {
-  filter: brightness(1.3);
 }

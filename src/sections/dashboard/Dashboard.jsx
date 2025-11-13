@@ -252,7 +252,7 @@ const Dashboard = () => {
         </div>
 
         <div className="dashboard-card newsletters-card">
-          <h3 className="card-title">Latest News Letters<span className="card-newsletters-icon"><i className="bi bi-file-earmark-text"></i></span></h3>
+          <h3 className="card-title">Latest Newsletters<span className="card-newsletters-icon"><i className="bi bi-file-earmark-text"></i></span></h3>
           <div className="list">
             {newslettersLoading || newslettersInitialLoading ? (
               <>
