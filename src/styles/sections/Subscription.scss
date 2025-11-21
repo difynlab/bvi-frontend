@@ -425,6 +425,7 @@
   .company-details input[type="text"],
   .company-details input[type="email"],
   .company-details input[type="number"],
+  .company-details input[type="date"],
   .company-details textarea {
     padding: 12px 16px;
     border: 1px solid #d1d5db;
@@ -437,6 +438,7 @@
   .company-details input[type="text"]:focus,
   .company-details input[type="email"]:focus,
   .company-details input[type="number"]:focus,
+  .company-details input[type="date"]:focus,
   .company-details textarea:focus {
     outline: none;
     border-color: #3b82f6;
@@ -603,6 +605,83 @@
     cursor: not-allowed;
     background: #f9fafb;
   }
+
+  .company-details .dropzone {
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 24px;
+    background: #f9fafb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .company-details .dropzone:hover {
+    border-color: #3b82f6;
+    background: #f0f9ff;
+  }
+
+  .company-details .dropzone.active {
+    border-color: #3b82f6;
+    background: #dbeafe;
+  }
+
+  .company-details .dropzone[aria-invalid="true"] {
+    border-color: #ef4444;
+    background: #fef2f2;
+  }
+
+  .company-details .dropzone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .company-details .dropzone-icon {
+    font-size: 32px;
+    color: #6b7280;
+    margin-bottom: 8px;
+  }
+
+  .company-details .dropzone-label {
+    font-size: 14px;
+    color: #374151;
+    margin: 0 0 8px 0;
+  }
+
+  .company-details .dropzone-separator {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 4px 0;
+  }
+
+  .company-details .dropzone-browse {
+    background: #3b82f6;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin: 8px 0;
+  }
+
+  .company-details .dropzone-browse:hover {
+    background: #2563eb;
+  }
+
+  .company-details .dropzone-hint {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 4px 0 0 0;
+  }
+
 
 }
 
@@ -1301,6 +1380,7 @@
   .subscription-tab-container .membership-license-officer .officer-block {
     padding: 1rem;
   }
+
 }
 
 /* Subscription Tab Picker Dropdown Styles */

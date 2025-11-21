@@ -1199,7 +1199,7 @@
 
 @media (max-width: 768px) {
   .notices-page {
-    padding: 20px;
+    padding: 40px 20px 20px 20px;
     margin-bottom: 80px;
     max-width: 100%;
   }
@@ -1350,30 +1350,47 @@
   /* Mobile FAB styling - SOLO MÓVIL para Notices */
   .notices-header-actions {
     .add-notice-btn {
-      position: fixed;
-      right: 20px;
-      bottom: 20px;
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      min-width: 0;
-      /* Mantener colores originales */
-      background-color: $vivid_red;
-      color: white;
-      border: none;
+      position: fixed !important;
+      right: 20px !important;
+      bottom: 100px !important;
+      width: 56px !important;
+      height: 56px !important;
+      border-radius: 50% !important;
+      border: none !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background-color: $vivid_red !important;
+      color: #fff !important;
+      box-shadow: 0 10px 24px rgba(16, 67, 148, 0.2) !important;
+      cursor: pointer !important;
+      transition: box-shadow 0.2s ease !important;
+      z-index: 1000 !important;
+      padding: 0 !important;
+      margin: 0 !important;
 
       /* Hide text, show only icon */
-      font-size: 0;
+      font-size: 0 !important;
 
       i {
-        font-size: 30px;
-        margin: 0;
-        opacity: 1;
+        font-size: 28px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1 !important;
+        opacity: 1 !important;
+        position: static !important;
+        transform: none !important;
+        left: auto !important;
+        top: auto !important;
+      }
+
+      &:hover:not(:disabled) {
+        transform: none !important;
+        box-shadow: 0 12px 28px rgba(16, 67, 148, 0.28) !important;
+      }
+
+      &:active {
+        transform: none !important;
       }
     }
   }

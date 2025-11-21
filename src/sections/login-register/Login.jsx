@@ -170,7 +170,7 @@ export const Login = () => {
           <div className="auth-logo">
             <img src="/BVI-logo.png" alt="BVI Finance Logo" />
           </div>
-          <h1 className="auth-title">Login Your Account</h1>
+          <h1 className="auth-title">Log in Your Account</h1>
           <p className="auth-subtitle">
             Log in with your data that you entered during your registration
           </p>

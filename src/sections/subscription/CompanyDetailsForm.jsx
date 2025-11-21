@@ -1,9 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { setCompanyDetails } from '../../helpers/subscriptionStorage';
 
 const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) => {
   const companyValues = values.companyDetails || {};
   const firstErrorRef = useRef(null);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef(null);
 
   const OFFICE_PRESENCE_OPTIONS = [
     'BVI', 'Latin America', 'North America', 'Asia Pacific', 'China', 'Europe', 'Other'
@@ -51,6 +53,62 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
   const handleTelephoneChange = (e) => {
     const value = e.target.value.replace(/\D/g, '');
     setField('companyDetails', 'telephone', value);
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragIn = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setDragActive(true);
+    }
+  };
+
+  const handleDragOut = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFile = (file) => {
+    const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf'];
+    if (allowedTypes.includes(file.type)) {
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      
+      if (file.size > maxSize) {
+        setField('companyDetails', 'signatureFileError', 'File size must not exceed 5MB');
+        setField('companyDetails', 'signatureFile', null);
+        return;
+      }
+      
+      setField('companyDetails', 'signatureFile', file);
+      setField('companyDetails', 'signatureFileError', '');
+    }
+  };
+
+  const handleFileInput = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFile(file);
+    }
+  };
+
+  const handleBrowseClick = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -261,6 +319,112 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
           </div>
         )}
       </div>
+
+      {/* Name of the Director and Date Row */}
+      <div className="row">
+        <div className="field">
+          <label htmlFor="company-directorName">Name of the Director <span className="req-star">*</span></label>
+          <input
+            id="company-directorName"
+            type="text"
+            placeholder="Enter director's full name"
+            value={companyValues.directorName || ''}
+            onChange={(e) => setField('companyDetails', 'directorName', e.target.value)}
+            onKeyDown={handleKeyDown}
+            aria-invalid={errors['companyDetails.directorName'] ? 'true' : 'false'}
+            aria-describedby={errors['companyDetails.directorName'] ? 'company-directorName-error' : undefined}
+          />
+          {errors['companyDetails.directorName'] && (
+            <div id="company-directorName-error" className="error-message">
+              {errors['companyDetails.directorName']}
+            </div>
+          )}
+        </div>
+        
+        <div className="field">
+          <label htmlFor="company-date">Date <span className="req-star">*</span></label>
+          <input
+            id="company-date"
+            type="date"
+            value={companyValues.date || ''}
+            onChange={(e) => setField('companyDetails', 'date', e.target.value)}
+            onKeyDown={handleKeyDown}
+            aria-invalid={errors['companyDetails.date'] ? 'true' : 'false'}
+            aria-describedby={errors['companyDetails.date'] ? 'company-date-error' : undefined}
+          />
+          {errors['companyDetails.date'] && (
+            <div id="company-date-error" className="error-message">
+              {errors['companyDetails.date']}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Signature Row */}
+      <div className="row">
+        <div className="field">
+          <label id="company-signatureFile-label">Signature <span className="req-star">*</span></label>
+          <div
+            id="company-signatureFile"
+            className={`dropzone dropzone-surface ${dragActive ? 'active' : ''}`}
+            data-has-file={Boolean(companyValues.signatureFile)}
+            onDragEnter={handleDragIn}
+            onDragLeave={handleDragOut}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            onClick={handleBrowseClick}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleBrowseClick();
+              }
+            }}
+            tabIndex={0}
+            role="button"
+            aria-labelledby="company-signatureFile-label"
+            aria-invalid={errors['companyDetails.signatureFile'] ? 'true' : 'false'}
+            aria-describedby={errors['companyDetails.signatureFile'] ? 'company-signatureFile-error' : undefined}
+          >
+            <div className="dropzone-content">
+              <i className="bi bi-cloud-upload dropzone-icon" aria-hidden="true"></i>
+              <p className="dropzone-label">
+                {companyValues.signatureFile ? companyValues.signatureFile.name : 'Drag and drop signature file here'}
+              </p>
+              <p className="dropzone-separator">or</p>
+              <button
+                type="button"
+                className="dropzone-browse"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBrowseClick();
+                }}
+              >
+                Browse File
+              </button>
+              <p className="dropzone-hint">PNG, JPG, JPEG, PDF (max 5MB)</p>
+            </div>
+          </div>
+          {errors['companyDetails.signatureFile'] && (
+            <div id="company-signatureFile-error" className="error-message">
+              {errors['companyDetails.signatureFile']}
+            </div>
+          )}
+          {companyValues.signatureFileError && (
+            <div className="error-message">
+              {companyValues.signatureFileError}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".png,.jpg,.jpeg,.pdf"
+        onChange={handleFileInput}
+        className="hidden-file-input"
+        aria-hidden="true"
+      />
 
       <div className="actions">
         <button

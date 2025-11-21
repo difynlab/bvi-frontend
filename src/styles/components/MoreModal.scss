@@ -1,0 +1,162 @@
+@use '../vars' as *;
+
+.more-modal-overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .more-modal-overlay {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeIn 0.2s ease-out;
+
+    &.closing {
+      animation: fadeOut 0.3s ease-out;
+    }
+  }
+
+  .more-modal {
+    width: 100%;
+    max-width: 95%;
+    background-color: rgba(25, 25, 25, 0.85);
+
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-top-left-radius: 44px;
+    border-top-right-radius: 44px;
+    padding: 20px calc(20px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-bottom)) 20px;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease-out;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+
+    &.closing {
+      animation: slideDown 0.3s ease-out;
+    }
+  }
+
+  .more-modal-content {
+    width: 100%;
+    padding-top: 0;
+  }
+
+  .more-modal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .more-modal-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 24px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    aspect-ratio: 1;
+    min-height: 0;
+
+    i {
+      font-size: 28px;
+      transition: all 0.2s ease;
+    }
+
+    span {
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    &:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    &.active {
+      background: rgba(233, 49, 37, 0.2);
+      color: white;
+
+      i {
+        color: #e93125;
+      }
+    }
+
+    &.more-modal-item--logout {
+      background: rgba(233, 49, 37, 0.1);
+      grid-column: 1 / -1;
+      width: 100%;
+      aspect-ratio: auto;
+      min-height: 60px;
+      flex-direction: row;
+      gap: 12px;
+      padding: 16px;
+
+      i {
+        color: #e93125;
+      }
+
+      &:active {
+        background: rgba(233, 49, 37, 0.2);
+      }
+    }
+
+    &:hover,
+    &:focus {
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(100%);
+    }
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+}
+

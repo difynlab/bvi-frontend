@@ -1,0 +1,124 @@
+@use '../vars' as *;
+
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    right: 0;
+    width: 95%;
+    height: 80px;
+    background-color: rgba(0, 0, 0, 0.85);
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+    border-radius: 30px;
+    padding: 8px;
+    z-index: 1000;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2px;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    opacity: 1;
+
+    &.bottom-nav--hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%) translateY(20px);
+      transition: opacity 0.1s ease, transform 0.1s ease;
+    }
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 8px 2px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    min-width: 0;
+    gap: 4px;
+    max-width: 100%;
+
+    i {
+      font-size: 20px;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .bottom-nav-label {
+      font-size: 10px;
+      font-weight: 500;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: visible;
+      text-overflow: clip;
+      width: 100%;
+      text-align: center;
+      word-break: keep-all;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      flex-wrap: nowrap;
+      min-width: 0;
+    }
+
+    .bottom-nav-chevron {
+      font-size: 9px;
+      flex-shrink: 0;
+    }
+
+    &.bottom-nav-item--more {
+      .bottom-nav-label {
+        flex-direction: column;
+        gap: 2px;
+        white-space: nowrap;
+      }
+
+      .bottom-nav-chevron {
+        margin-top: -2px;
+      }
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    &.active {
+      color: $vivid_red;
+
+      i {
+        transform: scale(1.1);
+        color: $vivid_red;
+      }
+
+      .bottom-nav-label {
+        color: $vivid_red;
+      }
+
+      .bottom-nav-chevron {
+        color: $vivid_red;
+      }
+    }
+
+    &:hover,
+    &:focus {
+      color: rgba(255, 255, 255, 0.9);
+      outline: none;
+    }
+  }
+}
+

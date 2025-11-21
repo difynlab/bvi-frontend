@@ -1010,7 +1010,7 @@
 @media (max-width: 768px) {
 
   .membership-page {
-    padding: 15px;
+    padding: 40px 15px 15px 15px;
     width: 100%;
 
     .card {
@@ -2157,26 +2157,35 @@
 
       .membership-plans__add-btn--fab {
         position: fixed;
-        bottom: 24px;
-        right: 24px;
+        right: 20px;
+        bottom: 100px;
         width: 56px;
         height: 56px;
         border-radius: 50%;
-        padding: 0;
+        border: none;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 10px 24px rgba(16, 67, 148, 0.25);
+        background-color: $vivid_red;
+        color: #fff;
+        box-shadow: 0 10px 24px rgba(16, 67, 148, 0.2);
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
         z-index: 1000;
 
         i {
           font-size: 28px;
           margin: 0;
-          color: #fff;
+          line-height: 1;
         }
 
         .membership-plans__add-btn-label {
           display: none;
+        }
+
+        &:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 28px rgba(16, 67, 148, 0.28);
         }
       }
 

@@ -714,7 +714,7 @@ const Membership = () => {
                 role="tab"
                 aria-selected={adminActiveTab === 'Member List'}
               >
-                Member List
+                Members List
               </button>
               <button 
                 className={`membership-admin-tab ${adminActiveTab === 'Important Info' ? 'active' : ''}`}

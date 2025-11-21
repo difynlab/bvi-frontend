@@ -11,11 +11,14 @@ import Settings from './sections/settings/Settings'
 import Reports from './sections/reports/Reports'
 import Subscription from './sections/subscription/Subscription'
 import { Legislation } from './sections/legislation/Legislation'
+import FindExpert from './sections/find-expert/FindExpert'
 import Dashboard from './sections/dashboard/Dashboard'
 import RouteGuard from './auth/RouteGuard'
 import Forbidden from './pages/Forbidden'
 import ResetPassword from './pages/ResetPassword'
 import SideNav from './components/SideNav'
+import BottomNav from './components/BottomNav'
+import MobileHeader from './components/MobileHeader'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { NotificationProvider } from './context/NotificationContext'
 import { ModalStateProvider } from './hooks/useModalState.jsx'
@@ -24,10 +27,12 @@ import SkeletonThemeProvider from './components/SkeletonSetup'
 const MainLayout = ({ children }) => {
   return (
     <div className="main-layout">
+      <MobileHeader />
       <SideNav />
       <main className="main-content">
         {children}
       </main>
+      <BottomNav />
     </div>
   )
 }
@@ -92,6 +97,14 @@ function App() {
             <RouteGuard requireAuth>
               <MainLayout>
                 <Subscription />
+              </MainLayout>
+            </RouteGuard>
+          }></Route>
+
+          <Route path='/find-expert' element={
+            <RouteGuard requireAuth>
+              <MainLayout>
+                <FindExpert />
               </MainLayout>
             </RouteGuard>
           }></Route>

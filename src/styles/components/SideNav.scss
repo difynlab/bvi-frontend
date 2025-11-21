@@ -277,21 +277,11 @@
 
 @media (max-width: 768px) {
   .side-nav-gesture-zone {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 20px;
-    height: 100dvh;
-    z-index: 1000;
-    background: transparent;
-    pointer-events: auto;
-  }
-
-  .main-layout {
-    margin-left: 50px;
+    display: none;
   }
 
   .side-nav {
+    display: none !important;
     flex: 0;
     background: #262626;
     width: 170px !important;
@@ -423,6 +413,10 @@
 
     &.is-collapsed {
       left: -120px;
+
+      .nav-item--find-expert {
+        padding-left: 0;
+      }
     }
 
     &.is-expanded {
@@ -431,7 +425,9 @@
       .nav-item {
         padding-right: 30px;
       }
-
+      .nav-item--find-expert {
+        padding-left: 20px;
+      }
 
     }
 

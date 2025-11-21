@@ -512,7 +512,7 @@
   }
 
   @media (max-width: 768px) {
-    padding: $spacing-md;
+    padding: 40px $spacing-md $spacing-md $spacing-md;
     margin-bottom: 80px;
     
     .legislation-header {
@@ -536,7 +536,7 @@
     .legislation-mobile-fab {
       position: fixed;
       right: 20px;
-      bottom: 20px;
+      bottom: 100px;
       display: flex;
       flex-direction: column;
       gap: 12px;

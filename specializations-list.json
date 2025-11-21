@@ -1,0 +1,197 @@
+[
+  {
+    "name": "Accountancy",
+    "value": "Accountancy",
+    "color": "000000"
+  },
+  {
+    "name": "Arbitration",
+    "value": "Arbitration",
+    "color": "464676"
+  },
+  {
+    "name": "Audit",
+    "value": "Audit",
+    "color": "000000"
+  },
+  {
+    "name": "Audit and Advisory",
+    "value": "Audit and Advisory",
+    "color": "000000"
+  },
+  {
+    "name": "Authorised Fund and SIBA Rep",
+    "value": "Authorised Fund and SIBA Rep",
+    "color": "D35098"
+  },
+  {
+    "name": "Banking",
+    "value": "Banking",
+    "color": "489836"
+  },
+  {
+    "name": "Brokers",
+    "value": "Brokers",
+    "color": "489836"
+  },
+  {
+    "name": "Business/Management Consultants",
+    "value": "Business/Management Consultants",
+    "color": "e62b1e"
+  },
+  {
+    "name": "Captive Insurance",
+    "value": "Captive Insurance",
+    "color": "FBB900"
+  },
+  {
+    "name": "Compliance and Risk",
+    "value": "Compliance and Risk",
+    "color": "AD0703"
+  },
+  {
+    "name": "Corporate Advisory and Valuation",
+    "value": "Corporate Advisory and Valuation",
+    "color": "E62B1E"
+  },
+  {
+    "name": "Director Services",
+    "value": "Director Services",
+    "color": "00338E"
+  },
+  {
+    "name": "Family Office",
+    "value": "Family Office",
+    "color": "F07D00"
+  },
+  {
+    "name": "Financial Planning Services",
+    "value": "Financial Planning Services",
+    "color": "E62B1E"
+  },
+  {
+    "name": "FinTech",
+    "value": "FinTech",
+    "color": "000000"
+  },
+  {
+    "name": "Forensic Accounting",
+    "value": "Forensic Accounting",
+    "color": "000000"
+  },
+  {
+    "name": "Fund Administration",
+    "value": "Fund Administration",
+    "color": "d35098"
+  },
+  {
+    "name": "Fund Managers",
+    "value": "Fund Managers",
+    "color": "D35098"
+  },
+  {
+    "name": "Hedge Fund Structuring",
+    "value": "Hedge Fund Structuring",
+    "color": "D35098"
+  },
+  {
+    "name": "ICT",
+    "value": "ICT",
+    "color": "000000"
+  },
+  {
+    "name": "Independent Financial Advisors",
+    "value": "Independent Financial Advisors",
+    "color": "00338E"
+  },
+  {
+    "name": "Industry Body Assocation",
+    "value": "Industry Body Assocation",
+    "color": "00338e"
+  },
+  {
+    "name": "Insolvency",
+    "value": "Insolvency",
+    "color": "BFB4AB"
+  },
+  {
+    "name": "Insolvency and Restructuring",
+    "value": "Insolvency and Restructuring",
+    "color": "BFB4AB"
+  },
+  {
+    "name": "Insurance",
+    "value": "Insurance",
+    "color": "fbb900"
+  },
+  {
+    "name": "Investment Banking",
+    "value": "Investment Banking",
+    "color": "489836"
+  },
+  {
+    "name": "Investment Business Representatives",
+    "value": "Investment Business Representatives",
+    "color": "D35098"
+  },
+  {
+    "name": "Investment Consultants",
+    "value": "Investment Consultants",
+    "color": "D35098"
+  },
+  {
+    "name": "Investment Managers",
+    "value": "Investment Managers",
+    "color": "d35098"
+  },
+  {
+    "name": "Law",
+    "value": "Law",
+    "color": "464676"
+  },
+  {
+    "name": "Marine Services",
+    "value": "Marine Services",
+    "color": "94D3E2"
+  },
+  {
+    "name": "Marine/Aviation Services",
+    "value": "Marine/Aviation Services",
+    "color": " 94d3e2"
+  },
+  {
+    "name": "Private Client Wealth Management",
+    "value": "Private Client Wealth Management",
+    "color": "F07D00"
+  },
+  {
+    "name": "Professional Directorships",
+    "value": "Professional Directorships",
+    "color": "00338E"
+  },
+  {
+    "name": "Real Estate",
+    "value": "Real Estate",
+    "color": "F07D00"
+  },
+  {
+    "name": "Recovery and Reorganisation",
+    "value": "Recovery and Reorganisation",
+    "color": "BFB4AB"
+  },
+  {
+    "name": "Taxation Practitioners",
+    "value": "Taxation Practitioners",
+    "color": "489836"
+  },
+  {
+    "name": "Trust & Company Administration",
+    "value": "Trust & Company Administration",
+    "color": "F07D00"
+  },
+  {
+    "name": "Vessel Registrations",
+    "value": "Vessel Registrations",
+    "color": "94d3e2"
+  }
+]

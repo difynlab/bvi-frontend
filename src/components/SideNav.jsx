@@ -249,7 +249,7 @@ const SideNav = () => {
 
         <NavLink to="/membership" className={`nav-item ${isAnimated ? 'nav-item-animate--6' : 'nav-item-hidden'}`} {...navItemGuard}>
           <i className="bi bi-people"></i>
-          <span className="nav-label">Membership</span>
+          <span className="nav-label">{isAdmin ? 'Members' : 'Membership'}</span>
         </NavLink>
 
         {!isAdmin && (
@@ -259,12 +259,21 @@ const SideNav = () => {
           </NavLink>
         )}
 
-        <NavLink to="/legislation" className={`nav-item ${isAnimated ? 'nav-item-animate--8' : 'nav-item-hidden'}`} {...navItemGuard}>
+        <NavLink
+          to="/find-expert"
+          className={`nav-item nav-item--find-expert ${isAnimated ? 'nav-item-animate--8' : 'nav-item-hidden'}`}
+          {...navItemGuard}
+        >
+          <i className="bi bi-file-person"></i>
+          <span className="nav-label">Find an Expert</span>
+        </NavLink>
+
+        <NavLink to="/legislation" className={`nav-item ${isAnimated ? 'nav-item-animate--9' : 'nav-item-hidden'}`} {...navItemGuard}>
           <i className="bi bi-book"></i>
           <span className="nav-label">Legislation</span>
         </NavLink>
 
-        <NavLink to="/reports" className={`nav-item ${isAnimated ? 'nav-item-animate--9' : 'nav-item-hidden'}`} {...navItemGuard}>
+        <NavLink to="/reports" className={`nav-item ${isAnimated ? 'nav-item-animate--10' : 'nav-item-hidden'}`} {...navItemGuard}>
           <i className="bi bi-file-earmark"></i>
           <span className="nav-label">Reports</span>
         </NavLink>

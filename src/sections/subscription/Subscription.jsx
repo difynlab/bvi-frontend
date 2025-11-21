@@ -3,7 +3,6 @@ import '../../styles/sections/Subscription.scss';
 import SubscriptionInfoModal from '../../components/modals/SubscriptionInfoModal';
 import SubscriptionTabPicker from '../../components/modals/SubscriptionTabPicker';
 import { useSubscriptionWizard } from '../../hooks/useSubscriptionWizard';
-import GeneralDetailsForm from './GeneralDetailsForm';
 import MembershipDetailsForm from './MembershipDetailsForm';
 import CompanyDetailsForm from './CompanyDetailsForm';
 import MembershipLicenseOfficerForm from './MembershipLicenseOfficerForm';
@@ -38,6 +37,7 @@ const Subscription = () => {
   const [importantInfoData, setImportantInfoData] = useState(null);
   const [importantInfoError, setImportantInfoError] = useState('');
   const [importantInfoLoading, setImportantInfoLoading] = useState(false);
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' | 'desc' for A-Z / Z-A
   
   const handleOpen = (key) => {
     if (importantInfoLoading || !importantInfoData) return;
@@ -91,12 +91,11 @@ const Subscription = () => {
   // Define the subscription tabs (static list)
   const subscriptionTabs = [
     'Important Info',
-    'General Details', 
+    'Membership Plans',
     'Membership Details',
     'Company Details',
     'Contact Person Details',
-    'Membership License Officer',
-    'Membership Plans'
+    'Membership License Officer'
   ];
 
   return (
@@ -152,12 +151,12 @@ const Subscription = () => {
           Important Info
         </button>
         <button 
-          className={`subscription-tab ${activeTab === 'General Details' ? 'active' : ''}`}
-          onClick={() => setTab('General Details')}
+          className={`subscription-tab ${activeTab === 'Membership Plans' ? 'active' : ''}`}
+          onClick={() => setTab('Membership Plans')}
           role="tab"
-          aria-selected={activeTab === 'General Details'}
+          aria-selected={activeTab === 'Membership Plans'}
         >
-          General Details
+          Membership Plans
         </button>
         <button 
           className={`subscription-tab ${activeTab === 'Membership Details' ? 'active' : ''}`}
@@ -190,14 +189,6 @@ const Subscription = () => {
           aria-selected={activeTab === 'Membership License Officer'}
         >
           Membership License Officer
-        </button>
-        <button 
-          className={`subscription-tab ${activeTab === 'Membership Plans' ? 'active' : ''}`}
-          onClick={() => setTab('Membership Plans')}
-          role="tab"
-          aria-selected={activeTab === 'Membership Plans'}
-        >
-          Membership Plans
         </button>
       </div>
 
@@ -245,18 +236,6 @@ const Subscription = () => {
               </div>
             </div>
             )}
-          </section>
-        )}
-
-        {activeTab === 'General Details' && (
-          <section key="general-details" className="subscription-panel subscription-panel--general">
-            <GeneralDetailsForm
-              key="general-form"
-              values={values.generalDetails || {}}
-              errors={errors}
-              setField={(name, value) => setField('generalDetails', name, value)}
-              onNext={goNext}
-            />
           </section>
         )}
 
@@ -312,7 +291,7 @@ const Subscription = () => {
           </section>
         )}
 
-        {activeTab !== 'Important Info' && activeTab !== 'General Details' && activeTab !== 'Membership Details' && activeTab !== 'Company Details' && activeTab !== 'Contact Person Details' && activeTab !== 'Membership License Officer' && activeTab !== 'Membership Plans' && (
+        {activeTab !== 'Important Info' && activeTab !== 'Membership Details' && activeTab !== 'Company Details' && activeTab !== 'Contact Person Details' && activeTab !== 'Membership License Officer' && activeTab !== 'Membership Plans' && (
           <section key={`placeholder-${activeTab.toLowerCase().replace(/\s+/g, '-')}`} className={`subscription-panel subscription-panel--${activeTab.toLowerCase().replace(/\s+/g, '-')}`}>
             <h2 className="subscription-panel__title">{activeTab}</h2>
           </section>

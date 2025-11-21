@@ -38,7 +38,7 @@ export default function Settings() {
   return (
     <div className="settings-container">
       <div className="settings-header-title">
-        <h1>Settings</h1>
+        <h1>Profile</h1>
         <p>Manage your account and adjust settings to optimize your workflow</p>
       </div>
 

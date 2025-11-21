@@ -1,0 +1,204 @@
+.expert-firms-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px;
+  margin-top: 20px;
+
+  &--loading,
+  &--error,
+  &--empty {
+    display: block;
+    padding: 40px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 16px;
+    width: 100%;
+    grid-column: none;
+  }
+
+  &--error {
+    color: #dc2626;
+  }
+}
+
+// Empty state styles (using EmptyPage component)
+.expert-firms-list--empty {
+  display: block;
+  width: 100%;
+
+  .empty-state {
+    padding: 30px 20px;
+    color: #6b7280;
+    margin-top: 75px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+
+    img {
+      width: 300px;
+      height: 300px;
+      opacity: 0.8;
+      object-fit: cover;
+      margin-bottom: 24px;
+    }
+
+    img.empty-state-user {
+      margin-bottom: 0;
+      width: 250px;
+      height: 250px;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 400;
+      color: #374151;
+      margin: 0 0 12px 0;
+    }
+
+    p {
+      font-size: 1rem;
+      line-height: 1.5;
+      margin: 0;
+      max-width: 600px;
+    }
+  }
+
+  // Mobile-only empty-state responsive styles
+  @media (max-width: 768px) {
+    .empty-state {
+      padding: 16px;
+
+      img,
+      img.empty-state-user {
+        display: block;
+        max-width: 250px;
+        width: 100%;
+        height: auto;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 16px;
+      }
+
+      h2 {
+        font-size: 20px;
+        line-height: 28px;
+      }
+
+      p {
+        font-size: 16px;
+        line-height: 24px;
+      }
+    }
+  }
+}
+
+.expert-firm-card-skeleton {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+
+  &__header {
+    width: 100%;
+    height: 200px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  &__body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+  }
+
+  &__top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  &__pill {
+    display: inline-block;
+    height: 24px;
+    border-radius: 999px;
+    width: 140px;
+
+    &--small {
+      width: 90px;
+    }
+  }
+
+  &__line {
+    height: 12px;
+    border-radius: 999px;
+
+    &--title {
+      width: 80%;
+      height: 16px;
+    }
+  }
+
+  &__contact {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__contact-line {
+    height: 12px;
+    width: 70%;
+    border-radius: 999px;
+  }
+
+  &__button {
+    height: 44px;
+    border-radius: 10px;
+    margin-top: auto;
+  }
+}
+
+.shimmer-block {
+  position: relative;
+  overflow: hidden;
+  background: #eef1f4;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150px;
+    height: 100%;
+    width: 150px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    animation: expert-firm-shimmer 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes expert-firm-shimmer {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(300px);
+  }
+}
+
+// Desktop: 3 columns layout
+@media (min-width: 1024px) {
+  .expert-firms-list {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+
+    &--empty {
+      display: block;
+      width: 100%;
+    }
+  }
+}
+

@@ -1,13 +1,12 @@
 import { useState, useCallback } from 'react';
 
 const TABS_ORDER = [
-  "Important Info", 
-  "General Details", 
+  "Important Info",
+  "Membership Plans",
   "Membership Details", 
   "Company Details", 
   "Contact Person Details", 
-  "Membership License Officer", 
-  "Membership Plans"
+  "Membership License Officer"
 ];
 
 export function useSubscriptionWizard(initialTab = 'Important Info') {
@@ -102,38 +101,6 @@ export function useSubscriptionWizard(initialTab = 'Important Info') {
     // Company Name validation
     if (!general.companyName || !general.companyName.trim()) {
       newErrors['generalDetails.companyName'] = 'Company Name is required';
-    }
-    
-    // Director Name validation
-    if (!general.directorName || !general.directorName.trim()) {
-      newErrors['generalDetails.directorName'] = 'Director Name is required';
-    }
-    
-    // Date validation
-    if (!general.date) {
-      newErrors['generalDetails.date'] = 'Date is required';
-    } else {
-      const selectedDate = new Date(general.date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      if (selectedDate < today) {
-        newErrors['generalDetails.date'] = 'Date must be today or in the future';
-      }
-    }
-    
-    // Signature File validation
-    if (!general.signatureFile) {
-      newErrors['generalDetails.signatureFile'] = 'Signature file is required';
-    } else {
-      const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf'];
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      
-      if (!allowedTypes.includes(general.signatureFile.type)) {
-        newErrors['generalDetails.signatureFile'] = 'File must be PNG, JPG, JPEG, or PDF';
-      } else if (general.signatureFile.size > maxSize) {
-        newErrors['generalDetails.signatureFile'] = 'File size must be 5MB or less';
-      }
     }
     
     setErrors(prev => ({ ...prev, ...newErrors }));
@@ -239,6 +206,38 @@ export function useSubscriptionWizard(initialTab = 'Important Info') {
       // Clear otherCategory if Other is not selected
       if (company.otherCategory) {
         setField('companyDetails', 'otherCategory', '');
+      }
+    }
+    
+    // Director Name validation
+    if (!company.directorName || !company.directorName.trim()) {
+      newErrors['companyDetails.directorName'] = 'Director Name is required';
+    }
+    
+    // Date validation
+    if (!company.date) {
+      newErrors['companyDetails.date'] = 'Date is required';
+    } else {
+      const selectedDate = new Date(company.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (selectedDate < today) {
+        newErrors['companyDetails.date'] = 'Date must be today or in the future';
+      }
+    }
+    
+    // Signature File validation
+    if (!company.signatureFile) {
+      newErrors['companyDetails.signatureFile'] = 'Signature file is required';
+    } else {
+      const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      
+      if (!allowedTypes.includes(company.signatureFile.type)) {
+        newErrors['companyDetails.signatureFile'] = 'File must be PNG, JPG, JPEG, or PDF';
+      } else if (company.signatureFile.size > maxSize) {
+        newErrors['companyDetails.signatureFile'] = 'File size must be 5MB or less';
       }
     }
     

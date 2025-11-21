@@ -31,25 +31,34 @@ export const useNotificationDropdown = () => {
   // Cerrar dropdown al hacer click fuera
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Verificar si el click es fuera del panel de notificaciones
       const notificationPanel = document.querySelector('.notification-panel')
-      const notificationTrigger = document.querySelector('.notification-trigger')
+      const notificationTriggers = document.querySelectorAll('.notification-trigger')
+      const mobileHeaderWrapper = document.querySelector('.mobile-header-notification-wrapper')
+      
+      let clickedOnTrigger = false
+      notificationTriggers.forEach(trigger => {
+        if (trigger.contains(event.target)) {
+          clickedOnTrigger = true
+        }
+      })
       
       if (isOpen && 
           notificationPanel && 
           !notificationPanel.contains(event.target) &&
-          notificationTrigger &&
-          !notificationTrigger.contains(event.target)) {
+          !clickedOnTrigger &&
+          (!mobileHeaderWrapper || !mobileHeaderWrapper.contains(event.target))) {
         setIsOpen(false)
       }
     }
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('touchstart', handleClickOutside)
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
     }
   }, [isOpen])
 
@@ -93,8 +102,22 @@ export const useNotificationDropdown = () => {
     // Detectar clicks fuera del SideNav (que cierran el SideNav)
     const handleClickOutsideSideNav = (e) => {
       const sideNav = document.querySelector('.side-nav')
-      if (sideNav && !sideNav.contains(e.target)) {
-        // Si se hace click fuera del SideNav, cerrar también el dropdown
+      const mobileHeader = document.querySelector('.mobile-header')
+      const notificationPanel = document.querySelector('.notification-panel')
+      const notificationTriggers = document.querySelectorAll('.notification-trigger')
+      
+      let clickedOnTrigger = false
+      notificationTriggers.forEach(trigger => {
+        if (trigger.contains(e.target)) {
+          clickedOnTrigger = true
+        }
+      })
+      
+      if (sideNav && 
+          !sideNav.contains(e.target) && 
+          (!mobileHeader || !mobileHeader.contains(e.target)) &&
+          (!notificationPanel || !notificationPanel.contains(e.target)) &&
+          !clickedOnTrigger) {
         setIsOpen(false)
       }
     }
