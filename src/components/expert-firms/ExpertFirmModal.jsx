@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import CustomDropdown from '../CustomDropdown';
+import { buildMemberFirmImageUrl } from '../../utils/memberFirmTransformers';
 import '../../styles/components/ExpertFirmModal.scss';
 
 const ExpertFirmModal = ({ firm, isOpen, onClose, isAdmin = false, specializationOptions = [], onSave, onDelete, specializationsData = [] }) => {
@@ -64,7 +65,7 @@ const ExpertFirmModal = ({ firm, isOpen, onClose, isAdmin = false, specializatio
         emails: emails,
         website: firm.website || ''
       });
-      setImagePreview(firm.image ? (firm.image.startsWith('http') ? firm.image : `/${firm.image}`) : '');
+      setImagePreview(firm.image ? buildMemberFirmImageUrl(firm.image) : '');
       setImageFile(null);
     }
   }, [firm]);
@@ -348,7 +349,7 @@ const ExpertFirmModal = ({ firm, isOpen, onClose, isAdmin = false, specializatio
 
   const specializationColor = getSpecializationColor(firm.specialization);
   const hasImage = firm.image !== null;
-  const imagePath = firm.image ? `/${firm.image}` : null;
+  const imagePath = firm.image ? buildMemberFirmImageUrl(firm.image) : null;
 
   // Format website URL
   const formatWebsite = (website) => {

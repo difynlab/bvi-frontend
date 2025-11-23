@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { buildMemberFirmImageUrl } from '../../utils/memberFirmTransformers';
 import '../../styles/components/ExpertFirmCard.scss';
 
 const ExpertFirmCard = ({ firm, onViewMore, isAdmin = false }) => {
@@ -62,13 +63,15 @@ const ExpertFirmCard = ({ firm, onViewMore, isAdmin = false }) => {
 
   const description = truncateDescription(firm.description);
   const hasImage = firm.image !== null && firm.image !== undefined;
-  // Handle both relative paths and full URLs
-  const imagePath = firm.image 
-    ? (firm.image.startsWith('http://') || firm.image.startsWith('https://') || firm.image.startsWith('/'))
-      ? firm.image
-      : `/${firm.image}`
-    : null;
+  // Build image URL using the same structure as events: /storage/member-firms/{filename}
+  const imagePath = firm.image ? buildMemberFirmImageUrl(firm.image) : null;
   const specializationColor = getSpecializationColor(firm.specialization);
+  const [imageError, setImageError] = useState(false);
+
+  // Reset image error when image changes
+  useEffect(() => {
+    setImageError(false);
+  }, [firm.image]);
 
   // Format website URL
   const formatWebsite = (website) => {
@@ -85,22 +88,22 @@ const ExpertFirmCard = ({ firm, onViewMore, isAdmin = false }) => {
     <div className="expert-firm-card">
       {/* Header with image */}
       <div className="expert-firm-card__header">
-        {hasImage ? (
+        {hasImage && !imageError ? (
           <img 
             src={imagePath} 
             alt={firm.name}
             className="expert-firm-card__image"
-            onError={(e) => {
-              // Fallback to white div if image fails to load
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'block';
+            onError={() => {
+              setImageError(true);
             }}
           />
-        ) : null}
-        <div 
-          className="expert-firm-card__image-placeholder"
-          style={{ display: hasImage ? 'none' : 'block' }}
-        />
+        ) : (
+          <img 
+            src="/empty.png" 
+            alt=""
+            className="expert-firm-card__image-placeholder"
+          />
+        )}
       </div>
 
       {/* Body with information */}

@@ -4,11 +4,11 @@
     "specialization": "Trust & Company Administration",
     "description": "ABM provides value added service relating to the formation of companies in the BVI. ABM provides a comprehensive range of advisory and company secretarial services to BVI Business Companies and Limited Partnerships, including the provision of directors and shareholders where needed. Services range from Company Formation, drafting Memorandum and Articles of Association to arranging for the filing of necessary documents with the Registry of Corporate Affairs. The team is very competent and strives hard to provide a fast, accurate service. Incorporation is same day and services are within four business hours.",
     "address": {
-      "street": null,
-      "poBox": "1st Floor, Columbus Centre P.O. Box 2283 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "1st Floor, Columbus Centre P.O. Box 2283 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "(284) 494 2933",
     "email": "mark.dubois@abm.vg",
@@ -20,11 +20,11 @@
     "specialization": "Trust & Company Administration",
     "description": null,
     "address": {
-      "street": null,
-      "poBox": "Road Town, Tortola P.O. Box 1589.",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Road Town, Tortola P.O. Box 1589."
     },
     "phone": "+ 1 (284) 494 - 1589",
     "email": "lmm@aegisintlgroup.com",
@@ -36,11 +36,11 @@
     "specialization": "Trust & Company Administration",
     "description": "Aleman, Cordero, Galindo & Lee was established in 1985 and has quickly become one of Panama's leading law firms in the offshore area as well as in banking law and in representing large corporations doing business in the country. The firm's offshore practice is supported by its offices in the Bahamas, Belize, British Virgin Islands, Dubai, Geneva, Hong Kong, New Zealand, Seychelles, Singapore, Switzerland and Uruguay, and also by a strong network of correspondents throughout Europe, Asia, the United States and Latin America. In its local practice, the banking department is one of the firm's main areas of strength; it provides services to most of the large banks established in the country and also represents several foreign banks that have recently applied for a banking license and have started operations in Panama. The firm also provides legal advice to companies from various industries, ranging from the largest telecommunications company in the country to companies engaged in port activities, software production, transportation (airlines, railroad and shipping), electric distribution, construction, manufacturing, petroleum distribution, pharmaceutical distribution and retail sales, among others. The firm's main strength is its well-trained group of lawyers, all with strong expertise in their respective areas of practice, who share the firm's commitment to providing prompt and efficient solutions to its clients' needs. These strengths, in turn, are reflected on the firm's excellent clientele, which includes several Global Fortune 500 companies. The firm invests heavily in telecommunications and technological equipment in order to make sure that contact with the clients is maintained at an optimal level.",
     "address": {
-      "street": null,
-      "poBox": "3rd Floor, Yamraj Building. Market Square, P.O. Box 3175 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "3rd Floor, Yamraj Building. Market Square, P.O. Box 3175 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+(284) 494-4666",
     "email": "aliburd@alcogal.com",
@@ -52,11 +52,11 @@
     "specialization": "Trust & Company Administration",
     "description": "Alfaro, Ferrer & Ramirez (BVI) Limited is a British Virgin Islands trust company. Since it was established in 1991, AFRA is licensed to provide a comprehensive range of company management and trust services including the formation and administration of British Virgin Islands companies, registered agent, registered office services and corporate secretarial services.",
     "address": {
-      "street": null,
-      "poBox": "P.O Box 915 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O Box 915 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 494-6206",
     "email": "bvioffice@afra.com",
@@ -68,11 +68,11 @@
     "specialization": "Insurance",
     "description": "Alphonso Warner Insurance Agency is an established Insurance Agency with over 45 years of experience serving the British Virgin Islands. We offer needed protection through insurance products in case the unexpected happens, all while helping you pursue your financial goals! Our services include:",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "(284) 346-9933",
     "email": "alphonsowarner@quijano.com",
@@ -84,11 +84,11 @@
     "specialization": "Law",
     "description": "Appleby is a leading offshore law firm with around 470 people, including 60 partners, operating from 10 offices around the globe. We advise global public and private companies, financial institutions, and high net worth individuals, working with them and their advisers to achieve practical solutions, whether in a single location or across multiple jurisdictions. Appleby represents combined ingenuity and talent taken from all of the most significant international offshore financial centres and is focused on the development of new products and the provision of effective service to its many international clients.",
     "address": {
-      "street": null,
-      "poBox": "Jayla Place P.O Box 3190 Road Town, Tortola British Virgin Islands",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Jayla Place P.O Box 3190 Road Town, Tortola British Virgin Islands"
     },
     "phone": "+1 (284) 393-4742",
     "email": "bri@applebyglobal.com",
@@ -100,11 +100,11 @@
     "specialization": "Trust & Company Administration",
     "description": "ARIFA is a full-service law firm covering 30 practice areas, organized into 14 practice groups and attended by 48 lawyers. ARIFA has a strong offshore practice, for which it has developed its own network of affiliated offices in Belize, the British Virgin Islands, Hong Kong, London and Uruguay. Under its brand name, ARIFA Corporate Services, the firm offers clients a wide range of standardized legal structures and services, including company formation and management services, as well as trust and foundation services. For selected clients, its Swiss ARIFA affiliate offers more sophisticated estate and family financial planning services, as well as trustee services.",
     "address": {
-      "street": null,
-      "poBox": "1st floor, Palm Grove House Wickham's Cay 1, P.O. Box 985 Road Town British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "1st floor, Palm Grove House Wickham's Cay 1, P.O. Box 985 Road Town British Virgin Islands VG1110"
     },
     "phone": "+1 (284)393-4977",
     "email": "rrestrepo@arifa.com",
@@ -116,11 +116,11 @@
     "specialization": "Trust & Company Administration",
     "description": "Asia Leading offers a fast, streamlining company incorporation process, along with trusted registered agent and registered office services on the British Virgin Islands. We ensure that our client's business stays fully compliant with all legal and filing requirements so they can focus on growth, while we handle the rest.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": "Road Town, Tortola British Virgin Islands",
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "1(284) 494-1145",
     "email": "mary@asialeading.com",
@@ -132,11 +132,11 @@
     "specialization": "Fund Administration",
     "description": "ATU General Trust (BVI) Limited (“ATU”) is a British Virgin Islands Trust Company which holds a Class 1 Trust License and offers a comprehensive range of fiduciary and corporate management services. ATU has been successfully operating in the BVI since 1995 and is a member of ATU Group, founded in 1929.",
     "address": {
-      "street": null,
-      "poBox": "3076 Sir Francis Drake's Highway, P.O. Box 346 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "3076 Sir Francis Drake's Highway, P.O. Box 346 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 494-1122",
     "email": "info@atubvi.com",
@@ -148,11 +148,11 @@
     "specialization": "Law",
     "description": "Baker & Partners is a specialist independent offshore litigation and dispute resolution law firm, headquartered in Jersey, Channel Islands with offices in London, BVI and Cayman.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "+ 1 (284) 394 - 9227",
     "email": "shaunreardonjohn@bakerandpartners.com",
@@ -164,11 +164,11 @@
     "specialization": "Accountancy",
     "description": "Accounting, audit, insolvency and technology services to a wide variety of clients within the financial services, tourism, government and general business sectors focusing on delivery of exceptional client services to all clients.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 34 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 34 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 494-3783 / +1 (284) 852-6200",
     "email": "mail@bdo.vg",
@@ -180,11 +180,11 @@
     "specialization": "Law",
     "description": "Bedell Cristin is an award-winning law firm with expertise in BVI, Cayman Islands, Guernsey and Jersey law and the agility to drive success for our clients in a fast-moving world. Bedell Cristin's experts advise on all aspects of BVI law and local practical issues from our locations across the globe. We provide legal advice shaped around the needs of corporate and private clients, financial institutions and intermediaries worldwide. The capabilities and talent of our lawyers have earned us industry recognition for identifying all the steps necessary to meet our clients’ goals, however diverse or complex the requirement. Working in multi-disciplinary teams, we marry thought leadership with a proactive approach to solving issues holistically – without a client needing to raise them – across geographies and practice areas in the most efficient and seamless way. Through this approach – delivering reliability and stability with flair – we combine commercial acumen with service excellence that helps our clients achieve their objectives. Services We are commercially minded. Expert. Professional. Our teams marry legal expertise with commercial acumen across a range of practice areas. From the straightforward to the highly complex, we understand what our clients need and deliver on their end goals.",
     "address": {
-      "street": null,
-      "poBox": "Mandar House Johnson's Ghut, PO Box 2283 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Mandar House Johnson's Ghut, PO Box 2283 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "1 284 495 5700",
     "email": "bedellcristin@quijano.com",
@@ -196,11 +196,11 @@
     "specialization": "Trust & Company Administration",
     "description": "Bolder Group is the result of the merger between AMS Financial Group and Circle Partners into one independent global organization. Having worked closely together over the last decade with stakeholders involved in both operations, the consolidation of fund and corporate services has resulted in a growth strategy which offers seamless services worldwide. While completion of the merger is still subject to regulatory approvals, bolder commenced operations October 18, 2021. The newly combined Bolder offices will result in global coverage in major financial jurisdictions. At Bolder, we believe that our core values lead us Our client service model is hands-on, providing clients with highly experienced and dedicated teams who are responsive, accessible, and deliver a proactive service. We build meaningful relationships with our clients and are truly connected to our markets. We connect with colleagues, teams and stakeholders in our clients’ and our own organisation. We share knowledge and work together to achieve great results.",
     "address": {
-      "street": null,
-      "poBox": "Sea Meadow House P.O. Box 116 Road Town, Tortola British Virgin Islands",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Sea Meadow House P.O. Box 116 Road Town, Tortola British Virgin Islands"
     },
     "phone": "+1 284 394 3399",
     "email": "info@amsfinanical.com",
@@ -212,11 +212,11 @@
     "specialization": "Others",
     "description": "The BVI International Arbitration Centre (BVI IAC), an independent not-for-profit institution, was established to meet the demands of the international business community for a neutral, impartial, efficient and reliable dispute resolution institution in the Caribbean, Latin America and beyond.",
     "address": {
-      "street": null,
-      "poBox": "PO Box 3438 Road Town, Tortola",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "PO Box 3438 Road Town, Tortola"
     },
     "phone": "284 393 8000",
     "email": "info@bviiac.org",
@@ -228,11 +228,11 @@
     "specialization": "Law",
     "description": "Campbells’ BVI law office provides both corporate and litigation services. Campbells enjoys an excellent reputation for its litigation strength and expertise in all aspects of commercial litigation, insolvency and investment fund disputes. We have extensive experience in cross-border liquidations and corporate reorganisations. Our clients include overseas governments and regulatory authorities, multinational corporations, banks and financial institutions, insurance, reinsurance and professional firms to trustees, court appointed receivers and liquidators, local businesses and individuals. We advise on complex commercial, investment fund, insurance, trust, construction and financial litigation and assist with regulatory matters and investigations..",
     "address": {
-      "street": null,
-      "poBox": "2nd Floor, Romesco Place Waterfront Dr., P.O. Box 4541 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "2nd Floor, Romesco Place Waterfront Dr., P.O. Box 4541 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 494-2423",
     "email": "vpolacle@campbellslegal.com",
@@ -244,11 +244,11 @@
     "specialization": "Law",
     "description": "We offer our clients the full range of legal advice regarding corporate and finance, investment funds, dispute resolution, insolvency, and trusts and private wealth. We have the international experience to provide accurate, efficient legal services for all transactions involving the BVI, including where BVI entities form part of a wider multi-jurisdictional structure. We also provide clients with access to BVI company management services through our affiliate CO Services.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "+1 (284) 394-4030",
     "email": "elizabeth.killeen@careyolsen.com",
@@ -260,11 +260,11 @@
     "specialization": "Insurance",
     "description": "Since Caribbean Insurers Ltd (“CIL”) was founded in 1973, we have provided the residents of the British Virgin Islands with all of the insurance coverages they need – from auto to homeowners; from life and health to marine; and from employer’s liability to professional indemnity. CIL takes great pride in being the leader of insurance services in the BVI. With custom in-house software technologies, we are able to provide complete insurance products and services in a matter of minutes. Our longevity speaks volumes about our stability and the incredible advantage of helping to shape the BVI’s insurance services sector.",
     "address": {
-      "street": null,
-      "poBox": "Mirage Building P.O. Box 129 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Mirage Building P.O. Box 129 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "(284) 393-8920",
     "email": "info@caribbins.com",
@@ -276,11 +276,11 @@
     "specialization": "Trust & Company Administration",
     "description": "Carré Trust is a multi-family office providing high-quality customised services. With a wealth of experience in the trust and company world, Carré Trust is able to offer qualified guidance and assistance to wealthy individuals, their families and professional intermediaries regarding their requirements and needs, from structural challenges to personal customer solutions. Carré Trust is a one-stop-shop committed to personal service, reliability and attention to detail. A trustworthy working relationship gives our clients the time and peace of mind they deserve..",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 260 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 260 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "t +1 (284) 495 5130",
     "email": "bvi@carre-trust.com",
@@ -292,11 +292,11 @@
     "specialization": "Fund Administration",
     "description": "Castlegate is a full-service fund administrator and provider of independent director services located in the British Virgin Islands. Through a team of highly qualified and experienced individuals, utilizing leading fund accounting and Registrar and Transfer Agency systems, our aim is to provide a high quality, customer-driven service, with an emphasis on responsiveness, attention to detail, competitive pricing, and sound corporate governance. As well as startups, we can also assist funds looking to transition from an existing third party administrator or in house service. Together with our affiliate in Malta, Castlegate Fund Services Limited , we are able to service our clients' needs in a timely manner whether they are located in the Asian, European or United States times zones.",
     "address": {
-      "street": null,
-      "poBox": "Top Floor Forbes Hare Building Pasea Estate Road P.O. Box 4441 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Top Floor Forbes Hare Building Pasea Estate Road P.O. Box 4441 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 284 494 6540",
     "email": "contact@castlegateglobal.com",
@@ -308,11 +308,11 @@
     "specialization": "Compliance and Risk",
     "description": null,
     "address": {
-      "street": null,
-      "poBox": "Road Town British Virgin Islands P.O. Box 2196",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Road Town British Virgin Islands P.O. Box 2196"
     },
     "phone": "1 (284) 494 - 2382",
     "email": "ccs@surfbvi.com",
@@ -321,14 +321,14 @@
   },
   {
     "name": "Clermont",
-    "specialization": "Corporate Services",
+    "specialization": "Others",
     "description": "Founded in 1996, we are an independent, owner-managed business free from private equity or bank ownership. We provide bespoke wealth, tax and succession planning solutions via multi-jurisdictional corporate and trust structures.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "+1 284 494 6038",
     "email": "contactus@clermonttrust.com",
@@ -340,11 +340,11 @@
     "specialization": "Law",
     "description": "Collas Crill is an offshore law firm with offices in BVI, Cayman, Guernsey, Hong Kong, Jersey, London and Singapore. With more than 30 partners and directors and over 60 other lawyers and legal professionals worldwide, Collas Crill delivers a comprehensive range of legal services to clients locally and around the globe.",
     "address": {
-      "street": null,
-      "poBox": "125 Main ST, P.O. Box 144 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "125 Main ST, P.O. Box 144 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 494-2717",
     "email": "bvi@collascrill.com",
@@ -356,11 +356,11 @@
     "specialization": "Law",
     "description": "Conyers Dill & Pearman is a leading international law firm with a broad client base including FTSE 100 and Fortune 500 companies, international finance houses and asset managers. The Firm advises on Bermuda, British Virgin Islands, Cayman Islands and Mauritius laws, from offices in those jurisdictions and key financial centres of Dubai, London, Hong Kong and Singapore.",
     "address": {
-      "street": null,
-      "poBox": "Commerce House Wickhams Cay 1, P.O. Box 3140 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Commerce House Wickhams Cay 1, P.O. Box 3140 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 852-1000",
     "email": "bvi@conyersdill.com",
@@ -372,11 +372,11 @@
     "specialization": "Trust & Company Administration",
     "description": "Conyers Dill & Pearman is a leading international law firm with a broad client base including FTSE 100 and Fortune 500 companies, international finance houses and asset managers. The Firm advises on Bermuda, British Virgin Islands, Cayman Islands and Mauritius laws, from offices in those jurisdictions and key financial centres of Dubai, London, Hong Kong and Singapore.",
     "address": {
-      "street": null,
-      "poBox": "Commerce House Wickhams Cay 1, P.O. Box 3140 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Commerce House Wickhams Cay 1, P.O. Box 3140 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 852-1010",
     "email": "bvi@conyersdill.com",
@@ -388,11 +388,11 @@
     "specialization": "Others",
     "description": "The British Virgin Islands has a robust legal system, a long history of political and economic stability, and a world-class reputation as a leading financial center in the Caribbean. As such, many private and corporate clients trust the BVI as their main hub to safeguard their private and corporate investments. We are located on Tortola, the main island, from where we provide a range of services to our clients around the globe. Services",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": "P.O. 438, Palm Grove House Road Town, Tortola.",
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "+1 284 494 0045",
     "email": "bvi@corpag.com",
@@ -404,11 +404,11 @@
     "specialization": "Banking",
     "description": "Coverdale is a full service trust company offering corporate services, trustee services, ship registration and asset management services at competitive rates. Coverdale is associated with two prominent law firms – O’Neal Webster in the BVI and Myers Fletcher & Gordon in Jamaica.Coverdale is licensed under the BVI Banks and Trust Companies Act 1990, to carry on Trust business and act as Registered Agent for companies incorporated in the BVI. The company has a number of wholly owned subsidiary companies, including: Coverdale Asset Management Limited Coverdale Authorised Representative Limited Coverdale Directors Limited Coverdale Secretaries Limited Coverdale Shareholders Limited Coverdale Trustees Limited",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 4519 Road Town, Tortola VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 4519 Road Town, Tortola VG1110"
     },
     "phone": "+1 (284) 494-6727",
     "email": "admin@coverdalebvi.com",
@@ -420,11 +420,11 @@
     "specialization": "Family Office",
     "description": null,
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "",
     "email": "gbarnett@xrcapial.com",
@@ -436,11 +436,11 @@
     "specialization": "Others",
     "description": "At Deloitte, we are driven to help our clients, people, and communities thrive. Working with the best of the best, we provide a wide variety of services for a range of industries. Whether we’re helping transform organizations, protecting financial markets, or working with governments to support societies, there is no end to the impact we make each day.",
     "address": {
-      "street": null,
-      "poBox": "3rd Floor, Waters Edge Building Meridian Plaza, Wickham's Cay Road Town British Virgin Islands P.O. Box 3083 VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "3rd Floor, Waters Edge Building Meridian Plaza, Wickham's Cay Road Town British Virgin Islands P.O. Box 3083 VG1110"
     },
     "phone": "+1 284 494 2868",
     "email": "cromney@deloitte.com",
@@ -452,11 +452,11 @@
     "specialization": "Others",
     "description": "Dentons’ full service office in the British Virgin Islands offers both corporate and litigation services. Our transaction team has notable expertise, advising on complex, high-value cross-border transactions across banking and finance, mergers and acquisitions, private equity and joint ventures, corporate reorganisations and regulatory matters. Our offshore corporate lawyers also work closely with corporate and fiduciary service providers to offer innovative and bespoke corporate services solutions to our clients.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "1 284 541 2260",
     "email": "viola.salomon@dentons.com",
@@ -468,11 +468,11 @@
     "specialization": "Director Services",
     "description": "We are an experienced boutique fintech consultancy specializing in the provision of a wide range of niche services to blockchain, fintech and high-net worth individuals in the Caribbean. We have an excellent network of trusted lawyers, accountant, banks, consultants, realtors, cyber security firms, developers, fund raisers and construction firms in the region.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "+1 (284) 340-6335",
     "email": "ask@dltsolutions.io",
@@ -484,11 +484,11 @@
     "specialization": "Trust & Company Administration",
     "description": "DR Asset Planning (BVI) operates pursuant to a Company Management Licence issued to it by the Financial Services Commission of the British Virgin Islands. It offers corporate secretarial and administration services to a wide range of professional and individual clients - interanationally , regionally and locally. Those services include: Company and Partnership Formation Registered Office Registered Agent Domiciliation Services Solvent Liquidations",
     "address": {
-      "street": null,
-      "poBox": "PO Box 60 Road Town British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "PO Box 60 Road Town British Virgin Islands VG1110"
     },
     "phone": "1-284-494-1601",
     "email": "bvi@drassetplanning.com",
@@ -500,11 +500,11 @@
     "specialization": "Accountancy",
     "description": "Audit & tax services; Business advisory, restructuring and insolvency services.",
     "address": {
-      "street": null,
-      "poBox": "Ritter House PMB 265 Wickhams Cay2, P.O. Box 3169 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Ritter House PMB 265 Wickhams Cay2, P.O. Box 3169 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 852-5450",
     "email": "ey@vg.ey.com",
@@ -513,14 +513,14 @@
   },
   {
     "name": "Exness (VG) Ltd",
-    "specialization": "Broker",
+    "specialization": "Brokers",
     "description": null,
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "",
     "email": "exness_vg@exness.com",
@@ -532,11 +532,11 @@
     "specialization": "Compliance and Risk",
     "description": "As an owner-managed firm, we are committed to providing our diverse range of clients with unparalleled levels of service and solutions to make their business work. Our BVI expertise combined with our global network capabilities and international relationships, enables us to service the most complex needs of our clients.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "",
     "email": "enquiries@folio.vg",
@@ -548,11 +548,11 @@
     "specialization": "Accountancy",
     "description": "FTI Consulting is an Independent Global Advisory firm dedicated to helping organizations manage change, mitigate risk and resolve disputes. Financial, legal, operational, political & regulatory, reputational & transactional & transactional. Individually, each practice is a leader in its specific field, staffed with experts recognized for the depth of their knowledge and a track record of making an impact.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 993 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 993 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 852-9050",
     "email": "john.ayres@fticonsulting.com",
@@ -564,11 +564,11 @@
     "specialization": "Banking",
     "description": "Gold Leaf Consulting provides compliance and regulatory services within the financial services industry as well as wealth planning solutions.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 3140 Road Town, Tortola British Virgin Islands",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 3140 Road Town, Tortola British Virgin Islands"
     },
     "phone": "+1 (758) 725-5055",
     "email": "shamini@goldleafbvi.com",
@@ -580,11 +580,11 @@
     "specialization": "Fund Administration",
     "description": "Harneys is a leading international offshore law firm. Harneys provides advice on British Virgin Islands, Cayman Islands, Cyprus, Bermuda and Anguilla law to an internal client base. Harneys’ associated corporate and private wealth services business, Harneys Fiduciary, delivers a full complement of corporate and fiduciary services in Bermuda, BVI and Cayman Islands.",
     "address": {
-      "street": null,
-      "poBox": "craigmuir Chambers P.O. Box 71 Road Town, Tortola VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "craigmuir Chambers P.O. Box 71 Road Town, Tortola VG1110"
     },
     "phone": "+1 (284) 494-2233",
     "email": "rahel.worede@harneys.com",
@@ -596,11 +596,11 @@
     "specialization": "Compliance and Risk",
     "description": "We are an independent provider of corporate, funds and trust services operating from key global offshore and onshore locations. We're the fiduciary firm clients can trust to manage all encompassing global, cross-border business solutions. For corporate, institutional, or private needs, Harneys Fiduciary provides an integrated, flexible, and personalised end to end service globally, delivered by aglie thinking experts who have a deep understanding of their clients' needs and unparalleled jurisdictional insight.",
     "address": {
-      "street": null,
-      "poBox": "Craigmuir Chambers PO Box 71 Road Town Road Town British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Craigmuir Chambers PO Box 71 Road Town Road Town British Virgin Islands VG1110"
     },
     "phone": "1-284-494-2233",
     "email": "ross.munro@harneysfiduciary.com",
@@ -612,11 +612,11 @@
     "specialization": "Accountancy",
     "description": "The company is an independent member firm of HLB International, a worldwide mid-tier network of independent accounting firms and business advisers. We focus on the provision of accounting, consultancy, auditing, as well as assurance services primarily for BVI Companies and Trusts.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 260 Road Town, Tortola British Virgin Islands",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 260 Road Town, Tortola British Virgin Islands"
     },
     "phone": "+1 (284) 495-5130",
     "email": "mail@trinitybvi.com",
@@ -628,11 +628,11 @@
     "specialization": "Fund Administration",
     "description": "Hudsun Trust has a BVI Class 1 Trust Licence, and has served professional advisors, financial institutions and high net worth clients for over 25 years. We provide full trust services, company formations, registered agent/office, directors, nominee shareholders, yacht services and mutual funds administration",
     "address": {
-      "street": null,
-      "poBox": "P.O Box 986 Road Town, Tortola British Virgin Islands",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O Box 986 Road Town, Tortola British Virgin Islands"
     },
     "phone": "+1 (284) 494-6544",
     "email": "admin@hudsun.vg",
@@ -644,11 +644,11 @@
     "specialization": "Accountancy",
     "description": "Formation and management of captive (re) insurance companies, accounting, policy drafting and claims management.",
     "address": {
-      "street": null,
-      "poBox": "Costal Building Wickhams Cay 2, P.O. Box 800 Road Twon, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Costal Building Wickhams Cay 2, P.O. Box 800 Road Twon, Tortola British Virgin Islands VG1110"
     },
     "phone": "",
     "email": "helen.lanes@hyperion-risk.com",
@@ -660,11 +660,11 @@
     "specialization": "Trust & Company Administration",
     "description": "Provision of corporate services, including incorporation of BVI Companies and post-incorporation services.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 873 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 873 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 344-2180",
     "email": "aassistant@icazalaw.com",
@@ -676,11 +676,11 @@
     "specialization": "Trust & Company Administration",
     "description": "ICS Corporate Services (BVI) Limited under the ICS Group has obtained Class III License from FSC and provides company management services. ICS Group also obtained Authorised Representative License from BVI to provide authorized representative services, obtained Corporate Service Provider License from Cayman Islands to provide company management services, and obtained Trust or Company Service Provider License from Hong Kong to provide company secretary services. ICS Group is an advisory and corporate firm operating in Hong Kong and China. ICS Group specializes in planning and assistance in the implementation of multi jurisdictional structures that comply with Chinese regulations. Our business includes setting up companies in China, Hong Kong and offshore jurisdictions.",
     "address": {
-      "street": null,
-      "poBox": "Sea Meadow House, P.O. Box 116 Road Town VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Sea Meadow House, P.O. Box 116 Road Town VG1110"
     },
     "phone": "1 284 - 394 - 3399 or 852 - 2126 - 7435",
     "email": "info@icscs.com",
@@ -692,11 +692,11 @@
     "specialization": "Trust & Company Administration",
     "description": null,
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "",
     "email": "natasha.penn@ils-world.com",
@@ -708,11 +708,11 @@
     "specialization": "Accountancy",
     "description": "At Interpath we offer our expertise and analysis to provide the most efficient and optimal solutions through any combination of our Restructuring and Liquidation Services, Advisory Services, and Forensic Services that may be appropriate and most helpful in advancing towards a resolution through a critical path to success.",
     "address": {
-      "street": null,
-      "poBox": "4th Floor, Fish Lock Road PO Box 4571, LM Business Centre Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "4th Floor, Fish Lock Road PO Box 4571, LM Business Centre Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 346 9600",
     "email": "paul.pretlove@interpathadvisory.vg",
@@ -724,11 +724,11 @@
     "specialization": "Compliance and Risk",
     "description": "Intertrust is a global leader in delivering corporate services, private wealth, funds and capital markets solutions to multi-nationals, fund managers, financial institutions, entrepreneurs and high net worth individuals worldwide.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 4041 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 4041 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 394-9100",
     "email": "bvi@intertrustgroup.com",
@@ -740,11 +740,11 @@
     "specialization": "Private Client Wealth Management",
     "description": "JTC is a publicly listed, award-winning provider of fund, corporate and private wealth services to institutional and private clients.",
     "address": {
-      "street": null,
-      "poBox": "80 Main St., P.O. Box 3200 Road town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "80 Main St., P.O. Box 3200 Road town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 852-3200",
     "email": "jtcbvioffices@jtcgroup.com",
@@ -756,11 +756,11 @@
     "specialization": "Law",
     "description": "Kobre & Kim is a conflict-free global law firm focused exclusively on disputes and investigations, often involving fraud and misconduct. Recognized as the premier firm for cross-border disputes, the firm has a particular focus on financial products and services litigation, insolvency disputes, intellectual property litigation, international judgment enforcement and asset recovery, and U.S. government enforcement and regulatory investigations. Kobre & Kim operates out of offices in New York, Washington DC, San Francisco, Miami, Delaware, London, São Paolo, Tel Aviv, Dubai, Seoul, Hong Kong, Shanghai, Cyprus, Cayman Islands, and British Virgin Islands.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "+1 (284) 852-1600",
     "email": "ritseeniyah.georges-haughton@kobrekim.com",
@@ -772,11 +772,11 @@
     "specialization": "Accountancy",
     "description": "KPMG (BVI) Limited is one of the leading professional services firms in the BVI, with 18 employees delivering audit, tax and advisory services to clients worldwide. KPMG globally has over 174,000 professionals in 155 countries. This global reach, combined with the on-island presence, allows us to use our island insights, local and international expertise to add value to clients, wherever in the world they may be.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 4467 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 4467 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 494-1134",
     "email": "kpmg@kpmg.vg",
@@ -788,11 +788,11 @@
     "specialization": "Trust & Company Administration",
     "description": "Kroll provides proprietary data, technology, and insights to help clients stay ahead of complex demands related to risk, governance and growth. Our solutions deliver a powerful competitive advantage, enabling faster, smarter, and more sustainable decisions. With 5,000 experts around the world, we create value and impact for our clients and communities. Serving clients in 140 countries across six continents and spanning nearly every industry and sector, Kroll delivers the coverage global organizations need to anticipate and exceed the complex demands surrounding risk, governance, operations, and growth.",
     "address": {
-      "street": null,
-      "poBox": "3rd Floor Commerce House PO Box 3339 Road Town, Tortola British Virgin Islands VG 1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "3rd Floor Commerce House PO Box 3339 Road Town, Tortola British Virgin Islands VG 1110"
     },
     "phone": "1 284 340 5888",
     "email": "kent.mcparland@kroll.com",
@@ -804,11 +804,11 @@
     "specialization": "Business/Management Consultants",
     "description": "Our mission is to provide bespoke consultancy services to a range of businesses including those operating in the financial services space in the BVI as well as internationally.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 689 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 689 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 542-1921",
     "email": "lorna.smith@lgsassociates.com",
@@ -820,11 +820,11 @@
     "specialization": "Accountancy",
     "description": "Little Bay Consulting Limited offers director services, Accounting, Compliance and consulting to BVI entities. Its Financial and legal professionals have experience in BVI financial services dating back to 2022. Areas of expertise include distress directorships and services to crypto / de-fi entities.",
     "address": {
-      "street": null,
-      "poBox": "PO Box 3042 Road Town",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "PO Box 3042 Road Town"
     },
     "phone": "",
     "email": "helen@littlebayconsulting.com",
@@ -836,11 +836,11 @@
     "specialization": "Law",
     "description": "Loeb Smith is a specialist corporate law firm with three offices in the Cayman Islands, the British Virgin Islands (BVI) and Hong Kong which specializes in advising on Investment Funds, Corporate/M&A, Capital Markets and Banking & Finance with respect to Cayman Islands law and BVI law. The Firm is ranked by Legal500 and IFLR for its Investment Funds practice and has an impressive and high-quality client base of institutional fund managers, banks, and listed companies and has successfully created a loyal corporate client base in North America and in Asia through its responsiveness to clients’ requirements and providing clear, specialist and expert advice on Cayman Islands law and BVI law. The Firm also has a very strong Corporate practice where it advises a large number of clients in Silicon Valley, U.S.A. in the Blockchain Technology and Fintech sectors. The Firm established an office in the BVI in 2020 which specializes in advising on principally Investment Funds, Corporate and Banking & Finance matters, particularly in the Blockchain Technology and Fintech sectors.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "",
     "email": "gary.smith@loebsmith.com",
@@ -852,11 +852,11 @@
     "specialization": "Law",
     "description": "Maples and Calder is a leading international law firm advising financial, institutional, business and private clients around the world. Through its affiliates the firm also provides a range of corporate formation, fiduciary and administration services.",
     "address": {
-      "street": null,
-      "poBox": "Sea Meadow House P.O. Box 173 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Sea Meadow House P.O. Box 173 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 852- 3000",
     "email": "richard.may@maplesandcalder.com",
@@ -868,11 +868,11 @@
     "specialization": "Law",
     "description": "Martin Kenney & Co. is a specialist, multi-jurisdictional investigative and litigation practice. The lawyers of the firm concentrate on the representation of persons harmed by economic crime in a multi-jurisdictional setting. Our lawyers and other professionals handle international cases relating to business fraud, commercial litigation, investigations and insolvency.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 4740 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 4740 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 494-2444",
     "email": "mkenney@mksolicitors.com",
@@ -884,11 +884,11 @@
     "specialization": "Corporate Advisory and Valuation",
     "description": "MMG Trust (BVI) Corp. brings over 35 years of experience in the British Virgin Islands, operating under a Class I Trust License issued pursuant to the Bank and Trust Companies Act, and is fully regulated by the BVI Financial Services Commission. Additionally, MMG Trust (BVI) is a licensed Authorized Custodian, reinforcing its commitment to regulatory excellence and client trust. The company offers specialized services in fiduciary management, company formation, and corporate administration for private clients, institutions, corporations, and non-profit entities. With a strong track record in regulatory compliance, MMG Trust (BVI) ensures that all structures and services adhere to the highest standards of governance and oversight. MMG Trust (BVI) Corp. benefits from the strategic support and deep expertise of Morgan & Morgan, a premier Panamanian law firm with a long-standing reputation in the management and administration of complex structures. Since 1998, these services have been delivered with a steadfast commitment to excellence, regulatory integrity, and client trust. Morgan & Morgan has been recognized as a Band 1 firm in the Chambers High Net Worth Guide for Private Wealth Law for nine consecutive years, underscoring its leadership and credibility in the field.",
     "address": {
-      "street": null,
-      "poBox": "Pasea Estate, P.O. Box 958 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Pasea Estate, P.O. Box 958 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 442-1975",
     "email": "bvi@morimor.com",
@@ -900,11 +900,11 @@
     "specialization": "Investment Managers",
     "description": null,
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 4857 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 4857 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 852-1700",
     "email": "rachael.mcdonald@mourantozannes.com",
@@ -916,11 +916,11 @@
     "specialization": "Banking",
     "description": "For over 30 years, the National Bank of the Virgin Islands Limited (the “Bank”) has served as a leading financial services institution in the Virgin Islands. Our team strives to help our clients reach their version of paradise by providing tailored banking services to suit personal and business banking needs. As the official bank of paradise, we are here to assist you every step of the way, whether purchasing a new home or car, paying off debt or saving for a dream vacation. We strive to ensure that your version of paradise grows organically into reality. The Bank is renowned by Virgin Islanders as the “savings bank”, and we are keen on maintaining this reputation while expanding the range of products and services we offer. Having recognized the diverse needs of our customers, we have responded with customized savings options.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "General Inquiries: 284 494 3737",
     "email": "info@nationalbank.vg",
@@ -932,11 +932,11 @@
     "specialization": "Others",
     "description": "NorthLark Pte Ltd is a trusted provider of Financial Crime Risk and Regulatory Compliance solutions, offering tailored services to financial institutions, fintech firms, and regulated entities worldwide. With a deep understanding of global regulatory frameworks across the UK, APAC, Americas and MENA regions with expansion into multiple jurisdictions at present, NorthLark delivers expert guidance, robust compliance programs, and innovative risk management strategies.",
     "address": {
-      "street": "6 Battery Rd, 049909 Singapore",
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": "6 Battery Rd, 049909 Singapore",
+      "addressLine2": null
     },
     "phone": "+94 77 2268826",
     "email": "vinoth@northlark.com",
@@ -948,11 +948,11 @@
     "specialization": "Vessel Registrations",
     "description": "O’Neal Webster holds a decidedly unique position among all BVI law firms, being among the first to establish exclusively in the British Virgin Islands to serve onshore and offshore corporate and finance, banking, business, real estate, and trust and estate clients. The firm is known for its handling of both transactional and adversarial matters. Since 1989, the practice has been particularly noted by clients and peers for its talent and service, consistently exceeding expectations in both international and domestic markets.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "+1 (284) 393-5800",
     "email": "info@onealwebster.com",
@@ -964,11 +964,11 @@
     "specialization": "Accountancy",
     "description": "Ocorian is a global leader in corporate and fiduciary services, fund administration and capital markets. With presence and capability across the world’s leading financial centres, we are global specialists in fund, corporate, capital market and private client services – recognised by our clients and the industry for exceptional client service and value. Specialising in the incorporation and administration of BVI companies, we work with clients to eliminate challenges, meet regulatory obligations, and give your ambitions the best chance of success. We also offer a range of corporate, fund and fiduciary services to high-net-worth individuals, private companies, funds, and global corporations, including corporate administration, directorship services, trusts and special purpose vehicles (SPVs).",
     "address": {
-      "street": null,
-      "poBox": "PO Box 3190 Road Town, Tortola VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "PO Box 3190 Road Town, Tortola VG1110"
     },
     "phone": "+1 284 393 1300",
     "email": "gareth.thomas@ocorian.com",
@@ -980,11 +980,11 @@
     "specialization": "Law",
     "description": "Our BVI team provides a seamless, round-the-clock service to clients from our offices in BVI, Cayman, Guernsey, Hong Kong and Jersey. We have been in the jurisdiction since 2007, acting for leading global financial institutions, investment managers and corporate entities from start-ups to global household names and re also instructed by many leading law firms and other intermediaries on many of the noteworthy and complex transactions and cases that involve BVI law across sectors including financial services, investment funds, energy and infrastructure, consumer goods and retail, life sciences, leisure and entertainment, manufacturing and real estate.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "+1(284) 852-7300",
     "email": "bvi@ogier.com",
@@ -996,11 +996,11 @@
     "specialization": "Trust & Company Administration",
     "description": "OMC Group is a multinational company that provides world-class corporate solutions and specializes in the provision of corporate, fiduciary and ministrative services, through its international network of duly licensed companies in various jurisdictions. In the British Virgin Islands, Overseas Management Company Trust (B.V.I.) Ltd., (OMC) is a Class I Trust License holder, providing formation and registered agent services for BVI Legal Entities. We offer customized solutions for company incorporation in the British Virgin Islands (BVI) and other jurisdictions. At OMC Group we focus in understanding our client’s main objectives and business requirements to guide them towards corporate solutions tailored to their objectives. Register your BVI company with us!",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": "Yamraj Building, Ground Floor Road Town, Tortola British Virgin Islands",
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "T. +284 494 4693  F. +284 494 4627",
     "email": "omggroup@quijano.com",
@@ -1012,11 +1012,11 @@
     "specialization": "Trust & Company Administration",
     "description": "Patton, Moreno & Asvat has more than 35 years of experience in providing legal services to both local and international clients.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 3174 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 3174 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 345-2632",
     "email": "mhibbert@pmalawyers.com",
@@ -1028,11 +1028,11 @@
     "specialization": "Family Office",
     "description": "Established in 1995, Price Demers & Co. is a British Virgin Islands law firm serving a diverse international and local clientele. Our lawyers are dedicated to providing high quality, personalised legal services to our local and international clients in the areas of commercial and corporate law, real estate, family law, trusts, estates and probate law. We specialise in civil litigation. Our team of BVI attorneys provides a full range of legal and corporate services.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 3331 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 3331 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 494-5514",
     "email": "info@pricemers.com",
@@ -1044,11 +1044,11 @@
     "specialization": "Trust & Company Administration",
     "description": "PMI is a financial services firm that specializes in pensions, investments, and private wealth. PMI provides investment advisory, management, and administration services with reliable independent analytics using expert analysts from our state-of-the-art investment trading floor. We further assist companies in satisfying economic substance requirements through the defined activity of fund management. At the core of the PMI business model, we believe that our clients must retain ownership of their assets. PMI is a firm built on the premise of service and integrity. At PMI, we live our motto, \"Financial Solutions, Delivered!\"",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "284-494-4484/5",
     "email": "mtodmansmith@pmipensions.com",
@@ -1060,11 +1060,11 @@
     "specialization": "Family Office",
     "description": "At Portcullis, we understand the importance of continuity and legacy planning. We are a true family office, with generational involvement in the business. We fully understand the needs and difficulties that families face and it is our vision to work with other families to create enduring legacies. At Portcullis, we believe in cultivating a strong sense of character, community and empathy. As important as it is to do our utmost for our clientele, we feel that it is just as important to remember our roots and support the less fortunate. We endeavour to support families and build communities.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "(284) 494 5296",
     "email": "info.britishvirginislands@portcullis.co",
@@ -1073,14 +1073,14 @@
   },
   {
     "name": "Praxis Trust (BVI) Limited",
-    "specialization": "Yacht Management",
+    "specialization": "Others",
     "description": "Praxis Group is a leading provider of bespoke private wealth, corporate and fund administration and yacht services to private individuals, families and international corporate clients. Established for over 50 years, we are an independent firm with a global presence, delivering onshore and offshore private and corporate administration solutions. Our products and services includes: Incorporation and administration of BVI Business Companies Formation and Administration of BVI trust Formation and Administration of BVI Private Trust Companies (PTCs) Corporate and personal directors Provision of Trustees for BVI Trusts Authorised Representative of BVI Funds",
     "address": {
-      "street": null,
-      "poBox": "Quastisky Building PO Box 905 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Quastisky Building PO Box 905 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 284 494 8790",
     "email": "info@praxisgroup.com",
@@ -1092,11 +1092,11 @@
     "specialization": "Accountancy",
     "description": "Charted Accountants and Insolvency Practitioners.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 4654 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 4654 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "1 (284) 494-4100",
     "email": "alexander.lower@vg.pwc.com",
@@ -1108,11 +1108,11 @@
     "specialization": "Others",
     "description": "PROVEN Bank (Saint Lucia) Limited (formerly Boslil Bank Limited) is global in scope, conservative in nature, and people-centred in our approach. We have remained a niche bank for over two decades, focused on our core competencies, delivering consistent and reliable results, and most importantly a trusted financial partner for our clients. PROVEN Bank (Saint Lucia) Limited recognises that the needs of our clients and the market will continue to evolve and grow over time. As demand for new services arise, we resolve to expand our services to cater to the diverse and growing needs of our clients in a prudent and sustainable manner. Our multi-currency platforms cater to the financial needs of corporations, individuals, trust and foundations. A member of the PROVEN Group of companies, PROVEN Bank (Saint Lucia) Limited is a financial services company incorporated in Saint Lucia and licensed under the International Banks Act, Cap. 12.17, as a Class A Bank. This license allows the Bank to conduct international banking operations in the international markets. We are regulated by the Financial Services Regulatory Authority (FSRA). Through our parent company, the Bank is regulated on a consolidated basis by the Cayman Islands Monetary Authority (CIMA). PROVEN Bank (Saint Lucia) Limited prides itself on providing premium international banking services with a human touch!",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "1(758)731-7030",
     "email": "info@provenbank.com",
@@ -1124,11 +1124,11 @@
     "specialization": "Accountancy",
     "description": "Quantuma (BVI) Ltd is part of the larger Quantuma group (Quantuma Advisory Limited) which has 18 offices in the UK and International presence in Cayman, Singapore, Dubai and Cyprus. We have deep experience and specialist expertise in restructuring and insolvency, corporate finance, forensic accounting and investigations, cross-border asset recovery and creditor services. We work alongside accountants, major law practices, private equity houses, lenders and regulators.",
     "address": {
-      "street": null,
-      "poBox": "PO Box 4171 Road town VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "PO Box 4171 Road town VG1110"
     },
     "phone": "+ 1 (284) 541 - 8097",
     "email": "merish.gujadhur@quantuma.com",
@@ -1140,11 +1140,11 @@
     "specialization": "Trust & Company Administration",
     "description": "Since 1959, Quijano & Associates has provided services to an ever growing clientele, covering the creation of companies, corporations and trusts, as well as fiduciary services. Our experts also provide the registration and representation of vessels under the Panamanian flag, and a wide range of advisory services for the establishment and maintenance of legal entities formed under a diversity of jurisdictions, including the Republic of Panama, the British Virgin Islands, Seychelles and Belize.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "+1 (284) 494-3638",
     "email": "omunoz@quijano.com",
@@ -1156,11 +1156,11 @@
     "specialization": "Others",
     "description": null,
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "",
     "email": "nmills@rhrestructuring.com",
@@ -1172,11 +1172,11 @@
     "specialization": "Accountancy",
     "description": "Company profile: ( Trustee and Corporate Services ) The provision of trust and corporate services is one of our core lines of business. We take the time at the outset to understand our clients’ requirements and expectations to ensure that we develop the right relationship and the optimal solution. As we are completely independent, we are not tied to any other service provider which allows us to offer our clients unfettered choice in selecting and working with third party service providers and professional advisers. ( Corporate advisory and Valuation Services ) We offer financial advisory and transaction support services (including financial due diligence) for local and international mergers & acquisitions and other corporate transactions. We also offer business valuation services for discal and commercial purposes for the entire company, majority and minority business interests. ( Accounting and payroll Services ) We offer a full range of bookkeeping and accounting services to trusts and companies designed to meet the unique requirements of each of our clients. We also offer BVI based payroll services.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 3162 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 3162 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 393-5400",
     "email": "annie.peliwan@bvi.rawlinson-hunter.com",
@@ -1188,11 +1188,11 @@
     "specialization": "Trust & Company Administration",
     "description": "The Chambers of Samuels Richardson & Co was established in the British Virgin Islands in 2002. Civil law is our main. Company management entity.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 3410 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 3410 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 494-3577",
     "email": "samuelsrichardson@surfbvi.com",
@@ -1204,11 +1204,11 @@
     "specialization": "Accountancy",
     "description": "SHRM work in close conjunction with clients to help deliver a bespoke solution to their trust and/or corporate needs. The offices are located in Luxembourg, British Virgin Islands, Hong Kong, Singapore and New Zealand, that together offer a broad spectrum of products and services to comprehensively service clients’ financially diverse and often dynamic circumstances.",
     "address": {
-      "street": null,
-      "poBox": "Trinity Chambers P.O. Box 4301 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Trinity Chambers P.O. Box 4301 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 494-8440",
     "email": "info@shrmbvi.com",
@@ -1220,11 +1220,11 @@
     "specialization": "Law",
     "description": "Premier Law firm offering legal services in banking & finance, corporate & commercial law, real estate, investment funds & regulatory law, compliance and litigation services, specializing in corporate insolvency.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "+1 (284) 542 - 2453",
     "email": "bvi@sinclairsoffshore.com",
@@ -1236,11 +1236,11 @@
     "specialization": "Financial Planning Services",
     "description": "Boutique full service company management and fiduciary services firm based in the British Virgin Islands.",
     "address": {
-      "street": null,
-      "poBox": "159 Main St, P.O. Box 2132 Road Town VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "159 Main St, P.O. Box 2132 Road Town VG1110"
     },
     "phone": "+1 (284) 394 - 9230",
     "email": "solutions@somasicorp.com",
@@ -1252,11 +1252,11 @@
     "specialization": "Others",
     "description": "Experienced international lawyers and partner firms providing top-tier assistance As the BVI office of Spencer West, we offer high-quality legal services with a global reach through our team of over 250 experts located worldwide. From complex corporate transactions to global litigation, our experienced team is here to help.",
     "address": {
-      "street": null,
-      "poBox": "2nd Floor, O'Neal Marketing Association Building Wichkams Cay ll, PO Box 3174 Road Town",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "2nd Floor, O'Neal Marketing Association Building Wichkams Cay ll, PO Box 3174 Road Town"
     },
     "phone": "1 284 - 494 - 2453",
     "email": "tamara.maduro@spencer-west.com",
@@ -1268,11 +1268,11 @@
     "specialization": "Compliance and Risk",
     "description": null,
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "1284-494-1589",
     "email": "marlon@alphasolutionsbvi.com",
@@ -1284,11 +1284,11 @@
     "specialization": "Others",
     "description": "A business consultancy with more than 25 years of experience in financial services and public administration, we provide world-class business support and help you simplify your operations. Sterling Group is about fostering lasting client relationships and finding the right offshore solutions to meet your needs. We respect our clients and our approach to business is built on ethical standards. With a solid understanding of British Virgin Islands law and a wealth of marketplace experience, we bring an exceptional level of service, adding value at every step of the way. Specialists in business development, financial services compliance, and corporate services, we offer a broad range of services designed to help you achieve operational efficiency and regulatory compliance. Services include business streamlining, Compliance and Money Laundering Officers, compliance training and support, business development and marketing, directorships, corporate services, liquidations and customs brokerage. With a focus on regulatory compliance, corporate governance, risk assessment and management, and process standardization, we can help create a robust platform from which to achieve your compliance goals. Feel free to contact us and find out how Sterling can assist you. We are Sterling Group in the British Virgin Islands- your partner for regulatory compliance and business success.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "+1 (284) 494-2071",
     "email": "info@sterlingbvi.com",
@@ -1300,11 +1300,11 @@
     "specialization": "Trust & Company Administration",
     "description": "Our business activities consists of developing and delivering corporate services for incorporation and administration of companies.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 3163 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 3163 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 494-5555",
     "email": "sanstrust@surfbvi.com",
@@ -1316,11 +1316,11 @@
     "specialization": "Accountancy",
     "description": "Teneo's global Financial Advisory business advises corporates, creditors and other financial stakeholders in all situations – from well-performing to stressed. No two situations are the same, and our advice and approach is tailored to each set of circumstances and client.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "+1 (284) 494 2018",
     "email": "bvi@teneo.com",
@@ -1332,11 +1332,11 @@
     "specialization": "Others",
     "description": "TMF Group has spent more than 30 years building teams of experts. Based in 120 offices across 85 jurisdictions, our people have the local knowledge, expertise and language skills you need to make a success of operating in an unfamiliar territory or across borders. TMF Group in the British Virgin Islands (BVI) has been a pioneer in the financial services industry and is regulated and licensed by the Financial Services Commission. The BVI team consists of qualified, knowledgeable staff with years of international experience in the regulated fiduciary industry. We can provide legal, compliance, trust and estate planning, accounting, mutual fund, company formation and registered office services, company management and company administration support for complex structures or family operations. In any economic climate, our staff can help you strengthen your business for growth, sustainability and success. Our full range of services include: Local Services TMF Group in the BVI can also help with the following services:",
     "address": {
-      "street": null,
-      "poBox": "4th Floor, Palm Grove House P.O. Box 438 Road Town Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "4th Floor, Palm Grove House P.O. Box 438 Road Town Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 284 494 2616",
     "email": "info@tmf-group.com",
@@ -1348,11 +1348,11 @@
     "specialization": "Investment Business Representatives",
     "description": "Totalserve holds a Class I Trust Licence within the BVI since 2004 and provides a full range of corporate and trust services. These corporate services includes services such as company registrations, providing registered agent/office services, fiduciary services and all related ancillary administrative and support services. Some of our trust services includes setting up of BVI Trusts, Vista Trusts, trustee services as well as providing investment business support services in the form of provision of authorized representation services.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 3540 Road Town, Total British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 3540 Road Town, Total British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 494-6900",
     "email": "bvi@totalserve.eu",
@@ -1364,11 +1364,11 @@
     "specialization": "Accountancy",
     "description": "The cornerstone of Tovel's) is to provide professional services to multi-national entities who wish to establish more robust operations for their offshore based operations (including but not limited to hedge funds and investment management operations). Through Tovel Investments we provide Investment Managemnet Services to a select group of clients. From other associated companies our services include directorship services, accounting and CFO, financial statement preparation, compliance, authorized representative and middle office signatory services.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 4643 Road town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 4643 Road town, Tortola British Virgin Islands VG1110"
     },
     "phone": "1-284-494-6401",
     "email": "waiter.reich@tovel.vg",
@@ -1380,11 +1380,11 @@
     "specialization": "Accountancy",
     "description": "Tricor is a global provider of integrated business, corporate & investor services. The services provided by the BVI office include company formations, corporate governance, company secretarial and trust administration.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 3340 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 3340 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 346-6947",
     "email": "info@bvi.tricorglobal.com",
@@ -1396,11 +1396,11 @@
     "specialization": "Captive Insurance",
     "description": "Established almost 40 years ago, Trident Trust is still controlled by its founding families. Today, Trident Trust is a leading independent corporate, fiduciary and fund administrator, employing over 800 staff across a global footprint that spans Africa, the Americas, Asia, the Caribbean, Europe and the Middle East.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 146 Road Town, Tortola British Virgin Islands",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 146 Road Town, Tortola British Virgin Islands"
     },
     "phone": "+1 (284) 494-2434",
     "email": "bgoodman@tridenttrust.com",
@@ -1412,11 +1412,11 @@
     "specialization": "Family Office",
     "description": "Litwak & Partners is a boutique law firm specializing in international business, specially focused on investment funds, corporate finance, tax optimization, tax amnesties and wealth structuring and planning. We aim at helping families and individuals, family offices, banks, independent financial advisors and investment funds to structure their vehicles and activities in the most efficient manner.",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 3133 Road town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 3133 Road town, Tortola British Virgin Islands VG1110"
     },
     "phone": "1 (598) 2518-3448",
     "email": "martin.litwak@untitled-slc.com",
@@ -1428,11 +1428,11 @@
     "specialization": "Trust & Company Administration",
     "description": "Vistra's specialist colleagues provide tailored trust, fiduciary, fund and corporate services. We form strong, trusted connections with our clients, based on a deep understanding of their professional worlds, drawn from our extensive experience of working in those same worlds - across finance, structuring, law, and accounting.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": "VG1110"
+      "postalCode": "VG1110",
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "+1 284 494 8184",
     "email": "bvi@vistra.com",
@@ -1444,11 +1444,11 @@
     "specialization": "Banking",
     "description": "VP Bank (BVI) Ltd. is a subsidiary of the international VP Bank Group, providing private banking, wealth management, trust and fiduciary services, and corporate banking solutions to high net-worth individuals, families, and institutions. Based in the British Virgin Islands, the bank specializes in personalized financial services such as investment management, estate planning , and cross-border financial solutions, leveraging the jurisdiction's favorable regulatory environment. With a focus on confidentiality, tailored advice, and global financial access, VP Bank BVI support clients in achieving long term wealth growth, asset protection and effective succession planning.",
     "address": {
-      "street": null,
-      "poBox": null,
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": null
     },
     "phone": "",
     "email": "info.bvi@vpbank.com",
@@ -1460,11 +1460,11 @@
     "specialization": "Law",
     "description": "Attorneys at law (practicing BVI Law).",
     "address": {
-      "street": null,
-      "poBox": "P.O. Box 92 Road Town, Tortola British Virgin Islands VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "P.O. Box 92 Road Town, Tortola British Virgin Islands VG1110"
     },
     "phone": "+1 (284) 494-2204",
     "email": "david.collins@walkersglobal.com",
@@ -1476,11 +1476,11 @@
     "specialization": "Others",
     "description": "Withers is one of the only onshore full service law firms with an offshore office and lawyers based full-time in the BVI. Litigation is a key strength of our BVI office. We have particular experience in the area of fraud and asset tracing, shareholder disputes, commercial litigation, trusts and insolvency and public international law. Our unique position as both an onshore and offshore firm, with real international capabilities, means that our team has skills and expertise not otherwise available in the BVI market, which is invaluable when working across jurisdictions.",
     "address": {
-      "street": null,
-      "poBox": "Little Denmark PO Box 145 Road Town, Tortola VG1110",
       "city": null,
       "country": null,
-      "postalCode": null
+      "postalCode": null,
+      "addressLine1": null,
+      "addressLine2": "Little Denmark PO Box 145 Road Town, Tortola VG1110"
     },
     "phone": "1 (284) 494 - 4949",
     "email": "rachel.marland@withersworlwide.com",

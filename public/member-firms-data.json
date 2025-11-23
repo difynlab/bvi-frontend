@@ -321,7 +321,7 @@
   },
   {
     "name": "Clermont",
-    "specialization": "Corporate Services",
+    "specialization": "Others",
     "description": "Founded in 1996, we are an independent, owner-managed business free from private equity or bank ownership. We provide bespoke wealth, tax and succession planning solutions via multi-jurisdictional corporate and trust structures.",
     "address": {
       "city": null,
@@ -513,7 +513,7 @@
   },
   {
     "name": "Exness (VG) Ltd",
-    "specialization": "Broker",
+    "specialization": "Brokers",
     "description": null,
     "address": {
       "city": null,
@@ -941,7 +941,7 @@
     "phone": "+94 77 2268826",
     "email": "vinoth@northlark.com",
     "website": "www.northlark.com",
-    "image": null
+    "image": "expert-images/NorthLark.jpg"
   },
   {
     "name": "O’Neal Webster",
@@ -1073,7 +1073,7 @@
   },
   {
     "name": "Praxis Trust (BVI) Limited",
-    "specialization": "Yacht Management",
+    "specialization": "Others",
     "description": "Praxis Group is a leading provider of bespoke private wealth, corporate and fund administration and yacht services to private individuals, families and international corporate clients. Established for over 50 years, we are an independent firm with a global presence, delivering onshore and offshore private and corporate administration solutions. Our products and services includes: Incorporation and administration of BVI Business Companies Formation and Administration of BVI trust Formation and Administration of BVI Private Trust Companies (PTCs) Corporate and personal directors Provision of Trustees for BVI Trusts Authorised Representative of BVI Funds",
     "address": {
       "city": null,
