@@ -38,11 +38,12 @@ import MembershipPlans from '../../sections/subscription/MembershipPlans';
 // fetch('/api/me', { credentials: 'include' }).then(res => res.json())...
 
 const Membership = () => {
-  const { name, email } = useCurrentUser();
+  const { name, email, phone } = useCurrentUser();
   const { user } = useAuth() || {};
-  const { paymentHistory, memberDetails, upcomingEvents, loading } = useMembershipData();
+  const { paymentHistory, paymentLoading, memberDetails, upcomingEvents, loading } = useMembershipData();
   const safeName = name && name.trim() ? name : '—';
   const safeEmail = email && email.trim() ? email : '—';
+  const safePhone = (phone && phone.trim() ? phone : (user?.phone && user.phone.trim() ? user.phone : '—'));
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminError, setAdminError] = useState('');
   const [adminMembers, setAdminMembers] = useState([]);
@@ -1190,8 +1191,8 @@ const Membership = () => {
                   <span>{safeEmail}</span>
                 </div>
                 <div className="profile-field">
-                  <label>Lorem:</label>
-                  <span>Lorem ipsum dolor sit amet</span>
+                  <label>Phone:</label>
+                  <span>{safePhone}</span>
                 </div>
               </div>
               <div className="profile-actions">
@@ -1211,39 +1212,55 @@ const Membership = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {paymentHistory.map((payment) => (
-                      <tr key={payment.id}>
-                        <td>{payment.dateISO}</td>
-                        <td>${payment.amount.toFixed(2)}</td>
-                        <td className={payment.status === 'Pending' ? 'status-pending' : ''}>
-                          {payment.status === 'Pending' ? (
-                            <span className="pending-text">Pending</span>
-                          ) : (
-                            payment.status
-                          )}
-                        </td>
-                        <td>
-                          {payment.status === 'Pending' ? (
-                            <span className="processing-status">
-                              {isMobile ? (
-                                <i className="bi bi-hourglass-split"></i>
-                              ) : (
-                                <span>Processing</span>
-                              )}
-                              <i className="bi bi-arrow-repeat"></i>
-                            </span>
-                          ) : (
-                            <a href={payment.receiptUrl} className="receipt-link">
-                              {isMobile ? (
-                                <i className="bi bi-download"></i>
-                              ) : (
-                                'Download'
-                              )}
-                            </a>
-                          )}
+                    {paymentLoading ? (
+                      <tr>
+                        <td colSpan="4" style={{ textAlign: 'center', padding: '2rem' }}>
+                          Loading payments...
                         </td>
                       </tr>
-                    ))}
+                    ) : paymentHistory.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" style={{ textAlign: 'center', padding: '2rem' }}>
+                          No payments found
+                        </td>
+                      </tr>
+                    ) : (
+                      paymentHistory.map((payment) => (
+                        <tr key={payment.id}>
+                          <td>{payment.dateISO || '—'}</td>
+                          <td>${typeof payment.amount === 'number' ? payment.amount.toFixed(2) : '0.00'}</td>
+                          <td className={payment.status === 'Pending' ? 'status-pending' : ''}>
+                            {payment.status === 'Pending' ? (
+                              <span className="pending-text">Pending</span>
+                            ) : (
+                              payment.status || 'Paid'
+                            )}
+                          </td>
+                          <td>
+                            {payment.status === 'Pending' ? (
+                              <span className="processing-status">
+                                {isMobile ? (
+                                  <i className="bi bi-hourglass-split"></i>
+                                ) : (
+                                  <span>Processing</span>
+                                )}
+                                <i className="bi bi-arrow-repeat"></i>
+                              </span>
+                            ) : payment.receiptUrl ? (
+                              <a href={payment.receiptUrl} className="receipt-link" target="_blank" rel="noopener noreferrer">
+                                {isMobile ? (
+                                  <i className="bi bi-download"></i>
+                                ) : (
+                                  'Download'
+                                )}
+                              </a>
+                            ) : (
+                              <span>—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

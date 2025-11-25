@@ -117,12 +117,12 @@ export function clearAllAuthData() {
  */
 export function getCurrentUserFromStorage() {
   try {
-    // Try session first
     const session = getSession()
     if (session) {
       return {
-        name: `${session.firstName || ''} ${session.lastName || ''}`.trim() || '',
-        email: session.email || ''
+        name: `${session.firstName || session.first_name || ''} ${session.lastName || session.last_name || ''}`.trim() || '',
+        email: session.email || '',
+        phone: session.phone || ''
       }
     }
     
@@ -138,14 +138,15 @@ export function getCurrentUserFromStorage() {
       const u = parsed?.user ?? parsed?.profile ?? parsed;
       const name = typeof u?.name === 'string' ? u.name : '';
       const email = typeof u?.email === 'string' ? u.email : '';
+      const phone = typeof u?.phone === 'string' ? u.phone : '';
       
       if (name || email) {
-        return { name, email };
+        return { name, email, phone };
       }
     }
   } catch (_e) { 
     // Swallow errors and fallback to empty values
   }
   
-  return { name: '', email: '' };
+  return { name: '', email: '', phone: '' };
 }

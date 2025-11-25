@@ -50,13 +50,13 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       
       if (file.size > maxSize) {
-        setField('membershipDetails', 'signatureFileError', 'File size must not exceed 5MB');
-        setField('membershipDetails', 'signatureFile', null);
+        setField('membershipDetails', 'membership_signature_error', 'File size must not exceed 5MB');
+        setField('membershipDetails', 'membership_signature', null);
         return;
       }
       
-      setField('membershipDetails', 'signatureFile', file);
-      setField('membershipDetails', 'signatureFileError', '');
+      setField('membershipDetails', 'membership_signature', file);
+      setField('membershipDetails', 'membership_signature_error', '');
     }
   };
 
@@ -86,10 +86,10 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
 
   const handleMembershipTypeChange = (e) => {
     const newType = e.target.value;
-    setField('membershipDetails', 'membershipType', newType);
+    setField('membershipDetails', 'membership_type', newType);
     
     if (newType !== 'Ordinary Member') {
-      setField('membershipDetails', 'ordinaryPlan', '');
+      setField('membershipDetails', 'ordinary_membership_plan', '');
     }
   };
 
@@ -105,8 +105,8 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
         <label htmlFor="membership-membershipType">Membership Type <span className="req-star">*</span></label>
         <CustomDropdown
           id="membership-membershipType"
-          name="membershipType"
-          value={membershipValues.membershipType || ''}
+          name="membership_type"
+          value={membershipValues.membership_type || ''}
           onChange={handleMembershipTypeChange}
           options={[
             { value: 'Ordinary Member', label: 'Ordinary Member' },
@@ -115,9 +115,9 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
           ]}
           placeholder="Select Membership Type"
         />
-        {errors['membershipDetails.membershipType'] && (
+        {errors['membershipDetails.membership_type'] && (
           <div id="membership-membershipType-error" className="error-message">
-            {errors['membershipDetails.membershipType']}
+            {errors['membershipDetails.membership_type']}
           </div>
         )}
       </div>
@@ -126,20 +126,20 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
       <div className="field">
         <label htmlFor="membership-ordinaryPlan">
           If you have chosen ordinary membership, please choose your plan
-          {membershipValues.membershipType === 'Ordinary Member' && <span className="req-star">*</span>}
+          {membershipValues.membership_type === 'Ordinary Member' && <span className="req-star">*</span>}
         </label>
         <CustomDropdown
           id="membership-ordinaryPlan"
-          name="ordinaryPlan"
-          value={membershipValues.ordinaryPlan || ''}
-          onChange={(e) => setField('membershipDetails', 'ordinaryPlan', e.target.value)}
+          name="ordinary_membership_plan"
+          value={membershipValues.ordinary_membership_plan || ''}
+          onChange={(e) => setField('membershipDetails', 'ordinary_membership_plan', e.target.value)}
           options={ORDINARY_PLANS.map(plan => ({ value: plan, label: plan }))}
           placeholder="Select Plan"
-          disabled={membershipValues.membershipType !== 'Ordinary Member'}
+          disabled={membershipValues.membership_type !== 'Ordinary Member'}
         />
-        {errors['membershipDetails.ordinaryPlan'] && (
+        {errors['membershipDetails.ordinary_membership_plan'] && (
           <div id="membership-ordinaryPlan-error" className="error-message">
-            {errors['membershipDetails.ordinaryPlan']}
+            {errors['membershipDetails.ordinary_membership_plan']}
           </div>
         )}
       </div>
@@ -149,9 +149,9 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
         <label htmlFor="membership-paymentMethod">Payment Method <span className="req-star">*</span></label>
         <CustomDropdown
           id="membership-paymentMethod"
-          name="paymentMethod"
-          value={membershipValues.paymentMethod || ''}
-          onChange={(e) => setField('membershipDetails', 'paymentMethod', e.target.value)}
+          name="payment_method"
+          value={membershipValues.payment_method || ''}
+          onChange={(e) => setField('membershipDetails', 'payment_method', e.target.value)}
           options={[
             { value: 'E-mail: members@bvifinance.vg', label: 'E-mail: members@bvifinance.vg' },
             { value: 'Hand/Mail: BVI Address', label: 'Hand/Mail: BVI Address' },
@@ -159,9 +159,9 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
           ]}
           placeholder="Select Payment Method"
         />
-        {errors['membershipDetails.paymentMethod'] && (
+        {errors['membershipDetails.payment_method'] && (
           <div id="membership-paymentMethod-error" className="error-message">
-            {errors['membershipDetails.paymentMethod']}
+            {errors['membershipDetails.payment_method']}
           </div>
         )}
       </div>
@@ -172,7 +172,7 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
         <div
           id="membership-signatureFile"
           className={`dropzone dropzone-surface ${dragActive ? 'active' : ''}`}
-          data-has-file={Boolean(membershipValues.signatureFile)}
+          data-has-file={Boolean(membershipValues.membership_signature)}
           onDragEnter={handleDragIn}
           onDragLeave={handleDragOut}
           onDragOver={handleDrag}
@@ -187,13 +187,13 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
           tabIndex={0}
           role="button"
           aria-labelledby="membership-signatureFile-label"
-          aria-invalid={errors['membershipDetails.signatureFile'] ? 'true' : 'false'}
-          aria-describedby={errors['membershipDetails.signatureFile'] ? 'membership-signatureFile-error' : undefined}
+          aria-invalid={errors['membershipDetails.membership_signature'] ? 'true' : 'false'}
+          aria-describedby={errors['membershipDetails.membership_signature'] ? 'membership-signatureFile-error' : undefined}
         >
           <div className="dropzone-content">
             <i className="bi bi-cloud-upload dropzone-icon" aria-hidden="true"></i>
             <p className="dropzone-label">
-              {membershipValues.signatureFile ? membershipValues.signatureFile.name : 'Drag and drop signature file here'}
+              {membershipValues.membership_signature ? membershipValues.membership_signature.name : 'Drag and drop signature file here'}
             </p>
             <p className="dropzone-separator">or</p>
             <button
@@ -209,14 +209,14 @@ const MembershipDetailsForm = ({ values, errors, setField, onNext }) => {
             <p className="dropzone-hint">PNG, JPG, JPEG, PDF (max 5MB)</p>
           </div>
         </div>
-        {errors['membershipDetails.signatureFile'] && (
+        {errors['membershipDetails.membership_signature'] && (
           <div id="membership-signatureFile-error" className="error-message">
-            {errors['membershipDetails.signatureFile']}
+            {errors['membershipDetails.membership_signature']}
           </div>
         )}
-        {membershipValues.signatureFileError && (
+        {membershipValues.membership_signature_error && (
           <div className="error-message">
-            {membershipValues.signatureFileError}
+            {membershipValues.membership_signature_error}
           </div>
         )}
       </div>

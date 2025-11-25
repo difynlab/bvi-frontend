@@ -264,7 +264,7 @@ const SideNav = () => {
           className={`nav-item nav-item--find-expert ${isAnimated ? 'nav-item-animate--8' : 'nav-item-hidden'}`}
           {...navItemGuard}
         >
-          <i className="bi bi-file-person"></i>
+          <i className="bi bi-person-fill"></i>
           <span className="nav-label">Find an Expert</span>
         </NavLink>
 

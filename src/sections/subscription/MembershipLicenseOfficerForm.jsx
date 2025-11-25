@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { setMembershipLicenseOfficers } from '../../helpers/subscriptionStorage';
 import { useAuth } from '../../context/useAuth';
 
-const MembershipLicenseOfficerForm = ({ values, errors, setOfficer, onSave }) => {
+const MembershipLicenseOfficerForm = ({ values, errors, setOfficer, onSave, isSubmitting = false, isAllDataComplete = false }) => {
   const { isAdmin } = useAuth();
   const firstErrorRef = useRef(null);
 
@@ -23,19 +23,11 @@ const MembershipLicenseOfficerForm = ({ values, errors, setOfficer, onSave }) =>
     setOfficer(officerIndex, 'phone', digitsOnly);
   };
 
-  const handleSubmit = () => {
-    if (onSave()) {
-      setMembershipLicenseOfficers(values.membershipLicenseOfficers);
-      
-      const button = document.querySelector('.membership-license-officer .update-button');
-      if (button) {
-        const originalText = button.textContent;
-        button.textContent = 'Saved!';
-        button.classList.add('update-button--saved');
-        setTimeout(() => {
-          button.textContent = originalText;
-          button.classList.remove('update-button--saved');
-        }, 2000);
+  const handleSubmit = async () => {
+    const isValid = await onSave();
+    if (isValid) {
+      if (!isSubmitting) {
+        setMembershipLicenseOfficers(values.membershipLicenseOfficers);
       }
     } else {
       const firstErrorField = Object.keys(errors).find(key => key.startsWith('membershipLicenseOfficers.'));
@@ -151,14 +143,14 @@ const MembershipLicenseOfficerForm = ({ values, errors, setOfficer, onSave }) =>
       {renderOfficerBlock(0, 'Membership Liaison Officer(s)', true)}
       {renderOfficerBlock(1, 'Membership Liaison Officer(s)')}
 
-      {/* Update Button - Visible for all users */}
       <div className="actions">
         <button
           type="button"
           className="update-button"
           onClick={handleSubmit}
+          disabled={!isAllDataComplete || isSubmitting}
         >
-          Update Now
+          {isSubmitting ? 'Submitting...' : 'Submit Data'}
         </button>
       </div>
     </div>

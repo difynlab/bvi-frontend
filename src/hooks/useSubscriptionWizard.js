@@ -1,4 +1,14 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { 
+  getMembershipDetails, 
+  setMembershipDetails,
+  getCompanyDetails,
+  setCompanyDetails,
+  getMembershipLicenseOfficers,
+  setMembershipLicenseOfficers,
+  getContactPersonDetails,
+  setContactPersonDetails
+} from '../helpers/subscriptionStorage';
 
 const TABS_ORDER = [
   "Important Info",
@@ -9,30 +19,104 @@ const TABS_ORDER = [
   "Membership License Officer"
 ];
 
-export function useSubscriptionWizard(initialTab = 'Important Info') {
+const MEMBERSHIP_DETAILS_TAB_INDEX = TABS_ORDER.indexOf('Membership Details');
+
+export function useSubscriptionWizard(initialTab = 'Important Info', initialData = null, hasServerData = false) {
   const [activeTab, setActiveTab] = useState(initialTab);
-  const [values, setValues] = useState({
-    generalDetails: {},
-    membershipDetails: {},
-    companyDetails: {},
-    membershipLicenseOfficers: {
-      officers: [
-        { name: '', title: '', phone: '', email: '' }, // Officer 1
-        { name: '', title: '', phone: '', email: '' }  // Officer 2
-      ]
+  const [values, setValues] = useState(() => {
+    if (initialData) {
+      return initialData;
     }
+    
+    if (hasServerData) {
+      return {
+        generalDetails: {},
+        membershipDetails: {},
+        companyDetails: {},
+        membershipLicenseOfficers: {
+          officers: [
+            { name: '', title: '', phone: '', email: '' },
+            { name: '', title: '', phone: '', email: '' }
+          ]
+        },
+        contactPersonDetails: null
+      };
+    }
+    
+    const membershipDetails = getMembershipDetails() || {};
+    const companyDetails = getCompanyDetails() || {};
+    const membershipLicenseOfficers = getMembershipLicenseOfficers() || {
+      officers: [
+        { name: '', title: '', phone: '', email: '' },
+        { name: '', title: '', phone: '', email: '' }
+      ]
+    };
+    const contactPersonDetails = getContactPersonDetails() || null;
+    
+    return {
+      generalDetails: {},
+      membershipDetails,
+      companyDetails,
+      membershipLicenseOfficers,
+      contactPersonDetails
+    };
   });
   const [errors, setErrors] = useState({});
+  const [isMembershipDetailsComplete, setIsMembershipDetailsComplete] = useState(false);
+
+  useEffect(() => {
+    if (initialData && hasServerData) {
+      setValues(initialData);
+    }
+  }, [initialData, hasServerData]);
+
+  useEffect(() => {
+    const membership = values.membershipDetails || {};
+    const hasMembershipType = !!membership.membership_type;
+    const hasPaymentMethod = !!membership.payment_method;
+    const hasSignature = !!membership.membership_signature;
+    const hasOrdinaryPlan = membership.membership_type !== 'Ordinary Member' || !!membership.ordinary_membership_plan;
+    
+    const isComplete = hasMembershipType && hasPaymentMethod && hasSignature && hasOrdinaryPlan;
+    setIsMembershipDetailsComplete(isComplete);
+  }, [values.membershipDetails]);
+
+  useEffect(() => {
+    if (!hasServerData && values.membershipDetails && Object.keys(values.membershipDetails).length > 0) {
+      setMembershipDetails(values.membershipDetails);
+    }
+  }, [values.membershipDetails, hasServerData]);
+
+  useEffect(() => {
+    if (!hasServerData && values.companyDetails && Object.keys(values.companyDetails).length > 0) {
+      setCompanyDetails(values.companyDetails);
+    }
+  }, [values.companyDetails, hasServerData]);
+
+  useEffect(() => {
+    if (!hasServerData && values.membershipLicenseOfficers && values.membershipLicenseOfficers.officers) {
+      setMembershipLicenseOfficers(values.membershipLicenseOfficers);
+    }
+  }, [values.membershipLicenseOfficers, hasServerData]);
+
+  useEffect(() => {
+    if (!hasServerData && values.contactPersonDetails) {
+      setContactPersonDetails(values.contactPersonDetails);
+    }
+  }, [values.contactPersonDetails, hasServerData]);
 
   const setField = useCallback((tab, name, value) => {
-    setValues(prev => ({
-      ...prev,
-      [tab]: {
-        ...prev[tab],
-        [name]: value
-      }
-    }));
-    // Clear error when field is updated
+    setValues(prev => {
+      const updated = {
+        ...prev,
+        [tab]: {
+          ...prev[tab],
+          [name]: value
+        }
+      };
+      return updated;
+    });
+    
     const errorKey = `${tab}.${name}`;
     if (errors[errorKey]) {
       setErrors(prev => {
@@ -111,32 +195,28 @@ export function useSubscriptionWizard(initialTab = 'Important Info') {
     const newErrors = {};
     const membership = values.membershipDetails || {};
     
-    // Membership Type validation
-    if (!membership.membershipType) {
-      newErrors['membershipDetails.membershipType'] = 'Membership Type is required';
+    if (!membership.membership_type) {
+      newErrors['membershipDetails.membership_type'] = 'Membership Type is required';
     }
     
-    // Ordinary Plan validation (only required if membershipType is "Ordinary Member")
-    if (membership.membershipType === 'Ordinary Member' && !membership.ordinaryPlan) {
-      newErrors['membershipDetails.ordinaryPlan'] = 'Please choose your plan';
+    if (membership.membership_type === 'Ordinary Member' && !membership.ordinary_membership_plan) {
+      newErrors['membershipDetails.ordinary_membership_plan'] = 'Please choose your plan';
     }
     
-    // Payment Method validation
-    if (!membership.paymentMethod) {
-      newErrors['membershipDetails.paymentMethod'] = 'Payment Method is required';
+    if (!membership.payment_method) {
+      newErrors['membershipDetails.payment_method'] = 'Payment Method is required';
     }
     
-    // Signature File validation
-    if (!membership.signatureFile) {
-      newErrors['membershipDetails.signatureFile'] = 'Signature file is required';
+    if (!membership.membership_signature) {
+      newErrors['membershipDetails.membership_signature'] = 'Signature file is required';
     } else {
       const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf'];
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      const maxSize = 5 * 1024 * 1024;
       
-      if (!allowedTypes.includes(membership.signatureFile.type)) {
-        newErrors['membershipDetails.signatureFile'] = 'File must be PNG, JPG, JPEG, or PDF';
-      } else if (membership.signatureFile.size > maxSize) {
-        newErrors['membershipDetails.signatureFile'] = 'File size must be 5MB or less';
+      if (!allowedTypes.includes(membership.membership_signature.type)) {
+        newErrors['membershipDetails.membership_signature'] = 'File must be PNG, JPG, JPEG, or PDF';
+      } else if (membership.membership_signature.size > maxSize) {
+        newErrors['membershipDetails.membership_signature'] = 'File size must be 5MB or less';
       }
     }
     
@@ -148,96 +228,84 @@ export function useSubscriptionWizard(initialTab = 'Important Info') {
     const newErrors = {};
     const company = values.companyDetails || {};
     
-    // Company Name validation
-    if (!company.companyName || !company.companyName.trim()) {
-      newErrors['companyDetails.companyName'] = 'Company Name is required';
+    if (!company.company_name || !company.company_name.trim()) {
+      newErrors['companyDetails.company_name'] = 'Company Name is required';
     }
     
-    // Company Address validation
-    if (!company.companyAddress || !company.companyAddress.trim()) {
-      newErrors['companyDetails.companyAddress'] = 'Company Address is required';
+    if (!company.company_address || !company.company_address.trim()) {
+      newErrors['companyDetails.company_address'] = 'Company Address is required';
     }
     
-    // Telephone validation
-    if (!company.telephone || !company.telephone.trim()) {
-      newErrors['companyDetails.telephone'] = 'Telephone is required';
+    if (!company.company_phone || !company.company_phone.trim()) {
+      newErrors['companyDetails.company_phone'] = 'Telephone is required';
     } else {
-      const phoneDigits = company.telephone.replace(/\D/g, '');
+      const phoneDigits = company.company_phone.replace(/\D/g, '');
       if (phoneDigits.length < 7 || phoneDigits.length > 20) {
-        newErrors['companyDetails.telephone'] = 'Telephone must be between 7 and 20 digits';
+        newErrors['companyDetails.company_phone'] = 'Telephone must be between 7 and 20 digits';
       }
     }
     
-    // Email validation
-    if (!company.email || !company.email.trim()) {
-      newErrors['companyDetails.email'] = 'Email is required';
+    if (!company.company_email || !company.company_email.trim()) {
+      newErrors['companyDetails.company_email'] = 'Email is required';
     } else {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(company.email)) {
-        newErrors['companyDetails.email'] = 'Please enter a valid email address';
+      if (!emailRegex.test(company.company_email)) {
+        newErrors['companyDetails.company_email'] = 'Please enter a valid email address';
       }
     }
     
-    // Website validation (optional)
-    if (company.website && company.website.trim()) {
+    if (company.company_website && company.company_website.trim()) {
       try {
-        new URL(company.website);
+        new URL(company.company_website);
       } catch {
-        newErrors['companyDetails.website'] = 'Please enter a valid URL';
+        newErrors['companyDetails.company_website'] = 'Please enter a valid URL';
       }
     }
     
-    // Office Presence validation
-    if (!company.officePresence || company.officePresence.length === 0) {
-      newErrors['companyDetails.officePresence'] = 'Please select at least one office presence option';
+    if (!company.office_presence_regions || company.office_presence_regions.length === 0) {
+      newErrors['companyDetails.office_presence_regions'] = 'Please select at least one office presence option';
     }
     
-    // Business Categories validation
-    if (!company.businessCategories || company.businessCategories.length === 0) {
-      newErrors['companyDetails.businessCategories'] = 'Please select at least one business category';
+    if (!company.business_categories || company.business_categories.length === 0) {
+      newErrors['companyDetails.business_categories'] = 'Please select at least one business category';
     }
     
-    // Other Category validation
-    if (company.businessCategories && company.businessCategories.includes('Other')) {
-      if (!company.otherCategory || !company.otherCategory.trim()) {
-        newErrors['companyDetails.otherCategory'] = 'Please specify the other business category';
+    if (company.business_categories && company.business_categories.includes('Other')) {
+      if (!company.other_business_category || !company.other_business_category.trim()) {
+        newErrors['companyDetails.other_business_category'] = 'Please specify the other business category';
       }
     } else {
-      // Clear otherCategory if Other is not selected
-      if (company.otherCategory) {
-        setField('companyDetails', 'otherCategory', '');
+      if (company.other_business_category) {
+        setField('companyDetails', 'other_business_category', '');
       }
     }
     
-    // Director Name validation
-    if (!company.directorName || !company.directorName.trim()) {
-      newErrors['companyDetails.directorName'] = 'Director Name is required';
+    if (!company.director_name || !company.director_name.trim()) {
+      newErrors['companyDetails.director_name'] = 'Director Name is required';
     }
     
-    // Date validation
-    if (!company.date) {
-      newErrors['companyDetails.date'] = 'Date is required';
+    if (!company.director_signed_at) {
+      newErrors['companyDetails.director_signed_at'] = 'Date is required';
     } else {
-      const selectedDate = new Date(company.date);
+      const selectedDate = new Date(company.director_signed_at);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
       if (selectedDate < today) {
-        newErrors['companyDetails.date'] = 'Date must be today or in the future';
+        newErrors['companyDetails.director_signed_at'] = 'Date must be today or in the future';
       }
     }
     
-    // Signature File validation
-    if (!company.signatureFile) {
-      newErrors['companyDetails.signatureFile'] = 'Signature file is required';
+    if (!company.signature) {
+      newErrors['companyDetails.signature'] = 'Signature file is required';
     } else {
       const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf'];
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      const maxSize = 5 * 1024 * 1024;
       
-      if (!allowedTypes.includes(company.signatureFile.type)) {
-        newErrors['companyDetails.signatureFile'] = 'File must be PNG, JPG, JPEG, or PDF';
-      } else if (company.signatureFile.size > maxSize) {
-        newErrors['companyDetails.signatureFile'] = 'File size must be 5MB or less';
+      if (!allowedTypes.includes(company.signature.type)) {
+        newErrors['companyDetails.signature'] = 'File must be PNG, JPG, JPEG, or PDF';
+      } else if (company.signature.size > maxSize) {
+        newErrors['companyDetails.signature'] = 'File size must be 5MB or less';
       }
     }
     
@@ -348,9 +416,40 @@ export function useSubscriptionWizard(initialTab = 'Important Info') {
   }, [activeTab]);
 
   const setTab = useCallback((tabName) => {
-    if (TABS_ORDER.includes(tabName)) {
-      setActiveTab(tabName);
+    if (!TABS_ORDER.includes(tabName)) {
+      return;
     }
+
+    const targetTabIndex = TABS_ORDER.indexOf(tabName);
+    const currentTabIndex = TABS_ORDER.indexOf(activeTab);
+
+    if (targetTabIndex > MEMBERSHIP_DETAILS_TAB_INDEX && !isMembershipDetailsComplete) {
+      return;
+    }
+
+    if (targetTabIndex < currentTabIndex) {
+      setActiveTab(tabName);
+      return;
+    }
+
+    if (targetTabIndex === currentTabIndex) {
+      return;
+    }
+
+    if (targetTabIndex > currentTabIndex) {
+      if (currentTabIndex === MEMBERSHIP_DETAILS_TAB_INDEX && !isMembershipDetailsComplete) {
+        return;
+      }
+    }
+
+    setActiveTab(tabName);
+  }, [activeTab, isMembershipDetailsComplete]);
+
+  const setContactPersonDetails = useCallback((data) => {
+    setValues(prev => ({
+      ...prev,
+      contactPersonDetails: data
+    }));
   }, []);
 
   return {
@@ -363,6 +462,8 @@ export function useSubscriptionWizard(initialTab = 'Important Info') {
     validateCurrent,
     goNext,
     goPrev,
-    setTab
+    setTab,
+    setContactPersonDetails,
+    isMembershipDetailsComplete
   };
 }

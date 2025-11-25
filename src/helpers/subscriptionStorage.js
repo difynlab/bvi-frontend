@@ -4,7 +4,8 @@ export const SUB_KEYS = {
   general: 'bvi.subscription.generalDetails',
   membership: 'bvi.subscription.membershipDetails',
   company: 'bvi.subscription.companyDetails',
-  membershipOfficers: 'bvi.subscription.membershipLicenseOfficers'
+  membershipOfficers: 'bvi.subscription.membershipLicenseOfficers',
+  contactPersons: 'bvi.subscription.contactPersonDetails'
 };
 
 export function getGeneralDetails() {
@@ -83,6 +84,38 @@ export function setMembershipLicenseOfficers(obj) {
     return true;
   } catch (error) {
     console.error('Error saving membership license officers:', error);
+    return false;
+  }
+}
+
+export function getContactPersonDetails() {
+  try {
+    const stored = localStorage.getItem(SUB_KEYS.contactPersons);
+    return stored ? JSON.parse(stored) : null;
+  } catch (error) {
+    console.error('Error loading contact person details:', error);
+    return null;
+  }
+}
+
+export function setContactPersonDetails(obj) {
+  try {
+    localStorage.setItem(SUB_KEYS.contactPersons, JSON.stringify(obj));
+    return true;
+  } catch (error) {
+    console.error('Error saving contact person details:', error);
+    return false;
+  }
+}
+
+export function clearAllSubscriptionStorage() {
+  try {
+    Object.values(SUB_KEYS).forEach(key => {
+      localStorage.removeItem(key);
+    });
+    return true;
+  } catch (error) {
+    console.error('Error clearing subscription storage:', error);
     return false;
   }
 }

@@ -22,15 +22,17 @@ export function useCurrentUser() {
       const { user } = useAuthHook();
       if (user) {
         const normalizedRole = (user.role || 'member').toString().toLowerCase();
+        const firstName = user.firstName || user.first_name || '';
+        const lastName = user.lastName || user.last_name || '';
         return {
-          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || '',
+          name: `${firstName} ${lastName}`.trim() || user.userName || user.name || '',
           email: user.email || '',
-          firstName: user.firstName || '',
-          lastName: user.lastName || '',
+          firstName: firstName,
+          lastName: lastName,
           role: normalizedRole,
           permissions: user.permissions || [],
           id: user.id || '',
-          phoneNumber: user.phoneNumber || ''
+          phone: user.phone || user.phoneNumber || ''
         };
       }
     } catch (_e) {
@@ -49,7 +51,7 @@ export function useCurrentUser() {
       role: normalizedRole,
       permissions: [],
       id: '',
-      phoneNumber: ''
+      phone: fallback.phone || ''
     };
   }, []);
 }

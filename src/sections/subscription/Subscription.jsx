@@ -11,6 +11,9 @@ import ContactPersonDetails from './ContactPersonDetails';
 import importantInfoService from '../../services/importantInfoService';
 import ImportantInfoSkeleton from '../../components/subscription/ImportantInfoSkeleton';
 import { useAuth } from '../../context/useAuth';
+import memberSubscriptionDetailsService from '../../services/memberSubscriptionDetailsService';
+import { transformSubscriptionToBackend } from '../../utils/subscriptionTransformers';
+import { clearAllSubscriptionStorage } from '../../helpers/subscriptionStorage';
 
 const IMPORTANT_INFO_DEFAULTS = {
   eligibility: {
@@ -32,12 +35,18 @@ const IMPORTANT_INFO_DEFAULTS = {
 
 const Subscription = () => {
   const { user } = useAuth();
-  const [openInfo, setOpenInfo] = useState(null); // 'eligibility' | 'benefits' | 'payment' | null
+  const [openInfo, setOpenInfo] = useState(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [importantInfoData, setImportantInfoData] = useState(null);
   const [importantInfoError, setImportantInfoError] = useState('');
   const [importantInfoLoading, setImportantInfoLoading] = useState(false);
-  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' | 'desc' for A-Z / Z-A
+  const [subscriptionData, setSubscriptionData] = useState(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+  const [subscriptionError, setSubscriptionError] = useState('');
+  const [subscriptionId, setSubscriptionId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   
   const handleOpen = (key) => {
     if (importantInfoLoading || !importantInfoData) return;
@@ -51,7 +60,208 @@ const Subscription = () => {
     return tabParam || 'Important Info';
   };
 
-  const { activeTab, values, errors, setField, setOfficer, toggleArray, goNext, setTab } = useSubscriptionWizard(getInitialTab());
+
+  const loadSubscriptionData = useCallback(async () => {
+    if (user?.role === 'admin') {
+      setSubscriptionLoading(false);
+      return;
+    }
+
+    setSubscriptionLoading(true);
+    setSubscriptionError('');
+
+    try {
+      const response = await memberSubscriptionDetailsService.getAll(1, 1);
+      
+      if (response?.data?.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
+        const userSubscription = response.data.data.find(sub => sub.user_id === user?.id) || response.data.data[0];
+        
+        setSubscriptionId(userSubscription.id);
+        
+        const membershipDetails = {
+          membership_type: userSubscription.membership_type || '',
+          ordinary_membership_plan: userSubscription.ordinary_membership_plan || '',
+          payment_method: userSubscription.payment_method || '',
+          membership_signature: userSubscription.membership_signature ? { name: userSubscription.membership_signature } : null
+        };
+
+        const companyDetails = {
+          company_name: userSubscription.company_name || '',
+          company_address: userSubscription.company_address || '',
+          company_phone: userSubscription.company_phone || '',
+          company_email: userSubscription.company_email || '',
+          company_website: userSubscription.company_website || '',
+          company_profile: userSubscription.company_profile || '',
+          office_presence_regions: userSubscription.office_presence_regions ? 
+            (typeof userSubscription.office_presence_regions === 'string' ? 
+              JSON.parse(userSubscription.office_presence_regions) : 
+              userSubscription.office_presence_regions) : [],
+          business_categories: userSubscription.business_categories ? 
+            (typeof userSubscription.business_categories === 'string' ? 
+              JSON.parse(userSubscription.business_categories) : 
+              userSubscription.business_categories) : [],
+          other_business_category: userSubscription.other_business_category || '',
+          director_name: userSubscription.director_name || '',
+          director_signed_at: userSubscription.director_signed_at || '',
+          signature: userSubscription.signature ? { name: userSubscription.signature } : null
+        };
+
+        const contactPersonDetails = {
+          lead: {
+            name: userSubscription.lead_contact_name || '',
+            title: userSubscription.lead_contact_title || '',
+            phone: userSubscription.lead_contact_phone || '',
+            email: userSubscription.lead_contact_email || ''
+          },
+          contacts: [
+            userSubscription.contact_2_name ? {
+              name: userSubscription.contact_2_name || '',
+              title: userSubscription.contact_2_title || '',
+              phone: userSubscription.contact_2_phone || '',
+              email: userSubscription.contact_2_email || ''
+            } : null,
+            userSubscription.contact_3_name ? {
+              name: userSubscription.contact_3_name || '',
+              title: userSubscription.contact_3_title || '',
+              phone: userSubscription.contact_3_phone || '',
+              email: userSubscription.contact_3_email || ''
+            } : null,
+            userSubscription.contact_4_name ? {
+              name: userSubscription.contact_4_name || '',
+              title: userSubscription.contact_4_title || '',
+              phone: userSubscription.contact_4_phone || '',
+              email: userSubscription.contact_4_email || ''
+            } : null,
+            userSubscription.contact_5_name ? {
+              name: userSubscription.contact_5_name || '',
+              title: userSubscription.contact_5_title || '',
+              phone: userSubscription.contact_5_phone || '',
+              email: userSubscription.contact_5_email || ''
+            } : null
+          ].filter(Boolean)
+        };
+
+        const membershipLicenseOfficers = {
+          officers: [
+            {
+              name: userSubscription.license_officer_1_name || '',
+              title: userSubscription.license_officer_1_title || '',
+              phone: userSubscription.license_officer_1_phone || '',
+              email: userSubscription.license_officer_1_email || ''
+            },
+            userSubscription.license_officer_2_name ? {
+              name: userSubscription.license_officer_2_name || '',
+              title: userSubscription.license_officer_2_title || '',
+              phone: userSubscription.license_officer_2_phone || '',
+              email: userSubscription.license_officer_2_email || ''
+            } : { name: '', title: '', phone: '', email: '' }
+          ]
+        };
+
+        setSubscriptionData({
+          generalDetails: {},
+          membershipDetails,
+          companyDetails,
+          contactPersonDetails,
+          membershipLicenseOfficers
+        });
+      } else {
+        setSubscriptionData(null);
+      }
+    } catch (error) {
+      if (error.message && !error.message.includes('No data found')) {
+        console.error('Error fetching subscription data:', error);
+        setSubscriptionError(error.message);
+      }
+      setSubscriptionData(null);
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadSubscriptionData();
+  }, [loadSubscriptionData]);
+
+  const { activeTab, values, errors, setField, setOfficer, toggleArray, goNext, setTab, setContactPersonDetails, isMembershipDetailsComplete, validateCurrent } = useSubscriptionWizard(getInitialTab(), subscriptionData, !!subscriptionId);
+
+  const isAllDataComplete = useCallback(() => {
+    const membership = values.membershipDetails || {};
+    const company = values.companyDetails || {};
+    const contacts = values.contactPersonDetails || {};
+    const officers = values.membershipLicenseOfficers?.officers || [];
+
+    const hasMembershipType = !!membership.membership_type;
+    const hasPaymentMethod = !!membership.payment_method;
+    const hasMembershipSignature = !!membership.membership_signature;
+    const hasOrdinaryPlan = membership.membership_type !== 'Ordinary Member' || !!membership.ordinary_membership_plan;
+
+    const hasCompanyName = !!company.company_name?.trim();
+    const hasCompanyAddress = !!company.company_address?.trim();
+    const hasCompanyPhone = !!company.company_phone?.trim();
+    const hasCompanyEmail = !!company.company_email?.trim();
+    const hasOfficePresence = company.office_presence_regions && company.office_presence_regions.length > 0;
+    const hasBusinessCategories = company.business_categories && company.business_categories.length > 0;
+    const hasDirectorName = !!company.director_name?.trim();
+    const hasDirectorDate = !!company.director_signed_at;
+    const hasCompanySignature = !!company.signature;
+
+    const hasLeadContact = contacts.lead && 
+      contacts.lead.name?.trim() && 
+      contacts.lead.title?.trim() && 
+      contacts.lead.phone?.trim() && 
+      contacts.lead.email?.trim();
+
+    const hasOfficer1 = officers[0] && 
+      officers[0].name?.trim() && 
+      officers[0].title?.trim() && 
+      (officers[0].phone?.trim() || officers[0].email?.trim());
+
+    return hasMembershipType && hasPaymentMethod && hasMembershipSignature && hasOrdinaryPlan &&
+           hasCompanyName && hasCompanyAddress && hasCompanyPhone && hasCompanyEmail &&
+           hasOfficePresence && hasBusinessCategories && hasDirectorName && hasDirectorDate && hasCompanySignature &&
+           hasLeadContact && hasOfficer1;
+  }, [values]);
+
+  const handleSubmitData = useCallback(async () => {
+    if (!isAllDataComplete()) {
+      setSubmitError('Please complete all required fields before submitting.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError('');
+    setSubmitSuccess(false);
+
+    try {
+      const formData = transformSubscriptionToBackend(values, user?.id);
+      
+      let response;
+      const isFirstSubmit = !subscriptionId;
+      
+      if (subscriptionId) {
+        response = await memberSubscriptionDetailsService.update(subscriptionId, formData);
+      } else {
+        response = await memberSubscriptionDetailsService.create(formData);
+        if (response?.data?.id) {
+          setSubscriptionId(response.data.id);
+          clearAllSubscriptionStorage();
+        }
+      }
+      
+      setSubmitSuccess(true);
+      await loadSubscriptionData();
+      
+      setTimeout(() => {
+        setSubmitSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error submitting subscription data:', error);
+      setSubmitError(error.message || 'Failed to submit subscription data. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [values, user, subscriptionId, isAllDataComplete, loadSubscriptionData]);
 
   const loadImportantInfo = useCallback(async () => {
     setImportantInfoLoading(true);
@@ -128,6 +338,7 @@ const Subscription = () => {
             tabs={subscriptionTabs}
             activeTab={activeTab}
             onSelect={setTab}
+            isMembershipDetailsComplete={isMembershipDetailsComplete}
           />
         </div>
       </div>
@@ -167,26 +378,32 @@ const Subscription = () => {
           Membership Details
         </button>
         <button 
-          className={`subscription-tab ${activeTab === 'Company Details' ? 'active' : ''}`}
+          className={`subscription-tab ${activeTab === 'Company Details' ? 'active' : ''} ${!isMembershipDetailsComplete ? 'disabled' : ''}`}
           onClick={() => setTab('Company Details')}
           role="tab"
           aria-selected={activeTab === 'Company Details'}
+          disabled={!isMembershipDetailsComplete}
+          title={!isMembershipDetailsComplete ? 'Please complete Membership Details first' : ''}
         >
           Company Details
         </button>
         <button 
-          className={`subscription-tab ${activeTab === 'Contact Person Details' ? 'active' : ''}`}
+          className={`subscription-tab ${activeTab === 'Contact Person Details' ? 'active' : ''} ${!isMembershipDetailsComplete ? 'disabled' : ''}`}
           onClick={() => setTab('Contact Person Details')}
           role="tab"
           aria-selected={activeTab === 'Contact Person Details'}
+          disabled={!isMembershipDetailsComplete}
+          title={!isMembershipDetailsComplete ? 'Please complete Membership Details first' : ''}
         >
           Contact Person Details
         </button>
         <button 
-          className={`subscription-tab ${activeTab === 'Membership License Officer' ? 'active' : ''}`}
+          className={`subscription-tab ${activeTab === 'Membership License Officer' ? 'active' : ''} ${!isMembershipDetailsComplete ? 'disabled' : ''}`}
           onClick={() => setTab('Membership License Officer')}
           role="tab"
           aria-selected={activeTab === 'Membership License Officer'}
+          disabled={!isMembershipDetailsComplete}
+          title={!isMembershipDetailsComplete ? 'Please complete Membership Details first' : ''}
         >
           Membership License Officer
         </button>
@@ -266,21 +483,41 @@ const Subscription = () => {
 
         {activeTab === 'Contact Person Details' && (
           <section key="contact-person-details" className="subscription-panel subscription-panel--contact">
-            <ContactPersonDetails key="contact-form" onNext={goNext} />
+            <ContactPersonDetails 
+              key="contact-form" 
+              onNext={goNext}
+              initialData={values.contactPersonDetails}
+              onDataChange={setContactPersonDetails}
+            />
           </section>
         )}
 
         {activeTab === 'Membership License Officer' && (
           <section key="membership-license-officer" className="subscription-panel subscription-panel--officer">
+            {submitError && (
+              <div className="app-form__error-banner" role="alert" aria-live="assertive">
+                <strong>Error:</strong> {submitError}
+              </div>
+            )}
+            {submitSuccess && (
+              <div className="app-form__success-banner" role="alert" aria-live="assertive">
+                <strong>Success:</strong> Subscription data has been {subscriptionId ? 'updated' : 'submitted'} successfully!
+              </div>
+            )}
             <MembershipLicenseOfficerForm
               key="officer-form"
               values={values}
               errors={errors}
               setOfficer={setOfficer}
-              onSave={() => {
+              onSave={async () => {
                 const isValid = goNext();
+                if (isValid && user?.role !== 'admin') {
+                  await handleSubmitData();
+                }
                 return isValid;
               }}
+              isSubmitting={isSubmitting}
+              isAllDataComplete={isAllDataComplete()}
             />
           </section>
         )}

@@ -52,7 +52,7 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
 
   const handleTelephoneChange = (e) => {
     const value = e.target.value.replace(/\D/g, '');
-    setField('companyDetails', 'telephone', value);
+    setField('companyDetails', 'company_phone', value);
   };
 
   const handleDrag = (e) => {
@@ -90,13 +90,13 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       
       if (file.size > maxSize) {
-        setField('companyDetails', 'signatureFileError', 'File size must not exceed 5MB');
-        setField('companyDetails', 'signatureFile', null);
+        setField('companyDetails', 'signature_error', 'File size must not exceed 5MB');
+        setField('companyDetails', 'signature', null);
         return;
       }
       
-      setField('companyDetails', 'signatureFile', file);
-      setField('companyDetails', 'signatureFileError', '');
+      setField('companyDetails', 'signature', file);
+      setField('companyDetails', 'signature_error', '');
     }
   };
 
@@ -120,15 +120,15 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
           id="companyName"
           type="text"
           placeholder="Enter company name"
-          value={companyValues.companyName || ''}
-          onChange={(e) => setField('companyDetails', 'companyName', e.target.value)}
+          value={companyValues.company_name || ''}
+          onChange={(e) => setField('companyDetails', 'company_name', e.target.value)}
           onKeyDown={handleKeyDown}
-          aria-invalid={errors['companyDetails.companyName'] ? 'true' : 'false'}
-          aria-describedby={errors['companyDetails.companyName'] ? 'companyName-error' : undefined}
+          aria-invalid={errors['companyDetails.company_name'] ? 'true' : 'false'}
+          aria-describedby={errors['companyDetails.company_name'] ? 'companyName-error' : undefined}
         />
-        {errors['companyDetails.companyName'] && (
+        {errors['companyDetails.company_name'] && (
           <div id="companyName-error" className="error-message">
-            {errors['companyDetails.companyName']}
+            {errors['companyDetails.company_name']}
           </div>
         )}
       </div>
@@ -140,15 +140,15 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
           id="companyAddress"
           type="text"
           placeholder="Enter company address"
-          value={companyValues.companyAddress || ''}
-          onChange={(e) => setField('companyDetails', 'companyAddress', e.target.value)}
+          value={companyValues.company_address || ''}
+          onChange={(e) => setField('companyDetails', 'company_address', e.target.value)}
           onKeyDown={handleKeyDown}
-          aria-invalid={errors['companyDetails.companyAddress'] ? 'true' : 'false'}
-          aria-describedby={errors['companyDetails.companyAddress'] ? 'companyAddress-error' : undefined}
+          aria-invalid={errors['companyDetails.company_address'] ? 'true' : 'false'}
+          aria-describedby={errors['companyDetails.company_address'] ? 'companyAddress-error' : undefined}
         />
-        {errors['companyDetails.companyAddress'] && (
+        {errors['companyDetails.company_address'] && (
           <div id="companyAddress-error" className="error-message">
-            {errors['companyDetails.companyAddress']}
+            {errors['companyDetails.company_address']}
           </div>
         )}
       </div>
@@ -161,15 +161,15 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
             id="telephone"
             type="number"
             placeholder="Enter phone number"
-            value={companyValues.telephone || ''}
+            value={companyValues.company_phone || ''}
             onChange={handleTelephoneChange}
             onKeyDown={handleKeyDown}
-            aria-invalid={errors['companyDetails.telephone'] ? 'true' : 'false'}
-            aria-describedby={errors['companyDetails.telephone'] ? 'telephone-error' : undefined}
+            aria-invalid={errors['companyDetails.company_phone'] ? 'true' : 'false'}
+            aria-describedby={errors['companyDetails.company_phone'] ? 'telephone-error' : undefined}
           />
-          {errors['companyDetails.telephone'] && (
+          {errors['companyDetails.company_phone'] && (
             <div id="telephone-error" className="error-message">
-              {errors['companyDetails.telephone']}
+              {errors['companyDetails.company_phone']}
             </div>
           )}
         </div>
@@ -180,15 +180,15 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
             id="email"
             type="email"
             placeholder="Enter email address"
-            value={companyValues.email || ''}
-            onChange={(e) => setField('companyDetails', 'email', e.target.value)}
+            value={companyValues.company_email || ''}
+            onChange={(e) => setField('companyDetails', 'company_email', e.target.value)}
             onKeyDown={handleKeyDown}
-            aria-invalid={errors['companyDetails.email'] ? 'true' : 'false'}
-            aria-describedby={errors['companyDetails.email'] ? 'email-error' : undefined}
+            aria-invalid={errors['companyDetails.company_email'] ? 'true' : 'false'}
+            aria-describedby={errors['companyDetails.company_email'] ? 'email-error' : undefined}
           />
-          {errors['companyDetails.email'] && (
+          {errors['companyDetails.company_email'] && (
             <div id="email-error" className="error-message">
-              {errors['companyDetails.email']}
+              {errors['companyDetails.company_email']}
             </div>
           )}
         </div>
@@ -201,15 +201,15 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
           id="website"
           type="text"
           placeholder="Enter website URL"
-          value={companyValues.website || ''}
-          onChange={(e) => setField('companyDetails', 'website', e.target.value)}
+          value={companyValues.company_website || ''}
+          onChange={(e) => setField('companyDetails', 'company_website', e.target.value)}
           onKeyDown={handleKeyDown}
-          aria-invalid={errors['companyDetails.website'] ? 'true' : 'false'}
-          aria-describedby={errors['companyDetails.website'] ? 'website-error' : undefined}
+          aria-invalid={errors['companyDetails.company_website'] ? 'true' : 'false'}
+          aria-describedby={errors['companyDetails.company_website'] ? 'website-error' : undefined}
         />
-        {errors['companyDetails.website'] && (
+        {errors['companyDetails.company_website'] && (
           <div id="website-error" className="error-message">
-            {errors['companyDetails.website']}
+            {errors['companyDetails.company_website']}
           </div>
         )}
       </div>
@@ -220,22 +220,22 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
         <textarea
           id="brief"
           placeholder="Enter brief company description"
-          value={companyValues.brief || ''}
-          onChange={(e) => setField('companyDetails', 'brief', e.target.value)}
+          value={companyValues.company_profile || ''}
+          onChange={(e) => setField('companyDetails', 'company_profile', e.target.value)}
           onKeyDown={handleKeyDown}
           rows={4}
-          aria-invalid={errors['companyDetails.brief'] ? 'true' : 'false'}
-          aria-describedby={errors['companyDetails.brief'] ? 'brief-error' : undefined}
+          aria-invalid={errors['companyDetails.company_profile'] ? 'true' : 'false'}
+          aria-describedby={errors['companyDetails.company_profile'] ? 'brief-error' : undefined}
         />
-        {errors['companyDetails.brief'] && (
+        {errors['companyDetails.company_profile'] && (
           <div id="brief-error" className="error-message">
-            {errors['companyDetails.brief']}
+            {errors['companyDetails.company_profile']}
           </div>
         )}
       </div>
 
       {/* Office Presence */}
-      <fieldset className="office-presence" aria-invalid={errors['companyDetails.officePresence'] ? 'true' : 'false'}>
+      <fieldset className="office-presence" aria-invalid={errors['companyDetails.office_presence_regions'] ? 'true' : 'false'}>
         <legend>Select all relevant choices for office presence <span className="req-star">*</span></legend>
         <div className="checkbox-group">
           {OFFICE_PRESENCE_OPTIONS.map(option => (
@@ -243,23 +243,23 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
               <input
                 type="checkbox"
                 id={`office-${createValidId(option)}`}
-                checked={companyValues.officePresence?.includes(option) || false}
-                onChange={() => toggleArray('companyDetails', 'officePresence', option)}
-                aria-invalid={errors['companyDetails.officePresence'] ? 'true' : 'false'}
+                checked={companyValues.office_presence_regions?.includes(option) || false}
+                onChange={() => toggleArray('companyDetails', 'office_presence_regions', option)}
+                aria-invalid={errors['companyDetails.office_presence_regions'] ? 'true' : 'false'}
               />
               <label htmlFor={`office-${createValidId(option)}`}>{option}</label>
             </div>
           ))}
         </div>
-        {errors['companyDetails.officePresence'] && (
+        {errors['companyDetails.office_presence_regions'] && (
           <div id="officePresence-error" className="error-message" aria-describedby="officePresence-error">
-            {errors['companyDetails.officePresence']}
+            {errors['companyDetails.office_presence_regions']}
           </div>
         )}
       </fieldset>
 
       {/* Business Categories */}
-      <fieldset className="business-categories" aria-invalid={errors['companyDetails.businessCategories'] ? 'true' : 'false'}>
+      <fieldset className="business-categories" aria-invalid={errors['companyDetails.business_categories'] ? 'true' : 'false'}>
         <legend>Please select all relevant category(ies) that indicate the type of business undertaken by your company <span className="req-star">*</span></legend>
         <div className="categories-grid">
           <div className="categories-column">
@@ -268,9 +268,9 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
                 <input
                   type="checkbox"
                   id={`category-${createValidId(category)}`}
-                  checked={companyValues.businessCategories?.includes(category) || false}
-                  onChange={() => toggleArray('companyDetails', 'businessCategories', category)}
-                  aria-invalid={errors['companyDetails.businessCategories'] ? 'true' : 'false'}
+                  checked={companyValues.business_categories?.includes(category) || false}
+                  onChange={() => toggleArray('companyDetails', 'business_categories', category)}
+                  aria-invalid={errors['companyDetails.business_categories'] ? 'true' : 'false'}
                 />
                 <label htmlFor={`category-${createValidId(category)}`}>{category}</label>
               </div>
@@ -282,18 +282,18 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
                 <input
                   type="checkbox"
                   id={`category-${createValidId(category)}`}
-                  checked={companyValues.businessCategories?.includes(category) || false}
-                  onChange={() => toggleArray('companyDetails', 'businessCategories', category)}
-                  aria-invalid={errors['companyDetails.businessCategories'] ? 'true' : 'false'}
+                  checked={companyValues.business_categories?.includes(category) || false}
+                  onChange={() => toggleArray('companyDetails', 'business_categories', category)}
+                  aria-invalid={errors['companyDetails.business_categories'] ? 'true' : 'false'}
                 />
                 <label htmlFor={`category-${createValidId(category)}`}>{category}</label>
               </div>
             ))}
           </div>
         </div>
-        {errors['companyDetails.businessCategories'] && (
+        {errors['companyDetails.business_categories'] && (
           <div id="businessCategories-error" className="error-message" aria-describedby="businessCategories-error">
-            {errors['companyDetails.businessCategories']}
+            {errors['companyDetails.business_categories']}
           </div>
         )}
       </fieldset>
@@ -305,17 +305,17 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
           id="otherCategory"
           type="text"
           placeholder="Specify other business category"
-          value={companyValues.otherCategory || ''}
-          onChange={(e) => setField('companyDetails', 'otherCategory', e.target.value)}
+          value={companyValues.other_business_category || ''}
+          onChange={(e) => setField('companyDetails', 'other_business_category', e.target.value)}
           onKeyDown={handleKeyDown}
-          disabled={!companyValues.businessCategories?.includes('Other')}
-          aria-disabled={!companyValues.businessCategories?.includes('Other')}
-          aria-invalid={errors['companyDetails.otherCategory'] ? 'true' : 'false'}
-          aria-describedby={errors['companyDetails.otherCategory'] ? 'otherCategory-error' : undefined}
+          disabled={!companyValues.business_categories?.includes('Other')}
+          aria-disabled={!companyValues.business_categories?.includes('Other')}
+          aria-invalid={errors['companyDetails.other_business_category'] ? 'true' : 'false'}
+          aria-describedby={errors['companyDetails.other_business_category'] ? 'otherCategory-error' : undefined}
         />
-        {errors['companyDetails.otherCategory'] && (
+        {errors['companyDetails.other_business_category'] && (
           <div id="otherCategory-error" className="error-message">
-            {errors['companyDetails.otherCategory']}
+            {errors['companyDetails.other_business_category']}
           </div>
         )}
       </div>
@@ -328,15 +328,15 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
             id="company-directorName"
             type="text"
             placeholder="Enter director's full name"
-            value={companyValues.directorName || ''}
-            onChange={(e) => setField('companyDetails', 'directorName', e.target.value)}
+            value={companyValues.director_name || ''}
+            onChange={(e) => setField('companyDetails', 'director_name', e.target.value)}
             onKeyDown={handleKeyDown}
-            aria-invalid={errors['companyDetails.directorName'] ? 'true' : 'false'}
-            aria-describedby={errors['companyDetails.directorName'] ? 'company-directorName-error' : undefined}
+            aria-invalid={errors['companyDetails.director_name'] ? 'true' : 'false'}
+            aria-describedby={errors['companyDetails.director_name'] ? 'company-directorName-error' : undefined}
           />
-          {errors['companyDetails.directorName'] && (
+          {errors['companyDetails.director_name'] && (
             <div id="company-directorName-error" className="error-message">
-              {errors['companyDetails.directorName']}
+              {errors['companyDetails.director_name']}
             </div>
           )}
         </div>
@@ -346,15 +346,15 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
           <input
             id="company-date"
             type="date"
-            value={companyValues.date || ''}
-            onChange={(e) => setField('companyDetails', 'date', e.target.value)}
+            value={companyValues.director_signed_at || ''}
+            onChange={(e) => setField('companyDetails', 'director_signed_at', e.target.value)}
             onKeyDown={handleKeyDown}
-            aria-invalid={errors['companyDetails.date'] ? 'true' : 'false'}
-            aria-describedby={errors['companyDetails.date'] ? 'company-date-error' : undefined}
+            aria-invalid={errors['companyDetails.director_signed_at'] ? 'true' : 'false'}
+            aria-describedby={errors['companyDetails.director_signed_at'] ? 'company-date-error' : undefined}
           />
-          {errors['companyDetails.date'] && (
+          {errors['companyDetails.director_signed_at'] && (
             <div id="company-date-error" className="error-message">
-              {errors['companyDetails.date']}
+              {errors['companyDetails.director_signed_at']}
             </div>
           )}
         </div>
@@ -367,7 +367,7 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
           <div
             id="company-signatureFile"
             className={`dropzone dropzone-surface ${dragActive ? 'active' : ''}`}
-            data-has-file={Boolean(companyValues.signatureFile)}
+            data-has-file={Boolean(companyValues.signature)}
             onDragEnter={handleDragIn}
             onDragLeave={handleDragOut}
             onDragOver={handleDrag}
@@ -382,13 +382,13 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
             tabIndex={0}
             role="button"
             aria-labelledby="company-signatureFile-label"
-            aria-invalid={errors['companyDetails.signatureFile'] ? 'true' : 'false'}
-            aria-describedby={errors['companyDetails.signatureFile'] ? 'company-signatureFile-error' : undefined}
+            aria-invalid={errors['companyDetails.signature'] ? 'true' : 'false'}
+            aria-describedby={errors['companyDetails.signature'] ? 'company-signatureFile-error' : undefined}
           >
             <div className="dropzone-content">
               <i className="bi bi-cloud-upload dropzone-icon" aria-hidden="true"></i>
               <p className="dropzone-label">
-                {companyValues.signatureFile ? companyValues.signatureFile.name : 'Drag and drop signature file here'}
+                {companyValues.signature ? companyValues.signature.name : 'Drag and drop signature file here'}
               </p>
               <p className="dropzone-separator">or</p>
               <button
@@ -404,14 +404,14 @@ const CompanyDetailsForm = ({ values, errors, setField, toggleArray, onNext }) =
               <p className="dropzone-hint">PNG, JPG, JPEG, PDF (max 5MB)</p>
             </div>
           </div>
-          {errors['companyDetails.signatureFile'] && (
+          {errors['companyDetails.signature'] && (
             <div id="company-signatureFile-error" className="error-message">
-              {errors['companyDetails.signatureFile']}
+              {errors['companyDetails.signature']}
             </div>
           )}
-          {companyValues.signatureFileError && (
+          {companyValues.signature_error && (
             <div className="error-message">
-              {companyValues.signatureFileError}
+              {companyValues.signature_error}
             </div>
           )}
         </div>

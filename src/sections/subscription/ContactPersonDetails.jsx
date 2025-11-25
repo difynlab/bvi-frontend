@@ -1,35 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import '../../styles/sections/ContactPersonDetails.scss';
+import { getContactPersonDetails } from '../../helpers/subscriptionStorage';
 
-const ContactPersonDetails = ({ onNext = () => {} }) => {
-  const [contacts, setContacts] = useState({
-    lead: { name: '', title: '', phone: '', email: '' },
-    contact2: { name: '', title: '', phone: '', email: '' },
-    contact3: { name: '', title: '', phone: '', email: '' },
-    contact4: { name: '', title: '', phone: '', email: '' },
-    contact5: { name: '', title: '', phone: '', email: '' }
+const ContactPersonDetails = ({ onNext = () => {}, initialData = null, onDataChange = null }) => {
+  const normalizeToFormFormat = (data) => {
+    if (!data) {
+      return {
+        lead: { name: '', title: '', phone: '', email: '' },
+        contact2: { name: '', title: '', phone: '', email: '' },
+        contact3: { name: '', title: '', phone: '', email: '' },
+        contact4: { name: '', title: '', phone: '', email: '' },
+        contact5: { name: '', title: '', phone: '', email: '' }
+      };
+    }
+
+    return {
+      lead: { name: '', title: '', phone: '', email: '', ...(data.lead || {}) },
+      contact2: { name: '', title: '', phone: '', email: '', ...(data.contacts?.[0] || {}) },
+      contact3: { name: '', title: '', phone: '', email: '', ...(data.contacts?.[1] || {}) },
+      contact4: { name: '', title: '', phone: '', email: '', ...(data.contacts?.[2] || {}) },
+      contact5: { name: '', title: '', phone: '', email: '', ...(data.contacts?.[3] || {}) }
+    };
+  };
+
+  const [contacts, setContacts] = useState(() => {
+    if (initialData) {
+      return normalizeToFormFormat(initialData);
+    }
+    const savedData = getContactPersonDetails();
+    return normalizeToFormFormat(savedData);
   });
   const [errors, setErrors] = useState({});
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(true);
 
   useEffect(() => {
-    const savedData = localStorage.getItem('membership.contactPersons');
-    if (savedData) {
-      try {
-        const parsedData = JSON.parse(savedData);
-        const normalizedData = {
-          lead: { name: '', title: '', phone: '', email: '', ...parsedData.lead },
-          contact2: { name: '', title: '', phone: '', email: '', ...parsedData.contacts?.[0] },
-          contact3: { name: '', title: '', phone: '', email: '', ...parsedData.contacts?.[1] },
-          contact4: { name: '', title: '', phone: '', email: '', ...parsedData.contacts?.[2] },
-          contact5: { name: '', title: '', phone: '', email: '', ...parsedData.contacts?.[3] }
-        };
-        setContacts(normalizedData);
-      } catch (error) {
-      }
+    if (initialData) {
+      setContacts(normalizeToFormFormat(initialData));
     }
-    setIsLoaded(true);
-  }, []);
+  }, [initialData]);
 
   const isComplete = (contact) => {
     return contact.name.trim() && contact.title.trim() && contact.phone.trim() && contact.email.trim();
@@ -65,51 +73,24 @@ const ContactPersonDetails = ({ onNext = () => {} }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const normalizeContacts = () => {
-    return {
-      lead: {
-        name: contacts.lead.name.trim(),
-        title: contacts.lead.title.trim(),
-        phone: contacts.lead.phone.trim(),
-        email: contacts.lead.email.trim()
-      },
-      contacts: [
-        isEmpty(contacts.contact2) ? null : {
-          name: contacts.contact2.name.trim(),
-          title: contacts.contact2.title.trim(),
-          phone: contacts.contact2.phone.trim(),
-          email: contacts.contact2.email.trim()
-        },
-        isEmpty(contacts.contact3) ? null : {
-          name: contacts.contact3.name.trim(),
-          title: contacts.contact3.title.trim(),
-          phone: contacts.contact3.phone.trim(),
-          email: contacts.contact3.email.trim()
-        },
-        isEmpty(contacts.contact4) ? null : {
-          name: contacts.contact4.name.trim(),
-          title: contacts.contact4.title.trim(),
-          phone: contacts.contact4.phone.trim(),
-          email: contacts.contact4.email.trim()
-        },
-        isEmpty(contacts.contact5) ? null : {
-          name: contacts.contact5.name.trim(),
-          title: contacts.contact5.title.trim(),
-          phone: contacts.contact5.phone.trim(),
-          email: contacts.contact5.email.trim()
-        }
-      ]
-    };
-  };
 
   const handleFieldChange = (contactKey, field, value) => {
-    setContacts(prev => ({
-      ...prev,
-      [contactKey]: {
-        ...prev[contactKey],
-        [field]: value
+    setContacts(prev => {
+      const updated = {
+        ...prev,
+        [contactKey]: {
+          ...prev[contactKey],
+          [field]: value
+        }
+      };
+      
+      if (onDataChange) {
+        const normalized = normalizeContacts(updated);
+        onDataChange(normalized);
       }
-    }));
+      
+      return updated;
+    });
 
     if (errors[contactKey] || errors.optional) {
       setErrors(prev => {
@@ -121,6 +102,43 @@ const ContactPersonDetails = ({ onNext = () => {} }) => {
     }
   };
 
+  const normalizeContacts = (contactsData) => {
+    return {
+      lead: {
+        name: contactsData.lead.name.trim(),
+        title: contactsData.lead.title.trim(),
+        phone: contactsData.lead.phone.trim(),
+        email: contactsData.lead.email.trim()
+      },
+      contacts: [
+        isEmpty(contactsData.contact2) ? null : {
+          name: contactsData.contact2.name.trim(),
+          title: contactsData.contact2.title.trim(),
+          phone: contactsData.contact2.phone.trim(),
+          email: contactsData.contact2.email.trim()
+        },
+        isEmpty(contactsData.contact3) ? null : {
+          name: contactsData.contact3.name.trim(),
+          title: contactsData.contact3.title.trim(),
+          phone: contactsData.contact3.phone.trim(),
+          email: contactsData.contact3.email.trim()
+        },
+        isEmpty(contactsData.contact4) ? null : {
+          name: contactsData.contact4.name.trim(),
+          title: contactsData.contact4.title.trim(),
+          phone: contactsData.contact4.phone.trim(),
+          email: contactsData.contact4.email.trim()
+        },
+        isEmpty(contactsData.contact5) ? null : {
+          name: contactsData.contact5.name.trim(),
+          title: contactsData.contact5.title.trim(),
+          phone: contactsData.contact5.phone.trim(),
+          email: contactsData.contact5.email.trim()
+        }
+      ]
+    };
+  };
+
   const handlePhoneChange = (contactKey, value) => {
     const digitsOnly = value.replace(/\D/g, '');
     handleFieldChange(contactKey, 'phone', digitsOnly);
@@ -128,8 +146,10 @@ const ContactPersonDetails = ({ onNext = () => {} }) => {
 
   const handleSubmit = () => {
     if (validateAll()) {
-      const normalizedData = normalizeContacts();
-      localStorage.setItem('membership.contactPersons', JSON.stringify(normalizedData));
+      const normalizedData = normalizeContacts(contacts);
+      if (onDataChange) {
+        onDataChange(normalizedData);
+      }
       onNext(normalizedData);
     }
   };
