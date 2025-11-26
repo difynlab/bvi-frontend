@@ -90,6 +90,11 @@ const SideNav = () => {
       // Don't handle touch gestures if any modal is open
       if (isAnyModalOpen()) return;
       
+      // Don't interfere with scroll on auth pages (login, register, etc.)
+      const target = e.target;
+      const authPage = target?.closest?.('.auth-page');
+      if (authPage) return;
+      
       const t = e.touches?.[0]; 
       if (!t) return;
       dragging.current = { active: true, startX: t.clientX, startY: t.clientY, moved: false };
@@ -98,6 +103,11 @@ const SideNav = () => {
     const handleTouchMove = (e) => {
       // Don't handle touch gestures if any modal is open
       if (isAnyModalOpen()) return;
+      
+      // Don't interfere with scroll on auth pages (login, register, etc.)
+      const target = e.target;
+      const authPage = target?.closest?.('.auth-page');
+      if (authPage) return;
       
       if (!dragging.current.active) return;
       const t = e.touches?.[0]; 

@@ -216,6 +216,52 @@
   }
 }
 
+.plan-pricing-input-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: white;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+}
+
+.plan-pricing-currency {
+  padding: 12px 0 12px 14px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #495057;
+}
+
+.plan-pricing-input {
+  flex: 1;
+  border: none;
+  padding: 12px 14px 12px 0;
+  font-size: 15px;
+  color: #111827;
+  background: transparent;
+  width: 100%;
+
+  &:focus {
+    outline: none;
+  }
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  &[type=number] {
+    -moz-appearance: textfield;
+  }
+}
+
 .membership-plan-modal-footer {
   padding: 24px 32px;
   border-top: 1px solid #e5e7eb;

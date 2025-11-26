@@ -333,6 +333,7 @@ export function useSettingsForm() {
           firstName: localProfileUpdate.firstName,
           lastName: localProfileUpdate.lastName,
           email: localProfileUpdate.email,
+          phone: updatedProfileData?.phone || localProfileUpdate.phoneE164 || '',
           phoneNumber: localProfileUpdate.phoneNumber,
           profilePicture: localProfileUpdate.profilePicture,
           profilePictureUrl: localProfileUpdate.profilePicture,
@@ -358,6 +359,12 @@ export function useSettingsForm() {
       setIsSaving(false);
     }
   }, [canSave, currentUser.id, isSaving, form, selectedFile, baseUser, ctx, resetAfterSave, currentPassword, newPassword, confirmPassword]);
+
+  useEffect(() => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+  }, [currentUser.id]);
 
   // Initialize form when user data changes
   useEffect(() => {

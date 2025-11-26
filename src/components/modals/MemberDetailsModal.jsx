@@ -412,25 +412,22 @@ export const MemberDetailsModal = ({
     }
   };
 
-  // Helper to format payment status from backend (0, 1, 2) to display text
   const formatPaymentStatus = (status) => {
     if (status === undefined || status === null) return '—';
     
-    // Handle numeric status (0, 1, 2)
     if (typeof status === 'number') {
-      if (status === 0) return 'Pending';
-      if (status === 1) return 'Paid';
-      if (status === 2) return 'Cancelled';
+      if (status === 0) return 'Fail';
+      if (status === 1) return 'Pending';
+      if (status === 2) return 'Paid';
       return '—';
     }
     
-    // Handle string status (fallback)
     if (typeof status === 'string') {
       const lowerStatus = status.toLowerCase();
-      if (lowerStatus === 'pending' || lowerStatus === '0') return 'Pending';
-      if (lowerStatus === 'paid' || lowerStatus === '1') return 'Paid';
-      if (lowerStatus === 'cancelled' || lowerStatus === '2') return 'Cancelled';
-      return status; // Return as-is if not recognized
+      if (lowerStatus === 'fail' || lowerStatus === '0') return 'Fail';
+      if (lowerStatus === 'pending' || lowerStatus === '1') return 'Pending';
+      if (lowerStatus === 'paid' || lowerStatus === '2') return 'Paid';
+      return status;
     }
     
     return '—';
@@ -505,7 +502,7 @@ export const MemberDetailsModal = ({
         date: formatPaymentDate(payment?.date || payment?.created_at || payment?.payment_date),
         status: formattedStatus,
         amount: formatPaymentAmount(payment?.amount || payment?.total),
-        isPending: statusValue === 0 || formattedStatus === 'Pending'
+        isPending: statusValue === 1 || formattedStatus === 'Pending'
       };
     });
   };

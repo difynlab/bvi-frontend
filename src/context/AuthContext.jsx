@@ -394,7 +394,7 @@ export const AuthProvider = ({ children }) => {
       }
       
       setProfile(next, {
-        profilePicture: profilePictureToSave, // Only server URL, never base64
+        profilePicture: profilePictureToSave,
         profilePictureUrl: profilePictureToSave,
         original_image: next.original_image || '',
         blurred_image: next.blurred_image || '',
@@ -402,8 +402,9 @@ export const AuthProvider = ({ children }) => {
         first_name: next.first_name || '',
         last_name: next.last_name || '',
         userName: next.userName || '',
+        email: next.email || '',
         phone: next.phone || '',
-      }); // TODO BACKEND: move to server profile
+      });
 
       // Persist to session storage with error handling
       try {

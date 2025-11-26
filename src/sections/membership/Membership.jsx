@@ -8,6 +8,7 @@ import { isAdmin } from '../../auth/acl';
 import { useMembershipData } from '../../hooks/useMembershipData';
 import membersService from '../../services/membersService';
 import importantInfoService from '../../services/importantInfoService';
+import membershipPlansService from '../../services/membershipPlansService';
 import ImportantInfoSkeleton from '../../components/subscription/ImportantInfoSkeleton';
 
 const IMPORTANT_INFO_DEFAULTS = {
@@ -33,6 +34,7 @@ import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal';
 import MembersTableSkeleton from '../../components/membership/MembersTableSkeleton';
 import SubscriptionInfoModal from '../../components/modals/SubscriptionInfoModal';
 import MembershipPlans from '../../sections/subscription/MembershipPlans';
+import { UserRenewMembershipModal } from '../../components/modals/UserRenewMembershipModal';
 
 // TODO BACKEND: Replace localStorage/context source with a secure API call:
 // fetch('/api/me', { credentials: 'include' }).then(res => res.json())...
@@ -40,10 +42,47 @@ import MembershipPlans from '../../sections/subscription/MembershipPlans';
 const Membership = () => {
   const { name, email, phone } = useCurrentUser();
   const { user } = useAuth() || {};
-  const { paymentHistory, paymentLoading, memberDetails, upcomingEvents, loading } = useMembershipData();
+  const { paymentHistory, paymentLoading, memberDetails, upcomingEvents, loading, reload } = useMembershipData();
   const safeName = name && name.trim() ? name : '—';
   const safeEmail = email && email.trim() ? email : '—';
   const safePhone = (phone && phone.trim() ? phone : (user?.phone && user.phone.trim() ? user.phone : '—'));
+
+  const getPlanInfo = useMemo(() => {
+    const planName = user?.plan || user?.membership_plan || memberDetails?.plan || 'Plan Inactive';
+    const normalizedPlan = planName.toString().toLowerCase();
+    
+    if (normalizedPlan.includes('standard') || normalizedPlan.includes('basic')) {
+      return { name: 'Standard Plan', color: '#e93125' };
+    } else if (normalizedPlan.includes('silver') || normalizedPlan.includes('intermediate')) {
+      return { name: 'Silver Plan', color: '#104394' };
+    } else if (normalizedPlan.includes('gold') || normalizedPlan.includes('premium')) {
+      return { name: 'Gold Plan', color: '#C5900A' };
+    } else {
+      return { name: 'Plan Inactive', color: '#262626' };
+    }
+  }, [user, memberDetails]);
+
+  const membershipStatus = user?.status !== undefined && user?.status !== null 
+    ? (Number(user.status) === 1 ? 'active' : 'inactive')
+    : 'inactive';
+
+  const hasActiveMembership = useMemo(() => {
+    if (membershipStatus === 'active') {
+      return true;
+    }
+    
+    if (paymentHistory && paymentHistory.length > 0) {
+      const hasPaidPayment = paymentHistory.some(payment => {
+        if (typeof payment.status === 'string') {
+          return payment.status === 'Paid';
+        }
+        return false;
+      });
+      return hasPaidPayment;
+    }
+    
+    return false;
+  }, [membershipStatus, paymentHistory]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminError, setAdminError] = useState('');
   const [adminMembers, setAdminMembers] = useState([]);
@@ -90,6 +129,14 @@ const Membership = () => {
   const [adminActiveTab, setAdminActiveTab] = useState('Member List');
   const [openInfo, setOpenInfo] = useState(null); // 'eligibility' | 'benefits' | 'payment' | null
   const [cardDataRefresh, setCardDataRefresh] = useState(0); // Force re-render when data changes
+  
+  // User renew membership modal state
+  const [isUserRenewModalOpen, setIsUserRenewModalOpen] = useState(false);
+  
+  // Active plan details state
+  const [activePlanDetails, setActivePlanDetails] = useState(null);
+  const [activePlanLoading, setActivePlanLoading] = useState(false);
+  const [activePlanError, setActivePlanError] = useState('');
   
   // Admin tabs definition
   const adminTabs = ['Member List', 'Important Info', 'Membership Plans'];
@@ -368,6 +415,64 @@ const Membership = () => {
   useEffect(() => {
     loadImportantInfo();
   }, [cardDataRefresh, loadImportantInfo]);
+
+  const getActivePlanId = useMemo(() => {
+    if (!hasActiveMembership) {
+      return null;
+    }
+
+    if (paymentHistory && paymentHistory.length > 0) {
+      const paidPayment = paymentHistory.find(payment => payment.status === 'Paid');
+      if (paidPayment && paidPayment.membership_plan_id) {
+        return paidPayment.membership_plan_id;
+      }
+      
+      if (paidPayment && paidPayment.originalPayment) {
+        const planId = paidPayment.originalPayment.membership_plan_id || paidPayment.originalPayment.plan_id;
+        if (planId) {
+          return planId;
+        }
+      }
+    }
+
+    if (user?.membership_plan_id) {
+      return user.membership_plan_id;
+    }
+
+    return null;
+  }, [hasActiveMembership, paymentHistory, user]);
+
+  const loadActivePlanDetails = useCallback(async () => {
+    if (!getActivePlanId || !hasActiveMembership) {
+      setActivePlanDetails(null);
+      return;
+    }
+
+    setActivePlanLoading(true);
+    setActivePlanError('');
+
+    try {
+      const response = await membershipPlansService.getMembershipPlan(getActivePlanId);
+      
+      if (response && response.data) {
+        setActivePlanDetails(response.data);
+      } else if (response && !response.data && response.id) {
+        setActivePlanDetails(response);
+      } else {
+        setActivePlanDetails(null);
+      }
+    } catch (error) {
+      console.error('Error loading active plan details:', error);
+      setActivePlanError(error.message || 'Failed to load plan details.');
+      setActivePlanDetails(null);
+    } finally {
+      setActivePlanLoading(false);
+    }
+  }, [getActivePlanId, hasActiveMembership]);
+
+  useEffect(() => {
+    loadActivePlanDetails();
+  }, [loadActivePlanDetails]);
 
   const handleOpenImportantInfo = (key) => {
     if (importantInfoLoading || !importantInfoData) return;
@@ -1230,11 +1335,7 @@ const Membership = () => {
                           <td>{payment.dateISO || '—'}</td>
                           <td>${typeof payment.amount === 'number' ? payment.amount.toFixed(2) : '0.00'}</td>
                           <td className={payment.status === 'Pending' ? 'status-pending' : ''}>
-                            {payment.status === 'Pending' ? (
-                              <span className="pending-text">Pending</span>
-                            ) : (
-                              payment.status || 'Paid'
-                            )}
+                            {payment.status || '—'}
                           </td>
                           <td>
                             {payment.status === 'Pending' ? (
@@ -1273,20 +1374,39 @@ const Membership = () => {
             <Card className="status-section">
               <div className="status-banner">
                 <div className="status-header">
-                  <div className="plan-image">
-                    <img src='gold-plan.png' alt="logo" />
+                  <div className="plan-badge" style={{ backgroundColor: getPlanInfo.color }}>
+                    {getPlanInfo.name}
                   </div>
                   <div className="status-header-info">
                     <div className="status-title-row">
                       <h2 className="card-title">Membership Status</h2>
-                      <div className="status-badge active">ACTIVE</div>
+                      <div className={`status-badge ${membershipStatus}`}>
+                        {membershipStatus === 'active' ? 'ACTIVE' : 'INACTIVE'}
+                      </div>
                     </div>
-                    <p className="valid-until">Valid until: August 15, 2025</p>
+                    <p className="valid-until">Valid until: {hasActiveMembership ? 'August 15, 2025' : '—'}</p>
                   </div>
                 </div>
                 <div className="status-actions">
-                  <NavLink to="/subscription" className="btn btn-renew">Renew Membership</NavLink>
-                  <NavLink to="/subscription" className="btn btn-upgrade">Upgrade</NavLink>
+                  <button 
+                    className="btn btn-renew"
+                    onClick={() => setIsUserRenewModalOpen(true)}
+                  >
+                    Renew Membership
+                  </button>
+                  {hasActiveMembership ? (
+                    <NavLink to="/subscription" className="btn btn-upgrade">
+                      Upgrade
+                    </NavLink>
+                  ) : (
+                    <button 
+                      className="btn btn-upgrade" 
+                      disabled
+                      style={{ cursor: 'not-allowed' }}
+                    >
+                      Upgrade
+                    </button>
+                  )}
                 </div>
                 <div className="status-links">
                   <NavLink to="/subscription" className="subscription-link">Edit Membership Subscription</NavLink>
@@ -1295,31 +1415,74 @@ const Membership = () => {
             </Card>
 
             <Card title="Membership Details" className="details-section">
-              <ul className="benefits-list">
-                <li className="benefit-item">
-                  <i className="bi bi-check-lg check-icon"></i>
-                  <span className="benefit-text">Access to premium content and resources</span>
-                </li>
-                <li className="benefit-item">
-                  <i className="bi bi-check-lg check-icon"></i>
-                  <span className="benefit-text">Priority customer support</span>
-                </li>
-                <li className="benefit-item">
-                  <i className="bi bi-check-lg check-icon"></i>
-                  <span className="benefit-text">Exclusive member events and webinars</span>
-                </li>
-                <li className="benefit-item">
-                  <i className="bi bi-check-lg check-icon"></i>
-                  <span className="benefit-text">Advanced analytics and reporting tools</span>
-                </li>
-                <li className="benefit-item">
-                  <i className="bi bi-check-lg check-icon"></i>
-                  <span className="benefit-text">Unlimited downloads and exports</span>
-                </li>
-              </ul>
-              <NavLink to="/subscription?tab=Membership Plans" className="membership-plans-link">
-                View all membership plans
-              </NavLink>
+              {!hasActiveMembership ? (
+                <>
+                  <p className="no-membership-message">No active membership yet...</p>
+                  <NavLink to="/subscription?tab=Membership Plans" className="membership-plans-link">
+                    View all membership plans
+                  </NavLink>
+                </>
+              ) : activePlanLoading ? (
+                <p className="plan-loading-message">Loading plan details...</p>
+              ) : activePlanError ? (
+                <p className="plan-error-message">Error loading plan details</p>
+              ) : activePlanDetails ? (
+                <>
+                  {activePlanDetails.description && (
+                    <div className="plan-detail-section">
+                      <h4 className="plan-detail-title">Description</h4>
+                      <p className="plan-detail-text">{activePlanDetails.description}</p>
+                    </div>
+                  )}
+                  
+                  {activePlanDetails.eligibility_criteria && (
+                    <div className="plan-detail-section">
+                      <h4 className="plan-detail-title">Eligibility Criteria</h4>
+                      <p className="plan-detail-text">{activePlanDetails.eligibility_criteria}</p>
+                    </div>
+                  )}
+                  
+                  {activePlanDetails.perks && (() => {
+                    const perksArray = Array.isArray(activePlanDetails.perks) 
+                      ? activePlanDetails.perks 
+                      : (typeof activePlanDetails.perks === 'string' 
+                          ? (() => {
+                              try {
+                                const parsed = JSON.parse(activePlanDetails.perks);
+                                return Array.isArray(parsed) ? parsed : activePlanDetails.perks.split('\n').filter(Boolean);
+                              } catch {
+                                return activePlanDetails.perks.split('\n').filter(Boolean);
+                              }
+                            })()
+                          : []);
+                    
+                    return perksArray.length > 0 ? (
+                      <div className="plan-perks-section">
+                        <h4 className="plan-perks-title">Perks</h4>
+                        <ul className="benefits-list">
+                          {perksArray.map((perk, index) => (
+                            <li key={index} className="benefit-item">
+                              <i className="bi bi-check-lg check-icon"></i>
+                              <span className="benefit-text">{typeof perk === 'string' ? perk : perk.toString()}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null;
+                  })()}
+                  
+                  <NavLink to="/subscription?tab=Membership Plans" className="membership-plans-link">
+                    View all membership plans
+                  </NavLink>
+                </>
+              ) : (
+                <>
+                  <p className="no-membership-message">No active membership yet...</p>
+                  <NavLink to="/subscription?tab=Membership Plans" className="membership-plans-link">
+                    View all membership plans
+                  </NavLink>
+                </>
+              )}
             </Card>
 
             <Card title="Upcoming Events" className="membership-events-section">
@@ -1346,7 +1509,7 @@ const Membership = () => {
                 ) : (
                   <li className="membership-event-item">
                     <div className="membership-event-content">
-                      <div className="membership-event-title">No upcoming events</div>
+                      <div className="membership-event-title no-events">No upcoming events yet...</div>
                     </div>
                   </li>
                 )}
@@ -1403,6 +1566,19 @@ const Membership = () => {
             }}
           />
         </>
+      )}
+
+      {!isAdmin(user) && (
+        <UserRenewMembershipModal
+          isOpen={isUserRenewModalOpen}
+          onClose={() => setIsUserRenewModalOpen(false)}
+          user={user}
+          onRenewed={async () => {
+            if (reload && typeof reload === 'function') {
+              await reload();
+            }
+          }}
+        />
       )}
     </div>
   );

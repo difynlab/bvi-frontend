@@ -5,6 +5,7 @@ import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal';
 import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal';
 import EmptyPage from '../../components/EmptyPage';
 import MembershipPlansSkeleton from '../../components/subscription/MembershipPlansSkeleton';
+import CustomDropdown from '../../components/CustomDropdown';
 
 const DEFAULT_SERVER_PLANS = [
   {
@@ -16,7 +17,12 @@ const DEFAULT_SERVER_PLANS = [
       'Monthly newsletter',
       'Community forum access'
     ],
-    status: 1
+    status: 1,
+    pricing: [
+      { duration: 6, price: 0 },
+      { duration: 12, price: 10 },
+      { duration: 18, price: 25 }
+    ]
   },
   {
     title: 'Silver (Intermediate)',
@@ -27,7 +33,12 @@ const DEFAULT_SERVER_PLANS = [
       'Priority customer support',
       'Exclusive webinars & events'
     ],
-    status: 1
+    status: 1,
+    pricing: [
+      { duration: 6, price: 0 },
+      { duration: 12, price: 10 },
+      { duration: 18, price: 25 }
+    ]
   },
   {
     title: 'Gold (Premium)',
@@ -39,7 +50,12 @@ const DEFAULT_SERVER_PLANS = [
       'Early access to new features',
       'Premium support hotline'
     ],
-    status: 1
+    status: 1,
+    pricing: [
+      { duration: 6, price: 0 },
+      { duration: 12, price: 10 },
+      { duration: 18, price: 25 }
+    ]
   }
 ];
 
@@ -85,10 +101,48 @@ const ensurePerksArray = (perks) => {
   return [];
 };
 
+const parsePricingFromBackend = (pricing) => {
+  if (!pricing) {
+    return { 6: 0, 12: 10, 18: 25 };
+  }
+  
+  if (typeof pricing === 'string') {
+    try {
+      pricing = JSON.parse(pricing);
+    } catch (_) {
+      return { 6: 0, 12: 10, 18: 25 };
+    }
+  }
+  
+  if (Array.isArray(pricing)) {
+    const pricingObj = {};
+    pricing.forEach(item => {
+      if (item.duration && item.price !== undefined) {
+        pricingObj[item.duration] = item.price;
+      }
+    });
+    return pricingObj;
+  }
+  
+  return pricing;
+};
+
+const convertPricingToBackendFormat = (pricingObj) => {
+  const pricing = pricingObj || { 6: 0, 12: 10, 18: 25 };
+  return [
+    { duration: 6, price: pricing[6] || 0 },
+    { duration: 12, price: pricing[12] || 10 },
+    { duration: 18, price: pricing[18] || 25 }
+  ];
+};
+
 const normalizePlan = (plan) => {
   if (!plan) return null;
 
   const perks = ensurePerksArray(plan.perks);
+  
+  const pricing = parsePricingFromBackend(plan.pricing);
+  const selectedDuration = 6;
 
   return {
     id: plan.id,
@@ -101,6 +155,8 @@ const normalizePlan = (plan) => {
     perksTitle: 'Perks',
     perks,
     theme: determinePlanTheme(plan.title || ''),
+    pricing,
+    selectedDuration,
     created_at: plan.created_at,
     updated_at: plan.updated_at
   };
@@ -175,6 +231,7 @@ const MembershipPlans = ({ isAdmin = false }) => {
   const [isSeedingDefaults, setIsSeedingDefaults] = useState(false);
   const [hasAttemptedDefaultSeed, setHasAttemptedDefaultSeed] = useState(false);
   const [hasFetchedPlans, setHasFetchedPlans] = useState(false);
+  const [selectedDurations, setSelectedDurations] = useState({});
 
   const autoResizeTextarea = (textarea) => {
     if (textarea) {
@@ -262,6 +319,39 @@ const MembershipPlans = ({ isAdmin = false }) => {
     });
   };
 
+  const handleDurationChange = (duration) => {
+    setEditDraft((prev) => {
+      if (!prev) return prev;
+      const durationNum = parseInt(duration, 10);
+      const pricing = prev.pricing || { 6: 0, 12: 10, 18: 25 };
+      const defaultPrice = durationNum === 6 ? 0 : durationNum === 12 ? 10 : 25;
+      return {
+        ...prev,
+        selectedDuration: durationNum,
+        pricing: {
+          ...pricing,
+          [durationNum]: pricing[durationNum] !== undefined ? pricing[durationNum] : defaultPrice
+        }
+      };
+    });
+  };
+
+  const handlePricingChange = (value) => {
+    setEditDraft((prev) => {
+      if (!prev) return prev;
+      const numValue = parseFloat(value) || 0;
+      const pricing = prev.pricing || { 6: 0, 12: 10, 18: 25 };
+      const selectedDuration = prev.selectedDuration || 6;
+      return {
+        ...prev,
+        pricing: {
+          ...pricing,
+          [selectedDuration]: numValue
+        }
+      };
+    });
+  };
+
   const handleTextareaChange = (field, value, event) => {
     updateDraftField(field, value);
     if (event && event.target) {
@@ -276,7 +366,9 @@ const MembershipPlans = ({ isAdmin = false }) => {
     setEditingPlanId(planId);
     setEditDraft({
       ...planToEdit,
-      perks: planToEdit.perks.length > 0 ? [...planToEdit.perks] : ['']
+      perks: planToEdit.perks.length > 0 ? [...planToEdit.perks] : [''],
+      pricing: planToEdit.pricing || { 6: 0, 12: 10, 18: 25 },
+      selectedDuration: planToEdit.selectedDuration || 6
     });
     setActionError('');
   };
@@ -290,12 +382,15 @@ const MembershipPlans = ({ isAdmin = false }) => {
   const handleSaveChanges = async () => {
     if (!editingPlanId || !editDraft || isSaving) return;
 
+    const pricingArray = convertPricingToBackendFormat(editDraft.pricing);
+    
     const payload = {
       title: editDraft.title,
       description: editDraft.descriptionText,
       eligibility_criteria: editDraft.eligibilityText,
       perks: sanitizePerksForSave(editDraft.perks),
-      status: editDraft.status ?? 1
+      status: editDraft.status ?? 1,
+      pricing: pricingArray
     };
 
     setIsSaving(true);
@@ -462,8 +557,26 @@ const MembershipPlans = ({ isAdmin = false }) => {
         plan.title !== editDraft.title ||
         plan.descriptionText !== editDraft.descriptionText ||
         plan.eligibilityText !== editDraft.eligibilityText ||
-        JSON.stringify(plan.perks) !== JSON.stringify(editDraft.perks)
+        JSON.stringify(plan.perks) !== JSON.stringify(editDraft.perks) ||
+        plan.selectedDuration !== editDraft.selectedDuration ||
+        JSON.stringify(plan.pricing) !== JSON.stringify(editDraft.pricing)
       );
+
+    const currentDuration = isEditing 
+      ? (editDraft?.selectedDuration || 6)
+      : (selectedDurations[planId] || displayPlan.selectedDuration || 6);
+    
+    const pricing = displayPlan.pricing || { 6: 0, 12: 10, 18: 25 };
+    const currentPrice = pricing[currentDuration] || 0;
+
+    const handleDurationSelect = (duration) => {
+      if (!isEditing) {
+        setSelectedDurations(prev => ({
+          ...prev,
+          [planId]: duration
+        }));
+      }
+    };
 
     const perksToRender = Array.isArray(displayPlan.perks) ? displayPlan.perks : [];
     const key = planId ?? `plan-${index}`;
@@ -572,6 +685,73 @@ const MembershipPlans = ({ isAdmin = false }) => {
                   </li>
                 )}
               </ul>
+            )}
+          </div>
+
+          <div className="plan-section plan-section-duration-pricing">
+            {isEditing ? (
+              <>
+                <div className="plan-duration-field">
+                  <label className="plan-section-title">Duration</label>
+                  <CustomDropdown
+                    name="duration"
+                    value={currentDuration.toString()}
+                    onChange={(e) => handleDurationChange(e.target.value)}
+                    options={[
+                      { value: '6', label: '6 months' },
+                      { value: '12', label: '12 months' },
+                      { value: '18', label: '18 months' }
+                    ]}
+                    placeholder="Select duration"
+                  />
+                </div>
+                <div className="plan-pricing-field">
+                  <label className="plan-section-title">Pricing</label>
+                  <div className="plan-pricing-input-wrapper">
+                    <span className="plan-pricing-currency">$</span>
+                    <input
+                      type="number"
+                      className="plan-pricing-input"
+                      value={currentPrice}
+                      onChange={(e) => handlePricingChange(e.target.value)}
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <h4 className="plan-section-title">Duration</h4>
+                <div className="plan-duration-pricing-display">
+                  <div className="plan-duration-options">
+                    <button
+                      type="button"
+                      className={`plan-duration-option ${currentDuration === 6 ? 'active' : ''}`}
+                      onClick={() => handleDurationSelect(6)}
+                    >
+                      6M
+                    </button>
+                    <button
+                      type="button"
+                      className={`plan-duration-option ${currentDuration === 12 ? 'active' : ''}`}
+                      onClick={() => handleDurationSelect(12)}
+                    >
+                      12M
+                    </button>
+                    <button
+                      type="button"
+                      className={`plan-duration-option ${currentDuration === 18 ? 'active' : ''}`}
+                      onClick={() => handleDurationSelect(18)}
+                    >
+                      18M
+                    </button>
+                  </div>
+                  <div className={`plan-pricing-display plan-pricing-display--${displayPlan.theme || 'custom'}`}>
+                    ${currentPrice}
+                  </div>
+                </div>
+              </>
             )}
           </div>
 

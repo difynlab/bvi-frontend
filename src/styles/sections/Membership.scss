@@ -440,14 +440,12 @@
   
   .card-content {
     padding: 15px;
-    padding-bottom: 50px;
-    padding-top: 0;
+    padding-top: 15px;
     height: fit-content;
   }
 }
 
 .profile-section {
-  height: 160px;
 
   .card-content {
     height: 130px;
@@ -749,7 +747,7 @@
     gap: 20px;
     align-items: center;
     height: 80px;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 
     .card-title {
       font-size: 14px;
@@ -768,18 +766,19 @@
     }
   }
 
-  .plan-image {
+  .plan-badge {
     width: 160px;
     height: 100%;
     border-radius: 20px;
-    overflow: hidden;
-    
-    img {
-      border-radius: 20px;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    padding: 0 16px;
+    box-sizing: border-box;
   }
 
   .member-text {
@@ -818,6 +817,11 @@
     &.active {
       background-color: #dcfce7;
       color: #166534;
+    }
+
+    &.inactive {
+      background-color: #fee2e2;
+      color: #e93125;
     }
   }
 
@@ -858,11 +862,12 @@
     }
 
     &.btn-upgrade {
-      background-color: #1f2937;
+      background-color: #262626;
       color: white;
 
-      &:hover {
-        background-color: #374151;
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
       }
     }
   }
@@ -939,6 +944,51 @@
       text-decoration: none;
     }
   }
+
+  .no-membership-message {
+    margin-bottom: 20px;
+    color: #6b7280;
+  }
+
+  .plan-loading-message {
+    color: #6b7280;
+  }
+
+  .plan-error-message {
+    color: #ef4444;
+  }
+
+  .plan-detail-section {
+    margin-bottom: 20px;
+
+    &:last-of-type {
+      margin-bottom: 20px;
+    }
+  }
+
+  .plan-detail-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+  }
+
+  .plan-detail-text {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+
+  .plan-perks-section {
+    margin-bottom: 20px;
+  }
+
+  .plan-perks-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 12px;
+  }
 }
 
 .membership-events-section {
@@ -996,6 +1046,10 @@
     margin-bottom: 4px;
     line-height: 1.4;
     word-wrap: break-word;
+
+    &.no-events {
+      color: #6b7280;
+    }
   }
 
   .membership-event-datetime {
@@ -1265,14 +1319,10 @@
   .status-section {
     width: 100%;
 
-    .status-banner .status-header .plan-image {
+    .status-banner .status-header .plan-badge {
       width: 100%;
-      height: 120px; 
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
+      height: 80px;
+      font-size: 18px;
     }
 
     .status-header {
@@ -1908,6 +1958,137 @@
 
       &:last-child {
         margin-bottom: 0;
+      }
+    }
+
+    .plan-section-duration-pricing {
+      margin-top: auto;
+      padding-top: 20px;
+      border-top: 1px solid #e9ecef;
+
+      .plan-section-title {
+        margin-bottom: 12px;
+      }
+    }
+
+    .plan-duration-pricing-display {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .plan-duration-options {
+      display: flex;
+      gap: 16px;
+    }
+
+    .plan-duration-option {
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: #9ca3af;
+      font-size: 14px;
+      font-weight: 400;
+      cursor: pointer;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: #6b7280;
+      }
+
+      &.active {
+        color: #374151;
+        font-weight: 400;
+      }
+
+      &:focus {
+        outline: none;
+      }
+    }
+
+    .plan-pricing-display {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      display: inline-block;
+
+      &--basic {
+        background-color: var(--vivid_red, #e93125);
+      }
+
+      &--silver {
+        background-color: var(--vivid_blue, #104394);
+      }
+
+      &--gold {
+        background-color: #C5900A;
+      }
+
+      &--custom {
+        background-color: #262626;
+      }
+    }
+
+    .plan-duration-field,
+    .plan-pricing-field {
+      margin-bottom: 16px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .plan-section-title {
+        margin-bottom: 8px;
+      }
+    }
+
+    .plan-pricing-input-wrapper {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background-color: white;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+      &:focus-within {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+    }
+
+    .plan-pricing-currency {
+      padding: 12px 0 12px 14px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #495057;
+    }
+
+    .plan-pricing-input {
+      flex: 1;
+      border: none;
+      padding: 12px 14px 12px 0;
+      font-size: 15px;
+      color: #111827;
+      background: transparent;
+      width: 100%;
+
+      &:focus {
+        outline: none;
+      }
+
+      &::-webkit-inner-spin-button,
+      &::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      &[type=number] {
+        -moz-appearance: textfield;
       }
     }
 

@@ -211,7 +211,7 @@ export default function Settings() {
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="••••••••"
-                    autoComplete="current-password"
+                    autoComplete="off"
                   />
                   <button
                     className="settings-password-toggle"

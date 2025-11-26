@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import ModalLifecycleLock from './ModalLifecycleLock';
+import CustomDropdown from '../CustomDropdown';
 import '../../styles/components/CreateMembershipPlanModal.scss';
 
 const MIN_FIELD_LENGTH = 3;
@@ -22,7 +23,9 @@ export const CreateMembershipPlanModal = ({
     description: '',
     eligibility_criteria: '',
     perks: [''],
-    status: 1
+    status: 1,
+    pricing: { 6: 0, 12: 10, 18: 25 },
+    selected_duration: 6
   });
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,7 +40,9 @@ export const CreateMembershipPlanModal = ({
         description: initialData?.description || '',
         eligibility_criteria: initialData?.eligibility_criteria || '',
         perks: initialData?.perks?.length ? [...initialData.perks] : [''],
-        status: 1
+        status: 1,
+        pricing: initialData?.pricing || { 6: 0, 12: 10, 18: 25 },
+        selected_duration: initialData?.selected_duration || initialData?.selectedDuration || 6
       });
       setErrorMessage('');
     }
@@ -93,6 +98,38 @@ export const CreateMembershipPlanModal = ({
     });
   }, []);
 
+  const handleDurationChange = useCallback((duration) => {
+    setFormState((prev) => {
+      const durationNum = parseInt(duration, 10);
+      const pricing = prev.pricing || { 6: 0, 12: 10, 18: 25 };
+      return {
+        ...prev,
+        selected_duration: durationNum,
+        pricing: {
+          ...pricing,
+          [durationNum]: pricing[durationNum] !== undefined ? pricing[durationNum] : (durationNum === 6 ? 0 : durationNum === 12 ? 10 : 25)
+        }
+      };
+    });
+    setErrorMessage('');
+  }, []);
+
+  const handlePricingChange = useCallback((value) => {
+    setFormState((prev) => {
+      const numValue = parseFloat(value) || 0;
+      const pricing = prev.pricing || { 6: 0, 12: 10, 18: 25 };
+      const selectedDuration = prev.selected_duration || 6;
+      return {
+        ...prev,
+        pricing: {
+          ...pricing,
+          [selectedDuration]: numValue
+        }
+      };
+    });
+    setErrorMessage('');
+  }, []);
+
   const isValid = useMemo(() => {
     const { title, description, eligibility_criteria, perks } = formState;
     return (
@@ -111,12 +148,24 @@ export const CreateMembershipPlanModal = ({
       return;
     }
 
+    const convertPricingToBackendFormat = (pricingObj) => {
+      const pricing = pricingObj || { 6: 0, 12: 10, 18: 25 };
+      return [
+        { duration: 6, price: pricing[6] || 0 },
+        { duration: 12, price: pricing[12] || 10 },
+        { duration: 18, price: pricing[18] || 25 }
+      ];
+    };
+
+    const pricingArray = convertPricingToBackendFormat(formState.pricing);
+    
     const payload = {
       title: formState.title.trim(),
       description: formState.description.trim(),
       eligibility_criteria: formState.eligibility_criteria.trim(),
       perks: sanitizePerks(formState.perks),
-      status: 1
+      status: 1,
+      pricing: pricingArray
     };
 
     try {
@@ -234,6 +283,40 @@ export const CreateMembershipPlanModal = ({
               <i className="bi bi-plus-lg"></i>
               Add perk
             </button>
+          </div>
+
+          <div className="form-field">
+            <label className="form-label">
+              Duration
+            </label>
+            <CustomDropdown
+              name="duration"
+              value={formState.selected_duration.toString()}
+              onChange={(e) => handleDurationChange(e.target.value)}
+              options={[
+                { value: '6', label: '6 months' },
+                { value: '12', label: '12 months' },
+                { value: '18', label: '18 months' }
+              ]}
+              placeholder="Select duration"
+            />
+          </div>
+
+          <div className="form-field">
+            <label className="form-label">
+              Pricing
+            </label>
+            <div className="plan-pricing-input-wrapper">
+              <span className="plan-pricing-currency">$</span>
+              <input
+                type="number"
+                className="plan-pricing-input"
+                value={formState.pricing[formState.selected_duration] || 0}
+                onChange={(e) => handlePricingChange(e.target.value)}
+                min="0"
+                step="0.01"
+              />
+            </div>
           </div>
         </div>
 

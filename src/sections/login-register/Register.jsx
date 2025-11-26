@@ -142,7 +142,7 @@ export const Register = () => {
   }
 
   return (
-    <div className="auth-page">
+    <div className="auth-page register-page">
       <div className="auth-bg-triangle-left"> 
       </div>
       <div className="auth-bg-triangle-right"> 
