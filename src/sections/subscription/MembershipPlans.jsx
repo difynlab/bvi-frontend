@@ -383,7 +383,7 @@ const MembershipPlans = ({ isAdmin = false }) => {
     if (!editingPlanId || !editDraft || isSaving) return;
 
     const pricingArray = convertPricingToBackendFormat(editDraft.pricing);
-    
+
     const payload = {
       title: editDraft.title,
       description: editDraft.descriptionText,

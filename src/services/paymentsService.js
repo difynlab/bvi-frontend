@@ -117,6 +117,21 @@ class PaymentsService {
       throw error
     }
   }
+
+  async updatePayment(id, data) {
+    try {
+      const url = `${this.baseURL}/payments/${id}`
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: this.getHeaders(true),
+        body: JSON.stringify(data)
+      })
+      return await this.handleResponse(response)
+    } catch (error) {
+      console.error('Error updating payment:', error)
+      throw error
+    }
+  }
 }
 
 export default new PaymentsService()

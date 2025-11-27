@@ -496,9 +496,17 @@ export const MemberDetailsModal = ({
         : null;
       const formattedStatus = formatPaymentStatus(payment?.status);
 
+      const formatDuration = (duration) => {
+        if (!duration && duration !== 0) return '—';
+        const numDuration = typeof duration === 'string' ? parseInt(duration, 10) : duration;
+        if (isNaN(numDuration)) return '—';
+        return `${numDuration} months`;
+      };
+
       return {
         id: payment?.id || null,
         plan: getPaymentPlanName(payment),
+        duration: formatDuration(payment?.duration),
         date: formatPaymentDate(payment?.date || payment?.created_at || payment?.payment_date),
         status: formattedStatus,
         amount: formatPaymentAmount(payment?.amount || payment?.total),
@@ -535,7 +543,6 @@ export const MemberDetailsModal = ({
     setSuccessMessage('');
 
     try {
-      // Prepare data for API - convert status back to 1/0
       const statusValue = editData.status === 'Active' ? 1 : (editData.status === 'Inactive' ? 0 : null);
       
       const updateData = {
@@ -548,33 +555,22 @@ export const MemberDetailsModal = ({
 
       const response = await membersService.updateMember(currentMember.id, updateData);
 
-      // Check if response is successful (200 OK)
       if (response && (response.http_status === 200 || !response.http_status)) {
-        // Fetch updated member data from API
-        try {
-          const updatedMemberResponse = await membersService.getMember(currentMember.id);
-          
-          // Update currentMember with fresh data from API
-          if (updatedMemberResponse && updatedMemberResponse.data) {
-            setCurrentMember(updatedMemberResponse.data);
-          } else if (updatedMemberResponse && !updatedMemberResponse.data && updatedMemberResponse.id) {
-            // If response structure is flat (data is the object itself)
-            setCurrentMember(updatedMemberResponse);
-          }
-        } catch (fetchError) {
-          console.error('Error fetching updated member:', fetchError);
-          // Still show success even if fetch fails
+        const updatedMemberResponse = await membersService.getMember(currentMember.id);
+        
+        if (updatedMemberResponse && updatedMemberResponse.data) {
+          setCurrentMember(updatedMemberResponse.data);
+        } else if (updatedMemberResponse && !updatedMemberResponse.data && updatedMemberResponse.id) {
+          setCurrentMember(updatedMemberResponse);
         }
 
         setSuccessMessage('Member information updated successfully!');
         setIsEditing(false);
         
-        // Refresh members list in parent component if callback provided
         if (onMemberUpdated && typeof onMemberUpdated === 'function') {
           onMemberUpdated();
         }
         
-        // Clear success message after 5 seconds
         setTimeout(() => {
           setSuccessMessage('');
         }, 5000);
@@ -791,6 +787,7 @@ export const MemberDetailsModal = ({
                 <thead>
                   <tr>
                     <th scope="col">Plan</th>
+                    <th scope="col">Duration</th>
                     <th scope="col">Amount</th>
                     <th scope="col">Date</th>
                     <th scope="col">Status</th>
@@ -799,7 +796,7 @@ export const MemberDetailsModal = ({
                 <tbody>
                   {paymentHistory.length === 0 ? (
                     <tr>
-                      <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
                         No payments yet
                       </td>
                     </tr>
@@ -807,6 +804,7 @@ export const MemberDetailsModal = ({
                     paymentHistory.map((payment, index) => (
                       <tr key={payment.id || `mock-payment-${index}`}>
                         <td>{payment.plan || '—'}</td>
+                        <td>{payment.duration || '—'}</td>
                         <td>{payment.amount || '—'}</td>
                         <td>{payment.date || '—'}</td>
                         <td>

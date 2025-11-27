@@ -7,6 +7,26 @@ import membershipPlansService from '../../services/membershipPlansService';
 import CustomDropdown from '../CustomDropdown';
 import '../../styles/components/RenewMembershipModal.scss';
 
+const parsePricingFromBackend = (pricing) => {
+  if (!pricing) {
+    return [];
+  }
+  
+  if (typeof pricing === 'string') {
+    try {
+      pricing = JSON.parse(pricing);
+    } catch (_) {
+      return [];
+    }
+  }
+  
+  if (Array.isArray(pricing)) {
+    return pricing;
+  }
+  
+  return [];
+};
+
 export const RenewMembershipModal = ({
   isOpen,
   onClose,
@@ -14,6 +34,7 @@ export const RenewMembershipModal = ({
   onRenewed
 }) => {
   const [membershipPlanId, setMembershipPlanId] = useState('');
+  const [duration, setDuration] = useState('');
   const [amount, setAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -25,7 +46,6 @@ export const RenewMembershipModal = ({
 
   useBodyScrollLock(isOpen);
 
-  // Map membership plans for display
   const membershipPlanOptions = useMemo(() => {
     return membershipPlans
       .map((plan) => ({
@@ -34,6 +54,23 @@ export const RenewMembershipModal = ({
       }))
       .filter((option) => option.value);
   }, [membershipPlans]);
+
+  const selectedPlan = useMemo(() => {
+    if (!membershipPlanId) return null;
+    return membershipPlans.find(plan => String(plan?.id) === membershipPlanId);
+  }, [membershipPlanId, membershipPlans]);
+
+  const durationOptions = useMemo(() => {
+    if (!selectedPlan) return [];
+    
+    const pricing = parsePricingFromBackend(selectedPlan.pricing);
+    if (!Array.isArray(pricing) || pricing.length === 0) return [];
+    
+    return pricing.map(item => ({
+      value: String(item.duration),
+      label: `${item.duration} months - $${parseFloat(item.price || 0).toFixed(2)}`
+    }));
+  }, [selectedPlan]);
 
   // Get last payment data to preload
   const lastPayment = useMemo(() => {
@@ -44,20 +81,19 @@ export const RenewMembershipModal = ({
     return member.payments[0];
   }, [member]);
 
-  // Initialize form with last payment data or defaults
   useEffect(() => {
     if (isOpen && member) {
       if (lastPayment) {
-        // Preload from last payment
         if (lastPayment.membership_plan_id !== undefined && lastPayment.membership_plan_id !== null) {
           setMembershipPlanId(String(lastPayment.membership_plan_id));
         } else {
           setMembershipPlanId('');
         }
-        setAmount(lastPayment.amount ? parseFloat(lastPayment.amount).toString() : '');
+        setDuration('');
+        setAmount('');
       } else {
-        // Default values
         setMembershipPlanId('');
+        setDuration('');
         setAmount('');
       }
       setErrorMessage('');
@@ -65,10 +101,24 @@ export const RenewMembershipModal = ({
     }
   }, [isOpen, member, lastPayment]);
 
-  // Reset form when modal closes
+  useEffect(() => {
+    if (duration && selectedPlan) {
+      const pricing = parsePricingFromBackend(selectedPlan.pricing);
+      const selectedPricing = pricing.find(item => String(item.duration) === duration);
+      if (selectedPricing) {
+        setAmount(parseFloat(selectedPricing.price || 0).toFixed(2));
+      } else {
+        setAmount('');
+      }
+    } else if (!duration) {
+      setAmount('');
+    }
+  }, [duration, selectedPlan]);
+
   useEffect(() => {
     if (!isOpen) {
       setMembershipPlanId('');
+      setDuration('');
       setAmount('');
       setErrorMessage('');
       setSuccessMessage('');
@@ -132,50 +182,41 @@ export const RenewMembershipModal = ({
     };
   }, [isOpen, member, lastPayment]);
 
-  // Check if there are changes from initial values
   const hasChanges = useMemo(() => {
     if (!lastPayment) {
-      // If no last payment, any value is a change
-      return membershipPlanId !== '' || amount !== '';
+      return membershipPlanId !== '' || duration !== '';
     }
     
-    const lastAmount = lastPayment.amount ? parseFloat(lastPayment.amount).toString() : '';
     const lastPlanId = lastPayment.membership_plan_id ? String(lastPayment.membership_plan_id) : '';
     
-    return membershipPlanId !== lastPlanId || amount !== lastAmount;
-  }, [membershipPlanId, amount, lastPayment]);
+    return membershipPlanId !== lastPlanId || duration !== '';
+  }, [membershipPlanId, duration, lastPayment]);
 
-  // Handle input changes
   const handleMembershipPlanChange = (e) => {
     setMembershipPlanId(e.target.value);
+    setDuration('');
+    setAmount('');
     setErrorMessage('');
     setSuccessMessage('');
   };
 
-  const handleAmountChange = (e) => {
-    const value = e.target.value;
-    // Allow only numbers and one decimal point
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      setAmount(value);
-      setErrorMessage('');
-      setSuccessMessage('');
-    }
+  const handleDurationChange = (e) => {
+    setDuration(e.target.value);
+    setErrorMessage('');
+    setSuccessMessage('');
   };
 
-  // Handle save
   const handleSave = useCallback(async () => {
     if (!member || !member.id || isLoading) return;
 
-    // Validate required fields
-    if (!membershipPlanId || !amount || amount === '') {
-      setErrorMessage('Membership plan and amount are required');
+    if (!membershipPlanId || !duration || !amount) {
+      setErrorMessage('Membership plan and duration are required');
       return;
     }
 
-    // Validate amount is a valid number
     const amountNum = parseFloat(amount);
-    if (isNaN(amountNum) || amountNum <= 0) {
-      setErrorMessage('Amount must be a valid positive number');
+    if (isNaN(amountNum) || amountNum < 0) {
+      setErrorMessage('Invalid amount');
       return;
     }
 
@@ -184,31 +225,29 @@ export const RenewMembershipModal = ({
     setSuccessMessage('');
 
     try {
-      // Create date in YYYY-MM-DD format (current date)
       const today = new Date();
-      const dateString = today.toISOString().split('T')[0];
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
 
-      // Prepare renewal data
       const renewalData = {
         membership_plan_id: Number(membershipPlanId),
         date: dateString,
         amount: amountNum,
-        status: 1 // Default status
+        duration: Number(duration),
+        status: 2
       };
 
-      // Call API
       const response = await membersService.renewMember(member.id, renewalData);
 
-      // Check if response is successful
       if (response && (response.http_status === 200 || !response.http_status)) {
         setSuccessMessage('Membership renewed successfully!');
         
-        // Call callback to refresh member data
         if (onRenewed && typeof onRenewed === 'function') {
           onRenewed();
         }
         
-        // Close modal after a short delay
         setTimeout(() => {
           onClose();
         }, 1500);
@@ -221,7 +260,7 @@ export const RenewMembershipModal = ({
     } finally {
       setIsLoading(false);
     }
-  }, [member, membershipPlanId, amount, isLoading, onRenewed, onClose]);
+  }, [member, membershipPlanId, duration, amount, isLoading, onRenewed, onClose]);
 
   // Handle ESC key
   useEffect(() => {
@@ -284,19 +323,16 @@ export const RenewMembershipModal = ({
 
           <div className="form-field">
             <label className="form-label">
-              Amount<span className="required">*</span>
+              Duration<span className="required">*</span>
             </label>
-            <div className="amount-input-wrapper">
-              <span className="amount-prefix">$</span>
-              <input
-                type="text"
-                inputMode="decimal"
-                className="amount-input"
-                value={amount}
-                onChange={handleAmountChange}
-                placeholder="0.00"
-              />
-            </div>
+            <CustomDropdown
+              name="duration"
+              value={duration}
+              onChange={handleDurationChange}
+              options={durationOptions}
+              placeholder={!membershipPlanId ? 'Select a plan first' : durationOptions.length === 0 ? 'No durations available' : 'Select duration'}
+              disabled={!membershipPlanId || durationOptions.length === 0}
+            />
           </div>
         </div>
 
@@ -332,7 +368,7 @@ export const RenewMembershipModal = ({
             <button
               className="btn btn-save"
               onClick={handleSave}
-              disabled={!hasChanges || isLoading || !membershipPlanId || !amount}
+              disabled={!hasChanges || isLoading || !membershipPlanId || !duration}
             >
               {isLoading ? 'Saving...' : 'Save Changes'}
             </button>

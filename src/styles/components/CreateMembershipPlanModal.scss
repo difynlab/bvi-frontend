@@ -310,12 +310,8 @@
 }
 
 .btn-save {
-  background: var(--vivid_blue, #104394);
+  background: $vivid_blue;
   color: #fff;
-
-  &:hover:not(:disabled) {
-    background: #0b3372;
-  }
 }
 
 @media (max-width: 768px) {

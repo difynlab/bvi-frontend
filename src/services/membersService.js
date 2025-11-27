@@ -139,23 +139,40 @@ class MembersService {
     return await this.handleResponse(response)
   }
 
-  // POST /members/{id} (FormData)
+  // POST /members/{id} (FormData or JSON)
   async updateMember(id, data) {
-    const formData = new FormData()
-    Object.keys(data || {}).forEach((key) => {
-      const value = data[key]
-      if (value !== undefined && value !== null && value !== '') {
-        formData.append(key, value)
+    const hasPayments = data && data.payments && Array.isArray(data.payments);
+    
+    if (hasPayments) {
+      const jsonData = { ...data };
+      if (jsonData.payments) {
+        jsonData.payments = JSON.stringify(jsonData.payments);
       }
-    })
+      
+      const url = `${this.baseURL}/members/${id}`
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: this.getHeaders(true), // Include Content-Type: application/json
+        body: JSON.stringify(jsonData)
+      })
+      return await this.handleResponse(response)
+    } else {
+      const formData = new FormData()
+      Object.keys(data || {}).forEach((key) => {
+        const value = data[key]
+        if (value !== undefined && value !== null && value !== '') {
+          formData.append(key, value)
+        }
+      })
 
-    const url = `${this.baseURL}/members/${id}`
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: this.getHeaders(false), // no Content-Type for FormData
-      body: formData
-    })
-    return await this.handleResponse(response)
+      const url = `${this.baseURL}/members/${id}`
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: this.getHeaders(false), // no Content-Type for FormData
+        body: formData
+      })
+      return await this.handleResponse(response)
+    }
   }
 
   // DELETE /members/{id}
@@ -171,6 +188,28 @@ class MembersService {
   // POST /members/{id}/renew
   async renewMember(id, data) {
     const url = `${this.baseURL}/members/${id}/renew`
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: this.getHeaders(true), // Include Content-Type: application/json
+      body: JSON.stringify(data)
+    })
+    return await this.handleResponse(response)
+  }
+
+  // POST /payments/{id}
+  async updatePayment(id, data) {
+    const url = `${this.baseURL}/payments/${id}`
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: this.getHeaders(true), // Include Content-Type: application/json
+      body: JSON.stringify(data)
+    })
+    return await this.handleResponse(response)
+  }
+
+  // POST /profile/membership-renew
+  async renewOwnMembership(data) {
+    const url = `${this.baseURL}/profile/membership-renew`
     const response = await fetch(url, {
       method: 'POST',
       headers: this.getHeaders(true), // Include Content-Type: application/json
