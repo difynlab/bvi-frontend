@@ -110,7 +110,7 @@ const BottomNav = () => {
           to="/find-expert"
           className={`bottom-nav-item ${isActive('/find-expert') ? 'active' : ''}`}
         >
-          <i className="bi bi-file-person"></i>
+          <i className="bi bi-person"></i>
           <span className="bottom-nav-label">Find Expert</span>
         </NavLink>
 
