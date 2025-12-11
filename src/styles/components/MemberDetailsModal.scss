@@ -40,6 +40,7 @@
 .member-details-modal-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding-top: 0;
   padding-bottom: 30px;
   
@@ -63,12 +64,127 @@
     color: #262626;
     margin: 0 0 20px 0;
   }
+
+  .payment-status-dropdown {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+    position: relative;
+    z-index: 1;
+
+    .custom-dropdown__trigger {
+      min-height: 32px;
+      padding: 6px 12px;
+      font-size: 0.875rem;
+      width: 100%;
+    }
+
+    &.open {
+      z-index: 10009;
+    }
+
+    .custom-dropdown__menu {
+      z-index: 10009;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: auto;
+      margin-top: 4px;
+      width: 150px;
+    }
+  }
+
+  .payment-status-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 12px;
+    width: 80px;
+    background: transparent;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    i {
+      font-size: 14px;
+    }
+
+    &:hover:not(:disabled) {
+      background: #f9fafb;
+      border-color: #9ca3af;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .payment-status-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 12px;
+    width: 80px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+
+    i {
+      font-size: 14px;
+    }
+
+    &--save {
+      background: $vivid_blue;
+      color: white;
+
+      &:hover:not(:disabled) {
+        background: color.adjust($vivid_blue, $lightness: -10%);
+      }
+    }
+
+    &--cancel {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+
+      &:hover:not(:disabled) {
+        background: #e5e7eb;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .payment-status-fail {
+    color: $vivid_red;
+    font-weight: 500;
+  }
+
+  .payment-status-fail-icon {
+    color: $vivid_red;
+    font-size: 16px;
+  }
 }
 
 // Import table styles from membership
 .table-container {
-  overflow-x: auto;
+  overflow-y: visible;
   width: 100%;
+  position: relative;
 }
 
 .data-table {
@@ -95,6 +211,8 @@
     padding: 16px 8px;
     border-bottom: 1px solid #f3f4f6;
     color: #6b7280;
+    position: relative;
+    overflow: visible;
   }
 
   tbody tr {
@@ -273,6 +391,21 @@
   &:last-child {
     border-bottom: none;
   }
+
+  &--dates {
+    .member-detail-dates-container {
+      display: flex;
+      gap: 30px;
+      width: 100%;
+    }
+
+    .member-detail-date-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      flex: 1;
+    }
+  }
 }
 
 .member-detail-icon {
@@ -307,6 +440,10 @@
 .member-detail-value {
   font-size: 1rem;
   font-weight: 400;
+
+  &--linked-firms {
+    font-weight: 700;
+  }
   color: #6b7280;
   background: transparent;
   border: none;
@@ -409,6 +546,13 @@
   .member-detail-row {
     gap: 12px;
     padding: 10px 0;
+
+    &--dates {
+      .member-detail-dates-container {
+        flex-direction: column;
+        gap: 20px;
+      }
+    }
   }
 
   .member-detail-icon {
@@ -625,5 +769,324 @@
       font-size: 0.875rem;
       margin-bottom: 12px;
     }
+  }
+}
+
+.member-link-firm-section {
+  margin-top: 40px;
+  width: 100%;
+
+  .member-link-firm-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #262626;
+    margin: 0 0 20px 0;
+    display: block;
+  }
+
+  .member-link-firm-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: nowrap;
+    margin-bottom: 20px;
+
+    .custom-dropdown {
+      width: 100%;
+      &__trigger {
+        width: 100%;
+        &:focus {
+          border-color: $vivid_red;
+          box-shadow: none;
+        }
+      }
+    }
+  }
+
+  .member-link-firm-filter {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .member-link-firm-sort {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    height: 45px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #f9fafb;
+    white-space: nowrap;
+  }
+
+  .member-link-firm-sort-label {
+    font-size: 14px;
+    color: #1f2937;
+    white-space: nowrap;
+  }
+
+  .member-link-firm-sort-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f0f9ff;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+  }
+
+  .sort-icon-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sort-letter {
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    line-height: 1;
+  }
+
+  .sort-icon-container .bi-arrow-down {
+    font-size: 10px;
+    color: #6b7280;
+  }
+
+  .member-link-firm-search {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    max-width: 500px;
+    height: 45px;
+    flex: 1;
+  }
+
+  .member-link-firm-search-input {
+    height: 45px;
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px 0 0 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      border-color: $vivid_red;
+    }
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+  }
+
+  .member-link-firm-search-btn {
+    background: $vivid_red;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 0 8px 8px 0;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 50px;
+    height: 45px;
+
+    &:hover:not(:disabled) {
+      background: color.adjust($vivid_red, $lightness: -5%);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .member-link-firm-list-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    &--scrollable {
+      max-height: calc(4 * (80px + 12px));
+      overflow-y: auto;
+      padding-right: 8px;
+
+      &::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+
+        &:hover {
+          background: #a8a8a8;
+        }
+      }
+    }
+  }
+
+  .member-link-firm-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+    transition: all 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .member-link-firm-card-logo {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+  }
+
+  .member-link-firm-card-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .member-link-firm-card-logo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 18px;
+    color: white;
+  }
+
+  .member-link-firm-card-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .member-link-firm-card-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .member-link-firm-card-specialization {
+    font-size: 14px;
+    color: #6b7280;
+  }
+
+  .member-link-firm-card-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+
+    i {
+      font-size: 16px;
+    }
+
+    &--link {
+      background: $vivid_blue;
+      color: white;
+
+      &:hover {
+        background: color.adjust($vivid_blue, $lightness: -10%);
+      }
+    }
+
+    &--unlink {
+      background: $vivid_red;
+      color: white;
+
+      &:hover {
+        background: color.adjust($vivid_red, $lightness: -10%);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .member-link-firm-controls {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+
+    .member-link-firm-filter {
+      flex: 1;
+      min-width: calc(50% - 8px);
+    }
+
+    .member-link-firm-sort {
+      flex: 1;
+      min-width: calc(50% - 8px);
+    }
+
+    .member-link-firm-search {
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+
+  .member-link-firm-card {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .member-link-firm-card-btn {
+    width: 100%;
+    justify-content: center;
   }
 }

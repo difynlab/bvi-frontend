@@ -1,4 +1,5 @@
 @use '../vars' as *;
+@use 'sass:color';
 
 .dashboard-container {
   padding: 30px;
@@ -98,6 +99,7 @@
     grid-template-columns: 2fr 1fr;
     grid-template-rows: auto auto;
     gap: 30px;
+    align-items: stretch;
 
     .dashboard-card {
       background: #fff;
@@ -224,6 +226,36 @@
 
           &:hover {
             color: #1d4ed8;
+          }
+        }
+
+        .add-new-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 12px 20px;
+          background-color: $vivid_red;
+          color: #fff;
+          text-decoration: none;
+          border-radius: 8px;
+          font-size: 0.875rem;
+          font-weight: 500;
+          transition: background-color 0.2s ease;
+          width: fit-content;
+
+          i {
+            font-size: 1rem;
+            font-weight: bold;
+          }
+
+          &:hover {
+            background-color: color.adjust($vivid_red, $lightness: -5%);
+            color: #fff;
+          }
+
+          &:active {
+            background-color: color.adjust($vivid_red, $lightness: -10%);
           }
         }
       }
@@ -395,7 +427,7 @@
       }
 
       &.quick-actions-card {
-        height: fit-content;
+        height: 100%;
 
         .qa-box {
           border: 2px solid rgba(16, 67, 148, 0.06);
@@ -466,6 +498,137 @@
           color: #101828;
           text-decoration: none;
           font-weight: 400;
+        }
+
+        .qa-members-table {
+          width: 100%;
+          margin-bottom: 16px;
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+
+            thead {
+              background-color: #f2f4f7;
+
+              th {
+                padding: 10px 8px;
+                text-align: left;
+                font-size: 12px;
+                font-weight: 600;
+                color: #262626;
+                border-bottom: 1px solid #e1e5e9;
+
+                &:last-child {
+                  width: 40px;
+                  text-align: center;
+                }
+              }
+            }
+
+            tbody {
+              tr {
+                border-bottom: 1px solid #f2f4f7;
+
+                &:last-child {
+                  border-bottom: none;
+                }
+
+                td {
+                  padding: 10px 8px;
+                  font-size: 13px;
+                  color: #262626;
+
+                  &:last-child {
+                    text-align: center;
+                  }
+                }
+              }
+            }
+          }
+
+          .qa-members-empty {
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            padding: 20px;
+          }
+
+          .qa-member-skeleton-row {
+            td {
+              padding: 10px 8px;
+            }
+          }
+        }
+
+        .qa-skeleton-cell {
+          background: linear-gradient(90deg, #f8f9fa 25%, #f1f3f4 50%, #f8f9fa 75%);
+          background-size: 200px 100%;
+          animation: shimmer 2.5s infinite;
+          border-radius: 4px;
+          height: 16px;
+
+          &.qa-skeleton-id {
+            width: 30px;
+          }
+
+          &.qa-skeleton-status {
+            width: 50px;
+          }
+
+          &.qa-skeleton-plan {
+            width: 80px;
+          }
+
+          &.qa-skeleton-until {
+            width: 40px;
+          }
+
+          &.qa-skeleton-icon {
+            width: 20px;
+            height: 20px;
+            margin: 0 auto;
+          }
+        }
+
+        .qa-edit-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 4px;
+          color: #666;
+          font-size: 16px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          transition: color 0.2s ease;
+
+          &:hover {
+            color: #262626;
+          }
+
+          &:focus {
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+            border-radius: 4px;
+          }
+        }
+
+        .qa-members-footer {
+          text-align: center;
+          padding-top: 12px;
+          border-top: 1px solid #f2f4f7;
+
+          a {
+            color: #2563eb;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+
+            &:hover {
+              color: #1d4ed8;
+            }
+          }
         }
       }
 

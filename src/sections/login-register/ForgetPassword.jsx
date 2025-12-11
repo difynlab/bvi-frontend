@@ -31,10 +31,9 @@ export const ForgetPassword = () => {
     setIsLoading(true)
     
     try {
-      await sendPasswordResetEmail(email)
+      await forgotPassword({ email })
       setIsEmailSent(true)
     } catch (error) {
-      // Handle specific error messages from backend
       if (error.message.includes('Email not found')) {
         setError('Email not found. Please check your email address.')
       } else if (error.message.includes('Validation failed')) {
@@ -44,17 +43,6 @@ export const ForgetPassword = () => {
       }
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const sendPasswordResetEmail = async (email) => {
-    try {
-      const response = await forgotPassword({ email })
-      console.log('Password reset email sent successfully:', response)
-      return response
-    } catch (error) {
-      console.error('Failed to send password reset email:', error)
-      throw error
     }
   }
 

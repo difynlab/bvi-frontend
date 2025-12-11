@@ -142,11 +142,18 @@ class MembersService {
   // POST /members/{id} (FormData or JSON)
   async updateMember(id, data) {
     const hasPayments = data && data.payments && Array.isArray(data.payments);
+    const hasMemberFirms = data && data.member_firms && Array.isArray(data.member_firms);
     
-    if (hasPayments) {
+    // Use JSON if we have payments or member_firms (arrays need JSON)
+    if (hasPayments || hasMemberFirms) {
       const jsonData = { ...data };
       if (jsonData.payments) {
         jsonData.payments = JSON.stringify(jsonData.payments);
+      }
+      // member_firms should be sent as array of numbers
+      if (jsonData.member_firms) {
+        // Ensure it's an array of numbers
+        jsonData.member_firms = jsonData.member_firms.map(id => Number(id));
       }
       
       const url = `${this.baseURL}/members/${id}`
@@ -185,13 +192,24 @@ class MembersService {
     return await this.handleResponse(response)
   }
 
-  // POST /members/{id}/renew
+  // POST /members/{id}/renew-membership
   async renewMember(id, data) {
-    const url = `${this.baseURL}/members/${id}/renew`
+    const url = `${this.baseURL}/members/${id}/renew-membership`
     const response = await fetch(url, {
       method: 'POST',
       headers: this.getHeaders(true), // Include Content-Type: application/json
       body: JSON.stringify(data)
+    })
+    return await this.handleResponse(response)
+  }
+
+  // POST /members/{member_id}/update-membership/{payment_id}
+  async updatePaymentStatus(memberId, paymentId, status) {
+    const url = `${this.baseURL}/members/${memberId}/update-membership/${paymentId}`
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: this.getHeaders(true), // Include Content-Type: application/json
+      body: JSON.stringify({ status })
     })
     return await this.handleResponse(response)
   }
@@ -207,9 +225,9 @@ class MembersService {
     return await this.handleResponse(response)
   }
 
-  // POST /profile/membership-renew
+  // POST /profile/renew-membership
   async renewOwnMembership(data) {
-    const url = `${this.baseURL}/profile/membership-renew`
+    const url = `${this.baseURL}/profile/renew-membership`
     const response = await fetch(url, {
       method: 'POST',
       headers: this.getHeaders(true), // Include Content-Type: application/json

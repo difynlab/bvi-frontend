@@ -2,16 +2,20 @@ import { useState, useEffect, useCallback } from 'react';
 import { mockPaymentHistory, mockMemberDetails } from '../helpers/membershipMocks';
 import eventsService from '../services/eventsService';
 import membersService from '../services/membersService';
+import membershipPlansService from '../services/membershipPlansService';
+import { getProfile } from '../services/profileService';
 import { transformFromBackend } from '../utils/eventTransformers';
 import { useAuth } from '../context/useAuth';
+import { isAdmin } from '../auth/acl';
 
 export function useMembershipData() {
   const { user } = useAuth() || {};
   const [paymentHistory, setPaymentHistory] = useState([]);
-  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(true); // Start as true to show loading initially
   const [memberDetails, setMemberDetails] = useState([]);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [plansById, setPlansById] = useState({});
 
   const formatPaymentStatus = (status) => {
     if (status === undefined || status === null) return '—';
@@ -38,7 +42,13 @@ export function useMembershipData() {
   const formatPaymentDate = (dateString) => {
     if (!dateString) return '—';
     try {
-      const date = new Date(dateString);
+      // Handle YYYY-MM-DD format by adding time to avoid timezone issues
+      let date;
+      if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        date = new Date(dateString + 'T12:00:00');
+      } else {
+        date = new Date(dateString);
+      }
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
       const year = date.getFullYear();
@@ -51,7 +61,13 @@ export function useMembershipData() {
   const formatDateToISO = (dateString) => {
     if (!dateString) return '';
     try {
-      const date = new Date(dateString);
+      // Handle YYYY-MM-DD format by adding time to avoid timezone issues
+      let date;
+      if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        date = new Date(dateString + 'T12:00:00');
+      } else {
+        date = new Date(dateString);
+      }
       if (isNaN(date.getTime())) return '';
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -71,7 +87,7 @@ export function useMembershipData() {
   };
 
   // Same logic as MemberDetailsModal to get payments from member object
-  const loadPaymentHistory = useCallback(async () => {
+  const loadPaymentHistory = useCallback(async (plansMap = {}) => {
     setPaymentLoading(true);
     try {
       if (!user?.id) {
@@ -79,15 +95,30 @@ export function useMembershipData() {
         return;
       }
 
-      // Get member data (same way as MemberDetailsModal does)
-      const memberResponse = await membersService.getMember(user.id);
+      let currentMember = null;
       
-      if (!memberResponse || !memberResponse.data) {
+      if (isAdmin(user)) {
+        const memberResponse = await membersService.getMember(user.id);
+        if (memberResponse && memberResponse.data) {
+          currentMember = memberResponse.data;
+        }
+      } else {
+        try {
+          const profileResponse = await getProfile();
+          if (profileResponse) {
+            currentMember = profileResponse;
+          }
+        } catch (error) {
+          console.error('Error loading profile for payment history:', error);
+          setPaymentHistory([]);
+          return;
+        }
+      }
+      
+      if (!currentMember) {
         setPaymentHistory([]);
         return;
       }
-
-      const currentMember = memberResponse.data;
 
       // Extract payments source (same logic as MemberDetailsModal)
       const paymentsSource = (() => {
@@ -120,13 +151,22 @@ export function useMembershipData() {
           ? (receiptUrl.startsWith('http') ? receiptUrl : `${baseURL}/${receiptUrl.replace(/^\//, '')}`)
           : null;
 
+        const planId = payment?.membership_plan_id || payment?.plan_id || null;
+        let planName = payment?.plan_name || payment?.plan_title || payment?.membership_plan_name || payment?.membership_plan_title || null;
+        
+        // If no plan name but we have planId, try to get it from plansMap
+        if (!planName && planId && plansMap[planId]) {
+          planName = plansMap[planId];
+        }
+
         return {
           id: payment?.id || `payment-${Math.random()}`,
           dateISO: dateISO,
           amount: amount,
           status: formattedStatus,
           receiptUrl: fullReceiptUrl,
-          membership_plan_id: payment?.membership_plan_id || payment?.plan_id || null,
+          membership_plan_id: planId,
+          plan_name: planName || (planId ? `Plan ${planId}` : '—'),
           originalPayment: payment
         };
       });
@@ -164,6 +204,11 @@ export function useMembershipData() {
 
   const loadUpcomingEvents = useCallback(async () => {
     try {
+      if (!user) {
+        setUpcomingEvents([]);
+        return;
+      }
+
       const response = await eventsService.getEvents(10, 1)
       
       if (response.http_status === 200 && response.data) {
@@ -187,24 +232,132 @@ export function useMembershipData() {
       console.error('Error loading upcoming events:', error);
       setUpcomingEvents([]);
     }
+  }, [user]);
+
+  const loadPlans = useCallback(async () => {
+    try {
+      const response = await membershipPlansService.getMembershipPlans({ pagination: 100, page: 1 });
+      const extractPlansArray = (payload) => {
+        if (!payload) return [];
+        if (Array.isArray(payload)) return payload;
+        if (payload.data) return extractPlansArray(payload.data);
+        if (payload.items) return extractPlansArray(payload.items);
+        return [];
+      };
+      const plansArray = extractPlansArray(response);
+      const plansMap = {};
+      plansArray.forEach(plan => {
+        if (plan.id !== undefined && plan.id !== null) {
+          plansMap[plan.id] = plan.title || plan.name || `Plan ${plan.id}`;
+        }
+      });
+      setPlansById(plansMap);
+    } catch (error) {
+      console.error('Error loading membership plans:', error);
+    }
   }, []);
 
+  // Load data on mount and when user changes
+  useEffect(() => {
+    if (!user?.id) return;
+
+    let isMounted = true;
+    let hasLoaded = false;
+
+    const loadData = async () => {
+      if (hasLoaded) return;
+      hasLoaded = true;
+      
+      setLoading(true);
+      try {
+        // Load plans first and wait for them to be set
+        const plansResponse = await membershipPlansService.getMembershipPlans({ pagination: 100, page: 1 });
+        const extractPlansArray = (payload) => {
+          if (!payload) return [];
+          if (Array.isArray(payload)) return payload;
+          if (payload.data) return extractPlansArray(payload.data);
+          if (payload.items) return extractPlansArray(payload.items);
+          return [];
+        };
+        const plansArray = extractPlansArray(plansResponse);
+        const plansMap = {};
+        plansArray.forEach(plan => {
+          if (plan.id !== undefined && plan.id !== null) {
+            plansMap[plan.id] = plan.title || plan.name || `Plan ${plan.id}`;
+          }
+        });
+        
+        if (isMounted) {
+          setPlansById(plansMap);
+        }
+        
+        // Now load payments with the plans map
+        if (isMounted) {
+          await Promise.all([
+            loadPaymentHistory(plansMap),
+            loadMemberDetails(),
+            loadUpcomingEvents()
+          ]);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only depend on user.id
+
+  // Update plan names in payment history when plansById changes (after initial load)
+  useEffect(() => {
+    if (Object.keys(plansById).length > 0 && paymentHistory.length > 0) {
+      const needsUpdate = paymentHistory.some(payment => 
+        !payment.plan_name && payment.membership_plan_id && plansById[payment.membership_plan_id]
+      );
+      
+      if (needsUpdate) {
+        setPaymentHistory(prevPayments => 
+          prevPayments.map(payment => {
+            if (!payment.plan_name && payment.membership_plan_id && plansById[payment.membership_plan_id]) {
+              return {
+                ...payment,
+                plan_name: plansById[payment.membership_plan_id]
+              };
+            }
+            return payment;
+          })
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plansById]); // Only update when plansById changes
+
   const reload = useCallback(async () => {
+    if (!user?.id) return;
+    
     setLoading(true);
     try {
+      // Load plans first
+      await loadPlans();
+      
+      // Load everything in parallel with current plans map
       await Promise.all([
-        loadPaymentHistory(),
+        loadPaymentHistory(plansById),
         loadMemberDetails(),
         loadUpcomingEvents()
       ]);
     } finally {
       setLoading(false);
     }
-  }, [loadPaymentHistory, loadMemberDetails, loadUpcomingEvents]);
-
-  useEffect(() => {
-    reload();
-  }, [reload]);
+  }, [user?.id, loadPlans, loadPaymentHistory, loadMemberDetails, loadUpcomingEvents, plansById]);
 
   return {
     paymentHistory,

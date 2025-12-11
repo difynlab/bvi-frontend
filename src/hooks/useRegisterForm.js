@@ -1,20 +1,14 @@
 import { useState, useCallback } from 'react';
 import { passwordPolicyMissing } from '../helpers/passwordPolicy';
 
-/**
- * Custom hook for handling registration form state and validation
- * @param {Function} onSubmitValid - Callback function called when form is valid
- * @returns {Object} Form state and handlers
- */
 export function useRegisterForm(onSubmitValid) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(''); // single string to avoid overlapping messages
+  const [error, setError] = useState('');
 
   const handleSubmit = useCallback((e) => {
     e.preventDefault();
     
-    // Validate email
     if (!email.trim()) {
       setError('Email is required');
       return;
@@ -26,7 +20,6 @@ export function useRegisterForm(onSubmitValid) {
       return;
     }
     
-    // Validate password
     if (!password.trim()) {
       setError('Password is required');
       return;

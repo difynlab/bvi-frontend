@@ -23,9 +23,8 @@ export const CreateMembershipPlanModal = ({
     description: '',
     eligibility_criteria: '',
     perks: [''],
-    status: 1,
-    pricing: { 6: 0, 12: 10, 18: 25 },
-    selected_duration: 6
+    pricing: [0],
+    status: 1
   });
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,9 +39,10 @@ export const CreateMembershipPlanModal = ({
         description: initialData?.description || '',
         eligibility_criteria: initialData?.eligibility_criteria || '',
         perks: initialData?.perks?.length ? [...initialData.perks] : [''],
-        status: 1,
-        pricing: initialData?.pricing || { 6: 0, 12: 10, 18: 25 },
-        selected_duration: initialData?.selected_duration || initialData?.selectedDuration || 6
+        pricing: Array.isArray(initialData?.pricing) && initialData.pricing.length > 0 
+          ? initialData.pricing.map(p => typeof p === 'number' ? p : parseFloat(p) || 0)
+          : [0],
+        status: 1
       });
       setErrorMessage('');
     }
@@ -98,45 +98,46 @@ export const CreateMembershipPlanModal = ({
     });
   }, []);
 
-  const handleDurationChange = useCallback((duration) => {
+  const handlePricingChange = useCallback((index, value) => {
     setFormState((prev) => {
-      const durationNum = parseInt(duration, 10);
-      const pricing = prev.pricing || { 6: 0, 12: 10, 18: 25 };
+      const pricing = [...prev.pricing];
+      if (value === '' || value === null || value === undefined) {
+        pricing[index] = '';
+      } else {
+        const numValue = parseFloat(value);
+        pricing[index] = isNaN(numValue) ? '' : numValue;
+      }
       return {
         ...prev,
-        selected_duration: durationNum,
-        pricing: {
-          ...pricing,
-          [durationNum]: pricing[durationNum] !== undefined ? pricing[durationNum] : (durationNum === 6 ? 0 : durationNum === 12 ? 10 : 25)
-        }
+        pricing
       };
     });
     setErrorMessage('');
   }, []);
 
-  const handlePricingChange = useCallback((value) => {
+  const handlePricingBlur = useCallback((index) => {
     setFormState((prev) => {
-      const numValue = parseFloat(value) || 0;
-      const pricing = prev.pricing || { 6: 0, 12: 10, 18: 25 };
-      const selectedDuration = prev.selected_duration || 6;
+      const pricing = [...prev.pricing];
+      if (pricing[index] === '' || pricing[index] === null || pricing[index] === undefined) {
+        pricing[index] = 0;
+      }
       return {
         ...prev,
-        pricing: {
-          ...pricing,
-          [selectedDuration]: numValue
-        }
+        pricing
       };
     });
-    setErrorMessage('');
   }, []);
+
+
 
   const isValid = useMemo(() => {
-    const { title, description, eligibility_criteria, perks } = formState;
+    const { title, description, eligibility_criteria, perks, pricing } = formState;
     return (
       title.trim().length >= MIN_FIELD_LENGTH &&
       description.trim().length >= MIN_FIELD_LENGTH &&
       eligibility_criteria.trim().length >= MIN_FIELD_LENGTH &&
-      sanitizePerks(perks).length > 0
+      sanitizePerks(perks).length > 0 &&
+      Array.isArray(pricing) && pricing.length > 0 && pricing.every(p => typeof p === 'number' && p >= 0)
     );
   }, [formState]);
 
@@ -147,25 +148,17 @@ export const CreateMembershipPlanModal = ({
       }
       return;
     }
-
-    const convertPricingToBackendFormat = (pricingObj) => {
-      const pricing = pricingObj || { 6: 0, 12: 10, 18: 25 };
-      return [
-        { duration: 6, price: pricing[6] || 0 },
-        { duration: 12, price: pricing[12] || 10 },
-        { duration: 18, price: pricing[18] || 25 }
-      ];
-    };
-
-    const pricingArray = convertPricingToBackendFormat(formState.pricing);
     
     const payload = {
       title: formState.title.trim(),
       description: formState.description.trim(),
       eligibility_criteria: formState.eligibility_criteria.trim(),
       perks: sanitizePerks(formState.perks),
-      status: 1,
-      pricing: pricingArray
+      pricing: formState.pricing.map(p => {
+        if (p === '' || p === null || p === undefined) return 0;
+        return typeof p === 'number' && p >= 0 ? p : 0;
+      }),
+      status: 1
     };
 
     try {
@@ -287,37 +280,42 @@ export const CreateMembershipPlanModal = ({
 
           <div className="form-field">
             <label className="form-label">
-              Duration
-            </label>
-            <CustomDropdown
-              name="duration"
-              value={formState.selected_duration.toString()}
-              onChange={(e) => handleDurationChange(e.target.value)}
-              options={[
-                { value: '6', label: '6 months' },
-                { value: '12', label: '12 months' },
-                { value: '18', label: '18 months' }
-              ]}
-              placeholder="Select duration"
-            />
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">
               Pricing
             </label>
-            <div className="plan-pricing-input-wrapper">
-              <span className="plan-pricing-currency">$</span>
+            <div style={{ position: 'relative' }}>
+              <i className="bi bi-currency-dollar" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666', zIndex: 1 }}></i>
               <input
                 type="number"
-                className="plan-pricing-input"
-                value={formState.pricing[formState.selected_duration] || 0}
-                onChange={(e) => handlePricingChange(e.target.value)}
+                value={formState.pricing[0] === '' || formState.pricing[0] === null || formState.pricing[0] === undefined ? '' : formState.pricing[0]}
+                onChange={(e) => handlePricingChange(0, e.target.value)}
+                onBlur={() => handlePricingBlur(0)}
+                placeholder="0.00"
                 min="0"
                 step="0.01"
+                style={{ 
+                  width: '100%', 
+                  paddingLeft: '30px', 
+                  padding: '10px 10px 10px 30px', 
+                  border: '1px solid #ddd', 
+                  borderRadius: '4px',
+                  MozAppearance: 'textfield',
+                  WebkitAppearance: 'none'
+                }}
+                onWheel={(e) => e.target.blur()}
               />
+              <style>{`
+                input[type="number"]::-webkit-inner-spin-button,
+                input[type="number"]::-webkit-outer-spin-button {
+                  -webkit-appearance: none;
+                  margin: 0;
+                }
+                input[type="number"] {
+                  -moz-appearance: textfield;
+                }
+              `}</style>
             </div>
           </div>
+
         </div>
 
         <div className="membership-plan-modal-footer">

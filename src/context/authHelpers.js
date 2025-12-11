@@ -1,34 +1,19 @@
-// Helper functions for authentication
-
-/**
- * Derive role from email address
- * @param {string} email - Email address
- * @returns {string} Role: 'admin' or 'member'
- */
 export const deriveRoleFromEmail = (email) => {
   if (!email || typeof email !== 'string') return 'member'
   
   const normalizedEmail = email.toLowerCase().trim()
   
-  // Check if email contains "@admin" OR domain starts with "admin"
   if (normalizedEmail.includes('@admin') || normalizedEmail.split('@')[1]?.startsWith('admin')) {
     return 'admin'
   }
   
-  // Check if email contains "@user" OR domain starts with "user"
   if (normalizedEmail.includes('@user') || normalizedEmail.split('@')[1]?.startsWith('user')) {
     return 'member'
   }
   
-  // Default to user
   return 'member'
 }
 
-/**
- * Hash password using Web Crypto SHA-256
- * @param {string} password - Plain text password
- * @returns {Promise<string>} Hex digest of hashed password
- */
 export const hashPassword = async (password) => {
   if (!password || typeof password !== 'string') {
     throw new Error('Password must be a non-empty string')
@@ -40,21 +25,11 @@ export const hashPassword = async (password) => {
   return toHex(hashBuffer)
 }
 
-/**
- * Convert ArrayBuffer to hex string
- * @param {ArrayBuffer} buffer - Buffer to convert
- * @returns {string} Hex string
- */
 export const toHex = (buffer) => {
   const hashArray = Array.from(new Uint8Array(buffer))
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
-/**
- * Get permissions for a role
- * @param {string} role - User role
- * @returns {Array} Array of permissions
- */
 export const getPermissions = (role) => {
   if (role === 'admin') {
     return [
@@ -69,7 +44,6 @@ export const getPermissions = (role) => {
     ]
   }
   
-  // User permissions - read/download only
   return [
     'events:read',
     'legislation:read',
@@ -82,5 +56,4 @@ export const getPermissions = (role) => {
   ]
 }
 
-// Legacy compatibility
 export const resolveRole = deriveRoleFromEmail

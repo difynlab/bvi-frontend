@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
 import { useEvents } from '../../hooks/useEvents'
 import { useNotices } from '../../hooks/useNotices'
 import { useNewslettersState } from '../../hooks/useNewslettersState'
 import { EVENT_TYPE_OPTIONS } from '../../hooks/useEventForm'
+import membersService from '../../services/membersService'
 import '../../styles/sections/Dashboard.scss'
 
 const Dashboard = () => {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const { events, loading: eventsLoading } = useEvents()
   const { notices, loading: noticesLoading } = useNotices()
   const {
@@ -17,6 +19,8 @@ const Dashboard = () => {
     initialLoading: newslettersInitialLoading
   } = useNewslettersState()
   const [, forceUpdate] = useState({})
+  const [members, setMembers] = useState([])
+  const [membersLoading, setMembersLoading] = useState(false)
 
   // Optional membership data - using fallbacks if no hook exists
   // const { membership } = useMembershipData?.() || {};
@@ -107,6 +111,9 @@ const Dashboard = () => {
     return option ? option.label : 'Event'
   }
 
+  const displayName = user?.first_name || 'Member'
+  const isAdmin = user?.role === 'admin'
+
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === 'events' && e.storageArea === localStorage) {
@@ -118,7 +125,70 @@ const Dashboard = () => {
     return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
-  const displayName = user?.first_name || 'Member'
+  useEffect(() => {
+    const loadMembers = async () => {
+      if (!isAdmin) return
+      setMembersLoading(true)
+      try {
+        const res = await membersService.getMembers({ pagination: 1000, page: 1 })
+        if (res && res.http_status === 404) {
+          setMembers([])
+          return
+        }
+        const payload = res?.data || {}
+        const list = Array.isArray(payload.data) ? payload.data : []
+        const sortedMembers = list.sort((a, b) => {
+          const dateA = new Date(a.created_at || a.createdAt || 0)
+          const dateB = new Date(b.created_at || b.createdAt || 0)
+          return dateB - dateA
+        })
+        setMembers(sortedMembers.slice(0, 3))
+      } catch (error) {
+        setMembers([])
+      } finally {
+        setMembersLoading(false)
+      }
+    }
+
+    loadMembers()
+  }, [isAdmin])
+
+  const handleEditMember = (memberId) => {
+    navigate(`/membership?searchId=${memberId}`)
+  }
+
+  const getPlanName = (member) => {
+    const planName = member?.plan || member?.membership_plan || 'Plan Inactive'
+    const normalizedPlan = planName.toString().toLowerCase()
+    
+    if (normalizedPlan.includes('standard') || normalizedPlan.includes('basic')) {
+      return 'Basic'
+    } else if (normalizedPlan.includes('silver') || normalizedPlan.includes('intermediate')) {
+      return 'Silver'
+    } else if (normalizedPlan.includes('gold') || normalizedPlan.includes('premium')) {
+      return 'Gold'
+    } else {
+      return 'Plan Inactive'
+    }
+  }
+
+  const getStatus = (member) => {
+    const status = member?.status
+    
+    if (!status) return 'Active'
+    
+    const statusStr = String(status).toLowerCase().trim()
+    
+    if (statusStr === '1' || statusStr === 'active') {
+      return 'Active'
+    }
+    
+    if (statusStr === '0' || statusStr === 'inactive') {
+      return 'Inactive'
+    }
+    
+    return statusStr.charAt(0).toUpperCase() + statusStr.slice(1)
+  }
 
   const today = startOfToday()
   const futureEvents = events
@@ -190,9 +260,18 @@ const Dashboard = () => {
               ))}
             </ul>
           )}
-          <div className="card-footer">
-            <NavLink to="/events">View All Events</NavLink>
-          </div>
+          {!eventsLoading && (
+            <div className="card-footer">
+              {isAdmin && futureEvents.length === 0 ? (
+                <NavLink to="/events" className="add-new-btn">
+                  <i className="bi bi-plus"></i>
+                  <span>Add New Event</span>
+                </NavLink>
+              ) : (
+                <NavLink to="/events">View All Events</NavLink>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="dashboard-card notices-card">
@@ -246,9 +325,18 @@ const Dashboard = () => {
           ) : (
             <div className="notices-empty">No notices yet...</div>
           )}
-          <div className="card-footer">
-            <NavLink to="/notices">View All Notices</NavLink>
-          </div>
+          {!noticesLoading && (
+            <div className="card-footer">
+              {isAdmin && !hasNotices ? (
+                <NavLink to="/notices" className="add-new-btn">
+                  <i className="bi bi-plus"></i>
+                  <span>Add New Notice</span>
+                </NavLink>
+              ) : (
+                <NavLink to="/notices">View All Notices</NavLink>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="dashboard-card newsletters-card">
@@ -279,30 +367,102 @@ const Dashboard = () => {
               <div className="newsletters-empty">No newsletters yet...</div>
             )}
           </div>
-          <div className="card-footer">
-            <NavLink to="/newsletters">View All News Letters</NavLink>
-          </div>
+          {!newslettersLoading && !newslettersInitialLoading && (
+            <div className="card-footer">
+              {isAdmin && latestNewsletters.length === 0 ? (
+                <NavLink to="/newsletters" className="add-new-btn">
+                  <i className="bi bi-plus"></i>
+                  <span>Add New Newsletter</span>
+                </NavLink>
+              ) : (
+                <NavLink to="/newsletters">View All News Letters</NavLink>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="dashboard-card quick-actions-card">
           <h3 className="card-title">Quick Actions<span className="card-quickActions-icon"><i className="bi bi-gear"></i></span></h3>
-          <div className="qa-box">
-            <div className="qa-status-row">
-              <span className="qa-status-title">Membership Status</span>
-              <span className="qa-badge qa-badge-active">
-                {(membership?.status || 'ACTIVE').toUpperCase()}
-              </span>
-            </div>
-            <p className="qa-valid-until">
-              Valid until: {membership?.validUntil || 'August 15, 2025'}
-            </p>
-            <NavLink to="/membership" className="qa-primary-btn">Renew Membership</NavLink>
-          </div>
+          {isAdmin ? (
+            <>
+              <div className="qa-members-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Id</th>
+                      <th>Status</th>
+                      <th>Plan</th>
+                      <th>Until</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {membersLoading ? (
+                      <>
+                        {[1, 2, 3].map((index) => (
+                          <tr key={`member-skeleton-${index}`} className="qa-member-skeleton-row">
+                            <td><div className="qa-skeleton-cell qa-skeleton-id"></div></td>
+                            <td><div className="qa-skeleton-cell qa-skeleton-status"></div></td>
+                            <td><div className="qa-skeleton-cell qa-skeleton-plan"></div></td>
+                            <td><div className="qa-skeleton-cell qa-skeleton-until"></div></td>
+                            <td><div className="qa-skeleton-cell qa-skeleton-icon"></div></td>
+                          </tr>
+                        ))}
+                      </>
+                    ) : members.length > 0 ? (
+                      members.map((member) => (
+                        <tr key={member.id}>
+                          <td>{member.id}</td>
+                          <td>{getStatus(member)}</td>
+                          <td>{getPlanName(member)}</td>
+                          <td>—</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="qa-edit-btn"
+                              onClick={() => handleEditMember(member.id)}
+                              aria-label={`Edit member ${member.id}`}
+                            >
+                              <i className="bi bi-pencil-square"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="qa-members-empty">No members yet...</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {!membersLoading && (
+                <div className="qa-members-footer">
+                  <NavLink to="/membership">View all members...</NavLink>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="qa-box">
+                <div className="qa-status-row">
+                  <span className="qa-status-title">Membership Status</span>
+                  <span className="qa-badge qa-badge-active">
+                    {(membership?.status || 'ACTIVE').toUpperCase()}
+                  </span>
+                </div>
+                <p className="qa-valid-until">
+                  Valid until: {membership?.validUntil || 'August 15, 2025'}
+                </p>
+                <NavLink to="/membership" className="qa-primary-btn">Renew Membership</NavLink>
+              </div>
 
-          <div className="qa-actions">
-            <NavLink to="/profile" className="qa-secondary-btn">Update Profile</NavLink>
-            <NavLink to="/legislation" className="qa-secondary-btn">Contact Support</NavLink>
-          </div>
+              <div className="qa-actions">
+                <NavLink to="/profile" className="qa-secondary-btn">Update Profile</NavLink>
+                <NavLink to="/legislation" className="qa-secondary-btn">Contact Support</NavLink>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

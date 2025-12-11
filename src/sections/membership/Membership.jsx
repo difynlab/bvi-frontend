@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Card from '../../components/Card';
 import '../../styles/sections/Membership.scss';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useSearchParams } from 'react-router-dom';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useAuth } from '../../context/useAuth';
 import { isAdmin } from '../../auth/acl';
@@ -40,6 +40,7 @@ import { UserRenewMembershipModal } from '../../components/modals/UserRenewMembe
 // fetch('/api/me', { credentials: 'include' }).then(res => res.json())...
 
 const Membership = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { name, email, phone } = useCurrentUser();
   const { user } = useAuth() || {};
   const { paymentHistory, paymentLoading, memberDetails, upcomingEvents, loading, reload } = useMembershipData();
@@ -47,7 +48,68 @@ const Membership = () => {
   const safeEmail = email && email.trim() ? email : '—';
   const safePhone = (phone && phone.trim() ? phone : (user?.phone && user.phone.trim() ? user.phone : '—'));
 
+  // Find the last paid payment that is not expired
+  const activePayment = useMemo(() => {
+    // Don't evaluate if still loading
+    if (paymentLoading) {
+      return null;
+    }
+
+    if (!paymentHistory || paymentHistory.length === 0) {
+      return null;
+    }
+
+    // Sort payments by date (most recent first)
+    const sortedPayments = [...paymentHistory].sort((a, b) => {
+      const dateA = a.dateISO ? new Date(a.dateISO + 'T12:00:00') : new Date(0);
+      const dateB = b.dateISO ? new Date(b.dateISO + 'T12:00:00') : new Date(0);
+      return dateB - dateA;
+    });
+
+    // Find the most recent paid payment
+    const paidPayment = sortedPayments.find(payment => {
+      const status = payment.status;
+      return status === 'Paid' || status === 'paid' || status === 2;
+    });
+
+    if (!paidPayment || !paidPayment.dateISO) {
+      return null;
+    }
+
+    // Check if payment is not expired (date + 12 months > today)
+    const paymentDate = new Date(paidPayment.dateISO + 'T12:00:00');
+    const expirationDate = new Date(paymentDate);
+    expirationDate.setMonth(expirationDate.getMonth() + 12);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (expirationDate > today) {
+      return paidPayment;
+    }
+
+    return null;
+  }, [paymentHistory, paymentLoading]);
+
   const getPlanInfo = useMemo(() => {
+    // Show loading while payments are being loaded
+    if (paymentLoading) {
+      return { name: 'Loading...', color: '#262626' };
+    }
+
+    // If there's an active payment, use its plan
+    if (activePayment && activePayment.plan_name) {
+      const planName = activePayment.plan_name.toString().toLowerCase();
+      
+      if (planName.includes('standard') || planName.includes('basic')) {
+        return { name: 'Standard Plan', color: '#e93125' };
+      } else if (planName.includes('silver') || planName.includes('intermediate')) {
+        return { name: 'Silver Plan', color: '#104394' };
+      } else if (planName.includes('gold') || planName.includes('premium')) {
+        return { name: 'Gold Plan', color: '#C5900A' };
+      }
+    }
+
+    // Fallback to user plan or inactive
     const planName = user?.plan || user?.membership_plan || memberDetails?.plan || 'Plan Inactive';
     const normalizedPlan = planName.toString().toLowerCase();
     
@@ -60,29 +122,45 @@ const Membership = () => {
     } else {
       return { name: 'Plan Inactive', color: '#262626' };
     }
-  }, [user, memberDetails]);
+  }, [activePayment, user, memberDetails, paymentLoading]);
 
-  const membershipStatus = user?.status !== undefined && user?.status !== null 
-    ? (Number(user.status) === 1 ? 'active' : 'inactive')
-    : 'inactive';
+  const membershipStatus = useMemo(() => {
+    if (paymentLoading) {
+      return 'loading';
+    }
+    return activePayment ? 'active' : 'inactive';
+  }, [activePayment, paymentLoading]);
 
   const hasActiveMembership = useMemo(() => {
-    if (membershipStatus === 'active') {
-      return true;
+    return activePayment !== null;
+  }, [activePayment]);
+
+  // Calculate valid until date
+  const validUntilDate = useMemo(() => {
+    if (!activePayment || !activePayment.dateISO) {
+      return null;
     }
+
+    const paymentDate = new Date(activePayment.dateISO + 'T12:00:00');
+    const expirationDate = new Date(paymentDate);
+    expirationDate.setMonth(expirationDate.getMonth() + 12);
     
-    if (paymentHistory && paymentHistory.length > 0) {
-      const hasPaidPayment = paymentHistory.some(payment => {
-        if (typeof payment.status === 'string') {
-          return payment.status === 'Paid';
-        }
-        return false;
-      });
-      return hasPaidPayment;
-    }
+    return expirationDate;
+  }, [activePayment]);
+
+  // Format valid until date
+  const formatValidUntil = useCallback((date) => {
+    if (!date) return '—';
     
-    return false;
-  }, [membershipStatus, paymentHistory]);
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                    'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    
+    return `${month} ${day}, ${year}`;
+  }, []);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminError, setAdminError] = useState('');
   const [adminMembers, setAdminMembers] = useState([]);
@@ -179,6 +257,12 @@ const Membership = () => {
     setImportantInfoError('');
 
     try {
+      if (!isAdmin(user)) {
+        setImportantInfoData(null);
+        setImportantInfoLoading(false);
+        return;
+      }
+
       const response = await importantInfoService.getImportantInfo();
       if (response?.data) {
         setImportantInfoData(response.data);
@@ -192,7 +276,7 @@ const Membership = () => {
     } finally {
       setImportantInfoLoading(false);
     }
-  }, []);
+  }, [user]);
   
   useEffect(() => {
     const checkMobile = () => {
@@ -412,26 +496,45 @@ const Membership = () => {
     fetchMembers();
   }, [user]);
 
+  // Handle searchId parameter from URL (from Dashboard edit button)
+  useEffect(() => {
+    const searchId = searchParams.get('searchId');
+    if (searchId && isAdmin(user)) {
+      // Wait for members to load, then find and open modal for the member
+      if (!adminLoading && adminMembers.length > 0) {
+        const memberId = parseInt(searchId, 10);
+        const member = adminMembers.find(m => m.id === memberId);
+        
+        if (member) {
+          setAdminActiveTab('Member List');
+          setSelectedMember(member);
+          setIsDetailsModalOpen(true);
+        }
+        
+        // Clear the URL parameter
+        searchParams.delete('searchId');
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [searchParams, adminLoading, adminMembers, user, setSearchParams]);
+
   useEffect(() => {
     loadImportantInfo();
   }, [cardDataRefresh, loadImportantInfo]);
 
   const getActivePlanId = useMemo(() => {
-    if (!hasActiveMembership) {
+    if (!hasActiveMembership || !activePayment) {
       return null;
     }
 
-    if (paymentHistory && paymentHistory.length > 0) {
-      const paidPayment = paymentHistory.find(payment => payment.status === 'Paid');
-      if (paidPayment && paidPayment.membership_plan_id) {
-        return paidPayment.membership_plan_id;
-      }
-      
-      if (paidPayment && paidPayment.originalPayment) {
-        const planId = paidPayment.originalPayment.membership_plan_id || paidPayment.originalPayment.plan_id;
-        if (planId) {
-          return planId;
-        }
+    if (activePayment.membership_plan_id) {
+      return activePayment.membership_plan_id;
+    }
+    
+    if (activePayment.originalPayment) {
+      const planId = activePayment.originalPayment.membership_plan_id || activePayment.originalPayment.plan_id;
+      if (planId) {
+        return planId;
       }
     }
 
@@ -440,7 +543,7 @@ const Membership = () => {
     }
 
     return null;
-  }, [hasActiveMembership, paymentHistory, user]);
+  }, [hasActiveMembership, activePayment, user]);
 
   const loadActivePlanDetails = useCallback(async () => {
     if (!getActivePlanId || !hasActiveMembership) {
@@ -1311,9 +1414,9 @@ const Membership = () => {
                   <thead>
                     <tr>
                       <th scope="col">Date</th>
+                      <th scope="col">Plan</th>
                       <th scope="col">Amount</th>
                       <th scope="col">Status</th>
-                      <th scope="col">Receipt</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1330,37 +1433,40 @@ const Membership = () => {
                         </td>
                       </tr>
                     ) : (
-                      paymentHistory.map((payment) => (
-                        <tr key={payment.id}>
-                          <td>{payment.dateISO || '—'}</td>
-                          <td>${typeof payment.amount === 'number' ? payment.amount.toFixed(2) : '0.00'}</td>
-                          <td className={payment.status === 'Pending' ? 'status-pending' : ''}>
-                            {payment.status || '—'}
-                          </td>
-                          <td>
-                            {payment.status === 'Pending' ? (
-                              <span className="processing-status">
-                                {isMobile ? (
-                                  <i className="bi bi-hourglass-split"></i>
-                                ) : (
-                                  <span>Processing</span>
-                                )}
-                                <i className="bi bi-arrow-repeat"></i>
-                              </span>
-                            ) : payment.receiptUrl ? (
-                              <a href={payment.receiptUrl} className="receipt-link" target="_blank" rel="noopener noreferrer">
-                                {isMobile ? (
-                                  <i className="bi bi-download"></i>
-                                ) : (
-                                  'Download'
-                                )}
-                              </a>
-                            ) : (
-                              <span>—</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))
+                      paymentHistory.map((payment) => {
+                        const isPending = payment.status === 'Pending';
+                        // Format date from YYYY-MM-DD to MM/DD/YYYY
+                        let formattedDate = '—';
+                        if (payment.dateISO) {
+                          try {
+                            const dateParts = payment.dateISO.split('-');
+                            if (dateParts.length === 3) {
+                              formattedDate = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`;
+                            } else {
+                              formattedDate = payment.dateISO;
+                            }
+                          } catch {
+                            formattedDate = payment.dateISO;
+                          }
+                        }
+                        return (
+                          <tr key={payment.id}>
+                            <td>{formattedDate}</td>
+                            <td>{payment.plan_name || '—'}</td>
+                            <td>${typeof payment.amount === 'number' ? payment.amount.toFixed(2) : '0.00'}</td>
+                            <td className={isPending ? 'status-pending' : ''}>
+                              {isPending ? (
+                                <span className="processing-status">
+                                  <span>Pending</span>
+                                  <i className="bi bi-arrow-repeat"></i>
+                                </span>
+                              ) : (
+                                payment.status || '—'
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -1381,10 +1487,10 @@ const Membership = () => {
                     <div className="status-title-row">
                       <h2 className="card-title">Membership Status</h2>
                       <div className={`status-badge ${membershipStatus}`}>
-                        {membershipStatus === 'active' ? 'ACTIVE' : 'INACTIVE'}
+                        {membershipStatus === 'loading' ? 'Loading...' : membershipStatus === 'active' ? 'ACTIVE' : 'INACTIVE'}
                       </div>
                     </div>
-                    <p className="valid-until">Valid until: {hasActiveMembership ? 'August 15, 2025' : '—'}</p>
+                    <p className="valid-until">Valid until: {formatValidUntil(validUntilDate)}</p>
                   </div>
                 </div>
                 <div className="status-actions">

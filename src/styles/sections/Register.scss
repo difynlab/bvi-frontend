@@ -1,9 +1,7 @@
 @use '../vars' as *;
 @use '../auth/AuthCommon' as *;
 
-// Estilos específicos de Register
 .auth-page {
-  // background-image: url('/images/bvi_speakers.png');
   background-repeat: no-repeat;
   background-size: auto;
   background-position: left bottom;
@@ -92,6 +90,7 @@
   font-size: 16px;
   line-height: 1;
 }
+
 .register-container .register-error {
   position: absolute;
   bottom: -20px;
@@ -105,7 +104,6 @@
   }
 }
 
-// Special positioning for long password error messages
 .register-container .register-error.password-error {
   bottom: -35px;
 }
@@ -129,44 +127,5 @@
 
   .grid.two-cols {
     flex-direction: column;
-  }
-}
-
-// Debug panel styles (temporary - remove before production)
-.debug-panel {
-  display: none;
-  margin-top: 20px;
-  padding: 12px;
-  background-color: #f5f5f5;
-  border-radius: 6px;
-  font-size: 12px;
-  border: 1px solid #e0e0e0;
-
-  .debug-title {
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #333;
-  }
-
-  .debug-button {
-    margin-right: 10px;
-    padding: 6px 12px;
-    font-size: 11px;
-    border: 1px solid #ccc;
-    background-color: #fff;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-
-    &:hover {
-      background-color: #f0f0f0;
-    }
-  }
-
-  .debug-description {
-    margin-top: 10px;
-    color: #666;
-    font-size: 11px;
-    font-style: italic;
   }
 }

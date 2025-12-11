@@ -1216,7 +1216,7 @@ const FindExpert = () => {
 
                   <div className="form-group">
                     <label htmlFor="firm-image">
-                      File Upload<span className="req-star" aria-hidden="true">*</span>
+                      Upload Logo<span className="req-star" aria-hidden="true">*</span>
                     </label>
                     <p className="find-expert-add-firm-file-hint">
                       PNG, JPG and JPEG files are supported. Maximum file size: 5 MB.

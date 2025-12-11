@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useSettingsForm } from '../../hooks/useSettingsForm';
@@ -6,10 +6,13 @@ import { usePasswordVisibility } from '../../hooks/usePasswordVisibility';
 import { useAuth } from '../../context/useAuth';
 import ImageUpload from '../../components/ImageUpload';
 import CustomDropdown from '../../components/CustomDropdown';
+import PasswordConfirmModal from '../../components/modals/PasswordConfirmModal';
 import '../../styles/sections/Settings.scss';
 
 export default function Settings() {
   const { user } = useAuth();
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [passwordModalError, setPasswordModalError] = useState('');
   
   const {
     form,
@@ -31,6 +34,29 @@ export default function Settings() {
     successMessage
   } = useSettingsForm();
 
+  const handleSaveClick = (e) => {
+    e.preventDefault();
+    if (canSave) {
+      setPasswordModalError('');
+      setIsPasswordModalOpen(true);
+    }
+  };
+
+  const handlePasswordConfirm = async (password) => {
+    setPasswordModalError('');
+    try {
+      await save(password);
+      setIsPasswordModalOpen(false);
+    } catch (error) {
+      setPasswordModalError(error.message || 'Failed to save changes. Please try again.');
+    }
+  };
+
+  const handlePasswordModalClose = () => {
+    setIsPasswordModalOpen(false);
+    setPasswordModalError('');
+  };
+
   const cur = usePasswordVisibility(false);
   const nw = usePasswordVisibility(false);
   const cf = usePasswordVisibility(false);
@@ -42,10 +68,7 @@ export default function Settings() {
         <p>Manage your account and adjust settings to optimize your workflow</p>
       </div>
 
-      <form className="settings-grid" onSubmit={(e) => {
-        e.preventDefault();
-        if (canSave) save();
-      }}>
+      <form className="settings-grid" onSubmit={handleSaveClick}>
         <section className="settings-card settings-general-details">
           <h2 className="settings-card-title">General Details</h2>
 
@@ -304,6 +327,13 @@ export default function Settings() {
           
         </div>
       </form>
+
+      <PasswordConfirmModal
+        isOpen={isPasswordModalOpen}
+        onClose={handlePasswordModalClose}
+        onConfirm={handlePasswordConfirm}
+        errorMessage={passwordModalError}
+      />
     </div>
   );
 }

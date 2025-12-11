@@ -107,7 +107,10 @@ const CustomDropdown = ({
       </div>
       
       {isOpen && (
-        <div className="custom-dropdown__menu" role="listbox">
+        <div 
+          className="custom-dropdown__menu"
+          role="listbox"
+        >
           {options.map((option) => (
             <div
               key={option.value}

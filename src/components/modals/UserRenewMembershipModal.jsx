@@ -7,26 +7,6 @@ import membershipPlansService from '../../services/membershipPlansService';
 import CustomDropdown from '../CustomDropdown';
 import '../../styles/components/UserRenewMembershipModal.scss';
 
-const parsePricingFromBackend = (pricing) => {
-  if (!pricing) {
-    return [];
-  }
-  
-  if (typeof pricing === 'string') {
-    try {
-      pricing = JSON.parse(pricing);
-    } catch (_) {
-      return [];
-    }
-  }
-  
-  if (Array.isArray(pricing)) {
-    return pricing;
-  }
-  
-  return [];
-};
-
 export const UserRenewMembershipModal = ({
   isOpen,
   onClose,
@@ -34,7 +14,6 @@ export const UserRenewMembershipModal = ({
   onRenewed
 }) => {
   const [membershipPlanId, setMembershipPlanId] = useState('');
-  const [duration, setDuration] = useState('');
   const [amount, setAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -55,46 +34,14 @@ export const UserRenewMembershipModal = ({
       .filter((option) => option.value);
   }, [membershipPlans]);
 
-  const selectedPlan = useMemo(() => {
-    if (!membershipPlanId) return null;
-    return membershipPlans.find(plan => String(plan?.id) === membershipPlanId);
-  }, [membershipPlanId, membershipPlans]);
-
-  const durationOptions = useMemo(() => {
-    if (!selectedPlan) return [];
-    
-    const pricing = parsePricingFromBackend(selectedPlan.pricing);
-    if (!Array.isArray(pricing) || pricing.length === 0) return [];
-    
-    return pricing.map(item => ({
-      value: String(item.duration),
-      label: `${item.duration} months - $${parseFloat(item.price || 0).toFixed(2)}`
-    }));
-  }, [selectedPlan]);
-
   useEffect(() => {
     if (isOpen) {
       setMembershipPlanId('');
-      setDuration('');
       setAmount('');
       setErrorMessage('');
       setSuccessMessage('');
     }
   }, [isOpen]);
-
-  useEffect(() => {
-    if (duration && selectedPlan) {
-      const pricing = parsePricingFromBackend(selectedPlan.pricing);
-      const selectedPricing = pricing.find(item => String(item.duration) === duration);
-      if (selectedPricing) {
-        setAmount(parseFloat(selectedPricing.price || 0).toFixed(2));
-      } else {
-        setAmount('');
-      }
-    } else if (!duration) {
-      setAmount('');
-    }
-  }, [duration, selectedPlan]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -139,22 +86,61 @@ export const UserRenewMembershipModal = ({
     };
   }, [isOpen]);
 
+  const selectedPlan = useMemo(() => {
+    if (!membershipPlanId || !membershipPlans.length) return null;
+    return membershipPlans.find(plan => plan.id !== undefined && plan.id !== null && String(plan.id) === membershipPlanId);
+  }, [membershipPlanId, membershipPlans]);
+
+  const planPrice = useMemo(() => {
+    if (!selectedPlan) return '';
+    
+    const pricing = selectedPlan.pricing;
+    if (!pricing) return '';
+    
+    if (Array.isArray(pricing) && pricing.length > 0) {
+      return String(pricing[0]);
+    }
+    
+    if (typeof pricing === 'number') {
+      return String(pricing);
+    }
+    
+    if (typeof pricing === 'string') {
+      try {
+        const parsed = JSON.parse(pricing);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return String(parsed[0]);
+        }
+        if (typeof parsed === 'number') {
+          return String(parsed);
+        }
+      } catch (e) {
+        const num = parseFloat(pricing);
+        if (!isNaN(num)) {
+          return String(num);
+        }
+      }
+    }
+    
+    return '';
+  }, [selectedPlan]);
+
+  useEffect(() => {
+    if (planPrice) {
+      setAmount(planPrice);
+    } else {
+      setAmount('');
+    }
+  }, [planPrice]);
+
   const handleMembershipPlanChange = (e) => {
     setMembershipPlanId(e.target.value);
-    setDuration('');
-    setAmount('');
-    setErrorMessage('');
-    setSuccessMessage('');
-  };
-
-  const handleDurationChange = (e) => {
-    setDuration(e.target.value);
     setErrorMessage('');
     setSuccessMessage('');
   };
 
   const handleRenew = useCallback(async () => {
-    if (!user || !user.id || isLoading || !membershipPlanId || !duration || !amount) return;
+    if (!user || !user.id || isLoading || !membershipPlanId || !amount) return;
 
     setIsLoading(true);
     setErrorMessage('');
@@ -178,7 +164,6 @@ export const UserRenewMembershipModal = ({
         membership_plan_id: Number(membershipPlanId),
         date: dateString,
         amount: amountNum,
-        duration: Number(duration),
         status: 1
       };
 
@@ -203,7 +188,7 @@ export const UserRenewMembershipModal = ({
     } finally {
       setIsLoading(false);
     }
-  }, [user, membershipPlanId, duration, amount, isLoading, onRenewed, onClose]);
+  }, [user, membershipPlanId, amount, isLoading, onRenewed, onClose]);
 
   useEffect(() => {
     const handleEsc = (e) => {
@@ -265,16 +250,21 @@ export const UserRenewMembershipModal = ({
 
           <div className="form-field">
             <label className="form-label">
-              Duration<span className="required">*</span>
+              Pricing<span className="required">*</span>
             </label>
-            <CustomDropdown
-              name="duration"
-              value={duration}
-              onChange={handleDurationChange}
-              options={durationOptions}
-              placeholder={!membershipPlanId ? 'Select a plan first' : durationOptions.length === 0 ? 'No durations available' : 'Select duration'}
-              disabled={!membershipPlanId || durationOptions.length === 0}
-            />
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666' }}>$</span>
+              <input
+                type="number"
+                name="amount"
+                value={amount}
+                readOnly
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+                style={{ width: '100%', paddingLeft: '30px', padding: '10px 10px 10px 30px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#f9fafb', cursor: 'not-allowed' }}
+              />
+            </div>
           </div>
         </div>
 
@@ -310,7 +300,7 @@ export const UserRenewMembershipModal = ({
             <button
               className="btn btn-renew"
               onClick={handleRenew}
-              disabled={isLoading || !membershipPlanId || !duration}
+              disabled={isLoading || !membershipPlanId || !amount}
             >
               {isLoading ? 'Processing...' : 'Renew Membership'}
             </button>

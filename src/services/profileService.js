@@ -254,9 +254,9 @@ function combinePhoneNumber(countryCode, phoneNumber) {
  * @param {string} settingsData.timeZone - Timezone preference (not sent to backend)
  * @param {string} settingsData.country - Country preference (not sent to backend)
  * @param {string} settingsData.language - Language preference (not sent to backend)
+ * @param {string} [settingsData.confirmPassword] - Password confirmation (required for all changes)
  * @param {string} [settingsData.currentPassword] - Current password (only if changing password)
  * @param {string} [settingsData.newPassword] - New password (only if changing password)
- * @param {string} [settingsData.confirmPassword] - Password confirmation (only if changing password)
  * @param {string|null} [currentProfilePicture] - Current profile picture to compare if it changed
  * @returns {Promise<Object>} Updated user profile data from backend (response.data)
  * @throws {Error} If request fails or validation errors occur
@@ -267,11 +267,11 @@ export async function updateProfile(
   currentProfilePicture = null
 ) {
   try {
-    // Determine if we need to send password fields
+    // Determine if we need to send password change fields
     const hasPasswordFields =
       settingsData.currentPassword &&
       settingsData.newPassword &&
-      settingsData.confirmPassword;
+      settingsData.passwordChangeConfirmPassword;
 
     // Determine if profile picture has changed
     const profilePictureChanged =
@@ -292,11 +292,17 @@ export async function updateProfile(
         ),
   };
 
-    // Add password fields only if all are present
+    // Add password confirmation for all profile updates (required by backend)
+    // This is the password from the modal to confirm changes
+    // Always send password field - backend requires it for all profile updates
+    if (settingsData.confirmPassword) {
+      backendData.password = settingsData.confirmPassword;
+    }
+
+    // Add password change fields only if all are present (when changing password)
     if (hasPasswordFields) {
-      backendData.password = settingsData.currentPassword;
       backendData.new_password = settingsData.newPassword;
-      backendData.confirm_password = settingsData.confirmPassword;
+      backendData.password_confirm = settingsData.passwordChangeConfirmPassword;
     }
 
     const url = `${BASE_URL}/profile`;

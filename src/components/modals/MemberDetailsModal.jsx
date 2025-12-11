@@ -4,8 +4,11 @@ import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import ModalLifecycleLock from './ModalLifecycleLock';
 import membersService from '../../services/membersService';
 import membershipPlansService from '../../services/membershipPlansService';
+import memberFirmsService from '../../services/memberFirmsService';
+import specializationsService from '../../services/specializationsService';
 import CustomDropdown from '../CustomDropdown';
 import { RenewMembershipModal } from './RenewMembershipModal';
+import { buildMemberFirmImageUrl } from '../../utils/memberFirmTransformers';
 import '../../styles/components/MemberDetailsModal.scss';
 
 const extractPlanInfo = (planLike) => {
@@ -69,6 +72,66 @@ const extractPlanInfo = (planLike) => {
   return { id: null, title: null };
 };
 
+const FirmCard = ({ firm, imagePath, isLinked, onLink, onUnlink, disabled = false }) => {
+  const [imageError, setImageError] = useState(false);
+  const showPlaceholder = !imagePath || imageError;
+  
+  const getPlaceholderColor = (name) => {
+    const colors = [
+      '#FBB900',
+      '#489836',
+      '#464676',
+      '#6b7280',
+      '#D35098',
+      '#E62B1E',
+      '#00338E',
+      '#F07D00',
+      '#94D3E2',
+      '#BFB4AB'
+    ];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
+  
+  return (
+    <div className="member-link-firm-card">
+      <div className="member-link-firm-card-logo">
+        {imagePath && !imageError ? (
+          <img 
+            src={imagePath} 
+            alt={firm.name}
+            className="member-link-firm-card-logo-img"
+            onError={() => setImageError(true)}
+          />
+        ) : null}
+        {showPlaceholder && (
+          <div 
+            className="member-link-firm-card-logo-placeholder"
+            style={{ backgroundColor: getPlaceholderColor(firm.name) }}
+          >
+            {firm.name.substring(0, 2).toUpperCase()}
+          </div>
+        )}
+      </div>
+      <div className="member-link-firm-card-content">
+        <div className="member-link-firm-card-name">{firm.name}</div>
+        <div className="member-link-firm-card-specialization">
+          Specialisation: {firm.specialization}
+        </div>
+      </div>
+      <button
+        type="button"
+        className={`member-link-firm-card-btn ${isLinked ? 'member-link-firm-card-btn--unlink' : 'member-link-firm-card-btn--link'}`}
+        onClick={isLinked ? onUnlink : onLink}
+        disabled={disabled}
+      >
+        <i className={isLinked ? 'bi bi-person-fill-dash' : 'bi bi-person-fill-check'}></i>
+        <span>{disabled ? 'Updating...' : (isLinked ? 'Unlink Firm' : 'Link Firm')}</span>
+      </button>
+    </div>
+  );
+};
+
 export const MemberDetailsModal = ({
   isOpen,
   onClose,
@@ -86,6 +149,20 @@ export const MemberDetailsModal = ({
   const [currentMember, setCurrentMember] = useState(member);
   const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
   const [plansById, setPlansById] = useState({});
+  
+  const [firmsData, setFirmsData] = useState([]);
+  const [firmsLoading, setFirmsLoading] = useState(false);
+  const [specializations, setSpecializations] = useState([]);
+  const [specializationsData, setSpecializationsData] = useState([]);
+  const [selectedSpecialization, setSelectedSpecialization] = useState('');
+  const [firmSearchTerm, setFirmSearchTerm] = useState('');
+  const [firmSortOrder, setFirmSortOrder] = useState('asc');
+  const [linkedFirmIds, setLinkedFirmIds] = useState(new Set());
+  const [updatingFirms, setUpdatingFirms] = useState(false);
+  const [editingPaymentId, setEditingPaymentId] = useState(null);
+  const [editingPaymentStatus, setEditingPaymentStatus] = useState(null);
+  const [originalPaymentStatus, setOriginalPaymentStatus] = useState(null);
+  const [updatingPaymentStatus, setUpdatingPaymentStatus] = useState(false);
 
   const modalBackdropClose = useModalBackdropClose(onClose);
 
@@ -96,6 +173,15 @@ export const MemberDetailsModal = ({
     if (isOpen && member) {
       // Set initial data immediately from prop (don't wait for API)
       setCurrentMember(member);
+      // Initialize linkedFirmIds from member.member_firms if available
+      if (member && member.member_firms && Array.isArray(member.member_firms)) {
+        const firmIds = member.member_firms.map(firm => 
+          typeof firm === 'object' ? firm.id : firm
+        );
+        setLinkedFirmIds(new Set(firmIds));
+      } else {
+        setLinkedFirmIds(new Set());
+      }
       setFetchError('');
       
       // Then fetch latest data from API in background
@@ -108,10 +194,28 @@ export const MemberDetailsModal = ({
             // Update currentMember with fresh data from API
             if (memberResponse && memberResponse.data) {
               setCurrentMember(memberResponse.data);
+              // Initialize linkedFirmIds from member_firms
+              if (memberResponse.data.member_firms && Array.isArray(memberResponse.data.member_firms)) {
+                const firmIds = memberResponse.data.member_firms.map(firm => 
+                  typeof firm === 'object' ? firm.id : firm
+                );
+                setLinkedFirmIds(new Set(firmIds));
+              } else {
+                setLinkedFirmIds(new Set());
+              }
               setFetchError('');
             } else if (memberResponse && !memberResponse.data && memberResponse.id) {
               // If response structure is flat (data is the object itself)
               setCurrentMember(memberResponse);
+              // Initialize linkedFirmIds from member_firms
+              if (memberResponse.member_firms && Array.isArray(memberResponse.member_firms)) {
+                const firmIds = memberResponse.member_firms.map(firm => 
+                  typeof firm === 'object' ? firm.id : firm
+                );
+                setLinkedFirmIds(new Set(firmIds));
+              } else {
+                setLinkedFirmIds(new Set());
+              }
               setFetchError('');
             } else {
               // Keep existing member data from prop
@@ -277,6 +381,104 @@ export const MemberDetailsModal = ({
     };
   }, [isOpen, addPlansToMap]);
 
+  const loadFirmsData = useCallback(async () => {
+    setFirmsLoading(true);
+    try {
+      const response = await memberFirmsService.getAll(1000, 1);
+      const firms = response.data?.data || [];
+      
+      const specsResult = await specializationsService.getSpecializations(100, 1);
+      const specs = specsResult.data || [];
+      const specializationMap = {};
+      specs.forEach(spec => {
+        specializationMap[spec.id] = spec.name;
+      });
+      
+      const mappedFirms = firms.map(firm => {
+        let parsedAddress = null;
+        let parsedPhone = null;
+        let parsedEmail = null;
+        let parsedContactNumbers = [];
+        let parsedEmails = [];
+        
+        try {
+          if (firm.address) {
+            parsedAddress = JSON.parse(firm.address);
+          }
+        } catch (e) {
+          console.warn('Error parsing address:', e);
+        }
+        
+        try {
+          if (firm.contact_number) {
+            const parsed = JSON.parse(firm.contact_number);
+            parsedContactNumbers = Array.isArray(parsed) ? parsed : [parsed];
+            parsedPhone = parsedContactNumbers[0] || null;
+          }
+        } catch (e) {
+          console.warn('Error parsing contact_number:', e);
+        }
+        
+        try {
+          if (firm.email) {
+            const parsed = JSON.parse(firm.email);
+            parsedEmails = Array.isArray(parsed) ? parsed : [parsed];
+            parsedEmail = parsedEmails[0] || null;
+          }
+        } catch (e) {
+          console.warn('Error parsing email:', e);
+        }
+        
+        return {
+          id: firm.id,
+          name: firm.name,
+          description: firm.description,
+          image: firm.image || null,
+          specialization: specializationMap[firm.specialization_id] || 'Others',
+          website: firm.website_link || null,
+          phone: parsedPhone,
+          email: parsedEmail,
+          address: parsedAddress,
+          contact_numbers: parsedContactNumbers,
+          emails: parsedEmails,
+          specialization_id: firm.specialization_id,
+          status: firm.status
+        };
+      });
+      
+      setFirmsData(mappedFirms);
+    } catch (error) {
+      console.error('Error fetching firms data:', error);
+      setFirmsData([]);
+    } finally {
+      setFirmsLoading(false);
+    }
+  }, []);
+
+  const loadSpecializations = useCallback(async () => {
+    try {
+      const result = await specializationsService.getSpecializations(100, 1);
+      const specs = result.data || [];
+      const filteredSpecs = specs.filter(spec => spec.status === 1);
+      setSpecializationsData(filteredSpecs);
+      const specNames = filteredSpecs
+        .map(spec => spec.name)
+        .sort((a, b) => a.localeCompare(b));
+      setSpecializations(specNames);
+    } catch (error) {
+      console.error('Error fetching specializations:', error);
+      setSpecializations([]);
+      setSpecializationsData([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadFirmsData();
+      loadSpecializations();
+    }
+  }, [isOpen, loadFirmsData, loadSpecializations]);
+
   // Initialize edit data when currentMember changes
   useEffect(() => {
     if (currentMember) {
@@ -372,27 +574,42 @@ export const MemberDetailsModal = ({
     }
   }, [isOpen, onClose]);
 
-  if (!isOpen || !currentMember) return null;
-
   const formatDate = (dateString) => {
     if (!dateString) return '—';
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+      const date = new Date(dateString);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
     } catch {
       return '—';
+    }
+  };
+
+  const formatDateTooltip = (dateString) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      const day = date.getDate();
+      const month = date.toLocaleDateString('en-US', { month: 'long' });
+      const year = date.getFullYear();
+      return `${day}, ${month} ${year}`;
+    } catch {
+      return '';
     }
   };
 
   const formatPaymentDate = (dateString) => {
     if (!dateString) return '—';
     try {
-      const date = new Date(dateString);
+      // Handle YYYY-MM-DD format by adding time to avoid timezone issues
+      let date;
+      if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        date = new Date(dateString + 'T12:00:00');
+      } else {
+        date = new Date(dateString);
+      }
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
       const year = date.getFullYear();
@@ -496,17 +713,10 @@ export const MemberDetailsModal = ({
         : null;
       const formattedStatus = formatPaymentStatus(payment?.status);
 
-      const formatDuration = (duration) => {
-        if (!duration && duration !== 0) return '—';
-        const numDuration = typeof duration === 'string' ? parseInt(duration, 10) : duration;
-        if (isNaN(numDuration)) return '—';
-        return `${numDuration} months`;
-      };
-
       return {
         id: payment?.id || null,
         plan: getPaymentPlanName(payment),
-        duration: formatDuration(payment?.duration),
+        duration: '12 months',
         date: formatPaymentDate(payment?.date || payment?.created_at || payment?.payment_date),
         status: formattedStatus,
         amount: formatPaymentAmount(payment?.amount || payment?.total),
@@ -519,6 +729,311 @@ export const MemberDetailsModal = ({
 
   const fullName = currentMember ? `${currentMember.first_name || ''} ${currentMember.last_name || ''}`.trim() || '—' : '—';
   const isActive = currentMember && currentMember.status !== undefined && currentMember.status !== null && Number(currentMember.status) === 1;
+
+  const specializationOptions = useMemo(() => {
+    return [
+      { value: '', label: 'All member firms' },
+      ...specializations.map(spec => ({
+        value: spec,
+        label: spec
+      }))
+    ];
+  }, [specializations]);
+
+  const filteredAndSortedFirms = useMemo(() => {
+    if (!Array.isArray(firmsData) || firmsData.length === 0) {
+      return [];
+    }
+
+    let filtered = firmsData;
+
+    if (selectedSpecialization && selectedSpecialization !== '') {
+      filtered = filtered.filter(firm => firm.specialization === selectedSpecialization);
+    }
+
+    if (firmSearchTerm && firmSearchTerm.length >= 3) {
+      const searchLower = firmSearchTerm.toLowerCase();
+      filtered = filtered.filter(firm => 
+        firm.name.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const sorted = [...filtered].sort((a, b) => {
+      const nameA = a.name.toLowerCase();
+      const nameB = b.name.toLowerCase();
+      if (firmSortOrder === 'asc') {
+        return nameA.localeCompare(nameB);
+      } else {
+        return nameB.localeCompare(nameA);
+      }
+    });
+
+    return sorted;
+  }, [firmsData, selectedSpecialization, firmSortOrder, firmSearchTerm]);
+
+  const handleSpecializationChange = useCallback((event) => {
+    setSelectedSpecialization(event.target.value);
+  }, []);
+
+  const handleLinkFirm = useCallback(async (firmId) => {
+    if (!currentMember || !currentMember.id || updatingFirms) return;
+
+    // Update local state optimistically
+    const newLinkedIds = new Set([...linkedFirmIds, firmId]);
+    setLinkedFirmIds(newLinkedIds);
+    setUpdatingFirms(true);
+
+    try {
+      // Get current member_firms IDs (handle both object and ID formats)
+      const currentFirmIds = currentMember.member_firms && Array.isArray(currentMember.member_firms)
+        ? currentMember.member_firms.map(firm => typeof firm === 'object' ? firm.id : firm)
+        : [];
+
+      // Create updated list
+      const updatedFirmIds = [...currentFirmIds, firmId];
+
+      // Prepare update data
+      const updateData = {
+        first_name: currentMember.first_name || '',
+        last_name: currentMember.last_name || '',
+        email: currentMember.email || '',
+        phone: currentMember.phone || '',
+        member_firms: updatedFirmIds
+      };
+
+      // Send update to API
+      const response = await membersService.updateMember(currentMember.id, updateData);
+
+      if (response && (response.http_status === 200 || !response.http_status)) {
+        // Fetch updated member data
+        const updatedMemberResponse = await membersService.getMember(currentMember.id);
+        
+        if (updatedMemberResponse && updatedMemberResponse.data) {
+          setCurrentMember(updatedMemberResponse.data);
+          // Update linkedFirmIds from response
+          if (updatedMemberResponse.data.member_firms && Array.isArray(updatedMemberResponse.data.member_firms)) {
+            const firmIds = updatedMemberResponse.data.member_firms.map(firm => 
+              typeof firm === 'object' ? firm.id : firm
+            );
+            setLinkedFirmIds(new Set(firmIds));
+          }
+        } else if (updatedMemberResponse && !updatedMemberResponse.data && updatedMemberResponse.id) {
+          setCurrentMember(updatedMemberResponse);
+          if (updatedMemberResponse.member_firms && Array.isArray(updatedMemberResponse.member_firms)) {
+            const firmIds = updatedMemberResponse.member_firms.map(firm => 
+              typeof firm === 'object' ? firm.id : firm
+            );
+            setLinkedFirmIds(new Set(firmIds));
+          }
+        }
+
+        if (onMemberUpdated) {
+          onMemberUpdated();
+        }
+      } else {
+        // Revert on error
+        setLinkedFirmIds(new Set([...linkedFirmIds]));
+        setErrorMessage('Failed to link firm. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error linking firm:', error);
+      // Revert on error
+      setLinkedFirmIds(new Set([...linkedFirmIds]));
+      setErrorMessage(error.message || 'Failed to link firm. Please try again.');
+    } finally {
+      setUpdatingFirms(false);
+    }
+  }, [currentMember, linkedFirmIds, updatingFirms, onMemberUpdated]);
+
+  const handleUnlinkFirm = useCallback(async (firmId) => {
+    if (!currentMember || !currentMember.id || updatingFirms) return;
+
+    // Update local state optimistically
+    const newLinkedIds = new Set(linkedFirmIds);
+    newLinkedIds.delete(firmId);
+    setLinkedFirmIds(newLinkedIds);
+    setUpdatingFirms(true);
+
+    try {
+      // Get current member_firms IDs (handle both object and ID formats)
+      const currentFirmIds = currentMember.member_firms && Array.isArray(currentMember.member_firms)
+        ? currentMember.member_firms.map(firm => typeof firm === 'object' ? firm.id : firm)
+        : [];
+
+      // Create updated list (remove the firmId)
+      const updatedFirmIds = currentFirmIds.filter(id => id !== firmId);
+
+      // Prepare update data
+      const updateData = {
+        first_name: currentMember.first_name || '',
+        last_name: currentMember.last_name || '',
+        email: currentMember.email || '',
+        phone: currentMember.phone || '',
+        member_firms: updatedFirmIds
+      };
+
+      // Send update to API
+      const response = await membersService.updateMember(currentMember.id, updateData);
+
+      if (response && (response.http_status === 200 || !response.http_status)) {
+        // Fetch updated member data
+        const updatedMemberResponse = await membersService.getMember(currentMember.id);
+        
+        if (updatedMemberResponse && updatedMemberResponse.data) {
+          setCurrentMember(updatedMemberResponse.data);
+          // Update linkedFirmIds from response
+          if (updatedMemberResponse.data.member_firms && Array.isArray(updatedMemberResponse.data.member_firms)) {
+            const firmIds = updatedMemberResponse.data.member_firms.map(firm => 
+              typeof firm === 'object' ? firm.id : firm
+            );
+            setLinkedFirmIds(new Set(firmIds));
+          } else {
+            setLinkedFirmIds(new Set());
+          }
+        } else if (updatedMemberResponse && !updatedMemberResponse.data && updatedMemberResponse.id) {
+          setCurrentMember(updatedMemberResponse);
+          if (updatedMemberResponse.member_firms && Array.isArray(updatedMemberResponse.member_firms)) {
+            const firmIds = updatedMemberResponse.member_firms.map(firm => 
+              typeof firm === 'object' ? firm.id : firm
+            );
+            setLinkedFirmIds(new Set(firmIds));
+          } else {
+            setLinkedFirmIds(new Set());
+          }
+        }
+
+        if (onMemberUpdated) {
+          onMemberUpdated();
+        }
+      } else {
+        // Revert on error
+        setLinkedFirmIds(new Set([...linkedFirmIds]));
+        setErrorMessage('Failed to unlink firm. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error unlinking firm:', error);
+      // Revert on error
+      setLinkedFirmIds(new Set([...linkedFirmIds]));
+      setErrorMessage(error.message || 'Failed to unlink firm. Please try again.');
+    } finally {
+      setUpdatingFirms(false);
+    }
+  }, [currentMember, linkedFirmIds, updatingFirms, onMemberUpdated]);
+
+  const getStatusValue = useCallback((statusText) => {
+    if (!statusText) return null;
+    const lowerStatus = statusText.toLowerCase();
+    if (lowerStatus === 'pending' || lowerStatus === '1') return 1;
+    if (lowerStatus === 'paid' || lowerStatus === '2') return 2;
+    if (lowerStatus === 'fail' || lowerStatus === 'failed' || lowerStatus === '0') return 0;
+    return null;
+  }, []);
+
+  const getStatusText = useCallback((statusValue) => {
+    if (statusValue === 1) return 'Pending';
+    if (statusValue === 2) return 'Paid';
+    if (statusValue === 0) return 'Failed';
+    return 'Pending';
+  }, []);
+
+  const handleEditPaymentStatus = useCallback((payment) => {
+    const statusValue = getStatusValue(payment.status);
+    setEditingPaymentId(payment.id);
+    setEditingPaymentStatus(statusValue !== null ? statusValue : 1);
+    setOriginalPaymentStatus(statusValue !== null ? statusValue : 1);
+  }, [getStatusValue]);
+
+  const handleCancelEditPaymentStatus = useCallback(() => {
+    setEditingPaymentId(null);
+    setEditingPaymentStatus(null);
+    setOriginalPaymentStatus(null);
+  }, []);
+
+  const handleSavePaymentStatus = useCallback(async () => {
+    if (!currentMember || !editingPaymentId || updatingPaymentStatus) return;
+    
+    if (editingPaymentStatus === originalPaymentStatus) {
+      handleCancelEditPaymentStatus();
+      return;
+    }
+
+    setUpdatingPaymentStatus(true);
+    setErrorMessage('');
+
+    try {
+      const response = await membersService.updatePaymentStatus(
+        currentMember.id,
+        editingPaymentId,
+        editingPaymentStatus
+      );
+
+      if (response && (response.http_status === 200 || !response.http_status)) {
+        if (response.data) {
+          setCurrentMember(response.data);
+        }
+
+        setSuccessMessage('Payment status updated successfully!');
+        setEditingPaymentId(null);
+        setEditingPaymentStatus(null);
+        setOriginalPaymentStatus(null);
+        
+        if (onMemberUpdated && typeof onMemberUpdated === 'function') {
+          onMemberUpdated();
+        }
+        
+        setTimeout(() => {
+          setSuccessMessage('');
+        }, 5000);
+      } else {
+        throw new Error(response?.message || 'Failed to update payment status');
+      }
+    } catch (error) {
+      setErrorMessage(error.message || 'An error occurred while updating payment status');
+      console.error('Error updating payment status:', error);
+    } finally {
+      setUpdatingPaymentStatus(false);
+    }
+  }, [currentMember, editingPaymentId, editingPaymentStatus, originalPaymentStatus, updatingPaymentStatus, onMemberUpdated, handleCancelEditPaymentStatus]);
+
+  const getLinkedFirmsNames = useMemo(() => {
+    // Use currentMember.member_firms if available (from API), otherwise use linkedFirmIds
+    let firmIds = [];
+    
+    if (currentMember && currentMember.member_firms && Array.isArray(currentMember.member_firms)) {
+      firmIds = currentMember.member_firms.map(firm => 
+        typeof firm === 'object' ? firm.id : firm
+      );
+    } else if (linkedFirmIds.size > 0) {
+      firmIds = Array.from(linkedFirmIds);
+    }
+    
+    if (firmIds.length === 0) {
+      return { text: 'No linked firms...', hasFirms: false };
+    }
+    
+    const linkedFirms = firmIds
+      .map(firmId => {
+        // First try to get from currentMember.member_firms (has full data)
+        if (currentMember && currentMember.member_firms && Array.isArray(currentMember.member_firms)) {
+          const firmObj = currentMember.member_firms.find(f => 
+            (typeof f === 'object' ? f.id : f) === firmId
+          );
+          if (firmObj && typeof firmObj === 'object') {
+            return firmObj.name;
+          }
+        }
+        // Fallback to firmsData
+        const firm = firmsData.find(f => f.id === firmId);
+        return firm ? firm.name : null;
+      })
+      .filter(name => name !== null);
+    
+    if (linkedFirms.length === 0) {
+      return { text: 'No linked firms...', hasFirms: false };
+    }
+    
+    return { text: linkedFirms.join(' - '), hasFirms: true };
+  }, [linkedFirmIds, firmsData, currentMember]);
 
   const handleEditClick = () => {
     setIsEditing(!isEditing);
@@ -584,6 +1099,8 @@ export const MemberDetailsModal = ({
       setIsLoading(false);
     }
   };
+
+  if (!isOpen || !currentMember) return null;
 
   return (
     <div
@@ -748,33 +1265,50 @@ export const MemberDetailsModal = ({
                 </div>
               </div>
 
-              <div className="member-detail-row">
-                <div className="member-detail-icon">
-                  <i className="bi bi-calendar-event"></i>
-                </div>
-                <div className="member-detail-info">
-                  <span className="member-detail-label">Created at:</span>
-                  <input
-                    type="text"
-                    className="member-detail-value"
-                    value={formatDate(currentMember.created_at)}
-                    readOnly
-                  />
+              <div className="member-detail-row member-detail-row--dates">
+                <div className="member-detail-dates-container">
+                  <div className="member-detail-date-item">
+                    <div className="member-detail-icon">
+                      <i className="bi bi-calendar-event"></i>
+                    </div>
+                    <div className="member-detail-info">
+                      <span className="member-detail-label">Created at:</span>
+                      <input
+                        type="text"
+                        className="member-detail-value"
+                        value={formatDate(currentMember.created_at)}
+                        title={formatDateTooltip(currentMember.created_at)}
+                        readOnly
+                      />
+                    </div>
+                  </div>
+                  <div className="member-detail-date-item">
+                    <div className="member-detail-icon">
+                      <i className="bi bi-calendar-check"></i>
+                    </div>
+                    <div className="member-detail-info">
+                      <span className="member-detail-label">Updated at:</span>
+                      <input
+                        type="text"
+                        className="member-detail-value"
+                        value={formatDate(currentMember.updated_at)}
+                        title={formatDateTooltip(currentMember.updated_at)}
+                        readOnly
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div className="member-detail-row">
                 <div className="member-detail-icon">
-                  <i className="bi bi-calendar-check"></i>
+                  <i className="bi bi-person-check"></i>
                 </div>
                 <div className="member-detail-info">
-                  <span className="member-detail-label">Updated at:</span>
-                  <input
-                    type="text"
-                    className="member-detail-value"
-                    value={formatDate(currentMember.updated_at)}
-                    readOnly
-                  />
+                  <span className="member-detail-label">Linked Firms:</span>
+                  <span className={`member-detail-value ${getLinkedFirmsNames.hasFirms ? 'member-detail-value--linked-firms' : ''}`}>
+                    {getLinkedFirmsNames.text}
+                  </span>
                 </div>
               </div>
             </div>
@@ -791,34 +1325,183 @@ export const MemberDetailsModal = ({
                     <th scope="col">Amount</th>
                     <th scope="col">Date</th>
                     <th scope="col">Status</th>
+                    <th scope="col" style={{ width: '120px' }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {paymentHistory.length === 0 ? (
                     <tr>
-                      <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                      <td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
                         No payments yet
                       </td>
                     </tr>
                   ) : (
-                    paymentHistory.map((payment, index) => (
-                      <tr key={payment.id || `mock-payment-${index}`}>
-                        <td>{payment.plan || '—'}</td>
-                        <td>{payment.duration || '—'}</td>
-                        <td>{payment.amount || '—'}</td>
-                        <td>{payment.date || '—'}</td>
-                        <td>
-                          {payment.isPending ? (
-                            <span className="pending-text">{payment.status}</span>
-                          ) : (
-                            payment.status || '—'
-                          )}
-                        </td>
-                      </tr>
-                    ))
+                    paymentHistory.map((payment, index) => {
+                      const isEditing = editingPaymentId === payment.id;
+                      const statusValue = getStatusValue(payment.status);
+                      const hasChanges = isEditing && editingPaymentStatus !== originalPaymentStatus;
+                      
+                      return (
+                        <tr key={payment.id || `mock-payment-${index}`}>
+                          <td>{payment.plan || '—'}</td>
+                          <td>{payment.duration || '—'}</td>
+                          <td>{payment.amount || '—'}</td>
+                          <td>{payment.date || '—'}</td>
+                          <td style={{ verticalAlign: 'middle' }}>
+                            {isEditing ? (
+                              <CustomDropdown
+                                name="payment-status"
+                                value={getStatusText(editingPaymentStatus)}
+                                onChange={(e) => {
+                                  const newValue = getStatusValue(e.target.value);
+                                  if (newValue !== null) {
+                                    setEditingPaymentStatus(newValue);
+                                  }
+                                }}
+                                options={[
+                                  { value: 'Pending', label: 'Pending' },
+                                  { value: 'Paid', label: 'Paid' },
+                                  { value: 'Failed', label: 'Failed' }
+                                ]}
+                                placeholder="Select Status"
+                                className="payment-status-dropdown"
+                              />
+                            ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                {payment.isPending ? (
+                                  <span className="pending-text">{payment.status}</span>
+                                ) : (
+                                  <span className={(payment.status && (payment.status.toLowerCase() === 'fail' || payment.status.toLowerCase() === 'failed')) ? 'payment-status-fail' : ''}>
+                                    {payment.status || '—'}
+                                  </span>
+                                )}
+                                {(payment.status && (payment.status.toLowerCase() === 'fail' || payment.status.toLowerCase() === 'failed')) && (
+                                  <i className="bi bi-x-lg payment-status-fail-icon"></i>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                          <td style={{ verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                            {isEditing ? (
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'nowrap' }}>
+                                {hasChanges ? (
+                                  <button
+                                    type="button"
+                                    className="payment-status-action-btn payment-status-action-btn--save"
+                                    onClick={handleSavePaymentStatus}
+                                    disabled={updatingPaymentStatus}
+                                  >
+                                    <i className="bi bi-floppy"></i>
+                                    <span>Save</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="payment-status-action-btn payment-status-action-btn--cancel"
+                                    onClick={handleCancelEditPaymentStatus}
+                                    disabled={updatingPaymentStatus}
+                                  >
+                                    <i className="bi bi-x-lg"></i>
+                                    <span>Cancel</span>
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                className="payment-status-edit-btn"
+                                onClick={() => handleEditPaymentStatus(payment)}
+                              >
+                                <i className="bi bi-pencil-square"></i>
+                                <span>Edit</span>
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <div className="member-link-firm-section">
+            <label className="member-link-firm-label">Link Member With Firm</label>
+            
+            <div className="member-link-firm-controls">
+              <div className="member-link-firm-filter">
+                <CustomDropdown
+                  id="member-firm-specialisation-filter"
+                  name="specialisation"
+                  value={selectedSpecialization}
+                  onChange={handleSpecializationChange}
+                  options={specializationOptions}
+                  placeholder="All member firms"
+                  disabled={firmsLoading || specializationOptions.length === 0}
+                />
+              </div>
+
+              <div className="member-link-firm-sort">
+                <span className="member-link-firm-sort-label">Sort By:</span>
+                <button
+                  type="button"
+                  className="member-link-firm-sort-btn"
+                  onClick={() => setFirmSortOrder(firmSortOrder === 'asc' ? 'desc' : 'asc')}
+                  aria-label={firmSortOrder === 'asc' ? 'Sort A to Z' : 'Sort Z to A'}
+                >
+                  <div className="sort-icon-container">
+                    <span className="sort-letter">{firmSortOrder === 'asc' ? 'A' : 'Z'}</span>
+                    <i className="bi bi-arrow-down" aria-hidden="true"></i>
+                    <span className="sort-letter">{firmSortOrder === 'asc' ? 'Z' : 'A'}</span>
+                  </div>
+                </button>
+              </div>
+
+              <div className="member-link-firm-search">
+                <input
+                  type="text"
+                  className="member-link-firm-search-input"
+                  placeholder="Search firms by name..."
+                  value={firmSearchTerm}
+                  onChange={(e) => setFirmSearchTerm(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="member-link-firm-search-btn"
+                  aria-label="Search firms"
+                >
+                  <i className="bi bi-search" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+
+            <div className={`member-link-firm-list-container ${selectedSpecialization === '' ? 'member-link-firm-list-container--scrollable' : ''}`}>
+              {firmsLoading ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
+                  Loading firms...
+                </div>
+              ) : filteredAndSortedFirms.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
+                  No firms found
+                </div>
+              ) : (
+                filteredAndSortedFirms.map((firm) => {
+                  const isLinked = linkedFirmIds.has(firm.id);
+                  const imagePath = firm.image ? buildMemberFirmImageUrl(firm.image) : null;
+                  
+                  return (
+                    <FirmCard 
+                      key={firm.id}
+                      firm={firm}
+                      imagePath={imagePath}
+                      isLinked={isLinked}
+                      onLink={() => handleLinkFirm(firm.id)}
+                      onUnlink={() => handleUnlinkFirm(firm.id)}
+                    />
+                  );
+                })
+              )}
             </div>
           </div>
         </div>

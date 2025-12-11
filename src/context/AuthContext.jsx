@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { deriveRoleFromEmail, getPermissions, hashPassword } from './authHelpers'
+import { deriveRoleFromEmail, getPermissions } from './authHelpers'
 import { AuthContext } from './AuthContext'
-import { getSession, saveSession, clearSession, clearAllAuthData, getUsers, setUsers, findUserByEmail } from '../helpers/authStorage'
+import { getSession, saveSession, clearSession } from '../helpers/authStorage'
 import { setProfile, getProfile, ensureProfile } from '../helpers/profileStorage'
 import { uploadAvatar } from '../api/avatarApi'
 import { registerUser, loginUser, logoutUser, getCurrentSession } from '../api/authApi'
@@ -15,15 +15,12 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null)
   const [isInitialized, setIsInitialized] = useState(false)
 
-  // API base URL from environment
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
-  // Compose session user by merging auth user with stored profile
   const composeSessionUser = (authUser) => {
     const stored = getProfile(authUser) || {}
-    const composed = { ...authUser, ...stored } // profile overrides base defaults
+    const composed = { ...authUser, ...stored }
     
-    // Ensure userName is set if not present
     if (!composed.userName && (composed.first_name || composed.last_name)) {
       composed.userName = `${composed.first_name || ''} ${composed.last_name || ''}`.trim()
     }
@@ -31,15 +28,11 @@ export const AuthProvider = ({ children }) => {
     return composed
   }
 
-  // Merge backend profile into current user
   const mergeBackendProfile = async (baseUser) => {
     try {
-      // Fetch profile using token in storage
       const backend = await fetchBackendProfile()
       const data = backend || {}
 
-      // Map fields from backend response
-      // Get profile picture URL from server (only server URLs, never base64)
       const originalImageRaw = data.original_image ||
                                data.profile_picture_url ||
                                data.image_url ||
@@ -61,15 +54,13 @@ export const AuthProvider = ({ children }) => {
         phone: data.phone ?? baseUser.phone,
         role: data.role ?? baseUser.role,
         profilePictureUrl: profilePictureUrl,
-        profilePicture: profilePictureUrl, // Only server URL, never base64
+        profilePicture: profilePictureUrl,
         original_image: profilePictureUrl || baseUser.original_image || '',
         blurred_image: blurredImageUrl || baseUser.blurred_image || '',
       }
 
-      // Persist mapped pieces needed across reloads
-      // Only save server URLs, never save base64 to localStorage
       setProfile(mapped, {
-        profilePicture: profilePictureUrl, // Only server URL
+        profilePicture: profilePictureUrl,
         profilePictureUrl: profilePictureUrl,
         original_image: mapped.original_image || '',
         blurred_image: mapped.blurred_image || '',
@@ -79,17 +70,13 @@ export const AuthProvider = ({ children }) => {
         phone: mapped.phone || '',
       })
 
-      // Update session
       saveSession(mapped)
       setUser(mapped)
     } catch (e) {
-      // Swallow errors to avoid breaking UI if backend unreachable
     }
   }
 
-  // Try to sync avatar to backend
   const trySyncAvatarToBackend = async (userLike, dataUrl) => {
-    // Skip if no API base or no dataURL
     if (!API_BASE || !dataUrl) return { synced: false, url: '' };
     const { ok, url } = await uploadAvatar({ apiBase: API_BASE, user: userLike, dataUrl });
     return { synced: ok, url };
@@ -99,7 +86,6 @@ export const AuthProvider = ({ children }) => {
     try {
       const session = getSession()
       if (session) {
-        // Sync API-compatible tokens if session has token
         if (session.token) {
           localStorage.setItem('token', session.token)
           if (session.email) {
@@ -114,17 +100,14 @@ export const AuthProvider = ({ children }) => {
         
         setIsAuthenticated(true)
         setUser(session)
-        // Fetch backend profile to get server image URLs and latest data
         mergeBackendProfile(session)
       }
     } catch (error) {
-      console.error('Error loading session from localStorage:', error)
       clearSession()
     } finally {
       setIsInitialized(true)
     }
   }, [])
-
 
   const register = async (payload) => {
     setLoading(true)
@@ -140,7 +123,6 @@ export const AuthProvider = ({ children }) => {
 
       const response = await registerUser(payload)
 
-      // API registration successful
       const authUser = {
         id: response.data?.user?.id || Date.now().toString(),
         first_name: response.data?.user?.first_name || firstName.trim(),
@@ -152,13 +134,10 @@ export const AuthProvider = ({ children }) => {
         permissions: response.data?.user?.permissions || getPermissions('member')
       }
 
-      // Ensure profile exists for new user
       ensureProfile(authUser, {})
 
-      // Compose session user with stored profile
       const sessionUser = composeSessionUser(authUser)
 
-      // Store token if provided by API
       if (response.data?.token) {
         sessionUser.token = response.data.token
         localStorage.setItem('token', response.data.token)
@@ -167,15 +146,11 @@ export const AuthProvider = ({ children }) => {
 
       saveSession(sessionUser)
       setUser(sessionUser)
-      // Fetch backend profile to update picture URL and latest fields
       mergeBackendProfile(sessionUser)
       setIsAuthenticated(true)
 
-      
       return true
     } catch (apiError) {
-      console.error('API registration failed:', apiError.message)
-      // Handle network errors with user-friendly message
       let errorMessage = apiError.message || 'Registration failed'
       if (errorMessage === 'Failed to fetch' || errorMessage.includes('fetch')) {
         errorMessage = 'Communication with server failed, please try again'
@@ -192,7 +167,6 @@ export const AuthProvider = ({ children }) => {
     setError(null)
 
     try {
-      // Require API for login
       if (!API_BASE) {
         setError({ type: 'general', message: 'API not configured. Login unavailable.' })
         return false
@@ -200,7 +174,6 @@ export const AuthProvider = ({ children }) => {
 
       const response = await loginUser({ email, password })
       
-      // API login successful
       const authUser = {
         id: response.data?.user?.id || Date.now().toString(),
         first_name: response.data?.user?.first_name || '',
@@ -212,10 +185,8 @@ export const AuthProvider = ({ children }) => {
         permissions: response.data?.user?.permissions || getPermissions('member')
       }
       
-      // Compose session user with stored profile
       const sessionUser = composeSessionUser(authUser)
 
-      // Store token if provided by API
       if (response.data?.token) {
         sessionUser.token = response.data.token
         localStorage.setItem('token', response.data.token)
@@ -224,15 +195,11 @@ export const AuthProvider = ({ children }) => {
 
       saveSession(sessionUser)
       setUser(sessionUser)
-      // Fetch backend profile to update picture URL and latest fields
       mergeBackendProfile(sessionUser)
       setIsAuthenticated(true)
 
-      
       return true
     } catch (apiError) {
-      console.error('API login failed:', apiError.message)
-      // Handle network errors with user-friendly message
       let errorMessage = apiError.message || 'Login failed'
       if (errorMessage === 'Failed to fetch' || errorMessage.includes('fetch')) {
         errorMessage = 'Communication with server failed, please try again'
@@ -244,7 +211,6 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // helper: decode JWT payload without extra deps
   const parseJwt = (jwt) => {
     try {
       const base64 = jwt.split('.')[1]?.replace(/-/g, '+').replace(/_/g, '/')
@@ -260,11 +226,10 @@ export const AuthProvider = ({ children }) => {
     setError(null)
 
     try {
-      // TODO BACKEND: POST /api/auth/google { credential } and verify on server
       const payload = parseJwt(credential)
       if (!payload?.email) throw new Error('Invalid Google token')
 
-      const role = 'member' // Always assign member role for Google login
+      const role = 'member'
       const permissions = getPermissions(role)
 
       const authUser = {
@@ -277,23 +242,18 @@ export const AuthProvider = ({ children }) => {
         role,
         permissions,
         oauthProvider: 'google'
-        // do NOT persist raw credential in production
       }
 
-      // Ensure profile exists for Google user
       ensureProfile(authUser, {})
 
-      // Compose session user with stored profile
       const sessionUser = composeSessionUser(authUser)
 
-      saveSession(sessionUser)     // localStorage mock // TODO BACKEND
+      saveSession(sessionUser)
       setUser(sessionUser)
       setIsAuthenticated(true)
 
-      
       return true
     } catch (err) {
-      console.error('Google login failed', err)
       setError('Google login failed')
       return false
     } finally {
@@ -302,64 +262,17 @@ export const AuthProvider = ({ children }) => {
   }
 
   const logout = () => {
-    // Try API logout first if available and user has token
     if (API_BASE && user?.token) {
       logoutUser(user.token).catch(error => {
-        // This is expected if token is expired/invalid
-        if (error.message.includes('Unauthenticated')) {
-          
-        } else {
-          
-        }
-        // Continue with local logout even if API fails
       })
     }
 
-    clearSession()          // remove only session key
-    // Also clear API-compatible tokens
+    clearSession()
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     setUser(null)
     setIsAuthenticated(false)
     setError(null)
-
-    
-  }
-
-  // TODO TEMPORARY: role toggle function for testing only. REMOVE before production.
-  const toggleRole = () => {
-    if (user) {
-      const newRole = user.role === 'admin' ? 'member' : 'admin'
-      const newPermissions = getPermissions(newRole)
-
-      const updatedUser = {
-        ...user,
-        role: newRole,
-        permissions: newPermissions
-      }
-
-      setUser(updatedUser)
-      saveSession(updatedUser)
-    }
-  }
-
-  // TEMPORARY: Debug function to clear all registered members (REMOVE before production)
-  const clearAllUsers = () => {
-    const users = getUsers()
-    
-    localStorage.removeItem('bvi.auth.users')
-    localStorage.removeItem('bvi.auth.session')
-    setUser(null)
-    setIsAuthenticated(false)
-    setError(null)
-    
-  }
-
-  // TEMPORARY: Debug function to show all registered members (REMOVE before production)
-  const showRegisteredUsers = () => {
-    const users = getUsers()
-    
-    return users
   }
 
   const updateProfile = async (partial) => {
@@ -370,7 +283,6 @@ export const AuthProvider = ({ children }) => {
       const prev = user || {};
       let next = { ...prev, ...partial };
 
-      // If firstName or lastName are being updated, also update userName
       if (partial?.firstName || partial?.lastName) {
         const firstName = partial.firstName || next.first_name || '';
         const lastName = partial.lastName || next.last_name || '';
@@ -379,9 +291,6 @@ export const AuthProvider = ({ children }) => {
         next.last_name = lastName;
       }
 
-      // Avatar sync disabled: profile image updates are handled only from profile page/backend
-
-      // Persist per-user profile and session using server URLs only
       const incomingOriginal = partial?.original_image || partial?.profilePictureUrl || next.original_image || '';
       const resolvedProfilePicture = resolveProfileImageUrl(incomingOriginal);
       next.original_image = resolvedProfilePicture || next.original_image || '';
@@ -406,15 +315,11 @@ export const AuthProvider = ({ children }) => {
         phone: next.phone || '',
       });
 
-      // Persist to session storage with error handling
       try {
-        saveSession(next); // existing helper // TODO BACKEND
+        saveSession(next);
       } catch (error) {
         if (error.name === 'QuotaExceededError') {
-          // Don't try to compress base64 images - they should not be saved to localStorage
-          // If quota exceeded, remove image data and only keep URL
           if (next.profilePicture && next.profilePicture.startsWith('data:')) {
-            // Remove base64 image, only keep URL if available
             const { profilePicture, ...nextWithoutImage } = next
             const nextWithUrlOnly = {
               ...nextWithoutImage,
@@ -427,14 +332,12 @@ export const AuthProvider = ({ children }) => {
               setUser(nextWithUrlOnly)
               return true
             } catch (compressionError) {
-              // If still fails, remove image completely
               saveSession(nextWithoutImage)
               setUser(nextWithoutImage)
               return true
             }
           }
 
-          // Fallback: remove image and try again
           const { profilePicture, ...nextWithoutImage } = next
           saveSession(nextWithoutImage)
           setUser(nextWithoutImage)
@@ -443,11 +346,9 @@ export const AuthProvider = ({ children }) => {
         throw error
       }
 
-      // Update state with new object
       setUser(next);
       return true;
     } catch (e) {
-      console.error('updateProfile error', e);
       setError('Failed to update profile');
       return false;
     } finally {
@@ -462,9 +363,6 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     updateProfile,
-    toggleRole, // TODO TEMPORARY: role toggle function for testing only. REMOVE before production.
-    clearAllUsers, // TODO TEMPORARY: Debug function. REMOVE before production.
-    showRegisteredUsers, // TODO TEMPORARY: Debug function. REMOVE before production.
     isAuthenticated,
     loading,
     error,

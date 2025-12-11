@@ -20,7 +20,7 @@ import '../../styles/sections/Events.scss'
 import '../../styles/sections/shimmerLoader.scss'
 
 export const Events = () => {
-  const { user, toggleRole, isInitialized } = useAuth()
+  const { user, isInitialized } = useAuth()
 
   const { events, createEvent, updateEvent, deleteEvent, loading, error, pagination, refreshEvents, changePage } = useEvents()
 

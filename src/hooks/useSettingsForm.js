@@ -211,10 +211,16 @@ export function useSettingsForm() {
     setConfirmPassword('');
     setSelectedFile(null);
     setErrorMessage('');
+    setIsSaving(false);
+    setProfilePreview(updatedProfile.profilePicture || '');
   }, []);
 
-  const save = useCallback(async () => {
+  const save = useCallback(async (modalPassword = null) => {
     if (!canSave || !currentUser.id || isSaving) return;
+    
+    if (!modalPassword || !modalPassword.trim()) {
+      throw new Error('Password is required to confirm changes');
+    }
     
     setIsSaving(true);
     setErrorMessage('');
@@ -242,23 +248,24 @@ export function useSettingsForm() {
       const settingsData = {
         first_name: form.firstName?.trim() || '',
         last_name: form.lastName?.trim() || '',
-        email: form.email?.toLowerCase().trim() || '', // Email no se puede cambiar pero se envía
+        email: form.email?.toLowerCase().trim() || '',
         countryCode: form.countryCode || '+1',
         phoneNumber: form.phoneNumber?.trim() || '',
         phoneE164: form.phoneE164 || '',
         profilePicture: form.profilePicture || null,
-        // Preferences (solo frontend, no se envían al backend)
         dateFormat: form.dateFormat || 'MM/DD/YYYY',
         timeZone: form.timeZone || 'EST',
         country: form.country || 'Virgin Islands, British',
         language: form.language || 'English (Default)',
+        confirmPassword: modalPassword,
       };
       
-      // Add password fields if all are present
+      // Add password change fields if all are present
+      // confirmPassword state is the confirmation of the new password in the form
       if (currentPassword && newPassword && confirmPassword) {
         settingsData.currentPassword = currentPassword;
         settingsData.newPassword = newPassword;
-        settingsData.confirmPassword = confirmPassword;
+        settingsData.passwordChangeConfirmPassword = confirmPassword;
       }
       
       // Get current profile picture to compare if it changed
@@ -348,15 +355,19 @@ export function useSettingsForm() {
       // Reset form state
       resetAfterSave(localProfileUpdate);
       
+      // Update baseUser reference by triggering useEffect
+      // The useEffect will update form when currentUser changes
+      
       // Show success message
       setSuccessMessage('Profile updated successfully');
       setTimeout(() => setSuccessMessage(''), 3000);
       
     } catch (error) {
       console.error('Error updating profile:', error);
-      setErrorMessage(error.message || 'Failed to update profile. Please try again.');
-    } finally {
+      const errorMsg = error.message || 'Failed to update profile. Please try again.';
+      setErrorMessage(errorMsg);
       setIsSaving(false);
+      throw new Error(errorMsg);
     }
   }, [canSave, currentUser.id, isSaving, form, selectedFile, baseUser, ctx, resetAfterSave, currentPassword, newPassword, confirmPassword]);
 

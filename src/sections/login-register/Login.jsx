@@ -1,12 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
-// TO DO CHANGE BACKEND: import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../../context/useAuth'
 import { useLoginForm } from '../../hooks/useLoginForm'
 import '../../styles/sections/Login.scss'
 
 export const Login = () => {
-  const { login, /* TO DO CHANGE BACKEND: loginWithGoogle, */ error: authError } = useAuth()
+  const { login, error: authError } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [showPassword, setShowPassword] = useState(false)
@@ -26,7 +25,7 @@ export const Login = () => {
     setPassword
   } = useLoginForm()
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (prefilledEmail) {
       setEmail(prefilledEmail)
     }
@@ -70,7 +69,7 @@ export const Login = () => {
     }
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (authError) {
       if (authError.type === 'email') {
         setEmailError(authError.message)
@@ -79,7 +78,6 @@ export const Login = () => {
         setPasswordError(authError.message)
         setEmailError('')
       } else if (authError.type === 'general') {
-        // Clear field errors when showing general error
         setEmailError('')
         setPasswordError('')
       }
@@ -116,32 +114,6 @@ export const Login = () => {
     e.preventDefault()
     handleFormSubmit()
   }
-
-  // TO DO CHANGE BACKEND: Google login functionality
-  /* const handleGoogleSuccess = async (credentialResponse) => {
-    const credential = credentialResponse?.credential || ''
-    if (!credential) {
-      handleGoogleError()
-      return
-    }
-    console.log('Google login success')
-    setIsSubmitting(true)
-    try {
-      const success = await loginWithGoogle(credential)
-      if (success) {
-        navigate('/dashboard')
-      }
-    } catch (error) {
-      console.error('Google login error:', error)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleGoogleError = () => {
-    console.log('Google login failed')
-    alert('Google login failed')
-  } */
 
   return (
     <div className="auth-page">
@@ -241,16 +213,6 @@ export const Login = () => {
               <button type="submit" className="auth-footer-cta" disabled={isSubmitting}>
                 {isSubmitting ? 'Logging in...' : 'Login Now'}
               </button>
-              {/* TO DO CHANGE BACKEND: Google login component */}
-              {/* <div className="auth-google google-login-container">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  theme="outline"
-                  size="large"
-                  text="continue_with"
-                />
-              </div> */}
               <p className='auth-footer-already'>
                 Don't have an account? <NavLink to={'/register'}>Sign Up here</NavLink>
               </p>

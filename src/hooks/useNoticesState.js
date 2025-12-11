@@ -12,7 +12,8 @@ import {
   getMockNotices,
   getMockNoticeCategories,
   setNoticeCategories,
-  setNotices
+  setNotices,
+  saveActiveTabId
 } from '../helpers/noticesStorage'
 import { transformFromBackend, transformToBackend, saveNoticeImageToLocalStorage, removeNoticeImageFromLocalStorage, getNoticeImageFromLocalStorage } from '../utils/noticeTransformers'
 import noticesService from '../services/noticesService'
@@ -249,25 +250,52 @@ export const useNoticesState = () => {
 
   // Category actions using API
   const handleAddCategory = useCallback(async (name) => {
+    const wasEmpty = categories.length === 0
+    
     try {
       await noticeCategoriesService.createNoticeCategory({
         title: name.trim(),
         status: '1'
       })
       
-      // Refresh categories from API
-      await refreshCategories()
+      setCategoriesLoaded(false)
+      localStorage.removeItem('bvi.notices.categoriesLoaded')
+      localStorage.removeItem('bvi.notices.categoriesCache')
+      localStorage.removeItem('bvi.notices.categoriesFromAPI')
       
-      // Set the new category as active
-      const slug = name.toLowerCase().replace(/\s+/g, '-')
-      setActiveCategory(slug)
+      try {
+        const response = await noticeCategoriesService.getNoticeCategories()
+        
+        if (response.http_status === 200 && response.data) {
+          const apiCategories = response.data.data.map(cat => ({
+            id: cat.id,
+            name: cat.title,
+            slug: cat.title.toLowerCase().replace(/\s+/g, '-'),
+            status: cat.status
+          }))
+          
+          setCategories(apiCategories)
+          setCategoriesLoaded(true)
+          localStorage.setItem('bvi.notices.categoriesLoaded', 'true')
+          localStorage.setItem('bvi.notices.categoriesCache', JSON.stringify(apiCategories))
+          localStorage.setItem('bvi.notices.categoriesFromAPI', 'true')
+          setNoticeCategories(apiCategories)
+          
+          if (wasEmpty && apiCategories.length > 0) {
+            setActiveCategory(apiCategories[0].id)
+            saveActiveTabId(apiCategories[0].id)
+          }
+        }
+      } catch (reloadError) {
+        console.error('Error reloading categories:', reloadError)
+      }
       
       setIsCategoryModalOpen(false)
     } catch (error) {
       console.error('Error creating category:', error)
-      throw error // Re-throw to be handled by the component
+      throw error
     }
-  }, [refreshCategories])
+  }, [categories.length])
 
   const handleDeleteCategory = useCallback((id) => {
     setCategoryToDelete(id)

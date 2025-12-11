@@ -33,6 +33,26 @@
       transform: translateX(-50%) translateY(20px);
       transition: opacity 0.1s ease, transform 0.1s ease;
     }
+
+    &.bottom-nav--initial {
+      transform: translateX(-50%) translateY(150px);
+      opacity: 0;
+    }
+
+    &.bottom-nav--animate-in {
+      animation: slideUpFromBottom 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  }
+
+  @keyframes slideUpFromBottom {
+    0% {
+      transform: translateX(-50%) translateY(150px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
   }
 
   .bottom-nav-item {

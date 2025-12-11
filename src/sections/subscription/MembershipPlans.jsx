@@ -17,12 +17,8 @@ const DEFAULT_SERVER_PLANS = [
       'Monthly newsletter',
       'Community forum access'
     ],
-    status: 1,
-    pricing: [
-      { duration: 6, price: 0 },
-      { duration: 12, price: 10 },
-      { duration: 18, price: 25 }
-    ]
+    pricing: [100],
+    status: 1
   },
   {
     title: 'Silver (Intermediate)',
@@ -33,12 +29,8 @@ const DEFAULT_SERVER_PLANS = [
       'Priority customer support',
       'Exclusive webinars & events'
     ],
-    status: 1,
-    pricing: [
-      { duration: 6, price: 0 },
-      { duration: 12, price: 10 },
-      { duration: 18, price: 25 }
-    ]
+    pricing: [200],
+    status: 1
   },
   {
     title: 'Gold (Premium)',
@@ -50,12 +42,8 @@ const DEFAULT_SERVER_PLANS = [
       'Early access to new features',
       'Premium support hotline'
     ],
-    status: 1,
-    pricing: [
-      { duration: 6, price: 0 },
-      { duration: 12, price: 10 },
-      { duration: 18, price: 25 }
-    ]
+    pricing: [300],
+    status: 1
   }
 ];
 
@@ -101,48 +89,29 @@ const ensurePerksArray = (perks) => {
   return [];
 };
 
-const parsePricingFromBackend = (pricing) => {
-  if (!pricing) {
-    return { 6: 0, 12: 10, 18: 25 };
-  }
-  
-  if (typeof pricing === 'string') {
-    try {
-      pricing = JSON.parse(pricing);
-    } catch (_) {
-      return { 6: 0, 12: 10, 18: 25 };
-    }
-  }
-  
-  if (Array.isArray(pricing)) {
-    const pricingObj = {};
-    pricing.forEach(item => {
-      if (item.duration && item.price !== undefined) {
-        pricingObj[item.duration] = item.price;
-      }
-    });
-    return pricingObj;
-  }
-  
-  return pricing;
-};
-
-const convertPricingToBackendFormat = (pricingObj) => {
-  const pricing = pricingObj || { 6: 0, 12: 10, 18: 25 };
-  return [
-    { duration: 6, price: pricing[6] || 0 },
-    { duration: 12, price: pricing[12] || 10 },
-    { duration: 18, price: pricing[18] || 25 }
-  ];
-};
-
 const normalizePlan = (plan) => {
   if (!plan) return null;
 
   const perks = ensurePerksArray(plan.perks);
   
-  const pricing = parsePricingFromBackend(plan.pricing);
-  const selectedDuration = 6;
+  let pricing = [];
+  if (plan.pricing) {
+    if (Array.isArray(plan.pricing)) {
+      pricing = plan.pricing.map(p => typeof p === 'number' ? p : parseFloat(p) || 0).filter(p => !isNaN(p));
+    } else if (typeof plan.pricing === 'string') {
+      try {
+        const parsed = JSON.parse(plan.pricing);
+        if (Array.isArray(parsed)) {
+          pricing = parsed.map(p => typeof p === 'number' ? p : parseFloat(p) || 0).filter(p => !isNaN(p));
+        }
+      } catch (_) {
+        pricing = [];
+      }
+    }
+  }
+  if (pricing.length === 0) {
+    pricing = [0];
+  }
 
   return {
     id: plan.id,
@@ -156,7 +125,6 @@ const normalizePlan = (plan) => {
     perks,
     theme: determinePlanTheme(plan.title || ''),
     pricing,
-    selectedDuration,
     created_at: plan.created_at,
     updated_at: plan.updated_at
   };
@@ -231,7 +199,6 @@ const MembershipPlans = ({ isAdmin = false }) => {
   const [isSeedingDefaults, setIsSeedingDefaults] = useState(false);
   const [hasAttemptedDefaultSeed, setHasAttemptedDefaultSeed] = useState(false);
   const [hasFetchedPlans, setHasFetchedPlans] = useState(false);
-  const [selectedDurations, setSelectedDurations] = useState({});
 
   const autoResizeTextarea = (textarea) => {
     if (textarea) {
@@ -319,38 +286,38 @@ const MembershipPlans = ({ isAdmin = false }) => {
     });
   };
 
-  const handleDurationChange = (duration) => {
+  const handlePricingChange = (index, value) => {
     setEditDraft((prev) => {
       if (!prev) return prev;
-      const durationNum = parseInt(duration, 10);
-      const pricing = prev.pricing || { 6: 0, 12: 10, 18: 25 };
-      const defaultPrice = durationNum === 6 ? 0 : durationNum === 12 ? 10 : 25;
+      const pricing = [...(prev.pricing || [0])];
+      if (value === '' || value === null || value === undefined) {
+        pricing[index] = '';
+      } else {
+        const numValue = parseFloat(value);
+        pricing[index] = isNaN(numValue) ? '' : numValue;
+      }
       return {
         ...prev,
-        selectedDuration: durationNum,
-        pricing: {
-          ...pricing,
-          [durationNum]: pricing[durationNum] !== undefined ? pricing[durationNum] : defaultPrice
-        }
+        pricing
       };
     });
   };
 
-  const handlePricingChange = (value) => {
+  const handlePricingBlur = (index) => {
     setEditDraft((prev) => {
       if (!prev) return prev;
-      const numValue = parseFloat(value) || 0;
-      const pricing = prev.pricing || { 6: 0, 12: 10, 18: 25 };
-      const selectedDuration = prev.selectedDuration || 6;
+      const pricing = [...(prev.pricing || [0])];
+      if (pricing[index] === '' || pricing[index] === null || pricing[index] === undefined) {
+        pricing[index] = 0;
+      }
       return {
         ...prev,
-        pricing: {
-          ...pricing,
-          [selectedDuration]: numValue
-        }
+        pricing
       };
     });
   };
+
+
 
   const handleTextareaChange = (field, value, event) => {
     updateDraftField(field, value);
@@ -367,8 +334,9 @@ const MembershipPlans = ({ isAdmin = false }) => {
     setEditDraft({
       ...planToEdit,
       perks: planToEdit.perks.length > 0 ? [...planToEdit.perks] : [''],
-      pricing: planToEdit.pricing || { 6: 0, 12: 10, 18: 25 },
-      selectedDuration: planToEdit.selectedDuration || 6
+      pricing: Array.isArray(planToEdit.pricing) && planToEdit.pricing.length > 0 
+        ? [...planToEdit.pricing] 
+        : [0]
     });
     setActionError('');
   };
@@ -382,15 +350,18 @@ const MembershipPlans = ({ isAdmin = false }) => {
   const handleSaveChanges = async () => {
     if (!editingPlanId || !editDraft || isSaving) return;
 
-    const pricingArray = convertPricingToBackendFormat(editDraft.pricing);
-
     const payload = {
       title: editDraft.title,
       description: editDraft.descriptionText,
       eligibility_criteria: editDraft.eligibilityText,
       perks: sanitizePerksForSave(editDraft.perks),
-      status: editDraft.status ?? 1,
-      pricing: pricingArray
+      pricing: Array.isArray(editDraft.pricing) 
+        ? editDraft.pricing.map(p => {
+            if (p === '' || p === null || p === undefined) return 0;
+            return typeof p === 'number' && p >= 0 ? p : 0;
+          })
+        : [0],
+      status: editDraft.status ?? 1
     };
 
     setIsSaving(true);
@@ -558,25 +529,11 @@ const MembershipPlans = ({ isAdmin = false }) => {
         plan.descriptionText !== editDraft.descriptionText ||
         plan.eligibilityText !== editDraft.eligibilityText ||
         JSON.stringify(plan.perks) !== JSON.stringify(editDraft.perks) ||
-        plan.selectedDuration !== editDraft.selectedDuration ||
-        JSON.stringify(plan.pricing) !== JSON.stringify(editDraft.pricing)
+        JSON.stringify(plan.pricing || []) !== JSON.stringify(editDraft.pricing || [])
       );
 
-    const currentDuration = isEditing 
-      ? (editDraft?.selectedDuration || 6)
-      : (selectedDurations[planId] || displayPlan.selectedDuration || 6);
-    
-    const pricing = displayPlan.pricing || { 6: 0, 12: 10, 18: 25 };
-    const currentPrice = pricing[currentDuration] || 0;
-
-    const handleDurationSelect = (duration) => {
-      if (!isEditing) {
-        setSelectedDurations(prev => ({
-          ...prev,
-          [planId]: duration
-        }));
-      }
-    };
+    const displayPricing = displayPlan.pricing || [0];
+    const firstPrice = displayPricing.length > 0 ? displayPricing[0] : 0;
 
     const perksToRender = Array.isArray(displayPlan.perks) ? displayPlan.perks : [];
     const key = planId ?? `plan-${index}`;
@@ -688,68 +645,47 @@ const MembershipPlans = ({ isAdmin = false }) => {
             )}
           </div>
 
-          <div className="plan-section plan-section-duration-pricing">
+          <div className="plan-section" style={{ marginTop: 'auto' }}>
             {isEditing ? (
               <>
-                <div className="plan-duration-field">
-                  <label className="plan-section-title">Duration</label>
-                  <CustomDropdown
-                    name="duration"
-                    value={currentDuration.toString()}
-                    onChange={(e) => handleDurationChange(e.target.value)}
-                    options={[
-                      { value: '6', label: '6 months' },
-                      { value: '12', label: '12 months' },
-                      { value: '18', label: '18 months' }
-                    ]}
-                    placeholder="Select duration"
+                <label className="plan-section-title">Pricing</label>
+                <div style={{ position: 'relative' }}>
+                  <i className="bi bi-currency-dollar" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666', zIndex: 1 }}></i>
+                  <input
+                    type="number"
+                    value={editDraft?.pricing?.[0] === '' || editDraft?.pricing?.[0] === null || editDraft?.pricing?.[0] === undefined ? '' : (editDraft?.pricing?.[0] || 0)}
+                    onChange={(e) => handlePricingChange(0, e.target.value)}
+                    onBlur={() => handlePricingBlur(0)}
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                    style={{ 
+                      width: '100%', 
+                      paddingLeft: '30px', 
+                      padding: '10px 10px 10px 30px', 
+                      border: '1px solid #ddd', 
+                      borderRadius: '4px',
+                      MozAppearance: 'textfield',
+                      WebkitAppearance: 'none'
+                    }}
+                    onWheel={(e) => e.target.blur()}
                   />
-                </div>
-                <div className="plan-pricing-field">
-                  <label className="plan-section-title">Pricing</label>
-                  <div className="plan-pricing-input-wrapper">
-                    <span className="plan-pricing-currency">$</span>
-                    <input
-                      type="number"
-                      className="plan-pricing-input"
-                      value={currentPrice}
-                      onChange={(e) => handlePricingChange(e.target.value)}
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
+                  <style>{`
+                    input[type="number"]::-webkit-inner-spin-button,
+                    input[type="number"]::-webkit-outer-spin-button {
+                      -webkit-appearance: none;
+                      margin: 0;
+                    }
+                    input[type="number"] {
+                      -moz-appearance: textfield;
+                    }
+                  `}</style>
                 </div>
               </>
             ) : (
               <>
-                <h4 className="plan-section-title">Duration</h4>
-                <div className="plan-duration-pricing-display">
-                  <div className="plan-duration-options">
-                    <button
-                      type="button"
-                      className={`plan-duration-option ${currentDuration === 6 ? 'active' : ''}`}
-                      onClick={() => handleDurationSelect(6)}
-                    >
-                      6M
-                    </button>
-                    <button
-                      type="button"
-                      className={`plan-duration-option ${currentDuration === 12 ? 'active' : ''}`}
-                      onClick={() => handleDurationSelect(12)}
-                    >
-                      12M
-                    </button>
-                    <button
-                      type="button"
-                      className={`plan-duration-option ${currentDuration === 18 ? 'active' : ''}`}
-                      onClick={() => handleDurationSelect(18)}
-                    >
-                      18M
-                    </button>
-                  </div>
-                  <div className={`plan-pricing-display plan-pricing-display--${displayPlan.theme || 'custom'}`}>
-                    ${currentPrice}
-                  </div>
+                <div className={`plan-pricing-display plan-pricing-display--${displayPlan.theme || 'custom'}`} style={{ marginTop: 'auto' }}>
+                  ${firstPrice.toFixed(2)}
                 </div>
               </>
             )}

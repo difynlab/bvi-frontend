@@ -6,7 +6,7 @@ import { useAuth } from '../../context/useAuth'
 import { passwordPolicyMissing } from '../../helpers/passwordPolicy'
 
 export const Register = () => {
-  const { register, error: authError, clearAllUsers, showRegisteredUsers } = useAuth()
+  const { register, error: authError } = useAuth()
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -295,36 +295,6 @@ export const Register = () => {
               <p className='auth-footer-already'>
                 Already have an account? <NavLink to={'/login'}>Sign In</NavLink>
               </p>
-              
-              {/* TEMPORARY DEBUG AREA - REMOVE BEFORE PRODUCTION */}
-              <div className="debug-panel">
-                <p className="debug-title"> Debug Panel (temporary)</p>
-                <button 
-                  type="button" 
-                  className="debug-button"
-                  onClick={() => {
-                    showRegisteredUsers()
-                    alert('Check console to see registered members')
-                  }}
-                >
-                  Show Users
-                </button>
-                <button 
-                  type="button" 
-                  className="debug-button"
-                  onClick={() => {
-                    if (confirm('This will clear ALL registered members. Are you sure?')) {
-                      clearAllUsers()
-                      alert('All members cleared! You can now register with any email.')
-                    }
-                  }}
-                >
-                  Clear All Users
-                </button>
-                <p className="debug-description">
-                  Use "Clear All Users" to reset and test with different emails
-                </p>
-              </div>
             </div>
           </form>
         </div>

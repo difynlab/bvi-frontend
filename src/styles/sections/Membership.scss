@@ -823,6 +823,11 @@
       background-color: #fee2e2;
       color: #e93125;
     }
+
+    &.loading {
+      background-color: #f3f4f6;
+      color: #6b7280;
+    }
   }
 
   .valid-until {
@@ -1286,19 +1291,25 @@
     .status-pending {
       display: flex;
       justify-content: center;
+      
+      .processing-status {
+        color: $vivid_red;
+      }
     }
     .processing-status {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 4px;
+      color: $vivid_red;
+      font-weight: 500;
       
       i {
-        animation: none;
+        animation: spin 1s linear infinite;
         font-size: 12px;
       }
       .bi-arrow-repeat {
-        display: none;
+        display: inline-block;
       }
     }
 

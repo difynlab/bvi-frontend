@@ -165,25 +165,58 @@ export const useNoticeForm = () => {
   }, [])
 
   const setFileFromDrop = useCallback((file) => {
-    if (file && file.type === 'application/pdf') {
-      const maxSize = 15 * 1024 * 1024; // 15MB in bytes
-      
-      if (file.size > maxSize) {
-        setErrorMessage('PDF size must not exceed 15MB')
-        // Clear any existing file data when size exceeds limit
-        setForm(prev => ({ ...prev, file: null, imageFileName: '', imagePreviewUrl: '' }))
-        return;
-      }
-      
-      setForm(prev => ({ ...prev, file, imageFileName: file.name, imagePreviewUrl: '' }))
-      
-      // Clear error when user selects a valid file
-      if (errorMessage) {
-        setErrorMessage('')
-      }
-    } else if (file) {
-      setErrorMessage('Please upload a PDF file only.')
+    const allowedTypes = [
+      'application/pdf',
+      'image/png',
+      'image/jpeg',
+      'image/jpg'
+    ]
+    const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg']
+    
+    if (!file) return
+    
+    const fileType = file.type.toLowerCase()
+    const fileName = file.name.toLowerCase()
+    const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext))
+    const isValidType = allowedTypes.includes(fileType) || hasValidExtension
+    
+    if (!isValidType) {
+      setErrorMessage('Please upload a PDF, PNG, JPG or JPEG file only.')
       setForm(prev => ({ ...prev, file: null, imageFileName: '', imagePreviewUrl: '' }))
+      return
+    }
+    
+    const maxSize = 15 * 1024 * 1024
+    
+    if (file.size > maxSize) {
+      setErrorMessage('File size must not exceed 15MB')
+      setForm(prev => ({ ...prev, file: null, imageFileName: '', imagePreviewUrl: '' }))
+      return
+    }
+    
+    const isImage = fileType.startsWith('image/') || (['.png', '.jpg', '.jpeg'].some(ext => fileName.endsWith(ext)))
+    
+    if (isImage) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setForm(prev => ({
+          ...prev,
+          file,
+          imageFileName: file.name,
+          imagePreviewUrl: e.target.result
+        }))
+      }
+      reader.onerror = () => {
+        setErrorMessage('Error reading image file.')
+        setForm(prev => ({ ...prev, file: null, imageFileName: '', imagePreviewUrl: '' }))
+      }
+      reader.readAsDataURL(file)
+    } else {
+      setForm(prev => ({ ...prev, file, imageFileName: file.name, imagePreviewUrl: '' }))
+    }
+    
+    if (errorMessage) {
+      setErrorMessage('')
     }
   }, [errorMessage])
 
@@ -201,19 +234,32 @@ export const useNoticeForm = () => {
       errors.push('Please complete all required fields.')
     }
     
-    // Check PDF file is required
+    // Check file is required
     if (!form.file && !form.imageFileName) {
-      errors.push('A PDF file is required.')
+      errors.push('A file is required (PDF, PNG, JPG or JPEG).')
     }
     
-    // Check PDF file type
-    if (form.file && form.file.type !== 'application/pdf') {
-      errors.push('Please upload a PDF file only.')
+    // Check file type
+    if (form.file) {
+      const allowedTypes = [
+        'application/pdf',
+        'image/png',
+        'image/jpeg',
+        'image/jpg'
+      ]
+      const fileName = form.file.name.toLowerCase()
+      const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg']
+      const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext))
+      const isValidType = allowedTypes.includes(form.file.type) || hasValidExtension
+      
+      if (!isValidType) {
+        errors.push('Please upload a PDF, PNG, JPG or JPEG file only.')
+      }
     }
     
-    // Check PDF size if file is present (max 15MB)
+    // Check file size if file is present (max 15MB)
     if (form.file && form.file.size > 15 * 1024 * 1024) {
-      errors.push('PDF size must not exceed 15MB.')
+      errors.push('File size must not exceed 15MB.')
     }
     
     // Check category exists

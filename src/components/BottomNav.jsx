@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
 import MoreModal from './modals/MoreModal'
@@ -16,8 +16,13 @@ const BottomNav = () => {
   })
   const [isMoreModalOpen, setIsMoreModalOpen] = useState(false)
   const [isModalClosing, setIsModalClosing] = useState(false)
+  const [shouldAnimate, setShouldAnimate] = useState(false)
+  const [isInitialMount, setIsInitialMount] = useState(true)
   const location = useLocation()
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
+  const prevLocationRef = useRef(null)
+  const hasAnimatedRef = useRef(false)
+  const isMountedRef = useRef(false)
 
   useEffect(() => {
     try {
@@ -31,6 +36,41 @@ const BottomNav = () => {
       console.warn('matchMedia not supported:', error)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true
+      const storedPrevPath = sessionStorage.getItem('bottomNavPrevPath')
+      prevLocationRef.current = storedPrevPath || location.pathname
+      
+      if (storedPrevPath !== '/login' || location.pathname !== '/dashboard') {
+        setIsInitialMount(false)
+      }
+    }
+
+    const prevPath = prevLocationRef.current
+    const currentPath = location.pathname
+
+    if (currentPath === '/login') {
+      hasAnimatedRef.current = false
+      sessionStorage.setItem('bottomNavPrevPath', '/login')
+      setIsInitialMount(false)
+    } else if (prevPath === '/login' && currentPath === '/dashboard' && isAuthenticated && !hasAnimatedRef.current && isMobile) {
+      setTimeout(() => {
+        setIsInitialMount(false)
+        setShouldAnimate(true)
+        hasAnimatedRef.current = true
+        setTimeout(() => {
+          setShouldAnimate(false)
+        }, 1800)
+      }, 100)
+    } else {
+      setIsInitialMount(false)
+    }
+
+    prevLocationRef.current = currentPath
+    sessionStorage.setItem('bottomNavPrevPath', currentPath)
+  }, [location.pathname, isAuthenticated, isMobile])
 
   if (!isMobile) return null
 
@@ -81,7 +121,7 @@ const BottomNav = () => {
 
   return (
     <>
-      <nav className={`bottom-nav ${isMoreModalOpen && !isModalClosing ? 'bottom-nav--hidden' : ''}`} role="navigation" aria-label="Bottom Navigation">
+      <nav className={`bottom-nav ${isMoreModalOpen && !isModalClosing ? 'bottom-nav--hidden' : ''} ${shouldAnimate ? 'bottom-nav--animate-in' : ''} ${isInitialMount && location.pathname === '/dashboard' ? 'bottom-nav--initial' : ''}`} role="navigation" aria-label="Bottom Navigation">
         <NavLink
           to="/dashboard"
           className={`bottom-nav-item ${isActive('/dashboard') ? 'active' : ''}`}

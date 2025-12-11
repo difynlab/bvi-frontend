@@ -46,9 +46,9 @@ const MobileHeader = () => {
     <>
       <header className="mobile-header">
         <div className="mobile-header-content">
-          <div className="mobile-header-logo">
+          <NavLink to="/dashboard" className="mobile-header-logo">
             <img src="/BVI-logo.png" alt="BVI Finance Logo" />
-          </div>
+          </NavLink>
 
           <div className="mobile-header-actions">
             <NotificationTrigger 

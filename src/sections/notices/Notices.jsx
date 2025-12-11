@@ -28,43 +28,98 @@ export const Notices = () => {
     return String(fileName).replace(/[<>:"/\\|?*]/g, '_').substring(0, 50);
   };
 
-  // Función para descargar PDF desde la URL del archivo subido por el usuario
-  const handleDownloadPDF = async (notice) => {
+  const handleDownloadFile = async (notice) => {
     const noticeId = notice.id;
     
-    // Activar loading para este notice específico
     setPdfLoadingStates(prev => ({ ...prev, [noticeId]: true }));
     
     try {
-      const fileName = `${getSafeFileName(notice)}.pdf`;
+      const getFileExtension = () => {
+        if (notice.imageFileName) {
+          const fileName = notice.imageFileName.toLowerCase();
+          if (fileName.endsWith('.pdf')) return '.pdf';
+          if (fileName.endsWith('.png')) return '.png';
+          if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+            return fileName.endsWith('.jpeg') ? '.jpeg' : '.jpg';
+          }
+        }
+        if (notice.fileUrl) {
+          const url = notice.fileUrl.toLowerCase();
+          if (url.includes('.pdf')) return '.pdf';
+          if (url.includes('.png')) return '.png';
+          if (url.includes('.jpg')) return '.jpg';
+          if (url.includes('.jpeg')) return '.jpeg';
+        }
+        return '.pdf';
+      };
       
-      // Si el notice tiene fileUrl, descargar directamente desde esa URL
-      if (notice.fileUrl) {
-        const link = document.createElement('a');
-        link.href = notice.fileUrl;
-        link.download = fileName;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      const extension = getFileExtension();
+      const baseFileName = getSafeFileName(notice);
+      const fileName = `${baseFileName}${extension}`;
+      
+      const isImageFile = ['.png', '.jpg', '.jpeg'].includes(extension);
+      
+      if (isImageFile) {
+        const localStorageImage = getNoticeImageFromLocalStorage(noticeId, 'original');
+        
+        if (localStorageImage) {
+          const link = document.createElement('a');
+          link.href = localStorageImage;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else if (notice.fileUrl || notice.original_thumbnail || notice.imagePreviewUrl) {
+          const imageUrl = notice.fileUrl || notice.original_thumbnail || notice.imagePreviewUrl;
+          
+          try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          } catch (fetchError) {
+            const link = document.createElement('a');
+            link.href = imageUrl;
+            link.download = fileName;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }
+        } else {
+          throw new Error('No se encontró la imagen para descargar.');
+        }
       } else {
-        // Si no hay fileUrl, intentar descargar desde el endpoint de la API
-        const blob = await noticesService.downloadNoticePDF(noticeId);
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        if (notice.fileUrl) {
+          const link = document.createElement('a');
+          link.href = notice.fileUrl;
+          link.download = fileName;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          const blob = await noticesService.downloadNoticePDF(noticeId);
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
       }
     } catch (error) {
-      console.error('Error downloading PDF:', error);
-      // Mostrar error al usuario
-      alert(`Error al descargar el PDF: ${error.message}`);
+      console.error('Error downloading file:', error);
+      alert(`Error al descargar el archivo: ${error.message}`);
     } finally {
-      // Desactivar loading para este notice específico
       setPdfLoadingStates(prev => ({ ...prev, [noticeId]: false }));
     }
   };
@@ -177,16 +232,19 @@ export const Notices = () => {
       const next = categories[0].id
       setActiveTabId(next)
       saveActiveTabId(next)
+      if (!isMobile) {
+        setActiveCategory(next)
+      }
     }
   }, [categories]) // Removed activeTabId to prevent infinite loop
 
-  // Sync mobile activeTabId with desktop activeCategory when in mobile mode
+  // Sync activeCategory with activeTabId
   useEffect(() => {
-    if (isMobile && activeCategory && activeCategory !== activeTabId) {
+    if (activeCategory && activeCategory !== activeTabId) {
       setActiveTabId(activeCategory)
       saveActiveTabId(activeCategory)
     }
-  }, [isMobile, activeCategory, activeTabId])
+  }, [activeCategory])
 
   // Mobile handlers
   const onSelectCategory = (id) => {
@@ -269,9 +327,9 @@ export const Notices = () => {
       }
     },
     { key: 'linkUrl', label: 'Upload Link', test: () => (noticeForm?.form?.linkUrl || '').trim().length > 0 },
-    {
+      {
       key: 'file',
-      label: 'PDF File Upload',
+      label: 'File Upload',
       test: () => {
         if (editingNotice) {
           return !!(
@@ -439,15 +497,26 @@ export const Notices = () => {
       const maxSize = 15 * 1024 * 1024 // 15MB in bytes
 
       if (uploadedFile) {
-        if (uploadedFile.type !== 'application/pdf') {
-          setPdfGenerationError('Please upload a PDF file.')
+        const allowedTypes = [
+          'application/pdf',
+          'image/png',
+          'image/jpeg',
+          'image/jpg'
+        ]
+        const fileName = uploadedFile.name.toLowerCase()
+        const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg']
+        const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext))
+        const isValidType = allowedTypes.includes(uploadedFile.type) || hasValidExtension
+        
+        if (!isValidType) {
+          setPdfGenerationError('Please upload a PDF, PNG, JPG or JPEG file.')
           bannerRef.current?.focus()
           setIsSubmitting(false)
           return
         }
 
         if (uploadedFile.size > maxSize) {
-          setPdfGenerationError('PDF size must not exceed 15MB')
+          setPdfGenerationError('File size must not exceed 15MB')
           bannerRef.current?.focus()
           setIsSubmitting(false)
           return
@@ -459,7 +528,7 @@ export const Notices = () => {
         delete payload.file
         await handleUpsertNotice(payload)
       } else {
-        setPdfGenerationError('Please upload a PDF file.')
+        setPdfGenerationError('Please upload a PDF, PNG, JPG or JPEG file.')
         bannerRef.current?.focus()
         setIsSubmitting(false)
         return
@@ -788,7 +857,7 @@ export const Notices = () => {
                         <button
                           className="download-btn"
                           disabled={pdfLoadingStates[notice.id]}
-                          onClick={() => handleDownloadPDF(notice)}
+                          onClick={() => handleDownloadFile(notice)}
                         >
                           {pdfLoadingStates[notice.id] ? 'Downloading...' : 'Download Notice'}
                         </button>
@@ -962,8 +1031,8 @@ export const Notices = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="file">Upload PDF File<span className="req-star" aria-hidden="true">*</span></label>
-                  <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>Only PDF files are supported. Maximum file size: 15 MB.</p>
+                  <label htmlFor="file">Upload File<span className="req-star" aria-hidden="true">*</span></label>
+                  <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>PDF, PNG, JPG and JPEG files are supported. Maximum file size: 15 MB.</p>
                   <div
                     className="file-upload-area dropzone-surface"
                     data-has-file={Boolean(noticeForm.form.file || noticeForm.form.imageFileName)}
@@ -975,7 +1044,7 @@ export const Notices = () => {
                       type="file"
                       id="file"
                       name="file"
-                      accept="application/pdf"
+                      accept="application/pdf,image/png,image/jpeg,image/jpg,.pdf,.png,.jpg,.jpeg"
                       onChange={handleFileInputChange}
                       className="hidden-file-input"
                     />
@@ -1006,10 +1075,21 @@ export const Notices = () => {
                         <p>{noticeForm.form.imageFileName}</p>
                       </div>
                     )}
+                    {noticeForm.form.imageFileName && !noticeForm.form.imagePreviewUrl && 
+                     ['png', 'jpg', 'jpeg'].some(ext => noticeForm.form.imageFileName.toLowerCase().endsWith(`.${ext}`)) && (
+                      <div className="file-preview">
+                        <i className="bi bi-file-image" style={{ fontSize: '3rem', color: '#0ea5e9' }}></i>
+                        <p>{noticeForm.form.imageFileName}</p>
+                      </div>
+                    )}
                     {editingNotice && noticeForm.form.imageFileName && (
                       <div className="existing-file-info">
                         <p className="file-info-text">
-                          <i className="bi bi-file-earmark-pdf" style={{marginRight: '8px', color: '#dc2626'}}></i>
+                          {noticeForm.form.imageFileName.toLowerCase().endsWith('.pdf') ? (
+                            <i className="bi bi-file-earmark-pdf" style={{marginRight: '8px', color: '#dc2626'}}></i>
+                          ) : (
+                            <i className="bi bi-file-earmark-image" style={{marginRight: '8px', color: '#0ea5e9'}}></i>
+                          )}
                           Current file: <strong>{noticeForm.form.imageFileName}</strong>
                         </p>
                         <p className="file-info-note">
