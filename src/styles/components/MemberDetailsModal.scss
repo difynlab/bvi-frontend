@@ -924,7 +924,7 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 15px;
 
     &--scrollable {
       max-height: calc(4 * (80px + 12px));
@@ -968,7 +968,7 @@
 
   .member-link-firm-card-logo {
     flex-shrink: 0;
-    width: 60px;
+    width: 120px;
     height: 60px;
     border-radius: 8px;
     overflow: hidden;
@@ -1061,28 +1061,48 @@
 
 @media (max-width: 768px) {
   .member-link-firm-controls {
-    flex-wrap: wrap;
-    justify-content: flex-start;
+    flex-direction: column;
+    gap: 12px;
 
     .member-link-firm-filter {
-      flex: 1;
-      min-width: calc(50% - 8px);
+      width: 100%;
+      flex: none;
     }
 
     .member-link-firm-sort {
-      flex: 1;
-      min-width: calc(50% - 8px);
+      width: 100%;
+      flex: none;
     }
 
     .member-link-firm-search {
       width: 100%;
-      max-width: 100%;
+      flex: none;
+      display: flex;
+    }
+  }
+
+  .member-link-firm-list-container {
+    &--scrollable {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding-right: 0;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
     }
   }
 
   .member-link-firm-card {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
     gap: 12px;
+    padding: 5px 0px;
+  }
+
+  .member-link-firm-card-logo {
+    width: 100%;
+    height: 80px;
   }
 
   .member-link-firm-card-btn {
