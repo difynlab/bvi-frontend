@@ -39,10 +39,18 @@ export const useNoticesState = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(false)
   const [noticesLoading, setNoticesLoading] = useState(false)
   const [shouldReloadCategories, setShouldReloadCategories] = useState(false)
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    last_page: 1,
+    per_page: 6,
+    total: 0
+  })
 
-  // Load notices from API on mount
   useEffect(() => {
-    // Load notices from API
+    setPagination(prev => ({ ...prev, current_page: 1 }))
+  }, [activeCategory])
+
+  useEffect(() => {
     loadNoticesFromAPI()
     
     // Only load categories from localStorage if they came from API (not mocks)
@@ -67,14 +75,11 @@ export const useNoticesState = () => {
     }
   }, [])
 
-  // Function to load notices from API
   const loadNoticesFromAPI = useCallback(async () => {
     setNoticesLoading(true)
     
-    // Temporarily suppress 404 console errors
     const originalConsoleError = console.error
     console.error = (...args) => {
-      // Don't log 404 errors
       if (args[0] && typeof args[0] === 'string' && args[0].includes('404')) {
         return
       }
@@ -82,26 +87,48 @@ export const useNoticesState = () => {
     }
     
     try {
-      const response = await noticesService.getNotices()
+      const allNotices = []
+      let currentPage = 1
+      let hasMorePages = true
+      const perPage = 100
       
-      if (response.http_status === 200 && response.data) {
-        // Transform API data to frontend format
-        const apiNotices = response.data.data.map(notice => transformFromBackend(notice))
-        setNotices(apiNotices)
-      } else if (response.http_status === 404) {
-        // No notices found - show empty state
+      while (hasMorePages) {
+        const response = await noticesService.getNotices(perPage, currentPage)
+        
+        if (response.http_status === 200 && response.data) {
+          const apiNotices = response.data.data.map(notice => transformFromBackend(notice))
+          allNotices.push(...apiNotices)
+          
+          const totalPages = response.data.last_page || 1
+          const total = response.data.total || 0
+          
+          if (currentPage >= totalPages || apiNotices.length === 0) {
+            hasMorePages = false
+          } else {
+            currentPage++
+          }
+        } else if (response.http_status === 404) {
+          hasMorePages = false
+          if (allNotices.length === 0) {
+            setNotices([])
+          }
+        } else {
+          hasMorePages = false
+        }
+      }
+      
+      if (allNotices.length > 0) {
+        setNotices(allNotices)
+      } else if (allNotices.length === 0) {
         setNotices([])
       }
     } catch (error) {
-      // Only log non-404 errors
       if (!error.message.includes('No notices found') && !error.message.includes('No data found')) {
         console.error('Error loading notices from API:', error)
       }
-      // Don't fallback to localStorage - let empty state show
       setNotices([])
     } finally {
       setNoticesLoading(false)
-      // Restore original console.error
       console.error = originalConsoleError
     }
   }, [])
@@ -233,16 +260,37 @@ export const useNoticesState = () => {
     setShouldReloadCategories(true)
   }, [])
 
-  // Derived state - filter notices by active category
-  const visibleItems = useMemo(() => {
+  const filteredNotices = useMemo(() => {
     if (!activeCategory || !notices.length) {
       return []
     }
-    
-    // Filter notices by notice_category_id matching activeCategory
-    const filtered = notices.filter(notice => notice.noticeType === activeCategory)
-    return filtered
+    return notices.filter(notice => notice.noticeType === activeCategory)
   }, [notices, activeCategory])
+
+  useEffect(() => {
+    const totalFiltered = filteredNotices.length
+    const totalPages = Math.ceil(totalFiltered / pagination.per_page) || 1
+    const adjustedPage = pagination.current_page > totalPages ? 1 : pagination.current_page
+    
+    setPagination(prev => ({
+      ...prev,
+      current_page: adjustedPage,
+      last_page: totalPages,
+      total: totalFiltered
+    }))
+  }, [filteredNotices.length, pagination.per_page])
+
+  const visibleItems = useMemo(() => {
+    if (!filteredNotices.length) {
+      return []
+    }
+    
+    const currentPage = pagination.current_page > pagination.last_page ? 1 : pagination.current_page
+    const startIndex = (currentPage - 1) * pagination.per_page
+    const endIndex = startIndex + pagination.per_page
+    
+    return filteredNotices.slice(startIndex, endIndex)
+  }, [filteredNotices, pagination.current_page, pagination.per_page, pagination.last_page])
 
   const getGroup = useCallback((categoryId) => {
     return notices.find(group => group.categoryId === categoryId)
@@ -421,11 +469,24 @@ export const useNoticesState = () => {
         }
         
         const backendData = transformToBackend(payload, true)
+        console.log('📤 [handleUpsertNotice UPDATE] Sending to backend:', {
+          payload: payload,
+          backendData: backendData,
+          editingNoticeId: editingNotice.id
+        });
+        
         const response = await noticesService.updateNotice(editingNotice.id, backendData)
+        
+        console.log('📥 [handleUpsertNotice UPDATE] Response from backend:', {
+          http_status: response.http_status,
+          responseData: response.data
+        });
         
         if (response.http_status === 200) {
           const backendNotice = response.data
+          console.log('📥 [handleUpsertNotice UPDATE] Backend notice before transform:', backendNotice);
           const noticeWithImages = transformFromBackend(backendNotice)
+          console.log('📥 [handleUpsertNotice UPDATE] Notice after transform:', noticeWithImages);
           
           setNotices(prev => prev.map(notice => 
             notice.id === editingNotice.id ? noticeWithImages : notice
@@ -448,11 +509,21 @@ export const useNoticesState = () => {
         }
         
         const backendData = transformToBackend(payload, false)
+        console.log('📤 [handleUpsertNotice CREATE] Sending to backend:', {
+          payload: payload,
+          backendData: backendData
+        });
         
         const response = await noticesService.createNotice(backendData)
         
+        console.log('📥 [handleUpsertNotice CREATE] Response from backend:', {
+          http_status: response.http_status,
+          responseData: response.data
+        });
+        
         if (response.http_status === 200) {
           const backendNotice = response.data
+          console.log('📥 [handleUpsertNotice CREATE] Backend notice before transform:', backendNotice);
           
           // TODO PRODUCTION: CHANGE IMAGES - Move image from temp ID to real backend ID FIRST
           if (payload.file && backendNotice.id) {
@@ -549,8 +620,11 @@ export const useNoticesState = () => {
     return mockCategories[0]?.id || ''
   }, [])
 
+  const changePage = useCallback((page) => {
+    setPagination(prev => ({ ...prev, current_page: page }))
+  }, [])
+
   return {
-    // State
     categories,
     notices,
     activeCategory,
@@ -564,8 +638,7 @@ export const useNoticesState = () => {
     categoriesLoaded,
     categoriesLoading,
     noticesLoading,
-    
-    // Actions
+    pagination,
     setActiveCategory,
     handleAddCategory,
     handleDeleteCategory,
@@ -585,9 +658,7 @@ export const useNoticesState = () => {
     loadCategoriesFromAPI,
     loadNoticesFromAPI,
     refreshCategories,
-    // loadNoticesForCategory, // Commented for future use
-    
-    // Legacy compatibility
+    changePage,
     getGroup
   }
 }

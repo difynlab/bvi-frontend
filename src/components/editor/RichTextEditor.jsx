@@ -402,18 +402,6 @@ const RichTextEditor = ({
           >
             <i className="bi bi-link-45deg"></i>
           </button>
-          
-          <button
-            type="button"
-            className="rte__btn"
-            onMouseDown={(e) => {
-              e.preventDefault()
-              setImage()
-            }}
-            title="Insert Image"
-          >
-            <i className="bi bi-image"></i>
-          </button>
         </div>
 
         <div className="rte__group">

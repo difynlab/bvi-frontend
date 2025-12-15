@@ -34,50 +34,48 @@ class NewslettersService {
         if (data.http_status === 401) {
           localStorage.removeItem(this.tokenKey)
           localStorage.removeItem('user')
-          throw new Error('Sesión expirada. Por favor inicia sesión nuevamente.')
+          throw new Error('Session expired. Please log in again.')
         } else if (data.http_status === 403) {
-          throw new Error('Acceso denegado. Se requiere rol de administrador.')
+          throw new Error('Access denied. Administrator role required.')
         } else if (data.http_status === 400) {
-          const errorMessage = data.message || 'Error de validación'
+          const errorMessage = data.message || 'Validation error'
           const validationErrors = data.errors ? Object.values(data.errors).flat().join(', ') : ''
           throw new Error(`${errorMessage}${validationErrors ? ': ' + validationErrors : ''}`)
         } else if (data.http_status === 422) {
-          const errorMessage = data.message || 'Errores de validación'
+          const errorMessage = data.message || 'Validation errors'
           const validationErrors = data.errors ? Object.values(data.errors).flat().join(', ') : ''
           throw new Error(`${errorMessage}${validationErrors ? ': ' + validationErrors : ''}`)
         } else if (data.http_status === 500) {
-          const errorMessage = data.message || data.error || 'Error interno del servidor'
+          const errorMessage = data.message || data.error || 'Internal server error'
           console.error('500 Server Error details:', data)
           console.error('Full error response:', JSON.stringify(data, null, 2))
           throw new Error(`${errorMessage} (Error 500)`)
         } else if (data.http_status === 404) {
-          // Return empty data instead of throwing error for 404
           return {
             http_status: 404,
             message: 'No newsletters found',
             data: []
           }
         } else {
-          const errorMessage = data.message || data.error || `Error del servidor: ${response.status}`
+          const errorMessage = data.message || data.error || `Server error: ${response.status}`
           throw new Error(errorMessage)
         }
       } catch (parseError) {
         if (response.status === 404) {
-          // Return empty data instead of throwing error for 404
           return {
             http_status: 404,
             message: 'No newsletters found',
             data: []
           }
         }
-        throw new Error(`Error del servidor: ${response.status} ${response.statusText}`)
+        throw new Error(`Server error: ${response.status} ${response.statusText}`)
       }
     }
     
     try {
       return await response.json()
     } catch (parseError) {
-      throw new Error('Error al procesar la respuesta del servidor')
+      throw new Error('Error processing server response')
     }
   }
 

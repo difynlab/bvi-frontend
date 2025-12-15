@@ -156,6 +156,7 @@
 .reports-container {
   padding: 30px;
   position: relative;
+  min-height: 100vh;
 
 
   .empty-state {
@@ -646,6 +647,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding-bottom: 55px;
 }
 
 .report-item {
@@ -1624,5 +1626,60 @@
   // Show desktop skeleton on desktop
   .reports-list-skeleton {
     display: flex;
+  }
+}
+
+.reports-pagination {
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 0;
+
+  .prev-btn,
+  .next-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #d1d5db;
+    background-color: white;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 16px;
+
+    &:hover {
+      background-color: #f3f4f6;
+      border-color: #9ca3af;
+    }
+
+    &:active {
+      background-color: #e5e7eb;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background-color: #f9fafb;
+      color: #9ca3af;
+    }
+  }
+
+  .page-counter {
+    font-size: 16px;
+    font-weight: 500;
+    color: #374151;
+    padding: 8px 16px;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    min-width: 80px;
+    text-align: center;
   }
 }

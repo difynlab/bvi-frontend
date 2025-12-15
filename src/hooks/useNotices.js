@@ -35,7 +35,7 @@ export const useNotices = () => {
     setError(null)
 
     try {
-      const response = await noticesService.getNotices()
+      const response = await noticesService.getNotices(100, 1)
       
       if (response.http_status === 200 && response.data) {
         const transformedNotices = response.data.data.map(transformFromBackend)

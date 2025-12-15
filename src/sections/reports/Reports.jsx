@@ -32,6 +32,7 @@ export default function Reports() {
     categories,
     activeCategory,
     visibleItems,
+    pagination,
     isCategoryModalOpen,
     isReportModalOpen,
     editingReport,
@@ -58,10 +59,10 @@ export default function Reports() {
     setIsCategoryModalOpen,
     setConfirmModalOpen,
     setCategoryToDelete,
-    // New reports-related states
     reportsLoading,
     refreshReports,
-    loadReportsFromAPI
+    loadReportsFromAPI,
+    changePage
   } = useReportsState();
 
 
@@ -297,20 +298,17 @@ export default function Reports() {
       if (reportToDelete) {
         setIsDeleting(true);
         
-        // Wait for delete to complete successfully
         await onDeleteReport(reportToDelete.id);
+        await loadReportsFromAPI();
         
-        // Close confirmation modal first
         setIsReportDeleteConfirmOpen(false);
         setReportToDelete(null);
         setIsDeleting(false);
         
-        // Then show success modal
         setIsSuccessDeleteOpen(true);
       }
     } catch (error) {
       alert('An error occurred while deleting the report');
-      // Close confirmation modal even on error
       setIsReportDeleteConfirmOpen(false);
       setReportToDelete(null);
       setIsDeleting(false);
@@ -517,51 +515,72 @@ export default function Reports() {
             )}
           </div>
         ) : (
-          <div className="reports-list">
-            {visibleItems.map(r => {
-              return (
-              <article key={r.id} className="report-item">
-                <div className="report-info">
-                  <div className="report-meta">Published: {formatDate(r.publish_date)}</div>
-                  <div className="report-title">{r.name}</div>
-                </div>
-                <div className="report-actions">
-                  {/* Desktop buttons */}
-                  {can(user, 'reports:delete') && (
-                    <button type="button" className="btn-delete" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.name}`}>
-                      Delete
-                    </button>
-                  )}
-                  {can(user, 'reports:create') && (
-                    <button type="button" className="btn-edit" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.name}`}>
-                      Edit Report
-                    </button>
-                  )}
-                  <button type="button" className="btn-download" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
-                    Download PDF
-                  </button>
-                  
-                  {/* Mobile buttons */}
-                  <div className="report-actions-mobile">
+          <>
+            <div className="reports-list">
+              {visibleItems.map(r => {
+                return (
+                <article key={r.id} className="report-item">
+                  <div className="report-info">
+                    <div className="report-meta">Published: {formatDate(r.publish_date)}</div>
+                    <div className="report-title">{r.name}</div>
+                  </div>
+                  <div className="report-actions">
                     {can(user, 'reports:delete') && (
-                      <button type="button" className="btn-delete-mobile" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.name}`}>
+                      <button type="button" className="btn-delete" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.name}`}>
                         Delete
                       </button>
                     )}
                     {can(user, 'reports:create') && (
-                      <button type="button" className="btn-edit-mobile" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.name}`}>
-                        Edit
+                      <button type="button" className="btn-edit" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.name}`}>
+                        Edit Report
                       </button>
                     )}
-                    <button type="button" className="btn-download-mobile" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
-                      Download
+                    <button type="button" className="btn-download" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
+                      Download PDF
                     </button>
+                    
+                    <div className="report-actions-mobile">
+                      {can(user, 'reports:delete') && (
+                        <button type="button" className="btn-delete-mobile" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.name}`}>
+                          Delete
+                        </button>
+                      )}
+                      {can(user, 'reports:create') && (
+                        <button type="button" className="btn-edit-mobile" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.name}`}>
+                          Edit
+                        </button>
+                      )}
+                      <button type="button" className="btn-download-mobile" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
+                        Download
+                      </button>
+                    </div>
                   </div>
+                </article>
+                );
+              })}
+            </div>
+            {pagination.last_page > 1 && (
+              <div className="reports-pagination">
+                <button 
+                  className="prev-btn"
+                  onClick={() => changePage(pagination.current_page - 1)}
+                  disabled={pagination.current_page <= 1}
+                >
+                  <i className="bi bi-chevron-left"></i>
+                </button>
+                <div className="page-counter">
+                  <span>{pagination.current_page} / {pagination.last_page}</span>
                 </div>
-              </article>
-              );
-            })}
-          </div>
+                <button 
+                  className="next-btn"
+                  onClick={() => changePage(pagination.current_page + 1)}
+                  disabled={pagination.current_page >= pagination.last_page}
+                >
+                  <i className="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
 

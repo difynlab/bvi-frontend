@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { readNewsletters, setNewsletters as persistNewsletters, getMockNewsletters, upsertNewsletter, deleteNewsletter } from '../helpers/newslettersStorage'
 import newslettersApi from '../api/newslettersApi'
 import { saveNewsletterImageToLocalStorage, transformFromBackend } from '../utils/newsletterTransformers'
@@ -69,52 +69,95 @@ export const useNewslettersState = () => {
   const [newsletters, setNewsletters] = useState([])
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    last_page: 1,
+    per_page: 6,
+    total: 0
+  })
 
-  // Load newsletters from API on mount (only once)
+  const loadNewslettersFromAPI = useCallback(async () => {
+    try {
+      setLoading(true)
+      setInitialLoading(true)
+      
+      const allNewsletters = []
+      let currentPage = 1
+      let hasMorePages = true
+      const perPage = 100
+      
+      while (hasMorePages) {
+        const response = await newslettersApi.getAll(perPage, currentPage)
+        
+        let newslettersData = []
+        if (response.data && response.data.data && Array.isArray(response.data.data)) {
+          newslettersData = response.data.data
+        } else if (response.data && Array.isArray(response.data)) {
+          newslettersData = response.data
+        } else if (Array.isArray(response)) {
+          newslettersData = response
+        } else if (response.newsletters && Array.isArray(response.newsletters)) {
+          newslettersData = response.newsletters
+        }
+        
+        const transformedNewsletters = newslettersData.map(newsletter => transformFromBackend(newsletter))
+        allNewsletters.push(...transformedNewsletters)
+        
+        const totalPages = response.data?.last_page || 1
+        const total = response.data?.total || 0
+        
+        if (currentPage >= totalPages || newslettersData.length === 0) {
+          hasMorePages = false
+        } else {
+          currentPage++
+        }
+      }
+      
+      setNewsletters(allNewsletters)
+    } catch (error) {
+      if (!error.message.includes('No newsletters found') && !error.message.includes('No data found')) {
+        console.error('Error loading newsletters from API:', error)
+      }
+      setNewsletters([])
+    } finally {
+      setLoading(false)
+      setInitialLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     if (hydratedRef.current) return
     hydratedRef.current = true
+    loadNewslettersFromAPI()
+  }, [loadNewslettersFromAPI])
 
-    // Load newsletters from API
-    const loadNewsletters = async () => {
-      try {
-        setLoading(true)
-        setInitialLoading(true)
-        const response = await newslettersApi.getAll()
-      // Handle different response structures
-      let newslettersData = []
-      if (response.data && response.data.data && Array.isArray(response.data.data)) {
-        // Paginated response: response.data.data
-        newslettersData = response.data.data
-      } else if (response.data && Array.isArray(response.data)) {
-        // Direct array in data
-        newslettersData = response.data
-      } else if (Array.isArray(response)) {
-        // Direct array response
-        newslettersData = response
-      } else if (response.newsletters && Array.isArray(response.newsletters)) {
-        // Alternative structure
-        newslettersData = response.newsletters
-      }
-      
-      // Transform newsletters from backend format to frontend format
-      const transformedNewsletters = newslettersData.map(newsletter => transformFromBackend(newsletter))
-      
-        setNewsletters(transformedNewsletters)
-      } catch (error) {
-        // Only log non-404 errors
-        if (!error.message.includes('No newsletters found') && !error.message.includes('No data found')) {
-          console.error('Error loading newsletters from API:', error)
-        }
-        // Fallback to empty array if API fails
-        setNewsletters([])
-      } finally {
-        setLoading(false)
-        setInitialLoading(false)
-      }
+  useEffect(() => {
+    const totalPages = Math.ceil(newsletters.length / pagination.per_page) || 1
+    const adjustedPage = pagination.current_page > totalPages ? 1 : pagination.current_page
+    
+    setPagination(prev => ({
+      ...prev,
+      current_page: adjustedPage,
+      last_page: totalPages,
+      total: newsletters.length
+    }))
+  }, [newsletters.length, pagination.per_page])
+
+  const visibleItems = useMemo(() => {
+    if (!newsletters.length) {
+      return []
     }
+    
+    const totalPages = Math.ceil(newsletters.length / pagination.per_page) || 1
+    const currentPage = pagination.current_page > totalPages ? 1 : pagination.current_page
+    const startIndex = (currentPage - 1) * pagination.per_page
+    const endIndex = startIndex + pagination.per_page
+    
+    return newsletters.slice(startIndex, endIndex)
+  }, [newsletters, pagination.current_page, pagination.per_page])
 
-    loadNewsletters()
+  const changePage = useCallback((page) => {
+    setPagination(prev => ({ ...prev, current_page: page }))
   }, [])
 
   const addNewsletter = useCallback(async (newsletterObj) => {
@@ -238,10 +281,14 @@ export const useNewslettersState = () => {
     loading,
     setLoading,
     initialLoading,
+    pagination,
+    visibleItems,
     addNewsletter,
     updateNewsletter,
     deleteNewsletter: deleteNewsletterById,
     seedFromMocks,
-    clearNewsletterSeeds
+    clearNewsletterSeeds,
+    loadNewslettersFromAPI,
+    changePage
   }
 }

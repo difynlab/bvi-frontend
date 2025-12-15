@@ -28,6 +28,11 @@ export const Notices = () => {
     return String(fileName).replace(/[<>:"/\\|?*]/g, '_').substring(0, 50);
   };
 
+  const handleViewNotice = (notice) => {
+    setViewingNotice(notice);
+    setIsViewNoticeModalOpen(true);
+  };
+
   const handleDownloadFile = async (notice) => {
     const noticeId = notice.id;
     
@@ -124,8 +129,14 @@ export const Notices = () => {
     }
   };
 
+  const hasFile = (notice) => {
+    return !!(notice.fileUrl || notice.imageFileName || notice.original_thumbnail || notice.imagePreviewUrl);
+  };
+
   // Estado para controlar el loading de PDFs individuales
   const [pdfLoadingStates, setPdfLoadingStates] = useState({});
+  const [isViewNoticeModalOpen, setIsViewNoticeModalOpen] = useState(false);
+  const [viewingNotice, setViewingNotice] = useState(null);
   const MOBILE_Q = '(max-width: 768px)'
   const failedImageIdsRef = useRef(new Set())
   const [fallbackTick, setFallbackTick] = useState(0)
@@ -190,6 +201,7 @@ export const Notices = () => {
     categoriesLoaded,
     categoriesLoading,
     noticesLoading,
+    pagination,
     setActiveCategory,
     handleAddCategory,
     handleDeleteCategory,
@@ -205,7 +217,8 @@ export const Notices = () => {
     setIsCategoryModalOpen,
     setConfirmModalOpen,
     setCategoryToDelete,
-    loadCategoriesFromAPI
+    loadCategoriesFromAPI,
+    changePage
   } = useNoticesState()
 
   // Mobile responsive effect
@@ -296,10 +309,11 @@ export const Notices = () => {
   })
   const confirmModalBackdropClose = useModalBackdropClose(() => setConfirmModalOpen(false))
   const addCategoryModalBackdropClose = useModalBackdropClose(() => setIsCategoryModalOpen(false))
+  const viewNoticeModalBackdropClose = useModalBackdropClose(() => setIsViewNoticeModalOpen(false))
 
   const titleMarquee = useTitleMarquee()
 
-  useBodyScrollLock(isNoticeModalOpen || isCategoryModalOpen || confirmModalOpen || isNoticeDeleteConfirmOpen || isSuccessDeleteOpen || pickerOpen)
+  useBodyScrollLock(isNoticeModalOpen || isCategoryModalOpen || confirmModalOpen || isNoticeDeleteConfirmOpen || isSuccessDeleteOpen || pickerOpen || isViewNoticeModalOpen)
 
   const truncateText = (text, maxLength = 110) => {
     if (!text || text.length <= maxLength) return text
@@ -326,22 +340,6 @@ export const Notices = () => {
         return text.length > 0;
       }
     },
-    { key: 'linkUrl', label: 'Upload Link', test: () => (noticeForm?.form?.linkUrl || '').trim().length > 0 },
-      {
-      key: 'file',
-      label: 'File Upload',
-      test: () => {
-        if (editingNotice) {
-          return !!(
-            noticeForm?.form?.file ||
-            noticeForm?.form?.imageFileName ||
-            editingNotice?.fileUrl ||
-            editingNotice?.file
-          );
-        }
-        return !!noticeForm?.form?.file;
-      }
-    }
   ];
 
   // Validation function
@@ -524,14 +522,9 @@ export const Notices = () => {
 
         payload.file = uploadedFile
         await handleUpsertNotice(payload)
-      } else if (isEditMode) {
-        delete payload.file
-        await handleUpsertNotice(payload)
       } else {
-        setPdfGenerationError('Please upload a PDF, PNG, JPG or JPEG file.')
-        bannerRef.current?.focus()
-        setIsSubmitting(false)
-        return
+        // File is optional, proceed without file
+        await handleUpsertNotice(payload)
       }
 
     } catch (error) {
@@ -821,39 +814,112 @@ export const Notices = () => {
               description={can(user, 'notices:create') ? 'This category is empty. Add your first notice to get started!' : "This category doesn't have any notices yet."}
             />
           ) : (
-            <div className="notices-list">
-              {visibleItems.map(notice => (
-                <div key={notice.id} className="notice-card">
-                  <div className="notice-content">
-                    <div className="notice-header">
-                      <div className="notice-info">
-                        <h3
-                          className="notice-title one-line-ellipsis"
-                          ref={titleMarquee.titleContainerRef}
-                          onMouseEnter={titleMarquee.onMouseEnter}
-                          onMouseLeave={titleMarquee.onMouseLeave}
-                        >
-                          <span className="notice-title__inner" title={notice.fileName}>{notice.fileName}</span>
-                        </h3>
-                        <p className="notice-description">{getNoticeDescriptionText(notice)}</p>
+            <div className="notices-list-container">
+              <div className="notices-list">
+                {visibleItems.map(notice => (
+                  <div key={notice.id} className="notice-card">
+                    <div className="notice-content">
+                      <div className="notice-header">
+                        <div className="notice-info">
+                          <h3
+                            className="notice-title one-line-ellipsis"
+                            ref={titleMarquee.titleContainerRef}
+                            onMouseEnter={titleMarquee.onMouseEnter}
+                            onMouseLeave={titleMarquee.onMouseLeave}
+                          >
+                            <span className="notice-title__inner" title={notice.fileName}>{notice.fileName}</span>
+                          </h3>
+                          <p className="notice-description">{getNoticeDescriptionText(notice)}</p>
+                        </div>
+                        <div className="notice-actions">
+                          {can(user, 'notices:delete') && (
+                            <button
+                              className="notice-card__delete-btn"
+                              onClick={() => handleDeleteNoticeLocal(notice.id)}
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          )}
+                          {can(user, 'notices:update') && (
+                            <button
+                              className="edit-btn"
+                              onClick={() => openEditNotice(notice)}
+                            >
+                              Edit Notice
+                            </button>
+                          )}
+                          <button
+                            className="download-btn"
+                            onClick={() => handleViewNotice(notice)}
+                          >
+                            View Notice
+                          </button>
+                        </div>
                       </div>
-                      <div className="notice-actions">
-                        {can(user, 'notices:delete') && (
-                          <button
-                            className="notice-card__delete-btn"
-                            onClick={() => handleDeleteNoticeLocal(notice.id)}
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
-                        )}
-                        {can(user, 'notices:update') && (
-                          <button
-                            className="edit-btn"
-                            onClick={() => openEditNotice(notice)}
-                          >
-                            Edit Notice
-                          </button>
-                        )}
+                      <div className="notice-preview-container">
+                        <div className="notice-preview-card">
+                          <div className="notice-preview-header">
+                            <h2 className="notice-preview-title">Official Notice</h2>
+                            <p className="notice-preview-subtitle">Here's what's happening with your membership</p>
+                          </div>
+                          
+                          <div className="notice-preview-content">
+                            <div className="notice-preview-info">
+                              <div className="notice-preview-field">
+                                <span className="notice-preview-label">Category:</span>
+                                <span className="notice-preview-value">
+                                  {categories.find(cat => cat.id === notice.noticeType)?.name || 'Not specified'}
+                                </span>
+                              </div>
+                              <div className="notice-preview-field">
+                                <span className="notice-preview-label">Date:</span>
+                                <span className="notice-preview-value">
+                                  {formatDate(notice.publishDate || notice.publish_date || notice.createdAt || notice.createdAtISO)}
+                                </span>
+                              </div>
+                              <div className="notice-preview-field">
+                                <span className="notice-preview-label">Link:</span>
+                                <span className="notice-preview-value">
+                                  {typeof notice.linkUrl === 'string' && notice.linkUrl.trim() ? (
+                                    <a
+                                      href={notice.linkUrl}
+                                      className="notice-preview-link"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      {notice.linkUrl}
+                                    </a>
+                                  ) : (
+                                    'No link provided'
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <span className="notice-date">Published: {formatDate(notice.publishDate || notice.publish_date || notice.createdAt || notice.createdAtISO)}</span>
+
+                      <div className="notice-actions-mobile">
+                        <div className="notice-actions-mobile-adm">
+                          {can(user, 'notices:delete') && (
+                            <button
+                              className="notice-card__delete-btn"
+                              onClick={() => handleDeleteNoticeLocal(notice.id)}
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          )}
+                          {can(user, 'notices:update') && (
+                            <button
+                              className="edit-btn"
+                              onClick={() => openEditNotice(notice)}
+                            >
+                              Edit
+                            </button>
+                            
+                          )}
+                        </div>
                         <button
                           className="download-btn"
                           disabled={pdfLoadingStates[notice.id]}
@@ -863,84 +929,30 @@ export const Notices = () => {
                         </button>
                       </div>
                     </div>
-                    <div className="notice-preview-container">
-                      <div className="notice-preview-card">
-                        {/* Header */}
-                        <div className="notice-preview-header">
-                          <h2 className="notice-preview-title">Official Notice</h2>
-                          <p className="notice-preview-subtitle">Here's what's happening with your membership</p>
-                        </div>
-                        
-                        {/* Content section */}
-                        <div className="notice-preview-content">
-                          <div className="notice-preview-info">
-                            <div className="notice-preview-field">
-                              <span className="notice-preview-label">Category:</span>
-                              <span className="notice-preview-value">
-                                {categories.find(cat => cat.id === notice.noticeType)?.name || 'Not specified'}
-                              </span>
-                            </div>
-                            <div className="notice-preview-field">
-                              <span className="notice-preview-label">Date:</span>
-                              <span className="notice-preview-value">
-                                {formatDate(notice.createdAt || notice.createdAtISO || notice.publishDate)}
-                              </span>
-                            </div>
-                            <div className="notice-preview-field">
-                              <span className="notice-preview-label">Link:</span>
-                              <span className="notice-preview-value">
-                                {typeof notice.linkUrl === 'string' && notice.linkUrl.trim() ? (
-                                  <a
-                                    href={notice.linkUrl}
-                                    className="notice-preview-link"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    {notice.linkUrl}
-                                  </a>
-                                ) : (
-                                  'No link provided'
-                                )}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <span className="notice-date">Published: {formatDate(notice.createdAt || notice.publishDate)}</span>
-
-                    {/* Mobile actions - shown only on mobile */}
-                    <div className="notice-actions-mobile">
-                      <div className="notice-actions-mobile-adm">
-                        {can(user, 'notices:delete') && (
-                          <button
-                            className="notice-card__delete-btn"
-                            onClick={() => handleDeleteNoticeLocal(notice.id)}
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
-                        )}
-                        {can(user, 'notices:update') && (
-                          <button
-                            className="edit-btn"
-                            onClick={() => openEditNotice(notice)}
-                          >
-                            Edit
-                          </button>
-                          
-                        )}
-                      </div>
-                      <button
-                        className="download-btn"
-                        disabled={pdfLoadingStates[notice.id]}
-                        onClick={() => handleDownloadPDF(notice)}
-                      >
-                        {pdfLoadingStates[notice.id] ? 'Generating...' : 'Download Notice'}
-                      </button>
-                    </div>
                   </div>
+                ))}
+              </div>
+              {pagination.last_page > 1 && (
+                <div className="notices-pagination">
+                  <button 
+                    className="prev-btn"
+                    onClick={() => changePage(pagination.current_page - 1)}
+                    disabled={pagination.current_page <= 1}
+                  >
+                    <i className="bi bi-chevron-left"></i>
+                  </button>
+                  <div className="page-counter">
+                    <span>{pagination.current_page} / {pagination.last_page}</span>
+                  </div>
+                  <button 
+                    className="next-btn"
+                    onClick={() => changePage(pagination.current_page + 1)}
+                    disabled={pagination.current_page >= pagination.last_page}
+                  >
+                    <i className="bi bi-chevron-right"></i>
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>
@@ -979,17 +991,29 @@ export const Notices = () => {
               </div>
 
               <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label htmlFor="fileName">File Name<span className="req-star" aria-hidden="true">*</span></label>
-                  <input
-                    type="text"
-                    id="fileName"
-                    name="fileName"
-                    value={noticeForm.form.fileName}
-                    onChange={handleInputChange}
-                    placeholder="Please mention how do you want to save the document name"
-                    required
-                  />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="fileName">File Name<span className="req-star" aria-hidden="true">*</span></label>
+                    <input
+                      type="text"
+                      id="fileName"
+                      name="fileName"
+                      value={noticeForm.form.fileName}
+                      onChange={handleInputChange}
+                      placeholder="Please mention how do you want to save the document name"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="publishDate">Publish Date</label>
+                    <input
+                      type="date"
+                      id="publishDate"
+                      name="publishDate"
+                      value={noticeForm.form.publishDate || ''}
+                      onChange={handleInputChange}
+                    />
+                  </div>
                 </div>
 
                 <div className="form-group">
@@ -1018,20 +1042,19 @@ export const Notices = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="linkUrl">Upload Link<span className="req-star" aria-hidden="true">*</span></label>
+                  <label htmlFor="linkUrl">Upload Link</label>
                   <input
-                    type="url"
+                    type="text"
                     id="linkUrl"
                     name="linkUrl"
                     value={noticeForm.form.linkUrl}
                     onChange={handleInputChange}
-                    placeholder="https://example.com"
-                    required
+                    placeholder="https://example.com or #"
                   />
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="file">Upload File<span className="req-star" aria-hidden="true">*</span></label>
+                  <label htmlFor="file">Upload File</label>
                   <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>PDF, PNG, JPG and JPEG files are supported. Maximum file size: 15 MB.</p>
                   <div
                     className="file-upload-area dropzone-surface"
@@ -1268,6 +1291,89 @@ export const Notices = () => {
         isOpen={isSuccessDeleteOpen}
         onClose={() => setIsSuccessDeleteOpen(false)}
       />
+
+      {/* View Notice Modal */}
+      {isViewNoticeModalOpen && viewingNotice && (
+        <div
+          className="notices-modal-overlay"
+          onPointerDown={viewNoticeModalBackdropClose.onBackdropPointerDown}
+          onPointerUp={viewNoticeModalBackdropClose.onBackdropPointerUp}
+          onPointerCancel={viewNoticeModalBackdropClose.onBackdropPointerCancel}
+        >
+          <ModalLifecycleLock />
+          <div
+            className="notices-modal view-notice-modal"
+            onPointerDown={viewNoticeModalBackdropClose.stopInsidePointer}
+            onClick={viewNoticeModalBackdropClose.stopInsidePointer}
+          >
+            <div className="view-notice-header-section">
+              <div className="view-notice-header-top">
+                <img src="/BVI-logo.png" alt="BVI Finance" className="view-notice-logo" />
+                <button
+                  className="close-btn view-notice-close-btn"
+                  onClick={() => setIsViewNoticeModalOpen(false)}
+                  aria-label="Close modal"
+                >
+                  <i className="bi bi-x-lg"></i>
+                </button>
+              </div>
+              <h2 className="view-notice-header-title">Official Notice</h2>
+              <hr className="view-notice-header-divider" />
+            </div>
+            
+            <div className="view-notice-content">
+              <div className="view-notice-header">
+                <h2 className="view-notice-title">{viewingNotice.fileName || 'Notice'}</h2>
+                <span className="view-notice-date">
+                  {formatDate(viewingNotice.publishDate || viewingNotice.publish_date || viewingNotice.createdAt || viewingNotice.createdAtISO)}
+                </span>
+              </div>
+              
+              <div className="view-notice-description">
+                {viewingNotice.descriptionHTML ? (
+                  <div dangerouslySetInnerHTML={{ __html: viewingNotice.descriptionHTML }} />
+                ) : viewingNotice.description ? (
+                  <div dangerouslySetInnerHTML={{ __html: viewingNotice.description }} />
+                ) : (
+                  <p>{getNoticeDescriptionText(viewingNotice)}</p>
+                )}
+              </div>
+              
+              {viewingNotice.linkUrl && viewingNotice.linkUrl.trim() !== '#' && (
+                <div className="view-notice-link">
+                  <a 
+                    href={viewingNotice.linkUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="view-notice-link-url"
+                  >
+                    {viewingNotice.linkUrl}
+                  </a>
+                </div>
+              )}
+              
+              <hr className="view-notice-divider" />
+              
+              <div className="view-notice-download-section">
+                <button
+                  className="download-notice-btn"
+                  disabled={!hasFile(viewingNotice)}
+                  onClick={() => {
+                    if (hasFile(viewingNotice)) {
+                      handleDownloadFile(viewingNotice);
+                    }
+                  }}
+                >
+                  Download Notice
+                </button>
+                {!hasFile(viewingNotice) && (
+                  <p className="no-file-message">No uploaded file available for download</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </>
   )

@@ -57,25 +57,24 @@ class MembersService {
         if (data.http_status === 401) {
           localStorage.removeItem(this.tokenKey)
           localStorage.removeItem('user')
-          throw new Error('Sesión expirada. Por favor inicia sesión nuevamente.')
+          throw new Error('Session expired. Please log in again.')
         } else if (data.http_status === 403) {
-          throw new Error('Acceso denegado. Se requiere rol de administrador.')
+          throw new Error('Access denied. Administrator role required.')
         } else if (data.http_status === 400 || data.http_status === 422) {
-          const errorMessage = data.message || 'Errores de validación'
+          const errorMessage = data.message || 'Validation errors'
           const validationErrors = data.errors ? Object.values(data.errors).flat().join(', ') : ''
           throw new Error(`${errorMessage}${validationErrors ? ': ' + validationErrors : ''}`)
         } else if (data.http_status === 404) {
-          // Pass-through 404 with message so caller can show empty state
           return {
             http_status: 404,
             message: data.message || 'No data found',
             data: []
           }
         } else if (data.http_status === 500) {
-          const errorMessage = data.message || data.error || 'Error del servidor. Intenta nuevamente más tarde.'
+          const errorMessage = data.message || data.error || 'Server error. Please try again later.'
           throw new Error(errorMessage)
         } else {
-          const errorMessage = data.message || data.error || `Error del servidor: ${response.status}`
+          const errorMessage = data.message || data.error || `Server error: ${response.status}`
           throw new Error(errorMessage)
         }
       } catch (_parseError) {
@@ -86,7 +85,7 @@ class MembersService {
             data: []
           }
         }
-        throw new Error(`Error del servidor: ${response.status} ${response.statusText}`)
+        throw new Error(`Server error: ${response.status} ${response.statusText}`)
       }
     }
 

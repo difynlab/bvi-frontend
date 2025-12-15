@@ -100,6 +100,7 @@ const FIELD_MAPPINGS = {
   frontendToBackend: {
     id: 'id',
     fileName: 'name',
+    publishDate: 'publish_date',
     noticeType: 'notice_category_id',
     thumbnail: 'thumbnail',  // Use thumbnail field directly (file object)
     linkUrl: 'link',
@@ -111,6 +112,8 @@ const FIELD_MAPPINGS = {
   backendToFrontend: {
     id: 'id',
     name: 'fileName',
+    publish_date: 'publishDate',
+    publishDate: 'publishDate', // Also handle camelCase from backend
     notice_category_id: 'noticeType',
     thumbnail: 'imageFileName',
     link: 'linkUrl',
@@ -153,11 +156,22 @@ const transformObject = (obj, fieldMapping, valueMapping) => {
 
 // Transformar datos del frontend al backend
 export const transformToBackend = (frontendNotice, isEdit = false) => {
+  console.log('🔄 [transformToBackend] Frontend notice to transform:', {
+    publishDate: frontendNotice.publishDate,
+    fullFrontend: frontendNotice,
+    isEdit: isEdit
+  });
+  
   const baseData = transformObject(
     frontendNotice,
     FIELD_MAPPINGS.frontendToBackend,
     VALUE_MAPPINGS.frontendToBackend
   )
+  
+  console.log('🔄 [transformToBackend] Transformed backend data:', {
+    publish_date: baseData.publish_date,
+    fullBackend: baseData
+  });
 
   // Build description as JSON string (same pattern as events)
   if (frontendNotice.description && frontendNotice.editorHtml) {
@@ -173,11 +187,22 @@ export const transformToBackend = (frontendNotice, isEdit = false) => {
 
 // Transformar datos del backend al frontend
 export const transformFromBackend = (backendNotice) => {
+  console.log('🔄 [transformFromBackend] Backend notice received:', {
+    publish_date: backendNotice.publish_date,
+    publishDate: backendNotice.publishDate,
+    fullBackend: backendNotice
+  });
+  
   const frontendNotice = transformObject(
     backendNotice,
     FIELD_MAPPINGS.backendToFrontend,
     VALUE_MAPPINGS.backendToFrontend
   )
+  
+  console.log('🔄 [transformFromBackend] Transformed frontend notice:', {
+    publishDate: frontendNotice.publishDate,
+    fullFrontend: frontendNotice
+  });
 
   // TODO PRODUCTION: CHANGE IMAGES - Use server URLs instead of localStorage
   // Handle new image structure with blurred and original thumbnails

@@ -54,8 +54,32 @@ const fromItem = (item) => {
     }
   }
   
+  let publishDate = '';
+  
+  if (item.publishDate) {
+    if (item.publishDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      publishDate = item.publishDate;
+    } else {
+      const date = new Date(item.publishDate);
+      if (!isNaN(date.getTime())) {
+        publishDate = date.toISOString().split('T')[0];
+      }
+    }
+  } else if (item.publish_date) {
+    if (item.publish_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      publishDate = item.publish_date;
+    } else {
+      const date = new Date(item.publish_date);
+      if (!isNaN(date.getTime())) {
+        publishDate = date.toISOString().split('T')[0];
+      }
+    }
+  }
+  // Don't fallback to createdAt - only use publishDate if it exists
+  
   return {
     fileName: item.fileName || '',
+    publishDate: publishDate,
     noticeType: item.noticeType || '',
     description: item.description || '',
     imageFileName: imageFileName,
@@ -72,6 +96,7 @@ export const useNoticeForm = () => {
   // Default empty form state
   const emptyForm = {
     fileName: '',
+    publishDate: '',
     noticeType: '',
     description: '',
     imageFileName: '',
@@ -230,8 +255,6 @@ export const useNoticeForm = () => {
       errors.push('Please complete all required fields.')
     } else if (!form.description?.trim()) {
       errors.push('Please complete all required fields.')
-    } else if (!form.linkUrl?.trim()) {
-      errors.push('Please complete all required fields.')
     }
     
     // Check file is required
@@ -267,9 +290,9 @@ export const useNoticeForm = () => {
       errors.push('Please select a valid category.')
     }
     
-    // Check URL is valid using helper
-    if (form.linkUrl && !isValidUrl(form.linkUrl)) {
-      errors.push('Please enter a valid URL.')
+    // Check URL is valid using helper (allow "#" as a placeholder)
+    if (form.linkUrl && form.linkUrl.trim() !== '#' && !isValidUrl(form.linkUrl)) {
+      errors.push('Please enter a valid URL or use "#" to indicate no link.')
     }
     
     // Convert array to single error message
@@ -310,8 +333,11 @@ export const useNoticeForm = () => {
 
   // Build notice object for backend (similar to buildEventObject in useEventForm)
   const buildNoticeObject = useCallback((existingId = null) => {
+    const publishDate = form.publishDate || new Date().toISOString().split('T')[0];
+    
     const noticeObject = {
       fileName: form.fileName,
+      publishDate: publishDate,
       noticeType: form.noticeType,
       description: editorText,
       editorHtml: editorHtml,
@@ -319,10 +345,9 @@ export const useNoticeForm = () => {
       imagePreviewUrl: form.imagePreviewUrl || '',
       linkUrl: form.linkUrl,
       file: form.file,
-      status: 1 // Default status: active
+      status: 1
     }
     
-    // Only include ID for edit mode (existing notices)
     if (existingId) {
       noticeObject.id = existingId
     }

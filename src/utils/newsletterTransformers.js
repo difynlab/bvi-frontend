@@ -22,15 +22,10 @@ const saveNewslettersImagesToStorage = (imagesData) => {
   } catch (error) {
     console.error('❌ Error saving newsletters images to localStorage:', error)
     
-    // If quota exceeded, clear old images and try again
     if (error.name === 'QuotaExceededError') {
-      console.log('🧹 localStorage quota exceeded, clearing old images...')
       try {
-        // Clear all newsletters images
         localStorage.removeItem(NEWSLETTERS_IMAGES_KEY)
-        // Try to save again
         localStorage.setItem(NEWSLETTERS_IMAGES_KEY, JSON.stringify(imagesData))
-        console.log('✅ Successfully saved after clearing old images')
         return true
       } catch (retryError) {
         console.error('❌ Failed to save even after clearing:', retryError)
@@ -39,7 +34,6 @@ const saveNewslettersImagesToStorage = (imagesData) => {
         if (currentNewsletterId) {
           const currentNewsletter = { [currentNewsletterId]: imagesData[currentNewsletterId] }
           localStorage.setItem(NEWSLETTERS_IMAGES_KEY, JSON.stringify(currentNewsletter))
-          console.log('✅ Saved only current newsletter image')
           return true
         }
         return false
@@ -73,9 +67,8 @@ const cleanImageUrl = (url) => {
   
   // Si la URL contiene el prefijo duplicado, extraer solo la parte final
   if (url.includes(`${storagePath}${storagePath}`)) {
-    const cleanUrl = url.replace(`${storagePath}${storagePath}`, storagePath)
-    console.log('cleanImageUrl: cleaned duplicated URL:', cleanUrl)
-    return cleanUrl
+      const cleanUrl = url.replace(`${storagePath}${storagePath}`, storagePath)
+      return cleanUrl
   }
   
   return url
@@ -115,7 +108,8 @@ const FIELD_MAPPINGS = {
     file: 'file',
     status: 'status',
     created_at: 'createdAt',
-    updated_at: 'updatedAt'
+    updated_at: 'updatedAt',
+    publish_date: 'publishDate'
   }
 }
 
@@ -241,7 +235,12 @@ export const transformFromBackend = (backendNewsletter) => {
     // Alternative field name for file
     const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
     const apiBaseURL = baseURL.replace('/api', '')
-    frontendNewsletter.fileUrl = `${apiBaseURL}/storage/newsletters/${backendNewsletter.file_name}`
+      frontendNewsletter.fileUrl = `${apiBaseURL}/storage/newsletters/${backendNewsletter.file_name}`
+  }
+
+  // Ensure publish_date is properly mapped if it wasn't transformed
+  if (!frontendNewsletter.publishDate && backendNewsletter.publish_date) {
+    frontendNewsletter.publishDate = backendNewsletter.publish_date
   }
 
   return frontendNewsletter

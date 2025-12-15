@@ -27,14 +27,15 @@ export const useNewsletterForm = () => {
   const emptyForm = {
     fileName: '',
     description: '',
-    descriptionHtml: '', // NUEVO: Para backend
-    descriptionText: '', // NUEVO: Para backend
+    descriptionHtml: '',
+    descriptionText: '',
     editorHtml: '',
     imageFileName: '',
     imagePreviewUrl: '',
     imageUrl: '',
     file: null,
-    linkUrl: ''
+    linkUrl: '',
+    publishDate: ''
   }
 
   const [form, setForm] = useState(emptyForm)
@@ -64,15 +65,33 @@ export const useNewsletterForm = () => {
     const initialHtml = newsletter.editorHtml || htmlFromPlain(newsletter.description || '')
     const description = newsletter.description || stripHtml(newsletter.editorHtml || '')
     
+    let publishDate = ''
+    const publishDateValue = newsletter.publishDate || newsletter.publish_date || newsletter.data?.publish_date || newsletter.data?.publishDate || newsletter.publishDateISO || newsletter.data?.publishDateISO
+    
+    if (publishDateValue) {
+      if (typeof publishDateValue === 'string' && publishDateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        publishDate = publishDateValue
+      } else {
+        const date = new Date(publishDateValue)
+        if (!isNaN(date.getTime())) {
+          publishDate = date.toISOString().split('T')[0]
+        }
+      }
+    }
+    
+    const fileName = newsletter.fileName || newsletter.data?.name || newsletter.name || ''
+    const linkUrl = newsletter.linkUrl || newsletter.data?.link || newsletter.link || ''
+    
     setForm({
-      fileName: newsletter.fileName || '',
+      fileName: fileName,
       description: description,
       editorHtml: initialHtml,
       imageFileName: newsletter.imageFileName || '',
       imagePreviewUrl: newsletter.imagePreviewUrl || '',
       imageUrl: newsletter.imageUrl || '',
       file: null,
-      linkUrl: newsletter.linkUrl || ''
+      linkUrl: linkUrl,
+      publishDate: publishDate
     })
     setEditorHtml(initialHtml)
     setEditorText(description)
@@ -182,9 +201,25 @@ export const useNewsletterForm = () => {
         }
       }
       
-      // Set form data
+      let publishDate = ''
+      const publishDateValue = item.publishDate || item.publish_date || item.data?.publish_date || item.data?.publishDate || item.publishDateISO || item.data?.publishDateISO
+      
+      if (publishDateValue) {
+        if (typeof publishDateValue === 'string' && publishDateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          publishDate = publishDateValue
+        } else {
+          const date = new Date(publishDateValue)
+          if (!isNaN(date.getTime())) {
+            publishDate = date.toISOString().split('T')[0]
+          }
+        }
+      }
+      
+      const fileName = item.fileName || item.data?.name || item.name || ''
+      const linkUrl = item.linkUrl || item.data?.link || item.link || ''
+      
       const formData = {
-        fileName: item.name || item.fileName || '',
+        fileName: fileName,
         description: descriptionText,
         descriptionHtml: descriptionHtml,
         descriptionText: descriptionText,
@@ -192,8 +227,9 @@ export const useNewsletterForm = () => {
         imageFileName: imageFileName,
         imagePreviewUrl: imagePreviewUrl,
         imageUrl: item.imageUrl || item.original_thumbnail || '',
-        file: null, // Don't load file for editing
-        linkUrl: item.link || item.linkUrl || ''
+        file: null,
+        linkUrl: linkUrl,
+        publishDate: publishDate
       }
       setForm(formData)
       
@@ -221,15 +257,12 @@ export const useNewsletterForm = () => {
   }
 
   const buildNewsletterObject = async (existingId = null) => {
-    // Extract HTML string from editorHtml object
     const htmlString = editorHtml?.html || editorHtml || ''
     
     const firstParagraph = extractFirstParagraph(htmlString)
     
-    // Fallback más robusto para descriptionText
     let descriptionText = firstParagraph
     if (!descriptionText && editorText) {
-      // Handle editorText if it's an object
       const textString = typeof editorText === 'string' ? editorText : editorText?.text || editorText?.html || ''
       descriptionText = textString.trim()
     }
@@ -240,17 +273,27 @@ export const useNewsletterForm = () => {
       descriptionText = 'Sin descripción'
     }
     
-    // Build the payload with the PDF file uploaded by the user
-    return {
+    const publishDate = form.publishDate || new Date().toISOString().split('T')[0]
+    
+    const payload = {
       name: form.fileName.trim(),
       description: JSON.stringify({
         descriptionHtml: htmlString,
         descriptionText: descriptionText
       }),
-      file: form.file, // PDF file uploaded by the user
-      link: form.linkUrl.trim(),
+      publish_date: publishDate,
       status: 1
     }
+    
+    if (form.linkUrl && form.linkUrl.trim()) {
+      payload.link = form.linkUrl.trim()
+    }
+    
+    if (form.file) {
+      payload.file = form.file
+    }
+    
+    return payload
   }
 
   return {

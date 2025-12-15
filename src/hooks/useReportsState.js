@@ -143,6 +143,12 @@ export function useReportsState() {
   const [shouldReloadCategories, setShouldReloadCategories] = useState(false);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [shouldReloadReports, setShouldReloadReports] = useState(false);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    last_page: 1,
+    per_page: 6,
+    total: 0
+  });
 
   // Function to refresh categories (called after create/update/delete)
   const refreshCategories = useCallback(async () => {
@@ -240,42 +246,65 @@ export function useReportsState() {
     setShouldReloadReports(true);
   }, []);
 
-  // Load reports from API function
   const loadReportsFromAPI = useCallback(async () => {
-    
-    // Check cache first for immediate display
     const cachedReports = getCachedReports();
     
     if (cachedReports) {
       setData(prev => ({ ...prev, items: cachedReports }));
       
-      // Check if cache is still fresh (less than 5 minutes old)
       const cacheData = JSON.parse(localStorage.getItem(REPORTS_CACHE_KEY));
       const cacheAge = Date.now() - cacheData.timestamp;
       const isCacheFresh = cacheAge < CACHE_EXPIRY_TIME;
       
-      
       if (isCacheFresh) {
-        return; // Skip API call if cache is fresh
+        return;
       }
     }
 
     setReportsLoading(true);
     try {
-      const response = await reportsService.getReports();
-      if (response.http_status === 200 && response.data) {
-        let dataArray = [];
-        if (Array.isArray(response.data)) {
-          dataArray = response.data;
-        } else if (response.data.reports && Array.isArray(response.data.reports)) {
-          dataArray = response.data.reports;
-        } else if (response.data.data && Array.isArray(response.data.data)) {
-          dataArray = response.data.data;
+      const allReports = [];
+      let currentPage = 1;
+      let hasMorePages = true;
+      const perPage = 100;
+      
+      while (hasMorePages) {
+        const response = await reportsService.getReports(perPage, currentPage);
+        
+        if (response.http_status === 200 && response.data) {
+          let dataArray = [];
+          if (Array.isArray(response.data)) {
+            dataArray = response.data;
+          } else if (response.data.reports && Array.isArray(response.data.reports)) {
+            dataArray = response.data.reports;
+          } else if (response.data.data && Array.isArray(response.data.data)) {
+            dataArray = response.data.data;
+          }
+          
+          allReports.push(...dataArray);
+          
+          const totalPages = response.data?.last_page || 1;
+          
+          if (currentPage >= totalPages || dataArray.length === 0) {
+            hasMorePages = false;
+          } else {
+            currentPage++;
+          }
+        } else if (response.http_status === 404) {
+          hasMorePages = false;
+          if (allReports.length === 0) {
+            setData(prev => ({ ...prev, items: [] }));
+          }
+        } else {
+          hasMorePages = false;
         }
-        
-        setData(prev => ({ ...prev, items: dataArray }));
-        setCachedReports(dataArray);
-        
+      }
+      
+      if (allReports.length > 0) {
+        setData(prev => ({ ...prev, items: allReports }));
+        setCachedReports(allReports);
+      } else if (allReports.length === 0) {
+        setData(prev => ({ ...prev, items: [] }));
       }
     } catch (error) {
       if (error.message.includes('No data found')) {
@@ -319,17 +348,46 @@ export function useReportsState() {
   //   writeReports(data);
   // }, [data]);
 
-  const visibleItems = useMemo(() => {
+  const filteredReports = useMemo(() => {
     if (!activeCategoryId) return [];
     
-    
-    const filtered = data.items.filter(item => {
-      // Filter by report_category_id (numeric ID from API)
+    return data.items.filter(item => {
       return item.report_category_id === activeCategoryId;
     });
-    
-    return filtered;
   }, [data.items, activeCategoryId]);
+
+  useEffect(() => {
+    const totalPages = Math.ceil(filteredReports.length / pagination.per_page) || 1;
+    const adjustedPage = pagination.current_page > totalPages ? 1 : pagination.current_page;
+    
+    setPagination(prev => ({
+      ...prev,
+      current_page: adjustedPage,
+      last_page: totalPages,
+      total: filteredReports.length
+    }));
+  }, [filteredReports.length, pagination.per_page]);
+
+  const visibleItems = useMemo(() => {
+    if (!filteredReports.length) {
+      return [];
+    }
+    
+    const totalPages = Math.ceil(filteredReports.length / pagination.per_page) || 1;
+    const currentPage = pagination.current_page > totalPages ? 1 : pagination.current_page;
+    const startIndex = (currentPage - 1) * pagination.per_page;
+    const endIndex = startIndex + pagination.per_page;
+    
+    return filteredReports.slice(startIndex, endIndex);
+  }, [filteredReports, pagination.current_page, pagination.per_page]);
+
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, current_page: 1 }));
+  }, [activeCategoryId]);
+
+  const changePage = useCallback((page) => {
+    setPagination(prev => ({ ...prev, current_page: page }));
+  }, []);
 
   const handleAddCategory = useCallback(async (name) => {
     const trimmedName = name.trim();
@@ -620,6 +678,7 @@ export function useReportsState() {
     items: data.items,
     activeCategory: activeCategoryId,
     visibleItems,
+    pagination,
     isCategoryModalOpen,
     isReportModalOpen,
     editingReport,
@@ -648,9 +707,9 @@ export function useReportsState() {
     setIsCategoryModalOpen,
     setConfirmModalOpen,
     setCategoryToDelete,
-    // New reports-related exports
     reportsLoading,
     refreshReports,
-    loadReportsFromAPI
+    loadReportsFromAPI,
+    changePage
   };
 }
