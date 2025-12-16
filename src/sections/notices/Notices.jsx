@@ -322,6 +322,11 @@ export const Notices = () => {
     return lastSpaceIndex > 0 ? truncated.substring(0, lastSpaceIndex) + '…' : truncated + '…'
   }
 
+  const truncateTitle = (title, maxLength = 65) => {
+    if (!title || title.length <= maxLength) return title
+    return title.substring(0, maxLength) + '...'
+  }
+
   const [useFallback, setUseFallback] = useState(false)
   const [editorKey, setEditorKey] = useState(0)
   const [missingRequired, setMissingRequired] = useState([])
@@ -827,7 +832,7 @@ export const Notices = () => {
                             onMouseEnter={titleMarquee.onMouseEnter}
                             onMouseLeave={titleMarquee.onMouseLeave}
                           >
-                            <span className="notice-title__inner" title={notice.fileName}>{notice.fileName}</span>
+                            <span className="notice-title__inner" title={notice.fileName}>{truncateTitle(notice.fileName)}</span>
                           </h3>
                           <p className="notice-description">{getNoticeDescriptionText(notice)}</p>
                         </div>
@@ -922,10 +927,9 @@ export const Notices = () => {
                         </div>
                         <button
                           className="download-btn"
-                          disabled={pdfLoadingStates[notice.id]}
-                          onClick={() => handleDownloadFile(notice)}
+                          onClick={() => handleViewNotice(notice)}
                         >
-                          {pdfLoadingStates[notice.id] ? 'Downloading...' : 'Download Notice'}
+                          View Notice
                         </button>
                       </div>
                     </div>

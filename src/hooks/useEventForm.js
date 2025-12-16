@@ -285,13 +285,6 @@ export const useEventForm = () => {
     // 📅 Campos de Fecha y Hora
     if (!form.date) {
       errors.push('Date is required.')
-    } else {
-      const selectedDate = new Date(form.date)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      if (selectedDate < today) {
-        errors.push('Date must be today or later.')
-      }
     }
     
     if (!form.startTime) {

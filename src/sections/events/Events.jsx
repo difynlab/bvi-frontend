@@ -717,7 +717,6 @@ export const Events = () => {
                       name="date"
                       value={eventForm.form.date}
                       onChange={handleInputChange}
-                      min={getTodayDate()}
                       required
                     />
                   </div>
@@ -732,7 +731,6 @@ export const Events = () => {
                         placeholder="09:00"
                       />
                     </div>
-                    <i className="bi bi-dash"></i>
                     <div className="form-group">
                       <input
                         type="time"

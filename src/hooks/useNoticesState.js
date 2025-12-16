@@ -53,7 +53,6 @@ export const useNoticesState = () => {
   useEffect(() => {
     loadNoticesFromAPI()
     
-    // Only load categories from localStorage if they came from API (not mocks)
     try {
       const cachedCategories = localStorage.getItem('bvi.notices.categoriesCache')
       const isFromAPI = localStorage.getItem('bvi.notices.categoriesFromAPI') === 'true'
@@ -63,7 +62,6 @@ export const useNoticesState = () => {
         setCategories(parsedCategories)
         setCategoriesLoaded(true)
         
-        // Ensure category groups are created in localStorage
         setNoticeCategories(parsedCategories)
         
         if (parsedCategories.length > 0 && !activeCategory) {
@@ -150,11 +148,13 @@ export const useNoticesState = () => {
           setCategories(parsedCategories)
           setCategoriesLoaded(true)
           
-          // Ensure category groups are created in localStorage
           setNoticeCategories(parsedCategories)
           
           if (!activeCategory) {
             setActiveCategory(parsedCategories[0].id)
+            if (notices.length === 0 && !noticesLoading) {
+              await loadNoticesFromAPI()
+            }
           }
           return
         }
@@ -182,12 +182,13 @@ export const useNoticesState = () => {
         localStorage.setItem('bvi.notices.categoriesCache', JSON.stringify(apiCategories))
         localStorage.setItem('bvi.notices.categoriesFromAPI', 'true')
         
-        // Ensure category groups are created in localStorage
         setNoticeCategories(apiCategories)
         
-        // Set first category as active if available
         if (apiCategories.length > 0 && !activeCategory) {
           setActiveCategory(apiCategories[0].id)
+          if (notices.length === 0 && !noticesLoading) {
+            await loadNoticesFromAPI()
+          }
         }
       } else if (response.http_status === 404) {
         // No categories found - show empty state
@@ -208,7 +209,7 @@ export const useNoticesState = () => {
     } finally {
       setCategoriesLoading(false)
     }
-  }, [categoriesLoaded, categoriesLoading, activeCategory]) // Remove categories from dependencies
+  }, [categoriesLoaded, categoriesLoading, activeCategory, notices.length, noticesLoading, loadNoticesFromAPI])
 
   // Effect to reload categories when needed
   useEffect(() => {

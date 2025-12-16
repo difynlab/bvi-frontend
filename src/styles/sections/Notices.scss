@@ -1,5 +1,10 @@
 @use '../vars' as *;
 
+.notices-page,
+.notices-page * {
+  box-sizing: border-box;
+}
+
 // Global modal form styles - needed for modals across all pages
 .form-group {
   display: flex;
@@ -29,7 +34,7 @@
   }
 }
 
-.form-row {
+.notices-modal .form-row {
   display: flex;
   gap: 16px;
   width: 100%;
@@ -167,9 +172,13 @@
 }
 
 .notices-page {
+  position: relative;
   padding: 30px;
   min-height: 100vh;
   background-color: $light_grey;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .notice-description {
@@ -295,6 +304,12 @@
 
 .notices-container {
   margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 
   .error-message {
     color: $vivid_red;
@@ -458,19 +473,25 @@
     .notice-preview-container {
       position: relative;
       width: 100%;
+      max-width: 100%;
       margin: $spacing-sm 0;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-sizing: border-box;
+      overflow: hidden;
     }
 
     .notice-preview-card {
       width: 100%;
+      max-width: 100%;
       background-color: #ffffff;
       border: 1px solid #e0e0e0;
       border-radius: 8px;
       padding: 20px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      box-sizing: border-box;
+      overflow: hidden;
     }
 
     .notice-preview-header {
@@ -507,6 +528,8 @@
       gap: 12px;
       align-items: center;
       width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
     }
 
     .notice-preview-field {
@@ -514,7 +537,9 @@
       flex-direction: column;
       gap: 4px;
       width: 50%;
+      max-width: 100%;
       text-align: left;
+      box-sizing: border-box;
     }
 
     .notice-preview-label {
@@ -528,7 +553,10 @@
       font-size: 14px;
       color: #666;
       word-break: break-word;
+      overflow-wrap: break-word;
       text-align: left;
+      max-width: 100%;
+      box-sizing: border-box;
     }
   }
 }
@@ -545,6 +573,8 @@
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .temp-role-toggle-btn {
@@ -591,6 +621,9 @@
   align-items: flex-end;
   flex-wrap: wrap;
   border-bottom: 1px solid #e9ecef;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .tab-group {
@@ -758,12 +791,18 @@
   position: relative;
   min-height: 400px;
   padding-bottom: 60px;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: visible;
+  box-sizing: border-box;
 }
 
 .notices-list {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .notice-card {
@@ -772,13 +811,19 @@
   border: 1px solid rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: box-shadow 0.2s;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 
 .notice-info {
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   min-width: 0;
+  max-width: 100%;
   height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .notice-actions {
@@ -786,6 +831,8 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .notice-image {
@@ -804,26 +851,61 @@
 
 .notice-content {
   padding: 20px;
+  max-width: 100%;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .notice-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .notice-title {
   font-size: 18px;
   color: #333;
   margin: 0;
-  flex: 1;
+  flex: 1 1 0%;
   margin-right: 15px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 
   &__inner {
     font-size: 20px;
     font-weight: 400;
     color: #333;
     height: 100%;
+    display: block;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &.one-line-ellipsis {
+    max-width: 100%;
+    overflow: hidden;
+
+    .notice-title__inner {
+      display: block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
+      box-sizing: border-box;
+    }
   }
 }
 
@@ -831,6 +913,10 @@
   color: #666;
   font-size: 0.875rem;
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
 }
 
 .notice-description {
@@ -839,16 +925,24 @@
   margin: 0;
   font-size: 0.9rem;
   width: 75%;
+  max-width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  min-width: 0;
 }
 
 .notice-actions {
   display: flex;
   width: fit-content;
   gap: 10px;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .notice-actions .edit-btn {
   width: fit-content;
+  max-width: 100%;
   background-color: rgb(245, 245, 245);
   color: #374151;
   border: none;
@@ -858,6 +952,8 @@
   font-weight: 400;
   cursor: pointer;
   transition: background-color 0.2s;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .edit-btn:hover {
@@ -875,6 +971,9 @@
   cursor: pointer;
   transition: all 0.2s;
   width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .notice-card__delete-btn {
@@ -889,6 +988,9 @@
   cursor: pointer;
   transition: all 0.3s;
   width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
 
   i {
     transition: all 0.3s;
@@ -1224,7 +1326,7 @@
 }
 
 @media (max-width: 768px) {
-  .form-row {
+  .notices-modal .form-row {
     flex-direction: column;
     gap: 0;
   }
@@ -1958,8 +2060,8 @@
 
 .notices-pagination {
   position: absolute;
-  bottom: 0;
-  right: 0;
+  bottom: 30px;
+  right: 30px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -2007,7 +2109,10 @@
     border-radius: 8px;
     border: 1px solid #e5e7eb;
     min-width: 80px;
+    max-width: 100%;
     text-align: center;
+    box-sizing: border-box;
+    flex-shrink: 0;
   }
 }
 
@@ -2016,13 +2121,18 @@
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 0;
   position: relative;
+  box-sizing: border-box;
 }
 
 .view-notice-header-section {
   padding: 30px 30px 0;
   margin-bottom: 20px;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .view-notice-header-top {
@@ -2081,6 +2191,9 @@
   flex-direction: column;
   gap: 20px;
   padding: 0 30px 30px;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .view-notice-header {
@@ -2089,19 +2202,30 @@
   align-items: flex-start;
   gap: 20px;
   margin-top: 10px;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 
   .view-notice-title {
     font-size: 24px;
     font-weight: 500;
     color: #212529;
     margin: 0;
-    flex: 1;
+    flex: 1 1 0%;
+    min-width: 0;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   .view-notice-date {
     font-size: 14px;
     color: #6c757d;
     white-space: nowrap;
+    flex-shrink: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -2109,13 +2233,55 @@
   font-size: 16px;
   line-height: 1.6;
   color: #374151;
+  max-width: 100%;
+  overflow-x: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
+
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  table {
+    width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  pre,
+  code {
+    max-width: 100%;
+    overflow-x: auto;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+  }
 
   p {
     margin: 0 0 12px 0;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 
     &:last-child {
       margin-bottom: 0;
     }
+  }
+
+  div {
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 }
 
@@ -2183,12 +2349,18 @@
 @media (max-width: 768px) {
   .view-notice-modal {
     width: 95%;
+    max-width: 100%;
     max-height: 95vh;
     padding: 0;
+    overflow-x: hidden;
+    box-sizing: border-box;
   }
 
   .view-notice-header-section {
     padding: 20px 20px 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
 
   .view-notice-header-top {
@@ -2217,6 +2389,9 @@
   .view-notice-content {
     padding: 0 20px 20px;
     gap: 15px;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
 
   .view-notice-header {
@@ -2235,6 +2410,34 @@
 
   .view-notice-description {
     font-size: 14px;
+    max-width: 100%;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+
+    * {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    table {
+      width: 100%;
+      max-width: 100%;
+      table-layout: fixed;
+    }
+
+    pre,
+    code {
+      max-width: 100%;
+      overflow-x: auto;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
   }
 
   .view-notice-download-section {
