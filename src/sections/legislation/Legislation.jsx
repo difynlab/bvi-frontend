@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useLegislationState } from '../../hooks/useLegislationState';
 import { useAuth } from '../../context/useAuth';
 import { can } from '../../auth/acl';
@@ -7,6 +7,7 @@ import LegislationDetailsSkeleton from '../../components/legislation/Legislation
 import { pdf } from '@react-pdf/renderer';
 import LegislationPDFDocument from '../../components/pdf/LegislationPDFDocument';
 import legislationService from '../../services/legislationService';
+import legislationFilesService from '../../services/legislationFilesService';
 import '../../styles/sections/Legislation.scss';
 
 const generateTempId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -153,14 +154,18 @@ const sanitizeRawDetails = (raw) =>
   );
 
 const Legislation = () => {
-  const { legislation } = useLegislationState(); // Solo usamos legislation del localStorage (info general)
+  const { legislation } = useLegislationState();
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState('both');
+  const [isUploadDropdownOpen, setIsUploadDropdownOpen] = useState(false);
+  const uploadDropdownRef = useRef(null);
 
-  // Estado local para attachments que vienen del backend (NO localStorage)
   const [attachments, setAttachments] = useState([]);
   const [isLoadingAttachments, setIsLoadingAttachments] = useState(true);
   const [isLegislationLoading, setIsLegislationLoading] = useState(true);
+  const [legislationFiles, setLegislationFiles] = useState([]);
+  const [isLoadingLegislationFiles, setIsLoadingLegislationFiles] = useState(true);
   // Estado para datos completos de la legislación (para el modal)
   const [legislationData, setLegislationData] = useState(null);
   const [serverDetailsSanitized, setServerDetailsSanitized] = useState(null);
@@ -427,84 +432,26 @@ const Legislation = () => {
       .replace(/-+/g, '-')}.pdf`;
   };
 
-  // Cargar attachments desde el index del backend
   useEffect(() => {
     const loadLegislationFromApi = async () => {
-      setIsLoadingAttachments(true);
       setIsLegislationLoading(true);
       try {
         const res = await legislationService.getLegislation();
         const apiData = res?.data || res;
         console.log('[Legislation] GET response raw description:', apiData?.description);
         const normalizedLinks = normalizeLinksFromApi(apiData?.links, apiData?.link);
-        const firstLinkUrl = getFirstLinkUrl(normalizedLinks);
         const parsedDetails = parseDetailsDescription(apiData?.description);
-        const descriptionForLegacy = parsedDetails ? '' : (apiData?.description || '').trim();
 
         setServerDetailsSanitized(parsedDetails ? sanitizeRawDetails(parsedDetails) : null);
 
-        // Construir lista de attachments desde files[] y/o description
-        const built = [];
-
-        // Si el backend trae archivos, mapear a attachments con títulos generados
-        const files = Array.isArray(apiData?.files) ? apiData.files : [];
-        files.forEach((fileItem, idx) => {
-          // El backend puede retornar fileItem como objeto { title, file } o como string (URL)
-          let fileUrl, fileName, title;
-
-          if (typeof fileItem === 'object' && fileItem !== null) {
-            fileUrl = fileItem.file || fileItem.fileUrl || '';
-            fileName = fileUrl.split('/').pop() || `document-${idx + 1}.pdf`;
-            title = fileItem.title || deriveTitleFromFileName(fileName) || `Support Document ${idx + 1}`;
-          } else if (typeof fileItem === 'string') {
-            fileUrl = fileItem;
-            fileName = fileUrl.split('/').pop() || `document-${idx + 1}.pdf`;
-            title = deriveTitleFromFileName(fileName) || `Support Document ${idx + 1}`;
-          } else {
-            return; // Skip invalid items
-          }
-
-          built.push({
-            id: `api-attachment-${idx + 1}`,
-            title: title,
-            displayTitle: title,
-            downloadName: buildDownloadFileName(title || 'legislation-document'),
-            descriptionHTML: descriptionForLegacy,
-            fileUrl: fileUrl,
-            fileName: fileName,
-            linkUrl: firstLinkUrl,
-            createdAt: apiData?.updated_at || apiData?.created_at || new Date().toISOString()
-          });
-        });
-
-        // Si no hay archivos pero hay description, crear un attachment virtual
-        if (built.length === 0 && descriptionForLegacy) {
-          built.push({
-            id: `api-attachment-1`,
-            title: 'Support Document 1',
-            displayTitle: 'Support Document 1',
-            downloadName: buildDownloadFileName('support-document'),
-            descriptionHTML: descriptionForLegacy,
-            fileUrl: '',
-            fileName: undefined,
-            linkUrl: firstLinkUrl,
-            createdAt: apiData?.updated_at || apiData?.created_at || new Date().toISOString()
-          });
-        }
-
-        setAttachments(built);
-
-        // Guardar datos completos para el modal
         setLegislationData({
-          files: files,
+          files: [],
           links: normalizedLinks
         });
       } catch (error) {
         console.error('Failed to load legislation from API:', error);
-        setAttachments([]); // En caso de error, lista vacía
         setLegislationData(null);
       } finally {
-        setIsLoadingAttachments(false);
         setIsLegislationLoading(false);
       }
     };
@@ -512,89 +459,136 @@ const Legislation = () => {
     loadLegislationFromApi();
   }, []);
 
+  useEffect(() => {
+    const loadLegislationFiles = async () => {
+      setIsLoadingLegislationFiles(true);
+      setIsLoadingAttachments(true);
+      try {
+        const response = await legislationFilesService.getAll(100, 1);
+        const filesData = response?.data?.data || [];
+        
+        const normalizedFiles = filesData.map((fileItem) => ({
+          id: `legislation-file-${fileItem.id}`,
+          title: fileItem.title || '',
+          displayTitle: fileItem.title || '',
+          fileUrl: fileItem.file || '',
+          fileName: fileItem.file ? fileItem.file.split('/').pop() : '',
+          apiId: fileItem.id,
+          status: fileItem.status,
+          createdAt: fileItem.created_at || new Date().toISOString()
+        }));
+
+        setLegislationFiles(normalizedFiles);
+        setAttachments(normalizedFiles);
+      } catch (error) {
+        console.error('Failed to load legislation files:', error);
+        setLegislationFiles([]);
+        setAttachments([]);
+      } finally {
+        setIsLoadingLegislationFiles(false);
+        setIsLoadingAttachments(false);
+      }
+    };
+
+    loadLegislationFiles();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (uploadDropdownRef.current && !uploadDropdownRef.current.contains(event.target)) {
+        setIsUploadDropdownOpen(false);
+      }
+    };
+
+    if (isUploadDropdownOpen) {
+      setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+      }, 0);
+      return () => {
+        document.removeEventListener('click', handleClickOutside);
+      };
+    }
+  }, [isUploadDropdownOpen]);
+
+
   const handleEditClick = () => {
     if (can(user, 'legislation:update')) {
       setIsModalOpen(true);
     }
   };
 
-  const handleModalClose = () => {
-    setIsModalOpen(false);
+  const handleUploadButtonClick = () => {
+    setIsUploadDropdownOpen(!isUploadDropdownOpen);
   };
 
-  const handleSaveAttachment = async () => {
-    // Recargar desde el backend después de guardar para tener los datos actualizados
-    // El backend ya guardó, así que refrescamos para obtener la respuesta del servidor
+  const handleUploadLinksClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsUploadDropdownOpen(false);
+    setModalMode('links');
+    setIsModalOpen(true);
+  };
+
+  const handleUploadFilesClick = () => {
+    setIsUploadDropdownOpen(false);
+    setModalMode('files');
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setModalMode('both');
+  };
+
+  const loadLegislationLinks = async () => {
     try {
       setIsLegislationLoading(true);
       const res = await legislationService.getLegislation();
       const apiData = res?.data || res;
-      console.log('[Legislation] Refresh GET response raw description:', apiData?.description);
       const normalizedLinks = normalizeLinksFromApi(apiData?.links, apiData?.link);
-      const firstLinkUrl = getFirstLinkUrl(normalizedLinks);
-
-      const built = [];
-      const files = Array.isArray(apiData?.files) ? apiData.files : [];
-      const parsedDetails = parseDetailsDescription(apiData?.description);
-      const descriptionForLegacy = parsedDetails ? '' : (apiData?.description || '').trim();
-
-      files.forEach((fileItem, idx) => {
-        // El backend puede retornar fileItem como objeto { title, file } o como string (URL)
-        let fileUrl, fileName, title;
-
-        if (typeof fileItem === 'object' && fileItem !== null) {
-          fileUrl = fileItem.file || fileItem.fileUrl || '';
-          fileName = fileUrl.split('/').pop() || `document-${idx + 1}.pdf`;
-          title = fileItem.title || deriveTitleFromFileName(fileName) || `Support Document ${idx + 1}`;
-        } else if (typeof fileItem === 'string') {
-          fileUrl = fileItem;
-          fileName = fileItem.split('/').pop() || `document-${idx + 1}.pdf`;
-          title = deriveTitleFromFileName(fileName) || `Support Document ${idx + 1}`;
-        } else {
-          return; // Skip invalid items
-        }
-
-        built.push({
-          id: `api-attachment-${idx + 1}`,
-          title: title,
-          displayTitle: title,
-          downloadName: buildDownloadFileName(title || 'legislation-document'),
-          descriptionHTML: descriptionForLegacy,
-          fileUrl: fileUrl,
-          fileName: fileName,
-          linkUrl: firstLinkUrl,
-          createdAt: apiData?.updated_at || apiData?.created_at || new Date().toISOString()
-        });
-      });
-
-      if (built.length === 0 && descriptionForLegacy) {
-        built.push({
-          id: `api-attachment-1`,
-          title: 'Support Document 1',
-          displayTitle: 'Support Document 1',
-          downloadName: buildDownloadFileName('support-document'),
-          descriptionHTML: descriptionForLegacy,
-          fileUrl: '',
-          fileName: undefined,
-          linkUrl: firstLinkUrl,
-          createdAt: apiData?.updated_at || apiData?.created_at || new Date().toISOString()
-        });
-      }
-
-      setServerDetailsSanitized(parsedDetails ? sanitizeRawDetails(parsedDetails) : null);
-
-      setAttachments(built);
-
-      // Actualizar datos completos para el modal
-      setLegislationData({
-        files: files,
+      
+      setLegislationData(prev => ({
+        ...prev,
         links: normalizedLinks
-      });
+      }));
     } catch (error) {
-      console.error('Failed to reload attachments after save:', error);
+      console.error('Failed to reload legislation links:', error);
     } finally {
       setIsLegislationLoading(false);
     }
+  };
+
+  const handleSaveAttachment = async () => {
+    try {
+      setIsLoadingLegislationFiles(true);
+      setIsLoadingAttachments(true);
+      
+      const response = await legislationFilesService.getAll(100, 1);
+      const filesData = response?.data?.data || [];
+      
+      const normalizedFiles = filesData.map((fileItem) => ({
+        id: `legislation-file-${fileItem.id}`,
+        title: fileItem.title || '',
+        displayTitle: fileItem.title || '',
+        fileUrl: fileItem.file || '',
+        fileName: fileItem.file ? fileItem.file.split('/').pop() : '',
+        apiId: fileItem.id,
+        status: fileItem.status,
+        createdAt: fileItem.created_at || new Date().toISOString()
+      }));
+
+      setLegislationFiles(normalizedFiles);
+      setAttachments(normalizedFiles);
+    } catch (error) {
+      console.error('Failed to reload legislation files after save:', error);
+    } finally {
+      setIsLoadingLegislationFiles(false);
+      setIsLoadingAttachments(false);
+    }
+  };
+
+  const handleSaveLinks = async () => {
+    await loadLegislationLinks();
   };
 
   const handleDownloadAttachment = async (attachment) => {
@@ -690,13 +684,34 @@ const Legislation = () => {
               <i className="bi bi-pencil-square" aria-hidden="true"></i>
               {detailsButtonLabel}
             </button>
-            <button
-              className="legislation-edit-btn legislation-edit-btn--desktop"
-              onClick={handleEditClick}
-              aria-label="Upload legislation"
-            >
-              Upload Legislation
-            </button>
+            <div className="legislation-upload-dropdown" ref={uploadDropdownRef}>
+              <button
+                className="legislation-edit-btn legislation-edit-btn--desktop"
+                onClick={handleUploadButtonClick}
+                aria-label="Upload legislation"
+                aria-expanded={isUploadDropdownOpen}
+              >
+                Upload Legislation
+              </button>
+              {isUploadDropdownOpen && (
+                <div className="legislation-upload-dropdown__menu">
+                  <button
+                    className="legislation-upload-dropdown__item"
+                    onClick={handleUploadLinksClick}
+                  >
+                    <i className="bi bi-link-45deg"></i>
+                    Upload Links
+                  </button>
+                  <button
+                    className="legislation-upload-dropdown__item"
+                    onClick={handleUploadFilesClick}
+                  >
+                    <i className="bi bi-file-earmark"></i>
+                    Upload Files
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -888,6 +903,7 @@ const Legislation = () => {
                 return (
                   <li key={`legislation-link-${index}`}>
                     <a href={url} target="_blank" rel="noopener noreferrer">
+                      <i className="bi bi-link-45deg"></i>
                       {title || url}
                     </a>
                   </li>
@@ -910,16 +926,28 @@ const Legislation = () => {
             attachments.map((attachment) => (
               <div key={attachment.id} className="attachment-item">
                 <div className="meta">
-                  <span className="source-label">Lorem Ipsum</span>
+                  <i className="bi bi-file-earmark attachment-icon" aria-hidden="true"></i>
                   <span className="attachment-title">{attachment.displayTitle || attachment.title}</span>
                 </div>
                 <div className="actions">
+                  {can(user, 'legislation:update') && (
+                    <button
+                      className="attachment-edit-btn"
+                      onClick={() => {
+                        setModalMode('files');
+                        setIsModalOpen(true);
+                      }}
+                      aria-label={`Edit files`}
+                    >
+                      <i className="bi bi-pencil-square"></i>
+                    </button>
+                  )}
                   <button
-                    className="download-btn"
+                    className="attachment-download-btn"
                     onClick={() => handleDownloadAttachment(attachment)}
                     aria-label={`Download ${attachment.title}`}
                   >
-                    Download PDF
+                    <i className="bi bi-download"></i>
                   </button>
                 </div>
               </div>
@@ -931,9 +959,24 @@ const Legislation = () => {
 
       <LegislationEditModal
         isOpen={isModalOpen}
-        onClose={handleModalClose}
-        onSave={handleSaveAttachment}
+        onClose={async () => {
+          handleModalClose();
+          if (modalMode === 'links') {
+            await loadLegislationLinks();
+          }
+        }}
+        onSave={async () => {
+          if (modalMode === 'links') {
+            await handleSaveLinks();
+          } else if (modalMode === 'files') {
+            await handleSaveAttachment();
+          } else {
+            await handleSaveLinks();
+            await handleSaveAttachment();
+          }
+        }}
         initialData={legislationData}
+        mode={modalMode}
       />
 
       {/* Mobile FAB */}
@@ -961,13 +1004,34 @@ const Legislation = () => {
               aria-hidden="true"
             ></i>
           </button>
-          <button
-            className="legislation-mobile-fab__btn legislation-mobile-fab__btn--upload"
-            onClick={handleEditClick}
-            aria-label="Upload legislation"
-          >
-            <i className="bi bi-plus" aria-hidden="true"></i>
-          </button>
+          <div className="legislation-upload-dropdown legislation-upload-dropdown--mobile" ref={uploadDropdownRef}>
+            <button
+              className="legislation-mobile-fab__btn legislation-mobile-fab__btn--upload"
+              onClick={handleUploadButtonClick}
+              aria-label="Upload legislation"
+              aria-expanded={isUploadDropdownOpen}
+            >
+              <i className="bi bi-plus" aria-hidden="true"></i>
+            </button>
+            {isUploadDropdownOpen && (
+              <div className="legislation-upload-dropdown__menu legislation-upload-dropdown__menu--mobile">
+                <button
+                  className="legislation-upload-dropdown__item"
+                  onClick={handleUploadLinksClick}
+                >
+                  <i className="bi bi-link-45deg"></i>
+                  Upload Links
+                </button>
+                <button
+                  className="legislation-upload-dropdown__item"
+                  onClick={handleUploadFilesClick}
+                >
+                  <i className="bi bi-file-earmark"></i>
+                  Upload Files
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -4,6 +4,10 @@ import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { isValidUrl } from '../../helpers/urlValidation';
 import ModalLifecycleLock from './ModalLifecycleLock';
 import legislationService from '../../services/legislationService';
+import legislationFilesService from '../../services/legislationFilesService';
+import LegislationUploadFileModal from './LegislationUploadFileModal';
+import { ConfirmDeleteModal } from './ConfirmDeleteModal';
+import { SuccessDeleteModal } from './SuccessDeleteModal';
 import '../../styles/components/LegislationEditModal.scss';
 
 const createEmptyLink = () => ({
@@ -126,7 +130,7 @@ const getDownloadHeaders = () => {
   }
 };
 
-const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) => {
+const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null, mode = 'both' }) => {
   const [links, setLinks] = useState(() => [createEmptyLink()]);
   const [fileRows, setFileRows] = useState(() => [createEmptyFileRow()]);
   const [existingFiles, setExistingFiles] = useState([]);
@@ -136,6 +140,17 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
   const [missingRequired, setMissingRequired] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [initialLinksSnapshot, setInitialLinksSnapshot] = useState([]);
+  const [fileSearchTerm, setFileSearchTerm] = useState('');
+  const [fileSortOrder, setFileSortOrder] = useState('asc');
+  const [isUploadFileModalOpen, setIsUploadFileModalOpen] = useState(false);
+  const [editingFile, setEditingFile] = useState(null);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false);
   const bannerRef = useRef(null);
   const fileInputRefs = useRef({});
   
@@ -181,25 +196,42 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
     return normalized.length > 0 ? normalized : [createEmptyLink()];
   };
 
-  // Inicializar datos desde props al abrir el modal
   useEffect(() => {
     if (isOpen) {
       const initialLinks = initialData
         ? normalizeLinks(initialData?.links, initialData?.link)
         : [createEmptyLink()];
 
-      const normalizedExisting = normalizeExistingFiles(initialData?.files);
-
-      setLinks(initialLinks.length > 0 ? initialLinks : [createEmptyLink()]);
-      setExistingFiles(normalizedExisting);
-      setNewFiles([]);
-      setRemovedFiles([]);
-      setFileRows(normalizedExisting.length > 0 ? [...normalizedExisting] : [createEmptyFileRow()]);
+      const normalizedLinks = initialLinks.length > 0 ? initialLinks : [createEmptyLink()];
+      setLinks(normalizedLinks);
+      
+      const linksSnapshot = normalizedLinks.map(link => ({
+        title: (link.title || '').trim(),
+        url: (link.url || '').trim()
+      }));
+      setInitialLinksSnapshot(linksSnapshot);
+      
       setErrors({});
       setMissingRequired([]);
       setHasAttemptedSubmit(false);
+
+      if (mode === 'files') {
+        loadLegislationFiles();
+      } else {
+        const normalizedExisting = normalizeExistingFiles(initialData?.files);
+        setExistingFiles(normalizedExisting);
+        setNewFiles([]);
+        setRemovedFiles([]);
+
+        if (mode === 'both') {
+          setFileRows(normalizedExisting.length > 0 ? [...normalizedExisting] : [createEmptyFileRow()]);
+        } else {
+          setFileRows([createEmptyFileRow()]);
+        }
+      }
     } else {
       setLinks([createEmptyLink()]);
+      setInitialLinksSnapshot([]);
       setExistingFiles([]);
       setNewFiles([]);
       setRemovedFiles([]);
@@ -208,7 +240,7 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
       setMissingRequired([]);
       setHasAttemptedSubmit(false);
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, mode]);
 
   const handleFileInputChange = (fileRowId, event) => {
     const files = Array.from(event.target.files || []);
@@ -305,21 +337,56 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
   // Eliminar archivo (marcar como removido si es existente, eliminar si es nuevo)
   const handleRemoveFile = (fileRowId) => {
     const targetRow = fileRows.find(row => row.id === fileRowId);
-
-    setFileRows(prev => {
-      const filtered = prev.filter(row => row.id !== fileRowId);
-      return filtered.length > 0 ? filtered : [createEmptyFileRow()];
-    });
-
-    if (targetRow?.isExisting) {
-      setExistingFiles(prev => prev.filter(f => f.id !== fileRowId));
-      setRemovedFiles(prev => (prev.includes(fileRowId) ? prev : [...prev, fileRowId]));
+    
+    if (targetRow?.apiId) {
+      setFileToDelete({
+        id: fileRowId,
+        apiId: targetRow.apiId,
+        title: targetRow.title || 'this file'
+      });
+      setIsDeleteConfirmOpen(true);
+      setDeleteError('');
     } else {
-      setNewFiles(prev => prev.filter(f => f.id !== fileRowId));
-    }
+      setFileRows(prev => {
+        const filtered = prev.filter(row => row.id !== fileRowId);
+        return filtered.length > 0 ? filtered : [createEmptyFileRow()];
+      });
 
-    if (fileInputRefs.current[fileRowId]) {
-      delete fileInputRefs.current[fileRowId];
+      if (targetRow?.isExisting) {
+        setExistingFiles(prev => prev.filter(f => f.id !== fileRowId));
+        setRemovedFiles(prev => (prev.includes(fileRowId) ? prev : [...prev, fileRowId]));
+      } else {
+        setNewFiles(prev => prev.filter(f => f.id !== fileRowId));
+      }
+
+      if (fileInputRefs.current[fileRowId]) {
+        delete fileInputRefs.current[fileRowId];
+      }
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!fileToDelete) return;
+
+    setIsDeleting(true);
+    setDeleteError('');
+
+    try {
+      await legislationFilesService.delete(fileToDelete.apiId);
+      
+      setIsDeleteConfirmOpen(false);
+      setFileToDelete(null);
+      setIsDeleting(false);
+      
+      setIsSuccessDeleteOpen(true);
+      
+      if (mode === 'files') {
+        loadLegislationFiles();
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      setDeleteError(error.message || 'Failed to delete file. Please try again.');
+      setIsDeleting(false);
     }
   };
 
@@ -360,6 +427,34 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
       throw new Error(displayTitle
         ? `Failed to retrieve the existing file "${displayTitle}". Please try again.`
         : 'Failed to retrieve one of the existing files. Please try again.');
+    }
+  };
+
+  const loadLegislationFiles = async () => {
+    setIsLoadingFiles(true);
+    try {
+      const response = await legislationFilesService.getAll(100, 1);
+      const filesData = response?.data?.data || [];
+      
+      const normalizedFiles = filesData.map((fileItem) => ({
+        id: `api-file-${fileItem.id}`,
+        title: fileItem.title || '',
+        file: null,
+        fileName: fileItem.file ? fileItem.file.split('/').pop() : '',
+        fileUrl: fileItem.file || '',
+        isExisting: true,
+        apiId: fileItem.id,
+        status: fileItem.status
+      }));
+
+      setExistingFiles(normalizedFiles);
+      setFileRows(normalizedFiles.length > 0 ? normalizedFiles : []);
+    } catch (error) {
+      console.error('Error loading legislation files:', error);
+      setExistingFiles([]);
+      setFileRows([]);
+    } finally {
+      setIsLoadingFiles(false);
     }
   };
 
@@ -405,26 +500,40 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
     return true;
   };
 
-  // Validation function
   const validateRequired = () => {
     const missing = [];
 
-    const hasFiles = populatedFileRows.length > 0;
+    if (mode === 'links' || mode === 'both') {
+      if (!validateLinks(links)) {
+        missing.push('Review link fields');
+      }
 
-    const filesWithoutTitle = populatedFileRows.filter(f => !(f.title || '').trim());
-    if (filesWithoutTitle.length > 0) {
-      missing.push('All files must have a title');
-      setErrors(prev => ({ ...prev, files: 'All files must have a title.' }));
-    } else {
-      setErrors(prev => ({ ...prev, files: '' }));
+      if (mode === 'links' && !links.some(link => (link.url || '').trim())) {
+        missing.push('Add at least one link');
+      }
     }
 
-    if (!validateLinks(links)) {
-      missing.push('Review link fields');
+    if (mode === 'files' || mode === 'both') {
+      const hasFiles = populatedFileRows.length > 0;
+
+      const filesWithoutTitle = populatedFileRows.filter(f => !(f.title || '').trim());
+      if (filesWithoutTitle.length > 0) {
+        missing.push('All files must have a title');
+        setErrors(prev => ({ ...prev, files: 'All files must have a title.' }));
+      } else {
+        setErrors(prev => ({ ...prev, files: '' }));
+      }
+
+      if (mode === 'files' && !hasFiles) {
+        missing.push('Add at least one file');
+      }
     }
 
-    if (!hasFiles && !links.some(link => (link.url || '').trim())) {
-      missing.push('Add at least one file or link');
+    if (mode === 'both') {
+      const hasFiles = populatedFileRows.length > 0;
+      if (!hasFiles && !links.some(link => (link.url || '').trim())) {
+        missing.push('Add at least one file or link');
+      }
     }
 
     setMissingRequired(missing);
@@ -438,8 +547,36 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
     }
   }, [links, fileRows, isOpen, hasAttemptedSubmit]);
 
+  const hasLinksChanged = () => {
+    if (mode !== 'links') return true;
+
+    const currentLinks = links
+      .map(link => ({
+        title: (link.title || '').trim(),
+        url: (link.url || '').trim()
+      }))
+      .filter(link => link.title || link.url);
+
+    if (currentLinks.length !== initialLinksSnapshot.length) return true;
+
+    return !currentLinks.every(currentLink => 
+      initialLinksSnapshot.some(initialLink => 
+        initialLink.title === currentLink.title && initialLink.url === currentLink.url
+      )
+    );
+  };
+
   const handleSave = async () => {
     setHasAttemptedSubmit(true);
+    
+    if (mode === 'links' && !hasLinksChanged()) {
+      setErrors({ 
+        submit: 'No changes detected in links. Please make changes before submitting.' 
+      });
+      bannerRef.current?.focus();
+      return;
+    }
+
     if (!validateRequired()) {
       bannerRef.current?.focus();
       return;
@@ -449,33 +586,34 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
     setErrors({});
 
     try {
-      // Preparar archivos finales para enviar (existentes + nuevos)
       const filesToSend = [];
       const titlesToSend = [];
       const removedIdsSet = new Set(removedFiles);
 
-      for (const row of fileRows) {
-        const hasContent = !!row.file || !!row.fileUrl;
-        if (!hasContent) continue;
-        if (removedIdsSet.has(row.id)) continue;
+      if (mode === 'files' || mode === 'both') {
+        for (const row of fileRows) {
+          const hasContent = !!row.file || !!row.fileUrl;
+          if (!hasContent) continue;
+          if (removedIdsSet.has(row.id)) continue;
 
-        const titleTrimmed = (row.title || '').trim();
-        const titleForFallback =
-          titleTrimmed ||
-          deriveDisplayTitleFromFileName(row.fileName) ||
-          (row.isExisting ? deriveDisplayTitleFromFileName(row.fileUrl?.split('/').pop() || '') : '') ||
-          'Documento';
-        const sanitizedFileName = sanitizeFileName(titleForFallback);
+          const titleTrimmed = (row.title || '').trim();
+          const titleForFallback =
+            titleTrimmed ||
+            deriveDisplayTitleFromFileName(row.fileName) ||
+            (row.isExisting ? deriveDisplayTitleFromFileName(row.fileUrl?.split('/').pop() || '') : '') ||
+            'Documento';
+          const sanitizedFileName = sanitizeFileName(titleForFallback);
 
-        if (row.file) {
-          const fileType = row.file.type || 'application/pdf';
-          const renamedFile = new File([row.file], sanitizedFileName, { type: fileType });
-          filesToSend.push(renamedFile);
-          titlesToSend.push(titleTrimmed || titleForFallback);
-        } else if (row.isExisting && row.fileUrl) {
-          const existingFile = await createFileFromExistingUrl(row, sanitizedFileName, titleForFallback);
-          filesToSend.push(existingFile);
-          titlesToSend.push(titleTrimmed || titleForFallback);
+          if (row.file) {
+            const fileType = row.file.type || 'application/pdf';
+            const renamedFile = new File([row.file], sanitizedFileName, { type: fileType });
+            filesToSend.push(renamedFile);
+            titlesToSend.push(titleTrimmed || titleForFallback);
+          } else if (row.isExisting && row.fileUrl) {
+            const existingFile = await createFileFromExistingUrl(row, sanitizedFileName, titleForFallback);
+            filesToSend.push(existingFile);
+            titlesToSend.push(titleTrimmed || titleForFallback);
+          }
         }
       }
 
@@ -487,15 +625,31 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
         .filter(link => link.title || link.url)
         .filter(link => link.url && isValidUrl(link.url));
 
-      // Preparar datos para enviar al backend
-      const backendData = {
-        files: filesToSend,
-        links: linksToInclude.length > 0 ? linksToInclude : undefined,
-        titles:
+      const backendData = {};
+
+      if (mode === 'files') {
+        const initialLinks = initialData
+          ? normalizeLinks(initialData?.links, initialData?.link)
+          : [];
+        const existingLinks = initialLinks
+          .map(link => ({
+            title: (link.title || '').trim(),
+            url: (link.url || '').trim()
+          }))
+          .filter(link => link.title || link.url)
+          .filter(link => link.url && isValidUrl(link.url));
+        backendData.links = existingLinks.length > 0 ? existingLinks : undefined;
+      } else if (mode === 'links' || mode === 'both') {
+        backendData.links = linksToInclude.length > 0 ? linksToInclude : undefined;
+      }
+
+      if (mode === 'files' || mode === 'both') {
+        backendData.files = filesToSend;
+        backendData.titles =
           filesToSend.length > 0
             ? titlesToSend.slice(0, filesToSend.length)
-            : (removedFiles.length > 0 && populatedFileRows.length === 0 ? [] : undefined)
-      };
+            : (removedFiles.length > 0 && populatedFileRows.length === 0 ? [] : undefined);
+      }
 
       // Enviar al backend
       await legislationService.updateLegislation(backendData);
@@ -556,11 +710,16 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
         </button>
 
         <header className="legislation-edit-modal__header">
-          <h2 className="legislation-edit-modal__title">Upload Legislation</h2>
-          <p className="legislation-edit-modal__subtitle">Add legislation links or supporting documents</p>
+          <h2 className="legislation-edit-modal__title">
+            {mode === 'links' ? 'Upload Legislation Links' : mode === 'files' ? 'Upload Legislation Files' : 'Upload Legislation'}
+          </h2>
+          <p className="legislation-edit-modal__subtitle">
+            {mode === 'links' ? 'Add or edit legislation links.' : mode === 'files' ? 'Upload or edit legislation files.' : 'Add legislation links or supporting documents'}
+          </p>
         </header>
 
         <div className="legislation-edit-modal__body">
+          {(mode === 'links' || mode === 'both') && (
           <div className="form-group">
             <label>Links</label>
             <div className="links-list">
@@ -615,81 +774,110 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
               <div className="error-message">{errors.links}</div>
             )}
           </div>
+          )}
 
+          {(mode === 'files' || mode === 'both') && (
           <div className="form-group">
-            <h3 className="form-group__title">Attachment Files</h3>
-            <div className="files-list">
-              {fileRows.map((fileItem) => (
-                <div key={fileItem.id} className="file-item-banner">
-                  <div className="file-item-content">
-                    <div className="file-item-info">
-                      <i className="bi bi-file-earmark-pdf" aria-hidden="true"></i>
-                      <div className="file-item-details">
-                        <label htmlFor={`file-title-${fileItem.id}`} className="file-title-label">File Title</label>
-                        <input
-                          id={`file-title-${fileItem.id}`}
-                          type="text"
-                          className="file-title-input"
-                          value={fileItem.title}
-                          onChange={(e) => handleFileTitleChange(fileItem.id, e.target.value)}
-                          placeholder="Enter file title..."
-                        />
-                        <div className="file-upload-row">
-                          <input
-                            ref={(element) => {
-                              if (element) {
-                                fileInputRefs.current[fileItem.id] = element;
-                              } else {
-                                delete fileInputRefs.current[fileItem.id];
-                              }
-                            }}
-                            type="file"
-                            accept="application/pdf"
-                            className="hidden-file-input"
-                            onChange={(event) => handleFileInputChange(fileItem.id, event)}
-                          />
-                          <button
-                            type="button"
-                            className="file-select-btn"
-                            onClick={() => handleSelectFileClick(fileItem.id)}
-                          >
-                            Select file
-                          </button>
-                          <span className="file-name">
-                            {(fileItem.isExisting && !fileItem.file) ? '(Existing) ' : ''}
-                            {fileItem.fileName || 'No uploaded file'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="file-remove-btn"
-                      onClick={() => handleRemoveFile(fileItem.id)}
-                      aria-label={`Remove ${fileItem.fileName || 'file'}`}
-                      disabled={fileRows.length === 1 && !fileItem.file && !fileItem.fileUrl}
-                    >
-                      <i className="bi bi-trash"></i>
-                    </button>
+            <h3 className="form-group__title">Files Uploaded</h3>
+            
+            <div className="legislation-files-controls">
+              <div className="find-expert-search">
+                <input
+                  type="text"
+                  className="find-expert-search-input"
+                  placeholder="Search files by name..."
+                  value={fileSearchTerm}
+                  onChange={(e) => setFileSearchTerm(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="find-expert-search-btn"
+                  aria-label="Search files"
+                >
+                  <i className="bi bi-search" aria-hidden="true"></i>
+                </button>
+              </div>
+
+              <div className="find-expert-sort">
+                <span className="find-expert-sort-label">Sort By:</span>
+                <button
+                  type="button"
+                  className="find-expert-sort-btn"
+                  onClick={() => setFileSortOrder(fileSortOrder === 'asc' ? 'desc' : 'asc')}
+                  aria-label={fileSortOrder === 'asc' ? 'Sort A to Z' : 'Sort Z to A'}
+                >
+                  <div className="sort-icon-container">
+                    <span className="sort-letter">{fileSortOrder === 'asc' ? 'A' : 'Z'}</span>
+                    <i className="bi bi-arrow-down" aria-hidden="true"></i>
+                    <span className="sort-letter">{fileSortOrder === 'asc' ? 'Z' : 'A'}</span>
                   </div>
-                </div>
-              ))}
+                </button>
+              </div>
             </div>
-            <div className="file-actions">
+
+            <div className="files-list">
+              {isLoadingFiles ? (
+                <div className="files-empty-state">
+                  <p>Loading files...</p>
+                </div>
+              ) : populatedFileRows.length === 0 ? (
+                <div className="files-empty-state">
+                  <p>No files uploaded yet...</p>
+                </div>
+              ) : (
+                populatedFileRows.map((fileItem) => (
+                  <div key={fileItem.id} className="file-item-banner">
+                    <div className="meta">
+                      <i className="bi bi-file-earmark file-item-icon" aria-hidden="true"></i>
+                      <span className="file-item-title">{fileItem.title || 'Untitled'}</span>
+                    </div>
+                    <div className="actions">
+                      <button
+                        type="button"
+                        className="file-edit-btn"
+                        onClick={() => {
+                          setEditingFile({
+                            apiId: fileItem.apiId,
+                            title: fileItem.title,
+                            fileUrl: fileItem.fileUrl,
+                            fileName: fileItem.fileName
+                          });
+                          setIsUploadFileModalOpen(true);
+                        }}
+                        aria-label={`Edit ${fileItem.title || 'file'}`}
+                      >
+                        <i className="bi bi-pencil-square"></i>
+                      </button>
+                      <button
+                        type="button"
+                        className="file-remove-btn"
+                        onClick={() => handleRemoveFile(fileItem.id)}
+                        aria-label={`Remove ${fileItem.title || 'file'}`}
+                        disabled={fileRows.length === 1 && !fileItem.file && !fileItem.fileUrl}
+                      >
+                        <i className="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="file-upload-action">
               <button
                 type="button"
-                className="add-file-btn"
-                onClick={handleAddFileRow}
-                disabled={!canAddAnotherFile}
+                className="upload-file-btn"
+                onClick={() => setIsUploadFileModalOpen(true)}
               >
-                <i className="bi bi-plus-lg"></i>
-                Add new file
+                Upload File
               </button>
             </div>
+
             {errors.files && (
               <div className="error-message">{errors.files}</div>
             )}
           </div>
+          )}
         </div>
 
         <div className="legislation-edit-modal__footer">
@@ -715,16 +903,61 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null }) =
               <strong>Error:</strong> {errors.submit}
             </div>
           )}
-          <button
-            type="button"
-            className="btn update-now-btn"
-            onClick={handleSave}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Updating...' : 'Submit'}
-          </button>
+          {mode !== 'files' && (
+            <button
+              type="button"
+              className="btn update-now-btn"
+              onClick={handleSave}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Updating...' : 'Submit'}
+            </button>
+          )}
         </div>
       </div>
+
+      <LegislationUploadFileModal
+        isOpen={isUploadFileModalOpen}
+        onClose={async () => {
+          setIsUploadFileModalOpen(false);
+          setEditingFile(null);
+          if (mode === 'files') {
+            await loadLegislationFiles();
+          }
+          if (onSave && typeof onSave === 'function') {
+            await onSave();
+          }
+        }}
+        onSave={async () => {
+          if (mode === 'files') {
+            await loadLegislationFiles();
+          }
+          setIsUploadFileModalOpen(false);
+          setEditingFile(null);
+          if (onSave && typeof onSave === 'function') {
+            await onSave();
+          }
+        }}
+        editFile={editingFile}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => {
+          setIsDeleteConfirmOpen(false);
+          setFileToDelete(null);
+          setDeleteError('');
+        }}
+        onConfirm={handleConfirmDelete}
+        message={fileToDelete ? `Are you sure you want to delete "${fileToDelete.title}"? This action cannot be reversed.` : undefined}
+        isDeleting={isDeleting}
+        errorMessage={deleteError}
+      />
+
+      <SuccessDeleteModal
+        isOpen={isSuccessDeleteOpen}
+        onClose={() => setIsSuccessDeleteOpen(false)}
+      />
     </div>
   );
 };

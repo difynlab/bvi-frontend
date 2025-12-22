@@ -1,4 +1,5 @@
 @use '../vars' as *;
+@use 'sass:color';
 
 .legislation-edit-modal-overlay {
   position: fixed;
@@ -72,7 +73,7 @@
 }
 
 .form-group {
-  margin-bottom: $spacing-lg;
+  margin-bottom: 0;
 
   label {
     display: block;
@@ -145,6 +146,165 @@
   margin: 8px 0 0 0;
 }
 
+.legislation-files-controls {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+
+  .find-expert-search {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex: 1;
+    min-width: 200px;
+    max-width: 100%;
+    height: 45px;
+  }
+
+  .find-expert-search-input {
+    height: 45px;
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px 0 0 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      border-color: $vivid_red;
+    }
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+  }
+
+  .find-expert-search-btn {
+    background: $vivid_red;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 0 8px 8px 0;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 50px;
+    height: 45px;
+
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+    }
+  }
+
+  .find-expert-sort {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    height: 45px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #f9fafb;
+    flex-shrink: 0;
+  }
+
+  .find-expert-sort-label {
+    font-size: 14px;
+    color: #1f2937;
+    white-space: nowrap;
+  }
+
+  .find-expert-sort-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f0f9ff;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+  }
+
+  .sort-icon-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sort-letter {
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    line-height: 1;
+  }
+
+  .sort-icon-container .bi-arrow-down {
+    font-size: 10px;
+    color: #6b7280;
+  }
+}
+
+.files-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.file-upload-action {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  width: 100%;
+
+}
+
+.upload-file-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 55px;
+  gap: 8px;
+  border: none;
+  border-radius: 6px;
+  background: $vivid_red;
+  color: #fff;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.2);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+  }
+}
+
 .files-list {
   width: 100%;
   margin-bottom: $spacing-md;
@@ -155,104 +315,77 @@
 
 .file-item-banner {
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: stretch;
-  padding: 12px 16px;
-  background: #f0f9ff;
-  border: 1px solid #0ea5e9;
-  border-radius: 6px;
-  gap: $spacing-sm;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-md;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: none;
+  border: 1px solid #eaeaea;
 
-  .file-item-content {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    gap: 12px;
+  & + .file-item-banner {
+    margin-top: $spacing-sm;
   }
 
-  .file-item-info {
+  .meta {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    gap: $spacing-sm;
     flex: 1;
-    gap: 8px;
 
-    i {
+    .file-item-icon {
       font-size: 1.2rem;
-      color: #dc2626;
+      color: $vivid_red;
       flex-shrink: 0;
     }
 
-    .file-item-details {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      flex: 1;
-      min-width: 0;
-
-      .file-title-label {
-        font-size: 16px;
-        font-weight: 600;
-        color: #374151;
-      }
-
-      .file-title-input {
-        width: 100%;
-        padding: 6px 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 0.9rem;
-        background: white;
-
-        &:focus {
-          outline: none;
-          border-color: #104394;
-          box-shadow: 0 0 0 2px rgba(16, 67, 148, 0.1);
-        }
-
-        &::placeholder {
-          color: #999;
-        }
-      }
-
-      .file-name {
-        font-size: 0.85rem;
-        color: #075985;
-        word-break: break-all;
-      }
-
-      .file-upload-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
+    .file-item-title {
+      font-weight: 600;
+      color: #333;
     }
   }
 
-  .file-remove-btn {
-    background: none;
-    border: none;
-    width: 40px;
-    color: #dc2626;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 4px;
+  .actions {
     display: flex;
+    gap: $spacing-sm;
     align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    align-self: flex-end;
 
-    &:hover {
-      background: rgba(220, 38, 38, 0.1);
-    }
+    .file-edit-btn,
+    .file-remove-btn {
+      background: none;
+      border: none;
+      padding: 8px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s ease;
 
-    &:focus {
-      outline: none;
-      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+      &:focus {
+        outline: none;
+      }
+
+      &.file-edit-btn {
+        color: #666;
+
+        &:hover {
+          color: #333;
+        }
+      }
+
+      &.file-remove-btn {
+        color: #dc2626;
+
+        &:hover {
+          color: color.adjust(#dc2626, $lightness: -10%);
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
     }
   }
 }
@@ -517,7 +650,8 @@
 
   .link-actions {
     justify-content: stretch;
-
+    width: 100%;
+    margin-bottom: 20px;
     .add-link-btn {
       width: 100%;
       justify-content: center;

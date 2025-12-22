@@ -1,0 +1,288 @@
+@use '../vars' as *;
+
+.legislation-upload-file-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: $spacing-md;
+}
+
+.legislation-upload-file-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.legislation-upload-file-modal__close {
+  position: absolute;
+  top: $spacing-md;
+  right: $spacing-md;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+  z-index: 1;
+
+  &:hover {
+    color: #000;
+  }
+}
+
+.legislation-upload-file-modal__header {
+  margin-bottom: $spacing-lg;
+}
+
+.legislation-upload-file-modal__title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 $spacing-xs 0;
+}
+
+.legislation-upload-file-modal__subtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.legislation-upload-file-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.legislation-upload-file-dropzone {
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #f9fafb;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+
+  &:hover {
+    border-color: $vivid_red;
+    background: #fef2f2;
+  }
+
+  &.active {
+    border-color: $vivid_red;
+    background: #fef2f2;
+  }
+
+  &[data-has-file='true'] {
+    border-color: #10b981;
+    background: #f0fdf4;
+    padding: 20px;
+    min-height: auto;
+  }
+}
+
+.dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.dropzone-icon {
+  font-size: 48px;
+  color: #9ca3af;
+}
+
+.dropzone-label {
+  font-size: 1rem;
+  color: #374151;
+  font-weight: 500;
+  margin: 0;
+}
+
+.dropzone-separator {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.dropzone-browse {
+  background: $vivid_red;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+}
+
+.dropzone-hint {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.file-preview-card {
+  width: 100%;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.file-preview-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.file-preview-content i {
+  font-size: 32px;
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+.file-preview-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.file-preview-name {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1f2937;
+  word-break: break-all;
+}
+
+.file-preview-size {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.file-preview-remove {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(220, 38, 38, 0.1);
+  }
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.legislation-upload-file-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: $spacing-lg;
+  padding-top: $spacing-lg;
+  border-top: 1px solid #e5e7eb;
+}
+
+.btn {
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+
+  &:hover:not(:disabled) {
+    background: #e5e7eb;
+  }
+}
+
+.btn-primary {
+  background: $vivid_red;
+  color: white;
+
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.form-input {
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    border-color: $vivid_red;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.1);
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+  }
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
