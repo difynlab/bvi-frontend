@@ -765,7 +765,6 @@ const FindExpert = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && searchTerm.length >= 3) {
-                  // Trigger search on Enter
                 }
               }}
             />
@@ -773,7 +772,6 @@ const FindExpert = () => {
               type="button"
               className="find-expert-search-btn"
               onClick={() => {
-                // Search is handled by the searchTerm state
               }}
               disabled={searchTerm.length < 3}
               aria-label="Search firms"
@@ -783,7 +781,6 @@ const FindExpert = () => {
           </div>
         </div>
 
-        {/* Add New Firm Button */}
         {isAdmin && (
           <div className="find-expert-add-firm-wrapper">
             <button
@@ -807,7 +804,6 @@ const FindExpert = () => {
           </div>
         )}
 
-        {/* Expert Firms List */}
         <ExpertFirmsList
           firms={firmsData}
           loading={firmsLoading}

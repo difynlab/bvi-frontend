@@ -327,6 +327,7 @@
             height: 97.5px;
             display: flex;
             flex-direction: column;
+            flex-wrap: nowrap;
             justify-content: center;
             align-items: flex-start;
             padding: 15px 10px;
@@ -344,6 +345,16 @@
               margin-bottom: 0;
               border-left: 5px solid #5A95F3;
               background-color: #F5F9FF;
+            }
+
+            .item-title {
+              width: 100%;
+              max-width: 100%;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              line-height: 1.4;
+              display: block;
             }
 
             .item-description {

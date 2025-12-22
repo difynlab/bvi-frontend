@@ -72,6 +72,11 @@ const Dashboard = () => {
     return match ? match[0] : timezone
   }
 
+  const truncateTitle = (title, maxLength = 55) => {
+    if (!title || title.length <= maxLength) return title
+    return title.substring(0, maxLength) + '...'
+  }
+
   // Parse newsletter data from backend (description field contains JSON string)
   const parseNewsletterData = (nl) => {
     let parsedData = { ...nl }
@@ -316,7 +321,7 @@ const Dashboard = () => {
                       <span className={index === 0 ? 'item-meta-urgent' : 'item-meta-new'}>{index === 0 ? 'Urgent' : 'New'}</span>
                       <span className="time-ago">{publishedMs ? timeAgo(publishedMs) : 'Recently'}</span>
                     </div>
-                    <div className="item-title">{notice.fileName}</div>
+                    <div className="item-title" title={notice.fileName}>{truncateTitle(notice.fileName)}</div>
                     <div className="item-description">{notice.description}</div>
                   </div>
                 )
