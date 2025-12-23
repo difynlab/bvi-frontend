@@ -464,7 +464,7 @@ const Legislation = () => {
       setIsLoadingLegislationFiles(true);
       setIsLoadingAttachments(true);
       try {
-        const response = await legislationFilesService.getAll(100, 1);
+        const response = await legislationFilesService.getAllPages(100);
         const filesData = response?.data?.data || [];
         
         const normalizedFiles = filesData.map((fileItem) => ({
@@ -478,8 +478,14 @@ const Legislation = () => {
           createdAt: fileItem.created_at || new Date().toISOString()
         }));
 
-        setLegislationFiles(normalizedFiles);
-        setAttachments(normalizedFiles);
+        const sortedFiles = normalizedFiles.sort((a, b) => {
+          const titleA = (a.title || 'Untitled').toLowerCase();
+          const titleB = (b.title || 'Untitled').toLowerCase();
+          return titleA.localeCompare(titleB);
+        });
+
+        setLegislationFiles(sortedFiles);
+        setAttachments(sortedFiles);
       } catch (error) {
         console.error('Failed to load legislation files:', error);
         setLegislationFiles([]);
@@ -577,8 +583,14 @@ const Legislation = () => {
         createdAt: fileItem.created_at || new Date().toISOString()
       }));
 
-      setLegislationFiles(normalizedFiles);
-      setAttachments(normalizedFiles);
+      const sortedFiles = normalizedFiles.sort((a, b) => {
+        const titleA = (a.title || 'Untitled').toLowerCase();
+        const titleB = (b.title || 'Untitled').toLowerCase();
+        return titleA.localeCompare(titleB);
+      });
+
+      setLegislationFiles(sortedFiles);
+      setAttachments(sortedFiles);
     } catch (error) {
       console.error('Failed to reload legislation files after save:', error);
     } finally {

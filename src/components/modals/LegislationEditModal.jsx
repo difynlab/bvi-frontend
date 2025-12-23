@@ -433,7 +433,7 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null, mod
   const loadLegislationFiles = async () => {
     setIsLoadingFiles(true);
     try {
-      const response = await legislationFilesService.getAll(100, 1);
+      const response = await legislationFilesService.getAllPages(100);
       const filesData = response?.data?.data || [];
       
       const normalizedFiles = filesData.map((fileItem) => ({
@@ -458,10 +458,30 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null, mod
     }
   };
 
-  const populatedFileRows = useMemo(
-    () => fileRows.filter(row => row.file || row.fileUrl),
-    [fileRows]
-  );
+  const populatedFileRows = useMemo(() => {
+    let filtered = fileRows.filter(row => row.file || row.fileUrl);
+
+    if (fileSearchTerm.trim().length >= 3) {
+      const searchLower = fileSearchTerm.toLowerCase().trim();
+      filtered = filtered.filter(row => {
+        const title = (row.title || '').toLowerCase();
+        return title.includes(searchLower);
+      });
+    }
+
+    filtered.sort((a, b) => {
+      const titleA = (a.title || 'Untitled').toLowerCase();
+      const titleB = (b.title || 'Untitled').toLowerCase();
+      
+      if (fileSortOrder === 'asc') {
+        return titleA.localeCompare(titleB);
+      } else {
+        return titleB.localeCompare(titleA);
+      }
+    });
+
+    return filtered;
+  }, [fileRows, fileSearchTerm, fileSortOrder]);
 
   const lastFileRow = fileRows[fileRows.length - 1];
   const canAddAnotherFile =
@@ -770,9 +790,6 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null, mod
                 Add new link
               </button>
             </div>
-            {errors.links && (
-              <div className="error-message">{errors.links}</div>
-            )}
           </div>
           )}
 
@@ -873,9 +890,6 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null, mod
               </button>
             </div>
 
-            {errors.files && (
-              <div className="error-message">{errors.files}</div>
-            )}
           </div>
           )}
         </div>
@@ -890,6 +904,28 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null, mod
               ref={bannerRef}
             >
               <strong>Please fill all required fields:</strong> {missingRequired.join(', ')}
+            </div>
+          )}
+          {errors.links && (
+            <div
+              className="app-form__error-banner"
+              role="alert"
+              aria-live="assertive"
+              tabIndex={-1}
+              ref={bannerRef}
+            >
+              <strong>Error:</strong> {errors.links}
+            </div>
+          )}
+          {errors.files && (
+            <div
+              className="app-form__error-banner"
+              role="alert"
+              aria-live="assertive"
+              tabIndex={-1}
+              ref={bannerRef}
+            >
+              <strong>Error:</strong> {errors.files}
             </div>
           )}
           {errors.submit && (

@@ -19,6 +19,7 @@
   background: white;
   border-radius: 12px;
   padding: 40px;
+  padding-bottom: 0;
   width: 100%;
   width: calc(100dvw - 350px);
   max-height: 90vh;
@@ -70,6 +71,8 @@
 
 .legislation-edit-modal__body {
   padding-top: 0;
+  position: relative;
+  padding-bottom: 0px;
 }
 
 .form-group {
@@ -275,9 +278,14 @@
 .file-upload-action {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
   width: 100%;
-
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 20px 0;
+  margin-top: 20px;
+  z-index: 10;
+  border-top: 1px solid #e5e7eb;
 }
 
 .upload-file-btn {
@@ -623,6 +631,11 @@
 
   .legislation-edit-modal {
     max-height: 95vh;
+    padding-bottom: 0 !important;
+  }
+
+  .file-upload-action {
+    padding-bottom: 20px;
   }
 
   .legislation-edit-modal__header,

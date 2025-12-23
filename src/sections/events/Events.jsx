@@ -22,7 +22,7 @@ import '../../styles/sections/shimmerLoader.scss'
 export const Events = () => {
   const { user, isInitialized } = useAuth()
 
-  const { events, createEvent, updateEvent, deleteEvent, loading, error, pagination, refreshEvents, changePage } = useEvents()
+  const { events, visibleEvents, createEvent, updateEvent, deleteEvent, loading, error, pagination, refreshEvents, changePage } = useEvents()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState('create')
@@ -268,7 +268,7 @@ export const Events = () => {
         ) : (
           <>
             <div className="events-list">
-              {events.map((event, index) => (
+              {visibleEvents.map((event, index) => (
                 <div key={event.id || `event-${index}`} className="event-card">
                   <div className="event-image">
                     {/* Imagen borrosa para carga rápida */}

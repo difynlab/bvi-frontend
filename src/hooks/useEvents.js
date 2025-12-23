@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import eventsService from '../services/eventsService'
 import { transformFromBackend, transformToBackend } from '../utils/eventTransformers'
 import { useNotifications } from '../context/NotificationContext'
@@ -8,9 +8,39 @@ const CACHE_EXPIRY_TIME = 5 * 60 * 1000 // 5 minutos en milisegundos
 
 const sortEventsByDate = (events) => {
   return events.sort((a, b) => {
-    const dateA = new Date(a.date)
-    const dateB = new Date(b.date)
-    return dateB - dateA
+    let dateA, dateB
+    
+    if (!a.date) {
+      return 1
+    }
+    if (!b.date) {
+      return -1
+    }
+    
+    if (typeof a.date === 'string' && a.date.includes('T')) {
+      dateA = new Date(a.date)
+    } else if (typeof a.date === 'string') {
+      dateA = new Date(a.date + 'T12:00:00')
+    } else {
+      dateA = new Date(a.date)
+    }
+    
+    if (typeof b.date === 'string' && b.date.includes('T')) {
+      dateB = new Date(b.date)
+    } else if (typeof b.date === 'string') {
+      dateB = new Date(b.date + 'T12:00:00')
+    } else {
+      dateB = new Date(b.date)
+    }
+    
+    const isValidA = !isNaN(dateA.getTime())
+    const isValidB = !isNaN(dateB.getTime())
+    
+    if (!isValidA && !isValidB) return 0
+    if (!isValidA) return 1
+    if (!isValidB) return -1
+    
+    return dateB.getTime() - dateA.getTime()
   })
 }
 
@@ -102,12 +132,11 @@ export const useEvents = () => {
   })
   const { addNotification } = useNotifications()
 
-  const loadEvents = useCallback(async (page = 1, forceRefresh = false) => {
-    if (!forceRefresh && page === 1) {
+  const loadEvents = useCallback(async (forceRefresh = false) => {
+    if (!forceRefresh) {
       const cachedData = getCachedEvents()
-      if (cachedData) {
-        setEvents(cachedData.events)
-        setPagination(cachedData.pagination)
+      if (cachedData && Array.isArray(cachedData)) {
+        setEvents(cachedData)
         setError(null)
         return
       }
@@ -116,47 +145,94 @@ export const useEvents = () => {
     setLoading(true)
     setError(null)
 
+    const originalConsoleError = console.error
+    console.error = (...args) => {
+      if (args[0] && typeof args[0] === 'string' && args[0].includes('404')) {
+        return
+      }
+      originalConsoleError.apply(console, args)
+    }
+
     try {
-      const response = await eventsService.getEvents(pagination.per_page, page)
-      
-      if ((response.http_status === 200 || response.http_status === 404) && response.data) {
-        const transformedEvents = response.data.data ? response.data.data.map(transformFromBackend) : []
-        const sortedEvents = sortEventsByDate(transformedEvents)
-        
-        const eventsData = {
-          events: sortedEvents,
-          pagination: {
-            current_page: response.data.current_page,
-            last_page: response.data.last_page,
-            per_page: response.data.per_page,
-            total: response.data.total
+      const allEvents = []
+      let currentPage = 1
+      let hasMorePages = true
+      const perPage = 100
+
+      while (hasMorePages) {
+        const response = await eventsService.getEvents(perPage, currentPage)
+
+        if (response.http_status === 200 && response.data) {
+          const transformedEvents = response.data.data ? response.data.data.map(transformFromBackend) : []
+          allEvents.push(...transformedEvents)
+
+          const totalPages = response.data.last_page || 1
+
+          if (currentPage >= totalPages || transformedEvents.length === 0) {
+            hasMorePages = false
+          } else {
+            currentPage++
           }
-        }
-        
-        setEvents(sortedEvents)
-        setPagination(eventsData.pagination)
-        setError(null) // Clear any previous errors
-        
-        if (page === 1) {
-          setCachedEvents(eventsData)
+        } else if (response.http_status === 404) {
+          hasMorePages = false
+          if (allEvents.length === 0) {
+            setEvents([])
+          }
+        } else {
+          hasMorePages = false
         }
       }
-    } catch (err) {
-      if (err.message.includes('No data found')) {
+
+      if (allEvents.length > 0) {
+        const sortedEvents = sortEventsByDate(allEvents)
+        setEvents(sortedEvents)
+        setCachedEvents(sortedEvents)
+      } else {
         setEvents([])
-        setError(null) // Don't set error for no data found
+      }
+      setError(null)
+    } catch (err) {
+      if (err.message.includes('No data found') || err.message.includes('No events found')) {
+        setEvents([])
+        setError(null)
       } else {
         console.error('Error loading events:', err)
         setError(err.message)
       }
     } finally {
       setLoading(false)
+      console.error = originalConsoleError
     }
-  }, [pagination.per_page])
+  }, [])
 
   useEffect(() => {
     loadEvents()
   }, [loadEvents])
+
+  useEffect(() => {
+    const totalEvents = events.length
+    const totalPages = Math.ceil(totalEvents / pagination.per_page) || 1
+    const adjustedPage = pagination.current_page > totalPages ? 1 : pagination.current_page
+
+    setPagination(prev => ({
+      ...prev,
+      current_page: adjustedPage,
+      last_page: totalPages,
+      total: totalEvents
+    }))
+  }, [events.length, pagination.per_page])
+
+  const visibleEvents = useMemo(() => {
+    if (!events.length) {
+      return []
+    }
+
+    const currentPage = pagination.current_page > pagination.last_page ? 1 : pagination.current_page
+    const startIndex = (currentPage - 1) * pagination.per_page
+    const endIndex = startIndex + pagination.per_page
+
+    return events.slice(startIndex, endIndex)
+  }, [events, pagination.current_page, pagination.per_page, pagination.last_page])
 
   const createEvent = useCallback(async (eventData) => {
     setLoading(true)
@@ -177,10 +253,10 @@ export const useEvents = () => {
       if (response.http_status === 200) {
         const backendEvent = response.data
         const eventWithImages = transformFromBackend(backendEvent)
-        setEvents(prev => sortEventsByDate([...prev, eventWithImages]))
         clearEventsCache()
         
-        // Agregar notificación de evento creado
+        await loadEvents(true)
+        
         addNotification({
           type: 'event_created',
           title: eventWithImages.title,
@@ -205,7 +281,7 @@ export const useEvents = () => {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [loadEvents, addNotification])
 
   const updateEvent = useCallback(async (eventData) => {
     setLoading(true)
@@ -227,19 +303,9 @@ export const useEvents = () => {
       const response = await eventsService.updateEvent(eventData.id, backendData)
       
       if (response.http_status === 200) {
-        const updatedEvent = transformFromBackend(response.data)
-        setEvents(prev => {
-          const updatedEvents = prev.map(e => e.id === eventData.id ? updatedEvent : e)
-          return sortEventsByDate(updatedEvents)
-        })
         clearEventsCache()
         
-        // Notificación de evento actualizado deshabilitada
-        // addNotification({
-        //   type: 'event_updated',
-        //   title: 'Event Updated',
-        //   message: `"${updatedEvent.title}" has been updated successfully`
-        // })
+        await loadEvents(true)
         
         return { success: true, response }
       } else {
@@ -256,54 +322,20 @@ export const useEvents = () => {
     } finally {
       setLoading(false)
     }
-  }, [events])
+  }, [events, pagination, loadEvents])
 
   const deleteEvent = useCallback(async (id) => {
     setLoading(true)
     setError(null)
 
     try {
-      // Obtener el evento antes de eliminarlo para la notificación
       const eventToDelete = events.find(e => e.id === id)
       
       const response = await eventsService.deleteEvent(id)
       
       if (response?.http_status === 200 || response?.http_status === 204) {
-        const remainingItems = Math.max(pagination.total - 1, 0)
-        const perPage = pagination.per_page || 6
-        const totalPages = remainingItems > 0 ? Math.ceil(remainingItems / perPage) : 1
-
-        let pageToLoad = pagination.current_page
-        if (remainingItems === 0) {
-          pageToLoad = 1
-        } else if (pageToLoad > totalPages) {
-          pageToLoad = totalPages
-        }
-
-        const updatedEvents = events.filter(event => event.id !== id)
-        const optimisticPagination = {
-          ...pagination,
-          current_page: pageToLoad,
-          last_page: totalPages,
-          total: remainingItems
-        }
-
-        setEvents(updatedEvents)
-        setPagination(optimisticPagination)
-
         clearEventsCache()
-        
-        // Reload events from the appropriate page to maintain 6 items per page
-        await loadEvents(pageToLoad, true)
-        
-        // Notificación de evento eliminado deshabilitada
-        // if (eventToDelete) {
-        //   addNotification({
-        //     type: 'event_deleted',
-        //     title: 'Event Deleted',
-        //     message: `"${eventToDelete.title}" has been deleted successfully`
-        //   })
-        // }
+        await loadEvents(true)
       }
     } catch (err) {
       console.error('Error deleting event:', err)
@@ -311,18 +343,22 @@ export const useEvents = () => {
     } finally {
       setLoading(false)
     }
-  }, [events, addNotification, pagination, loadEvents])
+  }, [events, loadEvents])
 
   const refreshEvents = useCallback(() => {
-    loadEvents(pagination.current_page, true)
-  }, [loadEvents, pagination.current_page])
+    loadEvents(true)
+  }, [loadEvents])
 
   const changePage = useCallback((page) => {
-    loadEvents(page)
-  }, [loadEvents])
+    setPagination(prev => ({
+      ...prev,
+      current_page: page
+    }))
+  }, [])
 
   return {
     events,
+    visibleEvents,
     loading,
     error,
     pagination,
@@ -332,7 +368,6 @@ export const useEvents = () => {
     refreshEvents,
     changePage,
     clearCache: clearEventsCache,
-    // Utility functions for debugging
     clearAllEventsData,
     getStorageUsage
   }

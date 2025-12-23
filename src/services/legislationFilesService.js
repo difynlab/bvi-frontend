@@ -101,6 +101,38 @@ class LegislationFilesService {
     return await this.handleResponse(response)
   }
 
+  async getAllPages(pagination = 6) {
+    const allFiles = []
+    let currentPage = 1
+    let hasMorePages = true
+
+    while (hasMorePages) {
+      const response = await this.getAll(pagination, currentPage)
+      
+      if (response?.data?.data && Array.isArray(response.data.data)) {
+        allFiles.push(...response.data.data)
+        
+        const lastPage = response.data.last_page || 1
+        hasMorePages = currentPage < lastPage
+        currentPage++
+      } else {
+        hasMorePages = false
+      }
+    }
+
+    return {
+      http_status: 200,
+      message: 'success',
+      data: {
+        data: allFiles,
+        total: allFiles.length,
+        current_page: 1,
+        last_page: 1,
+        per_page: allFiles.length
+      }
+    }
+  }
+
   async getById(id) {
     const url = `${this.baseURL}/legislation-files/${id}`
     const response = await fetch(url, {

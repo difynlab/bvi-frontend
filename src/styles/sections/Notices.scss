@@ -1228,6 +1228,12 @@
     font-weight: 400;
     font-size: 16px;
   }
+
+  .form-group label[for="description"],
+  .form-group label[for="linkUrl"],
+  .form-group label[for="file"] {
+    margin-top: 20px;
+  }
 }
 
 
