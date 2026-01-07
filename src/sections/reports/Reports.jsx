@@ -342,8 +342,8 @@ export default function Reports() {
     <div className="reports-container">
       <div className="reports-header">
         <div className="reports-header-title">
-          <h1>Reports</h1>
-          <p>Plan, view, and download annual and other key reports with ease.</p>
+          <h1>Publications</h1>
+          <p>Plan, view, and download annual and other key publications with ease.</p>
         </div>
 
       <div className="reports-header-actions">
@@ -357,7 +357,7 @@ export default function Reports() {
 
       {/* Header area */}
       {isMobile ? (
-        <div className="reports-mobile-header" role="region" aria-label="Report categories">
+        <div className="reports-mobile-header" role="region" aria-label="Publication categories">
           {categoriesLoading ? (
             <div className="category-title-skeleton">
               <span style={{ opacity: 0 }}>Loading...</span>
@@ -373,7 +373,7 @@ export default function Reports() {
                     aria-haspopup="dialog"
                     aria-controls="reportsTabPicker">
                     <h2>
-                      {activeCategoryData?.title || 'Reports'}
+                      {activeCategoryData?.title || 'Publications'}
                     </h2>
                     <i className="bi bi-chevron-down" aria-hidden="true"></i>
                   </button>
@@ -393,7 +393,7 @@ export default function Reports() {
                 </>
               ) : (
                 <div className="no-categories-message-mobile">
-                  <p>No report categories created yet...</p>
+                  <p>No publication categories created yet...</p>
                 </div>
               )}
             </div>
@@ -466,7 +466,7 @@ export default function Reports() {
                     ))
                   ) : (
                     <div className="no-categories-message">
-                      <p>No report categories created yet...</p>
+                      <p>No publication categories created yet...</p>
                     </div>
                   )}
                   {can(user, 'reports:create') && (
@@ -532,7 +532,7 @@ export default function Reports() {
                     )}
                     {can(user, 'reports:create') && (
                       <button type="button" className="btn-edit" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.name}`}>
-                        Edit Report
+                        Edit Publication
                       </button>
                     )}
                     <button type="button" className="btn-download" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
@@ -694,8 +694,8 @@ export default function Reports() {
             onClick={reportModalBackdropClose.stopInsidePointer}
           >
             <div className="reports-modal-header">
-              <h2>Upload Reports</h2>
-              <p>Please upload the reports you'd like to store or manage in your account</p>
+              <h2>Upload Publications</h2>
+              <p>Please upload the publications you'd like to store or manage in your account</p>
               <button
                 className="close-btn"
                 onClick={closeReportModalWithReset}
@@ -706,7 +706,7 @@ export default function Reports() {
 
             <form onSubmit={handleReportSubmit}>
               <div className="form-group">
-                <label htmlFor="title">Reports Title<span className="req-star" aria-hidden="true">*</span></label>
+                <label htmlFor="title">Publications Title<span className="req-star" aria-hidden="true">*</span></label>
                 <input
                   type="text"
                   id="title"
@@ -732,7 +732,7 @@ export default function Reports() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="typeId">Report Type<span className="req-star" aria-hidden="true">*</span></label>
+                <label htmlFor="typeId">Publication Type<span className="req-star" aria-hidden="true">*</span></label>
                 <CustomDropdown
                   id="typeId"
                   name="typeId"
@@ -896,7 +896,7 @@ export default function Reports() {
             </div>
 
             <div className="confirm-modal-content">
-              <p>This will permanently delete the category and all its reports.</p>
+              <p>This will permanently delete the category and all its publications.</p>
 
               <div className="form-actions">
                 <button type="button" onClick={() => setConfirmModalOpen(false)} className="cancel-button">

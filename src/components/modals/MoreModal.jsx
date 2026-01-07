@@ -97,7 +97,7 @@ const MoreModal = ({ isOpen, onClose, onClosingChange }) => {
     {
       path: '/membership',
       icon: 'bi bi-people',
-      label: isAdmin ? 'Members' : 'Membership'
+      label: isAdmin ? 'Memberships' : 'Membership'
     },
     ...(!isAdmin ? [{
       path: '/subscription',
@@ -112,7 +112,7 @@ const MoreModal = ({ isOpen, onClose, onClosingChange }) => {
     {
       path: '/reports',
       icon: 'bi bi-file-earmark',
-      label: 'Reports'
+      label: 'Publications'
     },
     {
       path: '/profile',

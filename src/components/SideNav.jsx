@@ -275,7 +275,7 @@ const SideNav = () => {
           {...navItemGuard}
         >
           <i className="bi bi-person"></i>
-          <span className="nav-label">Find an Expert</span>
+          <span className="nav-label">Memberships</span>
         </NavLink>
 
         <NavLink to="/legislation" className={`nav-item ${isAnimated ? 'nav-item-animate--9' : 'nav-item-hidden'}`} {...navItemGuard}>
@@ -285,7 +285,7 @@ const SideNav = () => {
 
         <NavLink to="/reports" className={`nav-item ${isAnimated ? 'nav-item-animate--10' : 'nav-item-hidden'}`} {...navItemGuard}>
           <i className="bi bi-file-earmark"></i>
-          <span className="nav-label">Reports</span>
+          <span className="nav-label">Publications</span>
         </NavLink>
       </div>
 

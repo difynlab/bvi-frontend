@@ -3,6 +3,37 @@ import { readNewsletters, setNewsletters as persistNewsletters, getMockNewslette
 import newslettersApi from '../api/newslettersApi'
 import { saveNewsletterImageToLocalStorage, transformFromBackend } from '../utils/newsletterTransformers'
 
+const sortNewslettersByPublishDate = (newsletters) => {
+  return [...newsletters].sort((a, b) => {
+    const getPublishDate = (newsletter) => {
+      const dateValue = newsletter.publishDate || 
+                        newsletter.publish_date || 
+                        newsletter.data?.publish_date || 
+                        newsletter.data?.created_at || 
+                        newsletter.createdAt || 
+                        newsletter.created_at
+      
+      if (!dateValue) return null
+      
+      if (typeof dateValue === 'string' && dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return new Date(dateValue + 'T00:00:00')
+      }
+      
+      const date = new Date(dateValue)
+      return isNaN(date.getTime()) ? null : date
+    }
+    
+    const dateA = getPublishDate(a)
+    const dateB = getPublishDate(b)
+    
+    if (!dateA && !dateB) return 0
+    if (!dateA) return 1
+    if (!dateB) return -1
+    
+    return dateB.getTime() - dateA.getTime()
+  })
+}
+
 // Generate Newsletter seeds with recent dates (≤7 days old)
 const generateNewsletterSeeds = () => {
   const newsletterTemplates = [
@@ -113,7 +144,8 @@ export const useNewslettersState = () => {
         }
       }
       
-      setNewsletters(allNewsletters)
+      const sortedNewsletters = sortNewslettersByPublishDate(allNewsletters)
+      setNewsletters(sortedNewsletters)
     } catch (error) {
       if (!error.message.includes('No newsletters found') && !error.message.includes('No data found')) {
         console.error('Error loading newsletters from API:', error)
@@ -170,7 +202,7 @@ export const useNewslettersState = () => {
       // Actualizar lista local - extraer solo los datos del newsletter y transformar
       const backendNewsletter = response.data || response
       const transformedNewsletter = transformFromBackend(backendNewsletter)
-      setNewsletters(prev => [...prev, transformedNewsletter])
+      setNewsletters(prev => sortNewslettersByPublishDate([...prev, transformedNewsletter]))
       
       // Guardar imagen en localStorage con el ID del backend para PDF
       if (newsletterObj.thumbnail && transformedNewsletter.id) {
@@ -207,7 +239,7 @@ export const useNewslettersState = () => {
       const transformedNewsletter = transformFromBackend(backendNewsletter)
       
       // Actualizar lista local
-      setNewsletters(prev => prev.map(nl => nl.id === id ? transformedNewsletter : nl))
+      setNewsletters(prev => sortNewslettersByPublishDate(prev.map(nl => nl.id === id ? transformedNewsletter : nl)))
       
       // Guardar nueva imagen en localStorage con el ID del backend para PDF
       if (newsletterObj.thumbnail && id) {

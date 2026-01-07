@@ -107,7 +107,7 @@ const BottomNav = () => {
     {
       path: '/reports',
       icon: 'bi bi-file-earmark',
-      label: 'Reports'
+      label: 'Publications'
     },
     {
       path: '/profile',
@@ -151,7 +151,7 @@ const BottomNav = () => {
           className={`bottom-nav-item ${isActive('/find-expert') ? 'active' : ''}`}
         >
           <i className="bi bi-person"></i>
-          <span className="bottom-nav-label">Find Expert</span>
+          <span className="bottom-nav-label">Members</span>
         </NavLink>
 
         <button

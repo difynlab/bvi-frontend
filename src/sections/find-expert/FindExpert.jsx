@@ -44,7 +44,7 @@ const FindExpert = () => {
   const [isDeletingFirm, setIsDeletingFirm] = useState(false);
   const [firmToDelete, setFirmToDelete] = useState(null);
   const [expertInfoContent, setExpertInfoContent] = useState(
-    'The BVI has a robust network of outstanding, experienced, and trusted experts based around the world. A number of BVI specialists and expert firms have developed to help service the needs of those looking to carry out cross-border trade and investment and want the comfort of the jurisdiction\'s well-regarded company law.\n\nThese experts come from the world\'s leading corporate firms, trust companies, law firms, and accounting firms, as well as others involved in the financial services sector. They offer a sophisticated array of corporate services, transactions, litigation, as well as wealth management solutions in trust and estate planning, funds and investment business, captive insurance and ship and aircraft registration services.\n\nOur experts are supported by a mature regulatory infrastructure, a well-developed financial services industry and a flexible, creditor-friendly jurisdiction.'
+    'The BVI has a robust network of outstanding, experienced, and trusted members based around the world. A number of BVI specialists and member firms have developed to help service the needs of those looking to carry out cross-border trade and investment and want the comfort of the jurisdiction\'s well-regarded company law.\n\nThese members come from the world\'s leading corporate firms, trust companies, law firms, and accounting firms, as well as others involved in the financial services sector. They offer a sophisticated array of corporate services, transactions, litigation, as well as wealth management solutions in trust and estate planning, funds and investment business, captive insurance and ship and aircraft registration services.\n\nOur members are supported by a mature regulatory infrastructure, a well-developed financial services industry and a flexible, creditor-friendly jurisdiction.'
   );
   const [specializationSearch, setSpecializationSearch] = useState('');
   const [addFirmModalOpen, setAddFirmModalOpen] = useState(false);
@@ -656,8 +656,8 @@ const FindExpert = () => {
         {/* Header */}
         <div className="find-expert-header">
           <div className="find-expert-header-title">
-            <h1>Find an Expert</h1>
-            <p>Browse and find your expert</p>
+            <h1>BVI Finance Members</h1>
+            <p>Browse and find yout BVI Finance member</p>
           </div>
         </div>
 
@@ -680,7 +680,7 @@ const FindExpert = () => {
                   type="button"
                   className="find-expert-edit-info-btn"
                   onClick={() => setEditInfoModalOpen(true)}
-                  aria-label="Edit expert information"
+                  aria-label="Edit member information"
                 >
                   <i className="bi bi-pencil-square" aria-hidden="true"></i>
                   <span>Edit info</span>
@@ -855,7 +855,7 @@ const FindExpert = () => {
                 <i className="bi bi-x-lg" aria-hidden="true"></i>
               </button>
               
-              <h2 className="find-expert-edit-modal-title">Edit Expert Information</h2>
+              <h2 className="find-expert-edit-modal-title">Edit Member Information</h2>
               
               <form onSubmit={handleEditInfoSubmit}>
                 <div className="form-group">
