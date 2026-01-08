@@ -180,12 +180,13 @@ export const useNewslettersState = () => {
       return []
     }
     
-    const totalPages = Math.ceil(newsletters.length / pagination.per_page) || 1
+    const sortedNewsletters = sortNewslettersByPublishDate(newsletters)
+    const totalPages = Math.ceil(sortedNewsletters.length / pagination.per_page) || 1
     const currentPage = pagination.current_page > totalPages ? 1 : pagination.current_page
     const startIndex = (currentPage - 1) * pagination.per_page
     const endIndex = startIndex + pagination.per_page
     
-    return newsletters.slice(startIndex, endIndex)
+    return sortedNewsletters.slice(startIndex, endIndex)
   }, [newsletters, pagination.current_page, pagination.per_page])
 
   const changePage = useCallback((page) => {
