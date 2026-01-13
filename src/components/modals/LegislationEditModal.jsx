@@ -252,16 +252,16 @@ const LegislationEditModal = ({ isOpen, onClose, onSave, initialData = null, mod
     if (!fileList || fileList.length === 0) return;
     const file = fileList[0];
 
-    const maxSize = 15 * 1024 * 1024; // 15MB in bytes (según backend)
-    const allowedTypes = ['application/pdf'];
+    const maxSize = 5 * 1024 * 1024;
+    const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
 
     if (file.size > maxSize) {
-      setErrors(prev => ({ ...prev, files: `${file.name}: File size must be less than 15MB` }));
+      setErrors(prev => ({ ...prev, files: `${file.name}: File size must be less than 5MB` }));
       return;
     }
 
     if (!allowedTypes.includes(file.type)) {
-      setErrors(prev => ({ ...prev, files: `${file.name}: Only PDF files are allowed` }));
+      setErrors(prev => ({ ...prev, files: `${file.name}: Only PDF, PNG, JPG, and JPEG files are allowed` }));
       return;
     }
 

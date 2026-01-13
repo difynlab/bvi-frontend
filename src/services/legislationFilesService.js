@@ -93,7 +93,7 @@ class LegislationFilesService {
 
   async getAll(pagination = 6, page = 1) {
     const queryParams = this.buildQuery({ pagination, page })
-    const url = `${this.baseURL}/legislation-files${queryParams}`
+    const url = `${this.baseURL}/legislations${queryParams}`
     const response = await fetch(url, {
       method: 'GET',
       headers: this.getHeaders(false)
@@ -134,7 +134,7 @@ class LegislationFilesService {
   }
 
   async getById(id) {
-    const url = `${this.baseURL}/legislation-files/${id}`
+    const url = `${this.baseURL}/legislations/${id}`
     const response = await fetch(url, {
       method: 'GET',
       headers: this.getHeaders(false)
@@ -148,7 +148,7 @@ class LegislationFilesService {
     formData.append('file', file)
     formData.append('status', String(status))
 
-    const url = `${this.baseURL}/legislation-files`
+    const url = `${this.baseURL}/legislations`
     const response = await fetch(url, {
       method: 'POST',
       headers: this.getHeaders(false),
@@ -166,7 +166,7 @@ class LegislationFilesService {
       formData.append('file', file)
     }
 
-    const url = `${this.baseURL}/legislation-files/${id}`
+    const url = `${this.baseURL}/legislations/${id}`
     const response = await fetch(url, {
       method: 'POST',
       headers: this.getHeaders(false),
@@ -176,7 +176,7 @@ class LegislationFilesService {
   }
 
   async delete(id) {
-    const url = `${this.baseURL}/legislation-files/${id}`
+    const url = `${this.baseURL}/legislations/${id}`
     const response = await fetch(url, {
       method: 'DELETE',
       headers: this.getHeaders(false)

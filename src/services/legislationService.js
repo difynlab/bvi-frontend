@@ -97,9 +97,8 @@ class LegislationService {
     return await response.text()
   }
 
-  // GET /legislation
   async getLegislation() {
-    const url = `${this.baseURL}/legislation`
+    const url = `${this.baseURL}/legislations`
     const response = await fetch(url, {
       method: 'GET',
       headers: this.getHeaders(false)
@@ -161,10 +160,10 @@ class LegislationService {
       })
     }
 
-    const url = `${this.baseURL}/legislation`
+    const url = `${this.baseURL}/legislations`
     const response = await fetch(url, {
       method: 'POST',
-      headers: this.getHeaders(false), // no Content-Type for FormData
+      headers: this.getHeaders(false),
       body: formData
     })
     return await this.handleResponse(response)

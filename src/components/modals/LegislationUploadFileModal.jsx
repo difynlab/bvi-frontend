@@ -49,16 +49,16 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
   };
 
   const handleFileSelect = (file) => {
-    const maxSize = 15 * 1024 * 1024;
-    const allowedTypes = ['application/pdf'];
+    const maxSize = 5 * 1024 * 1024;
+    const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
 
     if (file.size > maxSize) {
-      setErrors({ file: 'File size must be less than 15MB' });
+      setErrors({ file: 'File size must be less than 5MB' });
       return;
     }
 
     if (!allowedTypes.includes(file.type)) {
-      setErrors({ file: 'Only PDF files are allowed' });
+      setErrors({ file: 'Only PDF, PNG, JPG, and JPEG files are allowed' });
       return;
     }
 
@@ -92,7 +92,7 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
     }
 
     if (!editFile && !selectedFile) {
-      newErrors.file = 'Please select a PDF file';
+      newErrors.file = 'Please select a file';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -200,8 +200,8 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
           </h2>
           <p className="legislation-upload-file-modal__subtitle">
             {editFile 
-              ? 'Edit the file title or upload a new PDF file.'
-              : 'Upload the PDF files to add inside the attachment files section.'}
+              ? 'Edit the file title or upload a new file.'
+              : 'Upload files (PDF, PNG, JPG, JPEG) to add inside the attachment files section.'}
           </p>
         </header>
 
@@ -222,7 +222,7 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
           </div>
 
           <div className="form-group">
-            <label htmlFor="pdf-file-dropzone">PDF File</label>
+            <label htmlFor="pdf-file-dropzone">File</label>
             <div
               id="pdf-file-dropzone"
               className={`legislation-upload-file-dropzone ${dragActive ? 'active' : ''}`}
@@ -244,7 +244,7 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
               {selectedFile ? (
                 <div className="file-preview-card">
                   <div className="file-preview-content">
-                    <i className="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+                    <i className={`bi ${selectedFile.type === 'application/pdf' ? 'bi-file-earmark-pdf' : 'bi-file-earmark-image'}`} aria-hidden="true"></i>
                     <div className="file-preview-info">
                       <span className="file-preview-name">{selectedFile.name}</span>
                       <span className="file-preview-size">
@@ -267,7 +267,7 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
               ) : existingFileUrl ? (
                 <div className="file-preview-card">
                   <div className="file-preview-content">
-                    <i className="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+                    <i className={`bi ${existingFileUrl.toLowerCase().endsWith('.pdf') ? 'bi-file-earmark-pdf' : 'bi-file-earmark-image'}`} aria-hidden="true"></i>
                     <div className="file-preview-info">
                       <span className="file-preview-name">{existingFileName || 'Current file'}</span>
                       <span className="file-preview-size">Existing file</span>
@@ -277,7 +277,7 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
               ) : (
                 <div className="dropzone-content">
                   <i className="bi bi-cloud-upload dropzone-icon" aria-hidden="true"></i>
-                  <p className="dropzone-label">Drag and drop PDF file here</p>
+                  <p className="dropzone-label">Drag and drop file here</p>
                   <p className="dropzone-separator">or</p>
                   <button
                     type="button"
@@ -289,14 +289,14 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
                   >
                     Browse File
                   </button>
-                  <p className="dropzone-hint">PDF only (max 15MB)</p>
+                  <p className="dropzone-hint">PDF, PNG, JPG, JPEG (max 5MB)</p>
                 </div>
               )}
             </div>
             <input
               ref={fileInputRef}
               type="file"
-              accept="application/pdf"
+              accept="application/pdf,image/png,image/jpeg,image/jpg"
               className="hidden-file-input"
               onChange={handleFileInput}
             />

@@ -8,6 +8,7 @@ export const ForgetPassword = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isEmailSent, setIsEmailSent] = useState(false)
   const [error, setError] = useState('')
+  const [resetUrl, setResetUrl] = useState('')
 
   const isValidEmail = (value) => {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i
@@ -31,7 +32,14 @@ export const ForgetPassword = () => {
     setIsLoading(true)
     
     try {
-      await forgotPassword({ email })
+      const response = await forgotPassword({ email })
+      const token = response?.data?.token
+      
+      if (token) {
+        const url = `/reset-password?token=${token}&email=${encodeURIComponent(email)}`
+        setResetUrl(url)
+      }
+      
       setIsEmailSent(true)
     } catch (error) {
       if (error.message.includes('Email not found')) {
@@ -58,16 +66,37 @@ export const ForgetPassword = () => {
         <div className="auth-bg-triangle-right"></div>
         <div className="forget-password-container">
           <div className="success-message">
-            <h1 className="success-title">Check Your Email</h1>
-            <p className="success-text">
-              We've sent a password reset link to <strong>{email}</strong>
-            </p>
-            <p className="success-instructions">
-              Please check your email and click the link to reset your password.
-            </p>
+            <h1 className="success-title">Reset Your Password</h1>
+            {resetUrl ? (
+              <>
+                <p className="success-text-primary">
+                  Click the button below to reset your password
+                </p>
+                <div className="reset-link-container">
+                  <NavLink to={resetUrl} className="reset-link-button">
+                    Reset Password Now
+                  </NavLink>
+                </div>
+                <p className="success-text-secondary">
+                  We've also sent a reset link to <strong>{email}</strong>
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="success-text">
+                  We've sent a password reset link to <strong>{email}</strong>
+                </p>
+                <p className="success-instructions">
+                  Please check your email and click the link to reset your password.
+                </p>
+              </>
+            )}
             <div className="success-actions">
               <button 
-                onClick={() => setIsEmailSent(false)}
+                onClick={() => {
+                  setIsEmailSent(false)
+                  setResetUrl('')
+                }}
                 className="resend-button"
               >
                 Send Another Email

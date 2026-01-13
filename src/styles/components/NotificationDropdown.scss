@@ -94,6 +94,12 @@
     .notification-list {
       max-height: 400px;
       overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
 
       .notification-empty {
         padding: 40px 20px;
@@ -323,6 +329,12 @@
   .notification-list {
     max-height: 400px;
     overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
 
     .notification-empty {
       padding: 40px 20px;

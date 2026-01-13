@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
-import { useParams, NavLink } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { resetPassword } from '../api/authApi'
 import '../styles/pages/ResetPassword.scss'
 
 const ResetPassword = () => {
-  const { token } = useParams()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const [token, setToken] = useState('')
   const [formData, setFormData] = useState({
     email: '',
     newPassword: '',
@@ -16,6 +18,31 @@ const ResetPassword = () => {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isPasswordReset, setIsPasswordReset] = useState(false)
+
+  useEffect(() => {
+    const emailParam = searchParams.get('email')
+    const tokenParam = searchParams.get('token')
+    
+    if (!emailParam || !tokenParam) {
+      setErrors({ general: 'Invalid or missing reset link. Please request a new password reset.' })
+      return
+    }
+    
+    setToken(tokenParam)
+    setFormData(prev => ({
+      ...prev,
+      email: emailParam
+    }))
+  }, [searchParams])
+
+  useEffect(() => {
+    if (isPasswordReset) {
+      const timer = setTimeout(() => {
+        navigate('/login')
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [isPasswordReset, navigate])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -34,12 +61,6 @@ const ResetPassword = () => {
 
   const validateForm = () => {
     const newErrors = {}
-
-    if (!formData.email) {
-      newErrors.email = 'Email is required'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address'
-    }
 
     if (!formData.newPassword) {
       newErrors.newPassword = 'Password is required'
@@ -80,7 +101,7 @@ const ResetPassword = () => {
 
       setSuccess('Your password has been reset successfully!')
       setIsPasswordReset(true)
-      setFormData({ email: '', newPassword: '', confirmPassword: '' })
+      setFormData(prev => ({ ...prev, newPassword: '', confirmPassword: '' }))
     } catch (error) {
       console.error('Reset password error:', error)
 
@@ -123,15 +144,11 @@ const ResetPassword = () => {
               id="email"
               name="email"
               value={formData.email}
-              onChange={handleChange}
+              readOnly
+              disabled
               className={`form-input ${errors.email ? 'error' : ''}`}
               placeholder="Enter your email address"
             />
-            {errors.email && (
-              <p className="form-error">
-                {errors.email}
-              </p>
-            )}
           </div>
 
           <div className="form-group">
@@ -213,7 +230,7 @@ const ResetPassword = () => {
           <button
             type="submit"
             className="submit-button"
-            disabled={loading || isPasswordReset}
+            disabled={loading || isPasswordReset || !token || !formData.email}
           >
             {loading ? 'Resetting...' : 'Reset Password'}
           </button>
@@ -226,9 +243,7 @@ const ResetPassword = () => {
             <i className="bi bi-check-circle-fill"></i>
             <span>{success}</span>
           </div>
-          <NavLink to="/login" className="login-link">
-            Log in now
-          </NavLink>
+          <p className="redirect-message">Redirecting to login...</p>
         </div>
       )}
 

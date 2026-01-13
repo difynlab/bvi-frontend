@@ -50,7 +50,7 @@ function App() {
           <Route path='/register' element={<Register />}></Route>
           <Route path='/login' element={<Login />}></Route>
           <Route path='/forgot-password' element={<ForgetPassword />}></Route>
-          <Route path='/reset-password/:token' element={<ResetPassword />}></Route>
+          <Route path='/reset-password' element={<ResetPassword />}></Route>
           <Route path='/forbidden' element={<Forbidden />}></Route>
 
           <Route path='/dashboard' element={
