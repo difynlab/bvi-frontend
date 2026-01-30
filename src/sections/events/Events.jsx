@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useAuth } from '../../context/useAuth'
 import { can } from '../../auth/acl'
 import { useEvents } from '../../hooks/useEvents'
@@ -16,6 +16,9 @@ import EmptyPage from '../../components/EmptyPage'
 import CustomDropdown from '../../components/CustomDropdown'
 import EventsListSkeleton from '../../components/events/EventsListSkeleton'
 import EventsPaginationSkeleton from '../../components/events/EventsPaginationSkeleton'
+import eventCategoriesService from '../../services/eventCategoriesService'
+import EventTabPicker from '../../components/modals/EventTabPicker'
+import { loadActiveTabId, saveActiveTabId } from '../../helpers/eventsStorage'
 import '../../styles/sections/Events.scss'
 import '../../styles/sections/shimmerLoader.scss'
 
@@ -37,12 +40,39 @@ export const Events = () => {
   const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  const MOBILE_Q = '(max-width: 768px)'
+  const [categories, setCategories] = useState([])
+  const [activeCategory, setActiveCategory] = useState('')
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+  const [editingCategory, setEditingCategory] = useState(null)
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false)
+  const [categoryToDelete, setCategoryToDelete] = useState(null)
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false)
+  const [categoriesLoading, setCategoriesLoading] = useState(false)
+  const [shouldReloadCategories, setShouldReloadCategories] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [activeTabId, setActiveTabId] = useState(() => loadActiveTabId() || null)
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia(MOBILE_Q).matches)
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [categoryError, setCategoryError] = useState('')
+  const [isCategoryLoading, setIsCategoryLoading] = useState(false)
+
   const eventForm = useEventForm()
 
-  // Get event type label for display
-  const getEventTypeLabel = (eventType) => {
-    const option = EVENT_TYPE_OPTIONS.find(opt => opt.value === eventType?.toLowerCase())
-    return option ? option.label : 'Event'
+  const getEventTypeLabel = (event) => {
+    if (!event) return 'Event'
+    
+    if (event.event_category && event.event_category.title) {
+      return event.event_category.title
+    }
+    
+    if (event.event_category_id || event.eventType) {
+      const categoryId = event.event_category_id || event.eventType
+      const category = categories.find(cat => cat.id === categoryId)
+      return category ? category.name : 'Event'
+    }
+    
+    return 'Event'
   }
 
   // Register modal states to disable SideNav gestures
@@ -65,6 +95,7 @@ export const Events = () => {
         return text.length > 0;
       }
     },
+    { key: 'event_category_id', label: 'Event Category', test: () => !!(eventForm?.form?.event_category_id || eventForm?.form?.eventType) },
     { key: 'location', label: 'Location', test: () => (eventForm?.form?.location || '').trim().length > 0 },
     { key: 'register_link', label: 'Registration Link', test: () => (eventForm?.form?.register_link || '').trim().length > 0 },
     { key: 'file', label: 'File Upload', test: () => !!(eventForm?.form?.imagePreviewUrl || eventForm?.form?.imageFileName) }
@@ -88,6 +119,7 @@ export const Events = () => {
     eventForm?.form?.shortDescription,
     eventForm?.editorHtml,
     eventForm?.form?.description,
+    eventForm?.form?.event_category_id || eventForm?.form?.eventType,
     eventForm?.form?.location,
     eventForm?.form?.register_link,
     eventForm?.form?.imagePreviewUrl,
@@ -131,7 +163,10 @@ export const Events = () => {
 
   const titleMarquee = useTitleMarquee()
 
-  useBodyScrollLock(isModalOpen || isRegisterModalOpen || isConfirmDeleteOpen)
+  const addCategoryModalBackdropClose = useModalBackdropClose(() => setIsCategoryModalOpen(false))
+  const confirmCategoryModalBackdropClose = useModalBackdropClose(() => setConfirmModalOpen(false))
+
+  useBodyScrollLock(isModalOpen || isRegisterModalOpen || isConfirmDeleteOpen || isCategoryModalOpen || confirmModalOpen)
 
   useEffect(() => {
     const testElement = document.createElement('div')
@@ -144,6 +179,326 @@ export const Events = () => {
 
     document.body.removeChild(testElement)
   }, [])
+
+  const loadCategoriesFromAPI = useCallback(async (forceRefresh = false) => {
+    if (categoriesLoading) return
+    
+    if (!forceRefresh) {
+      try {
+        const cachedCategories = localStorage.getItem('bvi.events.categoriesCache')
+        const isLoaded = localStorage.getItem('bvi.events.categoriesLoaded') === 'true'
+        
+        if (isLoaded && cachedCategories) {
+          const parsedCategories = JSON.parse(cachedCategories)
+          if (parsedCategories.length > 0) {
+            setCategories(parsedCategories)
+            setCategoriesLoaded(true)
+          }
+        }
+      } catch (error) {
+        console.error('Error reading cache:', error)
+      }
+    }
+    
+    setCategoriesLoading(true)
+    try {
+      const response = await eventCategoriesService.getEventCategories()
+      
+      if (response.http_status === 404) {
+        setCategories([])
+        setCategoriesLoaded(true)
+        localStorage.setItem('bvi.events.categoriesLoaded', 'true')
+        localStorage.setItem('bvi.events.categoriesCache', JSON.stringify([]))
+      } else if (response.data) {
+        let dataArray = []
+        
+        if (Array.isArray(response.data)) {
+          dataArray = response.data
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          dataArray = response.data.data
+        }
+        
+        const apiCategories = dataArray.map(cat => ({
+          id: cat.id,
+          name: cat.title || cat.name,
+          slug: (cat.title || cat.name).toLowerCase().replace(/\s+/g, '-'),
+          status: cat.status
+        }))
+        
+        setCategories(apiCategories)
+        setCategoriesLoaded(true)
+        localStorage.setItem('bvi.events.categoriesLoaded', 'true')
+        localStorage.setItem('bvi.events.categoriesCache', JSON.stringify(apiCategories))
+      } else {
+        setCategories([])
+        setCategoriesLoaded(true)
+        localStorage.setItem('bvi.events.categoriesLoaded', 'true')
+        localStorage.setItem('bvi.events.categoriesCache', JSON.stringify([]))
+      }
+    } catch (error) {
+      console.error('Error loading categories from API:', error)
+      const cachedCategories = localStorage.getItem('bvi.events.categoriesCache')
+      if (cachedCategories) {
+        try {
+          const parsedCategories = JSON.parse(cachedCategories)
+          setCategories(parsedCategories)
+        } catch (e) {
+          setCategories([])
+        }
+      } else {
+        setCategories([])
+      }
+      setCategoriesLoaded(true)
+    } finally {
+      setCategoriesLoading(false)
+    }
+  }, [categoriesLoading])
+
+  const refreshCategories = useCallback(async () => {
+    setCategoriesLoaded(false)
+    localStorage.removeItem('bvi.events.categoriesLoaded')
+    localStorage.removeItem('bvi.events.categoriesCache')
+    setShouldReloadCategories(true)
+  }, [])
+
+  const handleAddCategory = useCallback(async (name) => {
+    try {
+      const response = await eventCategoriesService.createEventCategory({
+        title: name.trim(),
+        status: '1'
+      })
+      
+      const newCategory = response.data
+      
+      setCategoriesLoaded(false)
+      localStorage.removeItem('bvi.events.categoriesLoaded')
+      localStorage.removeItem('bvi.events.categoriesCache')
+      
+      try {
+        const categoriesResponse = await eventCategoriesService.getEventCategories()
+        
+        if (categoriesResponse.http_status === 404) {
+          setCategories([])
+        } else if (categoriesResponse.data) {
+          let dataArray = []
+          
+          if (Array.isArray(categoriesResponse.data)) {
+            dataArray = categoriesResponse.data
+          } else if (categoriesResponse.data.data && Array.isArray(categoriesResponse.data.data)) {
+            dataArray = categoriesResponse.data.data
+          }
+          
+          const apiCategories = dataArray.map(cat => ({
+            id: cat.id,
+            name: cat.title || cat.name,
+            slug: (cat.title || cat.name).toLowerCase().replace(/\s+/g, '-'),
+            status: cat.status
+          }))
+          
+          setCategories(apiCategories)
+          setCategoriesLoaded(true)
+          localStorage.setItem('bvi.events.categoriesLoaded', 'true')
+          localStorage.setItem('bvi.events.categoriesCache', JSON.stringify(apiCategories))
+        }
+      } catch (reloadError) {
+        console.error('Error reloading categories:', reloadError)
+      }
+      
+      setIsCategoryModalOpen(false)
+      
+      return newCategory ? {
+        id: newCategory.id,
+        name: newCategory.title || newCategory.name
+      } : null
+    } catch (error) {
+      console.error('Error creating category:', error)
+      throw error
+    }
+  }, [])
+
+  const handleDeleteCategory = useCallback((id) => {
+    setCategoryToDelete(id)
+    setConfirmModalOpen(true)
+  }, [])
+
+  const handleConfirmDeleteCategory = useCallback(async () => {
+    if (!categoryToDelete) return
+
+    try {
+      await eventCategoriesService.deleteEventCategory(categoryToDelete)
+
+      const updatedCategories = categories.filter(cat => cat.id !== categoryToDelete)
+      setCategories(updatedCategories)
+
+      localStorage.setItem('bvi.events.categoriesCache', JSON.stringify(updatedCategories))
+      localStorage.setItem('bvi.events.categoriesLoaded', 'true')
+
+      setConfirmModalOpen(false)
+      setCategoryToDelete(null)
+
+      setCategoriesLoaded(false)
+      setShouldReloadCategories(true)
+    } catch (error) {
+      console.error('Error deleting category:', error)
+    }
+  }, [categoryToDelete, categories])
+
+  const handleEditCategory = useCallback((id) => {
+    const category = categories.find(cat => cat.id === id)
+    if (category) {
+      setEditingCategory(category)
+      setIsCategoryModalOpen(true)
+    }
+  }, [categories])
+
+  const handleUpdateCategory = useCallback(async (newName) => {
+    if (editingCategory && newName.trim().length >= 3) {
+      try {
+        await eventCategoriesService.updateEventCategory(editingCategory.id, {
+          title: newName.trim(),
+          status: editingCategory.status.toString()
+        })
+        
+        await refreshCategories()
+        
+        setIsCategoryModalOpen(false)
+        setEditingCategory(null)
+      } catch (error) {
+        console.error('Error updating category:', error)
+        throw error
+      }
+    }
+  }, [editingCategory, refreshCategories])
+
+  const closeCategoryModal = useCallback(() => {
+    setIsCategoryModalOpen(false)
+    setEditingCategory(null)
+  }, [])
+
+  const handleAddCategorySubmit = async () => {
+    const trimmedName = newCategoryName.trim()
+    if (!trimmedName) {
+      setCategoryError('Category name is required')
+      return
+    }
+    if (trimmedName.length < 3) {
+      setCategoryError('Category name must be at least 3 characters')
+      return
+    }
+    
+    setIsCategoryLoading(true)
+    setCategoryError('')
+    
+    try {
+      if (editingCategory) {
+        await handleUpdateCategory(trimmedName)
+      } else {
+        const newCategory = await handleAddCategory(trimmedName)
+        if (newCategory && newCategory.id && isModalOpen) {
+          eventForm.onChange('event_category_id', Number(newCategory.id))
+          eventForm.onChange('eventType', Number(newCategory.id))
+        }
+      }
+      
+      setNewCategoryName('')
+      setCategoryError('')
+      
+    } catch (error) {
+      console.error('Error creating/updating category:', error)
+      setCategoryError(`Something went wrong. Error: ${error.message}`)
+    } finally {
+      setIsCategoryLoading(false)
+    }
+  }
+
+  const closeCategoryModalLocal = () => {
+    setNewCategoryName('')
+    setCategoryError('')
+    closeCategoryModal()
+  }
+
+  useEffect(() => {
+    const mql = window.matchMedia(MOBILE_Q)
+    const onChange = () => setIsMobile(mql.matches)
+    mql.addEventListener?.('change', onChange)
+    return () => mql.removeEventListener?.('change', onChange)
+  }, [])
+
+  useEffect(() => {
+    loadCategoriesFromAPI(true)
+  }, [])
+
+  useEffect(() => {
+    if (shouldReloadCategories) {
+      loadCategoriesFromAPI(true)
+      setShouldReloadCategories(false)
+    }
+  }, [shouldReloadCategories, loadCategoriesFromAPI])
+
+  useEffect(() => {
+    if (editingCategory) {
+      setNewCategoryName(editingCategory.name)
+    } else {
+      setNewCategoryName('')
+    }
+  }, [editingCategory])
+
+  useEffect(() => {
+    if (!categories.length) {
+      setActiveTabId(null)
+      saveActiveTabId(null)
+      setActiveCategory('')
+      return
+    }
+    if (!activeTabId || !categories.some(c => c.id === activeTabId)) {
+      const next = categories[0].id
+      setActiveTabId(next)
+      saveActiveTabId(next)
+      setActiveCategory(next)
+    }
+  }, [categories])
+
+  useEffect(() => {
+    if (activeCategory && activeCategory !== activeTabId) {
+      setActiveTabId(activeCategory)
+      saveActiveTabId(activeCategory)
+    }
+  }, [activeCategory, activeTabId])
+
+  const onSelectCategory = (id) => {
+    setActiveTabId(id)
+    saveActiveTabId(id)
+    setActiveCategory(id)
+  }
+
+  const onAddCategory = () => {
+    setIsCategoryModalOpen(true)
+  }
+
+  const onDeleteCategory = (id) => {
+    handleDeleteCategory(id)
+    if (id === activeTabId) {
+      const remaining = categories.filter(c => c.id !== id)
+      const next = remaining[0]?.id || null
+      setActiveTabId(next)
+      saveActiveTabId(next)
+    }
+  }
+
+  const activeCategoryData = useMemo(
+    () => categories.find(c => c.id === activeTabId) || null,
+    [categories, activeTabId]
+  )
+
+  const filteredEvents = useMemo(() => {
+    if (!activeCategory) {
+      return visibleEvents
+    }
+    return visibleEvents.filter(event => {
+      const eventCategoryId = event.event_category_id || event.eventType
+      return eventCategoryId === activeCategory
+    })
+  }, [visibleEvents, activeCategory])
 
   const getEventDescriptionText = (description) => {
     if (typeof description === 'string') {
@@ -255,7 +610,161 @@ export const Events = () => {
     return (
       <>
         {renderHeader()}
-        {events.length === 0 ? (
+        
+        {isMobile ? (
+          <div className="notices-mobile-header" role="region" aria-label="Event categories">
+            {categoriesLoading ? (
+              <div className="category-title-skeleton">
+                <span style={{ opacity: 0 }}>Loading...</span>
+              </div>
+            ) : (
+              <div className="category-title">
+                {categories.length > 0 ? (
+                  <>
+                    <button
+                      type="button"
+                      className="category-picker-btn"
+                      onClick={() => setPickerOpen(true)}
+                      aria-haspopup="dialog"
+                      aria-controls="eventTabPicker">
+                      <h2>
+                        {activeCategoryData?.name || 'Categories'}
+                      </h2>
+                      <i className="bi bi-chevron-down" aria-hidden="true"></i>
+                    </button>
+
+                    <EventTabPicker
+                      open={pickerOpen}
+                      onClose={() => setPickerOpen(false)}
+                      categories={categories}
+                      activeTabId={activeTabId}
+                      onSelect={onSelectCategory}
+                      canManage={can(user, 'events:create')}
+                      onAddCategory={onAddCategory}
+                      onDeleteCategory={onDeleteCategory}
+                      onEditCategory={handleEditCategory}
+                    />
+                  </>
+                ) : (
+                  <div className="no-categories-message-mobile">
+                    <p>No event categories created yet...</p>
+                  </div>
+                )}
+              </div>
+            )}
+            {can(user, 'events:create') && (
+              <button
+                type="button"
+                className="add-tab-btn"
+                onClick={onAddCategory}
+                aria-label="Add category"
+                title="Add category"
+              >
+                <i className="bi bi-plus" aria-hidden="true"></i>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="notices-tabs-desktop" role="tablist" aria-orientation="horizontal">
+            <div className="category-tabs">
+              <div className="tabs-container">
+                {categoriesLoading ? (
+                  <>
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="tab-skeleton-group">
+                        <div className="category-tab-skeleton">
+                          <span style={{ opacity: 0 }}>Loading...</span>
+                        </div>
+                      </div>
+                    ))}
+                    {can(user, 'events:create') && (
+                      <button
+                        className="add-category-btn"
+                        onClick={() => setIsCategoryModalOpen(true)}
+                      >
+                        <i className="bi bi-plus"></i>
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {categories.length > 0 ? (
+                      categories.map(category => (
+                        <div key={category.id} className="tab-group">
+                          <button
+                            className={`category-tab ${activeCategory === category.id ? 'active' : ''}`}
+                            onClick={() => setActiveCategory(category.id)}
+                          >
+                            <span>{category.name}</span>
+                          </button>
+                          {can(user, 'events:update') && (
+                            <button
+                              className="category-tab__edit"
+                              onClick={(e) => { e.stopPropagation(); handleEditCategory(category.id); }}
+                              aria-label="Edit category"
+                            >
+                              <i className="bi bi-pencil-square"></i>
+                            </button>
+                          )}
+                          {can(user, 'events:delete') && (
+                            <button
+                              className="category-tab__delete"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id); }}
+                              aria-label="Delete category"
+                            >
+                              <i className="bi bi-x-lg"></i>
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="no-categories-message">
+                        <p>No event categories created yet...</p>
+                      </div>
+                    )}
+                    {can(user, 'events:create') && (
+                      <button
+                        className="add-category-btn"
+                        onClick={() => setIsCategoryModalOpen(true)}
+                      >
+                        <i className="bi bi-plus"></i>
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {pickerOpen && (
+          <div
+            className="notices-dropdown-overlay"
+            onClick={() => setPickerOpen(false)}
+          />
+        )}
+
+        {categories.length === 0 ? (
+          <EmptyPage
+            isAdmin={can(user, 'events:create')}
+            title={can(user, 'events:create') ? 'No categories yet!' : 'No categories available.'}
+            description={
+              can(user, 'events:create')
+                ? <>Create your first category to get started with events.</>
+                : <>No event categories have been created yet.</>
+            }
+          />
+        ) : filteredEvents.length === 0 ? (
+          <EmptyPage
+            isAdmin={can(user, 'events:create')}
+            title={can(user, 'events:create') ? 'No events in this category!' : 'No events found.'}
+            description={
+              can(user, 'events:create')
+                ? <>This category is empty. Add your first event to get started!</>
+                : <>This category doesn't have any events yet.</>
+            }
+          />
+        ) : events.length === 0 ? (
           <EmptyPage
             isAdmin={can(user, 'events:create')}
             title={can(user, 'events:create') ? 'Oops nothing to see here yet!' : 'Oops! No data found.'}
@@ -268,7 +777,7 @@ export const Events = () => {
         ) : (
           <>
             <div className="events-list">
-              {visibleEvents.map((event, index) => (
+              {filteredEvents.map((event, index) => (
                 <div key={event.id || `event-${index}`} className="event-card">
                   <div className="event-image">
                     {/* Imagen borrosa para carga rápida */}
@@ -303,8 +812,8 @@ export const Events = () => {
                   </div>
                   <div className="event-content">
                     <div className="event-header">
-                      <span className={`event-type ${event.eventType.toLowerCase()}`}>
-                        {getEventTypeLabel(event.eventType)}
+                      <span className="event-type">
+                        {getEventTypeLabel(event)}
                       </span>
                       <span className="event-date">{formatDate(event.date)}</span>
                     </div>
@@ -493,7 +1002,6 @@ export const Events = () => {
   const handleRegister = () => {
     try {
       // TODO BACKEND: Implement registration
-      console.log('Registering for event:', registeringEvent?.id)
       closeRegisterModal()
     } catch (error) {
       console.error('Error in handleRegister:', error)
@@ -576,9 +1084,41 @@ export const Events = () => {
       let result
       if (modalMode === 'create') {
         const newEvent = eventForm.buildEventObject()
+        const selectedCategory = categories.find(cat => cat.id === newEvent.event_category_id)
+        if (selectedCategory) {
+          const categoryName = (selectedCategory.name || '').toLowerCase()
+          if (categoryName.includes('workshop')) {
+            newEvent.category = 'workshop'
+          } else if (categoryName.includes('webinar')) {
+            newEvent.category = 'webinar'
+          } else if (categoryName.includes('conference')) {
+            newEvent.category = 'conference'
+          } else {
+            newEvent.category = 'workshop'
+          }
+          newEvent.event_category = selectedCategory
+        } else {
+          newEvent.category = 'workshop'
+        }
         result = await createEvent(newEvent)
       } else if (modalMode === 'edit' && editingEventId) {
         const updatedEvent = eventForm.buildEventObject(editingEventId)
+        const selectedCategory = categories.find(cat => cat.id === updatedEvent.event_category_id)
+        if (selectedCategory) {
+          const categoryName = (selectedCategory.name || '').toLowerCase()
+          if (categoryName.includes('workshop')) {
+            updatedEvent.category = 'workshop'
+          } else if (categoryName.includes('webinar')) {
+            updatedEvent.category = 'webinar'
+          } else if (categoryName.includes('conference')) {
+            updatedEvent.category = 'conference'
+          } else {
+            updatedEvent.category = 'workshop'
+          }
+          updatedEvent.event_category = selectedCategory
+        } else {
+          updatedEvent.category = 'workshop'
+        }
         result = await updateEvent(updatedEvent)
       }
 
@@ -751,7 +1291,7 @@ export const Events = () => {
                       value={eventForm.form.timeZone}
                       onChange={handleInputChange}
                       options={eventForm.TIME_ZONES}
-                      formatDisplay={(opt) => opt.value}
+                      formatDisplay={(opt) => opt.label}
                       placeholder="Select time zone"
                     />
                   </div>
@@ -774,14 +1314,20 @@ export const Events = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="eventType">Event Type</label>
+                    <label htmlFor="event_category_id">Event Category<span className="req-star" aria-hidden="true">*</span></label>
                     <CustomDropdown
-                      id="eventType"
-                      name="eventType"
-                      value={eventForm.form.eventType}
-                      onChange={handleInputChange}
-                      options={eventForm.EVENT_TYPE_OPTIONS}
-                      placeholder="Select event type"
+                      id="event_category_id"
+                      name="event_category_id"
+                      value={eventForm.form.event_category_id || eventForm.form.eventType}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        eventForm.onChange('event_category_id', value ? Number(value) : null)
+                        eventForm.onChange('eventType', value ? Number(value) : null)
+                      }}
+                      options={categories.filter(cat => cat.status === 1 || cat.status === '1').map(category => ({ value: category.id, label: category.name }))}
+                      placeholder="Select category"
+                      actionLabel="New category..."
+                      onAction={() => setIsCategoryModalOpen(true)}
                     />
                   </div>
                 </div>
@@ -938,8 +1484,8 @@ export const Events = () => {
                 <div className="register-event-details">
                   <div className="register-event-content">
                     <div className="register-event-header">
-                      <span className={`event-type ${registeringEvent.eventType.toLowerCase()}`}>
-                        {registeringEvent.eventType}
+                      <span className="event-type">
+                        {getEventTypeLabel(registeringEvent)}
                       </span>
                       <h2>{registeringEvent.title}</h2>
 
@@ -985,6 +1531,119 @@ export const Events = () => {
           </div>
         )}
       </div>
+
+      {isCategoryModalOpen && (
+        <div
+          className="notices-modal-overlay"
+          onPointerDown={addCategoryModalBackdropClose.onBackdropPointerDown}
+          onPointerUp={addCategoryModalBackdropClose.onBackdropPointerUp}
+          onPointerCancel={addCategoryModalBackdropClose.onBackdropPointerCancel}
+        >
+          <ModalLifecycleLock />
+          <div
+            className="notices-modal notices-addcat-modal"
+            onPointerDown={addCategoryModalBackdropClose.stopInsidePointer}
+            onClick={addCategoryModalBackdropClose.stopInsidePointer}
+          >
+            <div className="notices-modal-header">
+              <button
+                className="close-btn"
+                onClick={closeCategoryModalLocal}
+              >
+                <i className="bi bi-x"></i>
+              </button>
+            </div>
+
+            <div className="notices-addcat-modal__content">
+              <h2 className="notices-addcat-modal__title">
+                {editingCategory ? 'Update Category Title' : 'Add New Category'}
+              </h2>
+              <p className="notices-addcat-modal__subtitle">
+                {editingCategory ? 'Please update the category name' : 'Please add new category details'}
+              </p>
+
+              <div className="form-group">
+                <label htmlFor="categoryName" className="notices-addcat-modal__label">Enter Title</label>
+                <input
+                  type="text"
+                  id="categoryName"
+                  placeholder={editingCategory ? "Please enter the new title" : "Please mention the title of the new category which you want to create"}
+                  className="notices-addcat-modal__input"
+                  value={newCategoryName}
+                  onChange={(e) => {
+                    setNewCategoryName(e.target.value)
+                    setCategoryError('')
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleAddCategorySubmit()
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
+
+              {categoryError && (
+                <div className="app-form__error-banner">
+                  Error: {categoryError}
+                </div>
+              )}
+
+              <div className="notices-addcat-modal__actions">
+                <button
+                  type="button"
+                  className="notices-addcat-modal__update-btn"
+                  onClick={handleAddCategorySubmit}
+                  disabled={isCategoryLoading}
+                >
+                  {isCategoryLoading ? 'Loading...' : (editingCategory ? 'Update' : 'Update')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmModalOpen && categoryToDelete && (
+        <div
+          className="notices-modal-overlay"
+          onPointerDown={confirmCategoryModalBackdropClose.onBackdropPointerDown}
+          onPointerUp={confirmCategoryModalBackdropClose.onBackdropPointerUp}
+          onPointerCancel={confirmCategoryModalBackdropClose.onBackdropPointerCancel}
+        >
+          <ModalLifecycleLock />
+          <div
+            className="notices-deleteCategory-modal"
+            onPointerDown={confirmCategoryModalBackdropClose.stopInsidePointer}
+            onClick={confirmCategoryModalBackdropClose.stopInsidePointer}
+          >
+            <button
+              className="close-btn"
+              onClick={() => setConfirmModalOpen(false)}
+            >
+              <i className="bi bi-x"></i>
+            </button>
+            <div className="confirm-delete-modal-header">
+              <i className="bi bi-exclamation-triangle"></i>
+              <h2>Delete category?</h2>
+            </div>
+
+            <div className="confirm-modal-content">
+              <p>This will permanently delete the category and all its events.</p>
+
+              <div className="form-actions">
+                <button type="button" onClick={() => setConfirmModalOpen(false)} className="cancel-button">
+                  Cancel
+                </button>
+                <button type="button" onClick={handleConfirmDeleteCategory} className="delete-button">
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirm Delete Modal */}
       <ConfirmDeleteModal

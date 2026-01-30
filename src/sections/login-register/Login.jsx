@@ -124,7 +124,7 @@ export const Login = () => {
       <div className="auth-container login-container">
         <div className="auth-left" aria-hidden>
           <img
-            src="/images/login.jpg"
+            src="/images/members-portal-image.jpg"
             alt="Login Background"
           />
         </div>

@@ -17,7 +17,7 @@ const DEFAULT_SERVER_PLANS = [
       'Monthly newsletter',
       'Community forum access'
     ],
-    pricing: [100],
+    pricing: { 6: 100, 12: 180, 18: 250 },
     status: 1
   },
   {
@@ -29,7 +29,7 @@ const DEFAULT_SERVER_PLANS = [
       'Priority customer support',
       'Exclusive webinars & events'
     ],
-    pricing: [200],
+    pricing: { 6: 200, 12: 360, 18: 500 },
     status: 1
   },
   {
@@ -42,7 +42,7 @@ const DEFAULT_SERVER_PLANS = [
       'Early access to new features',
       'Premium support hotline'
     ],
-    pricing: [300],
+    pricing: { 6: 300, 12: 540, 18: 750 },
     status: 1
   }
 ];
@@ -94,23 +94,129 @@ const normalizePlan = (plan) => {
 
   const perks = ensurePerksArray(plan.perks);
   
-  let pricing = [];
+  let pricing = { 6: 0, 12: 0, 18: 0 };
+  let pricingArray = [];
+  
   if (plan.pricing) {
     if (Array.isArray(plan.pricing)) {
-      pricing = plan.pricing.map(p => typeof p === 'number' ? p : parseFloat(p) || 0).filter(p => !isNaN(p));
+      const isArrayOfObjects = plan.pricing.length > 0 && typeof plan.pricing[0] === 'object' && plan.pricing[0] !== null && 'duration' in plan.pricing[0];
+      
+      if (isArrayOfObjects) {
+        pricingArray = plan.pricing.map(item => ({
+          duration: item.duration || '',
+          price: typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0
+        }));
+        
+        const durationMap = {};
+        pricingArray.forEach(item => {
+          const durationStr = item.duration.toLowerCase();
+          if (durationStr.includes('6') || durationStr === '6 months' || durationStr === '6 month') {
+            durationMap[6] = item.price;
+          } else if (durationStr.includes('12') || durationStr === '12 months' || durationStr === '12 month') {
+            durationMap[12] = item.price;
+          } else if (durationStr.includes('18') || durationStr === '18 months' || durationStr === '18 month') {
+            durationMap[18] = item.price;
+          }
+        });
+        
+        pricing = {
+          6: durationMap[6] ?? (pricingArray[0]?.price || 0),
+          12: durationMap[12] ?? (pricingArray[1]?.price || pricingArray[0]?.price || 0),
+          18: durationMap[18] ?? (pricingArray[2]?.price || pricingArray[0]?.price || 0)
+        };
+      } else {
+        const arr = plan.pricing.map(p => typeof p === 'number' ? p : parseFloat(p) || 0).filter(p => !isNaN(p));
+        pricing = {
+          6: arr[0] || 0,
+          12: arr[1] || arr[0] || 0,
+          18: arr[2] || arr[0] || 0
+        };
+        pricingArray = arr.map((price, index) => ({
+          duration: ['6 months', '12 months', '18 months'][index] || `${index + 1} months`,
+          price
+        }));
+      }
+    } else if (typeof plan.pricing === 'object' && !Array.isArray(plan.pricing)) {
+      pricing = {
+        6: typeof plan.pricing[6] === 'number' ? plan.pricing[6] : parseFloat(plan.pricing[6]) || 0,
+        12: typeof plan.pricing[12] === 'number' ? plan.pricing[12] : parseFloat(plan.pricing[12]) || 0,
+        18: typeof plan.pricing[18] === 'number' ? plan.pricing[18] : parseFloat(plan.pricing[18]) || 0
+      };
+      pricingArray = [
+        { duration: '6 months', price: pricing[6] },
+        { duration: '12 months', price: pricing[12] },
+        { duration: '18 months', price: pricing[18] }
+      ];
     } else if (typeof plan.pricing === 'string') {
       try {
         const parsed = JSON.parse(plan.pricing);
         if (Array.isArray(parsed)) {
-          pricing = parsed.map(p => typeof p === 'number' ? p : parseFloat(p) || 0).filter(p => !isNaN(p));
+          const isArrayOfObjects = parsed.length > 0 && typeof parsed[0] === 'object' && parsed[0] !== null && 'duration' in parsed[0];
+          
+          if (isArrayOfObjects) {
+            pricingArray = parsed.map(item => ({
+              duration: item.duration || '',
+              price: typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0
+            }));
+            
+            const durationMap = {};
+            pricingArray.forEach(item => {
+              const durationStr = item.duration.toLowerCase();
+              if (durationStr.includes('6') || durationStr === '6 months' || durationStr === '6 month') {
+                durationMap[6] = item.price;
+              } else if (durationStr.includes('12') || durationStr === '12 months' || durationStr === '12 month') {
+                durationMap[12] = item.price;
+              } else if (durationStr.includes('18') || durationStr === '18 months' || durationStr === '18 month') {
+                durationMap[18] = item.price;
+              }
+            });
+            
+            pricing = {
+              6: durationMap[6] ?? (pricingArray[0]?.price || 0),
+              12: durationMap[12] ?? (pricingArray[1]?.price || pricingArray[0]?.price || 0),
+              18: durationMap[18] ?? (pricingArray[2]?.price || pricingArray[0]?.price || 0)
+            };
+          } else {
+            const arr = parsed.map(p => typeof p === 'number' ? p : parseFloat(p) || 0).filter(p => !isNaN(p));
+            pricing = {
+              6: arr[0] || 0,
+              12: arr[1] || arr[0] || 0,
+              18: arr[2] || arr[0] || 0
+            };
+            pricingArray = arr.map((price, index) => ({
+              duration: ['6 months', '12 months', '18 months'][index] || `${index + 1} months`,
+              price
+            }));
+          }
+        } else if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+          pricing = {
+            6: typeof parsed[6] === 'number' ? parsed[6] : parseFloat(parsed[6]) || 0,
+            12: typeof parsed[12] === 'number' ? parsed[12] : parseFloat(parsed[12]) || 0,
+            18: typeof parsed[18] === 'number' ? parsed[18] : parseFloat(parsed[18]) || 0
+          };
+          pricingArray = [
+            { duration: '6 months', price: pricing[6] },
+            { duration: '12 months', price: pricing[12] },
+            { duration: '18 months', price: pricing[18] }
+          ];
         }
       } catch (_) {
-        pricing = [];
+        pricing = { 6: 0, 12: 0, 18: 0 };
+        pricingArray = [
+          { duration: '6 months', price: 0 },
+          { duration: '12 months', price: 0 },
+          { duration: '18 months', price: 0 }
+        ];
       }
     }
   }
-  if (pricing.length === 0) {
-    pricing = [0];
+  
+  if (pricingArray.length === 0) {
+    pricingArray = [
+      { duration: '6 months', price: pricing[6] },
+      { duration: '12 months', price: pricing[12] },
+      { duration: '18 months', price: pricing[18] }
+    ];
   }
 
   return {
@@ -125,6 +231,7 @@ const normalizePlan = (plan) => {
     perks,
     theme: determinePlanTheme(plan.title || ''),
     pricing,
+    pricingArray,
     created_at: plan.created_at,
     updated_at: plan.updated_at
   };
@@ -199,6 +306,9 @@ const MembershipPlans = ({ isAdmin = false }) => {
   const [isSeedingDefaults, setIsSeedingDefaults] = useState(false);
   const [hasAttemptedDefaultSeed, setHasAttemptedDefaultSeed] = useState(false);
   const [hasFetchedPlans, setHasFetchedPlans] = useState(false);
+  const [selectedDurations, setSelectedDurations] = useState({});
+  const [editingDurationIndex, setEditingDurationIndex] = useState({});
+  const [planDurations, setPlanDurations] = useState({});
 
   const autoResizeTextarea = (textarea) => {
     if (textarea) {
@@ -233,6 +343,20 @@ const MembershipPlans = ({ isAdmin = false }) => {
   useEffect(() => {
     fetchPlans();
   }, [fetchPlans]);
+
+  useEffect(() => {
+    if (plans.length > 0) {
+      const newDurations = {};
+      plans.forEach((plan) => {
+        if (plan.id && !selectedDurations[plan.id]) {
+          newDurations[plan.id] = 6;
+        }
+      });
+      if (Object.keys(newDurations).length > 0) {
+        setSelectedDurations((prev) => ({ ...prev, ...newDurations }));
+      }
+    }
+  }, [plans]);
 
   useEffect(() => {
     if (editingPlanId) {
@@ -286,15 +410,15 @@ const MembershipPlans = ({ isAdmin = false }) => {
     });
   };
 
-  const handlePricingChange = (index, value) => {
+  const handlePricingChange = (duration, value) => {
     setEditDraft((prev) => {
       if (!prev) return prev;
-      const pricing = [...(prev.pricing || [0])];
+      const pricing = { ...(prev.pricing || { 6: 0, 12: 0, 18: 0 }) };
       if (value === '' || value === null || value === undefined) {
-        pricing[index] = '';
+        pricing[duration] = '';
       } else {
         const numValue = parseFloat(value);
-        pricing[index] = isNaN(numValue) ? '' : numValue;
+        pricing[duration] = isNaN(numValue) ? '' : numValue;
       }
       return {
         ...prev,
@@ -303,18 +427,108 @@ const MembershipPlans = ({ isAdmin = false }) => {
     });
   };
 
-  const handlePricingBlur = (index) => {
+  const handlePricingBlur = (duration) => {
     setEditDraft((prev) => {
       if (!prev) return prev;
-      const pricing = [...(prev.pricing || [0])];
-      if (pricing[index] === '' || pricing[index] === null || pricing[index] === undefined) {
-        pricing[index] = 0;
+      const pricing = { ...(prev.pricing || { 6: 0, 12: 0, 18: 0 }) };
+      if (pricing[duration] === '' || pricing[duration] === null || pricing[duration] === undefined) {
+        pricing[duration] = 0;
       }
       return {
         ...prev,
         pricing
       };
     });
+  };
+
+  const handleDurationSelect = (planId, duration) => {
+    setSelectedDurations((prev) => ({
+      ...prev,
+      [planId]: duration
+    }));
+  };
+
+  const handleDurationEdit = (planId, index) => {
+    setEditingDurationIndex((prev) => ({
+      ...prev,
+      [planId]: index
+    }));
+  };
+
+  const handleDurationChange = (planId, index, value) => {
+    if (value === '' || value === null || value === undefined) {
+      setPlanDurations((prev) => {
+        const currentDurations = prev[planId] || [6, 12, 18];
+        const newDurations = [...currentDurations];
+        newDurations[index] = '';
+        return {
+          ...prev,
+          [planId]: newDurations
+        };
+      });
+      return;
+    }
+    
+    const numValue = parseInt(value, 10);
+    if (!isNaN(numValue) && numValue > 0) {
+      const currentDurations = planDurations[planId] || [6, 12, 18];
+      const oldDuration = currentDurations[index];
+      const newDuration = numValue;
+
+      setPlanDurations((prev) => {
+        const currentDurations = prev[planId] || [6, 12, 18];
+        const newDurations = [...currentDurations];
+        newDurations[index] = numValue;
+        return {
+          ...prev,
+          [planId]: newDurations
+        };
+      });
+
+      setEditDraft((prev) => {
+        if (!prev) return prev;
+        const pricing = { ...(prev.pricing || {}) };
+        if (oldDuration && pricing[oldDuration] !== undefined) {
+          pricing[newDuration] = pricing[oldDuration];
+          delete pricing[oldDuration];
+        }
+        return {
+          ...prev,
+          pricing
+        };
+      });
+
+      if (selectedDurations[planId] === oldDuration) {
+        setSelectedDurations((prev) => ({
+          ...prev,
+          [planId]: newDuration
+        }));
+      }
+    }
+  };
+
+  const handleDurationBlur = (planId) => {
+    setPlanDurations((prev) => {
+      const currentDurations = prev[planId] || [6, 12, 18];
+      const editingIdx = editingDurationIndex[planId];
+      if (editingIdx !== null && editingIdx !== undefined) {
+        const newDurations = currentDurations.map((d, idx) => {
+          if (idx === editingIdx && (d === '' || d === null || d === undefined || d < 1)) {
+            return 6;
+          }
+          return d;
+        });
+        return {
+          ...prev,
+          [planId]: newDurations
+        };
+      }
+      return prev;
+    });
+    setEditingDurationIndex((prev) => ({
+      ...prev,
+      [planId]: null
+    }));
   };
 
 
@@ -330,37 +544,84 @@ const MembershipPlans = ({ isAdmin = false }) => {
     const planToEdit = plans.find((plan) => plan.id === planId);
     if (!planToEdit) return;
 
+    let durations = [6, 12, 18];
+    if (planToEdit.pricingArray && Array.isArray(planToEdit.pricingArray) && planToEdit.pricingArray.length > 0) {
+      durations = planToEdit.pricingArray.map(item => {
+        const durationStr = item.duration || '';
+        const match = durationStr.match(/(\d+)/);
+        return match ? parseInt(match[1], 10) : 6;
+      });
+      if (durations.length < 3) {
+        durations = [...durations, ...Array(3 - durations.length).fill(6)];
+      }
+      durations = durations.slice(0, 3);
+    }
+
     setEditingPlanId(planId);
+    setPlanDurations((prev) => ({
+      ...prev,
+      [planId]: durations
+    }));
+    setEditingDurationIndex((prev) => ({
+      ...prev,
+      [planId]: null
+    }));
     setEditDraft({
       ...planToEdit,
       perks: planToEdit.perks.length > 0 ? [...planToEdit.perks] : [''],
-      pricing: Array.isArray(planToEdit.pricing) && planToEdit.pricing.length > 0 
-        ? [...planToEdit.pricing] 
-        : [0]
+      pricing: typeof planToEdit.pricing === 'object' && !Array.isArray(planToEdit.pricing)
+        ? { ...planToEdit.pricing }
+        : { 6: 0, 12: 0, 18: 0 }
     });
+    if (!selectedDurations[planId]) {
+      setSelectedDurations((prev) => ({
+        ...prev,
+        [planId]: durations[0] || 6
+      }));
+    }
     setActionError('');
   };
 
   const handleCancelEdit = () => {
+    const planId = editingPlanId;
     setEditingPlanId(null);
     setEditDraft(null);
     setActionError('');
+    if (planId) {
+      setEditingDurationIndex((prev) => {
+        const newState = { ...prev };
+        delete newState[planId];
+        return newState;
+      });
+      setPlanDurations((prev) => {
+        const newState = { ...prev };
+        delete newState[planId];
+        return newState;
+      });
+    }
   };
 
   const handleSaveChanges = async () => {
     if (!editingPlanId || !editDraft || isSaving) return;
+
+    const pricingObj = typeof editDraft.pricing === 'object' && !Array.isArray(editDraft.pricing)
+      ? editDraft.pricing
+      : { 6: 0, 12: 0, 18: 0 };
+
+    const currentDurations = planDurations[editingPlanId] || [6, 12, 18];
+    const durationsArray = currentDurations.map(d => `${d} months`);
+    const prices = currentDurations.map(d => {
+      const price = pricingObj[d];
+      return typeof price === 'number' && price >= 0 ? price : 0;
+    });
 
     const payload = {
       title: editDraft.title,
       description: editDraft.descriptionText,
       eligibility_criteria: editDraft.eligibilityText,
       perks: sanitizePerksForSave(editDraft.perks),
-      pricing: Array.isArray(editDraft.pricing) 
-        ? editDraft.pricing.map(p => {
-            if (p === '' || p === null || p === undefined) return 0;
-            return typeof p === 'number' && p >= 0 ? p : 0;
-          })
-        : [0],
+      durations: durationsArray,
+      prices,
       status: editDraft.status ?? 1
     };
 
@@ -381,6 +642,16 @@ const MembershipPlans = ({ isAdmin = false }) => {
       );
       setEditingPlanId(null);
       setEditDraft(null);
+      setEditingDurationIndex((prev) => {
+        const newState = { ...prev };
+        delete newState[editingPlanId];
+        return newState;
+      });
+      setPlanDurations((prev) => {
+        const newState = { ...prev };
+        delete newState[editingPlanId];
+        return newState;
+      });
     } catch (error) {
       console.error('Error updating membership plan:', error);
       setActionError(error.message || 'Failed to update membership plan.');
@@ -400,10 +671,28 @@ const MembershipPlans = ({ isAdmin = false }) => {
 
   const handleCreatePlan = async (planData) => {
     try {
-      const response = await membershipPlansService.createMembershipPlan({
-        ...planData,
-        perks: sanitizePerksForSave(planData.perks)
-      });
+      const pricingObj = typeof planData.pricing === 'object' && !Array.isArray(planData.pricing)
+        ? planData.pricing
+        : { 6: 0, 12: 0, 18: 0 };
+
+      const durations = ['6 months', '12 months', '18 months'];
+      const prices = [
+        typeof pricingObj[6] === 'number' && pricingObj[6] >= 0 ? pricingObj[6] : 0,
+        typeof pricingObj[12] === 'number' && pricingObj[12] >= 0 ? pricingObj[12] : 0,
+        typeof pricingObj[18] === 'number' && pricingObj[18] >= 0 ? pricingObj[18] : 0
+      ];
+
+      const payload = {
+        title: planData.title,
+        description: planData.description,
+        eligibility_criteria: planData.eligibility_criteria,
+        perks: sanitizePerksForSave(planData.perks),
+        durations,
+        prices,
+        status: planData.status ?? 1
+      };
+
+      const response = await membershipPlansService.createMembershipPlan(payload);
 
       const createdPlan = normalizePlan(extractPlanFromResponse(response));
 
@@ -477,9 +766,25 @@ const MembershipPlans = ({ isAdmin = false }) => {
 
     try {
       for (const plan of DEFAULT_SERVER_PLANS) {
+        const pricingObj = typeof plan.pricing === 'object' && !Array.isArray(plan.pricing)
+          ? plan.pricing
+          : { 6: 0, 12: 0, 18: 0 };
+
+        const durations = ['6 months', '12 months', '18 months'];
+        const prices = [
+          typeof pricingObj[6] === 'number' && pricingObj[6] >= 0 ? pricingObj[6] : 0,
+          typeof pricingObj[12] === 'number' && pricingObj[12] >= 0 ? pricingObj[12] : 0,
+          typeof pricingObj[18] === 'number' && pricingObj[18] >= 0 ? pricingObj[18] : 0
+        ];
+
         await membershipPlansService.createMembershipPlan({
-          ...plan,
-          perks: sanitizePerksForSave(plan.perks)
+          title: plan.title,
+          description: plan.description,
+          eligibility_criteria: plan.eligibility_criteria,
+          perks: sanitizePerksForSave(plan.perks),
+          durations,
+          prices,
+          status: plan.status ?? 1
         });
       }
 
@@ -529,11 +834,30 @@ const MembershipPlans = ({ isAdmin = false }) => {
         plan.descriptionText !== editDraft.descriptionText ||
         plan.eligibilityText !== editDraft.eligibilityText ||
         JSON.stringify(plan.perks) !== JSON.stringify(editDraft.perks) ||
-        JSON.stringify(plan.pricing || []) !== JSON.stringify(editDraft.pricing || [])
+        JSON.stringify(plan.pricing || { 6: 0, 12: 0, 18: 0 }) !== JSON.stringify(editDraft.pricing || { 6: 0, 12: 0, 18: 0 })
       );
 
-    const displayPricing = displayPlan.pricing || [0];
-    const firstPrice = displayPricing.length > 0 ? displayPricing[0] : 0;
+    const displayPricing = typeof displayPlan.pricing === 'object' && !Array.isArray(displayPlan.pricing)
+      ? displayPlan.pricing
+      : { 6: 0, 12: 0, 18: 0 };
+    const selectedDuration = selectedDurations[planId] || 6;
+    
+    let currentPrice = 0;
+    if (displayPlan.pricingArray && Array.isArray(displayPlan.pricingArray) && displayPlan.pricingArray.length > 0) {
+      const selectedItem = displayPlan.pricingArray.find(item => {
+        const durationStr = (item.duration || '').toLowerCase();
+        const match = durationStr.match(/(\d+)/);
+        const durationNum = match ? parseInt(match[1], 10) : null;
+        return durationNum === selectedDuration;
+      });
+      if (selectedItem && typeof selectedItem.price === 'number') {
+        currentPrice = selectedItem.price;
+      } else {
+        currentPrice = displayPricing[selectedDuration] || 0;
+      }
+    } else {
+      currentPrice = displayPricing[selectedDuration] || 0;
+    }
 
     const perksToRender = Array.isArray(displayPlan.perks) ? displayPlan.perks : [];
     const key = planId ?? `plan-${index}`;
@@ -568,11 +892,10 @@ const MembershipPlans = ({ isAdmin = false }) => {
             <h4 className="plan-section-title">{displayPlan.descriptionTitle}</h4>
             {isEditing ? (
               <textarea
-                className="plan-section-text-input"
+                className="plan-section-text-input plan-section-text-input-auto"
                 value={displayPlan.descriptionText}
                 onChange={(event) => handleTextareaChange('descriptionText', event.target.value, event)}
                 onInput={(event) => autoResizeTextarea(event.target)}
-                style={{ minHeight: 'fit-content' }}
               />
             ) : (
               <p className="plan-section-text">{displayPlan.descriptionText}</p>
@@ -583,11 +906,10 @@ const MembershipPlans = ({ isAdmin = false }) => {
             <h4 className="plan-section-title">{displayPlan.eligibilityTitle}</h4>
             {isEditing ? (
               <textarea
-                className="plan-section-text-input"
+                className="plan-section-text-input plan-section-text-input-auto"
                 value={displayPlan.eligibilityText}
                 onChange={(event) => handleTextareaChange('eligibilityText', event.target.value, event)}
                 onInput={(event) => autoResizeTextarea(event.target)}
-                style={{ minHeight: 'fit-content' }}
               />
             ) : (
               <p className="plan-section-text">{displayPlan.eligibilityText}</p>
@@ -636,56 +958,117 @@ const MembershipPlans = ({ isAdmin = false }) => {
                     </li>
                   ))
                 ) : (
-                  <li>
-                    <i className="bi bi-check-lg check-icon" style={{ visibility: 'hidden' }}></i>
-                    No perks defined yet
-                  </li>
+                    <li>
+                      <i className="bi bi-check-lg check-icon check-icon-hidden"></i>
+                      No perks defined yet
+                    </li>
                 )}
               </ul>
             )}
           </div>
 
-          <div className="plan-section" style={{ marginTop: 'auto' }}>
+          <div className="plan-section plan-section-pricing">
             {isEditing ? (
               <>
                 <label className="plan-section-title">Pricing</label>
-                <div style={{ position: 'relative' }}>
-                  <i className="bi bi-currency-dollar" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666', zIndex: 1 }}></i>
+                <div className="plan-durations-container">
+                  {(planDurations[planId] || [6, 12, 18]).map((duration, index) => {
+                    const isSelected = selectedDurations[planId] === duration;
+                    const isEditingDuration = editingDurationIndex[planId] === index;
+                    return (
+                      <div key={`duration-${planId}-${index}`} className="plan-duration-wrapper">
+                        {isEditingDuration ? (
+                          <div className="plan-duration-edit-container">
+                            <input
+                              type="number"
+                              className="plan-duration-input"
+                              value={duration === '' ? '' : duration}
+                              onChange={(e) => handleDurationChange(planId, index, e.target.value)}
+                              onBlur={() => handleDurationBlur(planId)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleDurationBlur(planId);
+                                }
+                              }}
+                              min="1"
+                              autoFocus
+                            />
+                            <span className="plan-duration-m-label">M</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className={`plan-duration-button ${isSelected ? 'selected' : ''}`}
+                            onClick={() => handleDurationSelect(planId, duration)}
+                          >
+                            {duration}M
+                            <button
+                              type="button"
+                              className="plan-duration-edit-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDurationEdit(planId, index);
+                              }}
+                              aria-label="Edit duration"
+                            >
+                              <i className="bi bi-pencil-square"></i>
+                            </button>
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="plan-pricing-input-wrapper">
+                  <i className="bi bi-currency-dollar plan-pricing-currency"></i>
                   <input
                     type="number"
-                    value={editDraft?.pricing?.[0] === '' || editDraft?.pricing?.[0] === null || editDraft?.pricing?.[0] === undefined ? '' : (editDraft?.pricing?.[0] || 0)}
-                    onChange={(e) => handlePricingChange(0, e.target.value)}
-                    onBlur={() => handlePricingBlur(0)}
+                    className="plan-pricing-input"
+                    value={(() => {
+                      const selectedDur = selectedDurations[planId];
+                      const price = editDraft?.pricing?.[selectedDur];
+                      return price === '' || price === null || price === undefined ? '' : (price || 0);
+                    })()}
+                    onChange={(e) => {
+                      const selectedDur = selectedDurations[planId];
+                      handlePricingChange(selectedDur, e.target.value);
+                    }}
+                    onBlur={() => {
+                      const selectedDur = selectedDurations[planId];
+                      handlePricingBlur(selectedDur);
+                    }}
                     placeholder="0.00"
                     min="0"
                     step="0.01"
-                    style={{ 
-                      width: '100%', 
-                      paddingLeft: '30px', 
-                      padding: '10px 10px 10px 30px', 
-                      border: '1px solid #ddd', 
-                      borderRadius: '4px',
-                      MozAppearance: 'textfield',
-                      WebkitAppearance: 'none'
-                    }}
                     onWheel={(e) => e.target.blur()}
                   />
-                  <style>{`
-                    input[type="number"]::-webkit-inner-spin-button,
-                    input[type="number"]::-webkit-outer-spin-button {
-                      -webkit-appearance: none;
-                      margin: 0;
-                    }
-                    input[type="number"] {
-                      -moz-appearance: textfield;
-                    }
-                  `}</style>
                 </div>
               </>
             ) : (
               <>
-                <div className={`plan-pricing-display plan-pricing-display--${displayPlan.theme || 'custom'}`} style={{ marginTop: 'auto' }}>
-                  ${firstPrice.toFixed(2)}
+                <div className="plan-durations-container">
+                  {(displayPlan.pricingArray && displayPlan.pricingArray.length > 0
+                    ? displayPlan.pricingArray.map(item => {
+                        const match = (item.duration || '').match(/(\d+)/);
+                        return match ? parseInt(match[1], 10) : 6;
+                      })
+                    : [6, 12, 18]
+                  ).slice(0, 3).map((duration, index) => {
+                    const isSelected = selectedDurations[planId] === duration;
+                    return (
+                      <button
+                        key={`display-duration-${planId}-${index}`}
+                        type="button"
+                        className={`plan-duration-button ${isSelected ? 'selected' : ''}`}
+                        onClick={() => handleDurationSelect(planId, duration)}
+                      >
+                        {duration}M
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className={`plan-pricing-display plan-pricing-display--${displayPlan.theme || 'custom'}`}>
+                  ${currentPrice.toFixed(2)}
                 </div>
               </>
             )}
@@ -748,10 +1131,9 @@ const MembershipPlans = ({ isAdmin = false }) => {
 
       {actionError && (
         <div
-          className="app-form__error-banner"
+          className="app-form__error-banner membership-plans-error-banner"
           role="alert"
           aria-live="assertive"
-          style={{ marginBottom: '16px' }}
         >
           <strong>Error:</strong> {actionError}
         </div>

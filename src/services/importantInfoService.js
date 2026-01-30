@@ -190,7 +190,6 @@ class ImportantInfoService {
 
     Object.entries(this.keyMap).forEach(([frontendKey, mapping]) => {
       const entry = data[frontendKey] || {}
-      console.debug('[importantInfoService] buildFormData entry', frontendKey, entry)
       this.appendField(formData, mapping.title, entry.title ?? '')
       this.appendField(formData, mapping.subtitle, entry.subtitle ?? '')
       this.appendFile(formData, mapping.image, entry.file)
@@ -232,18 +231,14 @@ class ImportantInfoService {
 
   // POST /important-info
   async updateImportantInfo(payload = {}) {
-    console.debug('[importantInfoService] updateImportantInfo payload', payload)
     const formData = this.buildFormData(payload)
     const url = `${this.baseURL}/important-info`
-    console.debug('[importantInfoService] POST url', url)
     const response = await fetch(url, {
       method: 'POST',
       headers: this.getHeaders(false),
       body: formData
     })
-    console.debug('[importantInfoService] POST status', response.status)
     const result = await this.handleResponse(response)
-    console.debug('[importantInfoService] POST result', result)
 
     if (result && result.data) {
       return {
@@ -256,7 +251,6 @@ class ImportantInfoService {
       // Backend sometimes omits data payload; fetch fresh copy.
       try {
         const refreshed = await this.getImportantInfo()
-        console.debug('[importantInfoService] refresh after POST', refreshed)
         if (refreshed?.data) {
           return {
             http_status: refreshed?.http_status ?? 200,
@@ -270,7 +264,6 @@ class ImportantInfoService {
           data: this.normalizeFrontendPayload(payload)
         }
       } catch (refreshError) {
-        console.warn('importantInfoService.updateImportantInfo: failed to refresh data', refreshError)
         return {
           http_status: result?.http_status ?? 200,
           message: result?.message || 'success',

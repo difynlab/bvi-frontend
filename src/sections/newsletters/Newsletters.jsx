@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../../context/useAuth'
 import { can } from '../../auth/acl'
 import { useNewslettersState } from '../../hooks/useNewslettersState'
@@ -11,6 +11,9 @@ import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal'
 import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock'
 import EmptyPage from '../../components/EmptyPage'
 import NewsletterListShimmer from '../../components/newsletters/NewsletterListShimmer'
+import CustomDropdown from '../../components/CustomDropdown'
+import NewsletterTabPicker from '../../components/modals/NewsletterTabPicker'
+import { loadActiveTabId, saveActiveTabId } from '../../helpers/newslettersStorage'
 import '../../styles/sections/Newsletters.scss'
 
 // Utility to strip HTML
@@ -125,8 +128,33 @@ const Newsletters = () => {
     deleteNewsletter,
     initialLoading,
     changePage,
-    loadNewslettersFromAPI
+    loadNewslettersFromAPI,
+    categories,
+    activeCategory,
+    setActiveCategory,
+    isCategoryModalOpen,
+    editingCategory,
+    confirmModalOpen,
+    categoryToDelete,
+    categoriesLoaded,
+    categoriesLoading,
+    handleAddCategory,
+    handleDeleteCategory,
+    handleConfirmDeleteCategory,
+    handleEditCategory,
+    handleUpdateCategory,
+    closeCategoryModal,
+    setIsCategoryModalOpen,
+    setConfirmModalOpen,
+    setCategoryToDelete,
+    loadCategoriesFromAPI,
+    refreshCategories
   } = useNewslettersState()
+
+  const MOBILE_Q = '(max-width: 768px)'
+  
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [activeTabId, setActiveTabId] = useState(() => loadActiveTabId() || null)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingNewsletter, setEditingNewsletter] = useState(null)
@@ -136,9 +164,11 @@ const Newsletters = () => {
   const [newsletterToDelete, setNewsletterToDelete] = useState(null)
   const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [categoryError, setCategoryError] = useState('')
+  const [isCategoryLoading, setIsCategoryLoading] = useState(false)
 
-  // Mobile detection
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia(MOBILE_Q).matches)
 
   const {
     form,
@@ -167,7 +197,10 @@ const Newsletters = () => {
     setIsViewNewsletterModalOpen(false)
   })
 
-  useBodyScrollLock(isModalOpen || isConfirmDeleteOpen || isSuccessDeleteOpen || isViewNewsletterModalOpen)
+  const addCategoryModalBackdropClose = useModalBackdropClose(() => setIsCategoryModalOpen(false))
+  const confirmCategoryModalBackdropClose = useModalBackdropClose(() => setConfirmModalOpen(false))
+
+  useBodyScrollLock(isModalOpen || isConfirmDeleteOpen || isSuccessDeleteOpen || isViewNewsletterModalOpen || isCategoryModalOpen || confirmModalOpen)
 
 
   useEffect(() => {
@@ -182,14 +215,10 @@ const Newsletters = () => {
   }, [])
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768)
-    }
-
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-
-    return () => window.removeEventListener('resize', checkMobile)
+    const mql = window.matchMedia(MOBILE_Q)
+    const onChange = () => setIsMobile(mql.matches)
+    mql.addEventListener?.('change', onChange)
+    return () => mql.removeEventListener?.('change', onChange)
   }, [])
 
   // Load newsletter data when opening for editing (similar to notices)
@@ -208,6 +237,65 @@ const Newsletters = () => {
       }, 10)
     }
   }, [isModalOpen, editingNewsletter]) // Removed loadFrom and initializeCreate from dependencies
+
+  useEffect(() => {
+    loadCategoriesFromAPI(true)
+  }, [])
+
+  useEffect(() => {
+    if (editingCategory) {
+      setNewCategoryName(editingCategory.name)
+    } else {
+      setNewCategoryName('')
+    }
+  }, [editingCategory])
+
+  useEffect(() => {
+    if (!categories.length) {
+      setActiveTabId(null)
+      saveActiveTabId(null)
+      setActiveCategory('')
+      return
+    }
+    if (!activeTabId || !categories.some(c => c.id === activeTabId)) {
+      const next = categories[0].id
+      setActiveTabId(next)
+      saveActiveTabId(next)
+      setActiveCategory(next)
+    }
+  }, [categories])
+
+  useEffect(() => {
+    if (activeCategory && activeCategory !== activeTabId) {
+      setActiveTabId(activeCategory)
+      saveActiveTabId(activeCategory)
+    }
+  }, [activeCategory, activeTabId])
+
+  const onSelectCategory = (id) => {
+    setActiveTabId(id)
+    saveActiveTabId(id)
+    setActiveCategory(id)
+  }
+
+  const onAddCategory = () => {
+    setIsCategoryModalOpen(true)
+  }
+
+  const onDeleteCategory = (id) => {
+    handleDeleteCategory(id)
+    if (id === activeTabId) {
+      const remaining = categories.filter(c => c.id !== id)
+      const next = remaining[0]?.id || null
+      setActiveTabId(next)
+      saveActiveTabId(next)
+    }
+  }
+
+  const activeCategoryData = useMemo(
+    () => categories.find(c => c.id === activeTabId) || null,
+    [categories, activeTabId]
+  )
 
   if (!user) {
     return (
@@ -237,11 +325,11 @@ const Newsletters = () => {
                   type="button"
                   className="add-newsletter-btn"
                   onClick={() => openModal()}
-                  aria-label="Add newsletter"
-                  title="Add Newsletter"
+                  aria-label="Add new"
+                  title="Add New"
                 >
                   <i className="bi bi-plus" aria-hidden="true"></i>
-                  <span className="btn-label">Add Newsletter</span>
+                  <span className="btn-label">Add New</span>
                 </button>
               )}
             </div>
@@ -324,6 +412,45 @@ const Newsletters = () => {
     }
   }
 
+  const handleAddCategorySubmit = async () => {
+    const trimmedName = newCategoryName.trim()
+    if (!trimmedName) {
+      setCategoryError('Category name is required')
+      return
+    }
+    if (trimmedName.length < 3) {
+      setCategoryError('Category name must be at least 3 characters')
+      return
+    }
+    
+    setIsCategoryLoading(true)
+    setCategoryError('')
+    
+    try {
+      if (editingCategory) {
+        await handleUpdateCategory(trimmedName)
+      } else {
+        await handleAddCategory(trimmedName)
+      }
+      
+      setNewCategoryName('')
+      setCategoryError('')
+      
+    } catch (error) {
+      console.error('Error creating/updating category:', error)
+      setCategoryError(`Something went wrong. Error: ${error.message}`)
+    } finally {
+      setIsCategoryLoading(false)
+    }
+  }
+
+  const closeCategoryModalLocal = () => {
+    setNewCategoryName('')
+    setCategoryError('')
+    closeCategoryModal()
+  }
+
+
   const handleEditorChange = (html) => {
     setEditorHtml(html)
     const text = stripHtml(html)
@@ -384,27 +511,162 @@ const Newsletters = () => {
                 type="button"
                 className="add-newsletter-btn"
                 onClick={() => openModal()}
-                aria-label="Add newsletter"
-                title="Add Newsletter"
+                aria-label="Add new"
+                title="Add New"
               >
                 <i className="bi bi-plus" aria-hidden="true"></i>
-                <span className="btn-label">Add Newsletter</span>
+                <span className="btn-label">Add New</span>
               </button>
             )}
           </div>
         </header>
 
+        {isMobile ? (
+          <div className="notices-mobile-header" role="region" aria-label="Newsletter categories">
+            {categoriesLoading ? (
+              <div className="category-title-skeleton">
+                <span style={{ opacity: 0 }}>Loading...</span>
+              </div>
+            ) : (
+              <div className="category-title">
+                {categories.length > 0 ? (
+                  <>
+                    <button
+                      type="button"
+                      className="category-picker-btn"
+                      onClick={() => setPickerOpen(true)}
+                      aria-haspopup="dialog"
+                      aria-controls="newsletterTabPicker">
+                      <h2>
+                        {activeCategoryData?.name || 'Categories'}
+                      </h2>
+                      <i className="bi bi-chevron-down" aria-hidden="true"></i>
+                    </button>
+
+                    <NewsletterTabPicker
+                      open={pickerOpen}
+                      onClose={() => setPickerOpen(false)}
+                      categories={categories}
+                      activeTabId={activeTabId}
+                      onSelect={onSelectCategory}
+                      canManage={can(user, 'newsletters:create')}
+                      onAddCategory={onAddCategory}
+                      onDeleteCategory={onDeleteCategory}
+                      onEditCategory={handleEditCategory}
+                    />
+                  </>
+                ) : (
+                  <div className="no-categories-message-mobile">
+                    <p>No newsletter categories created yet...</p>
+                  </div>
+                )}
+              </div>
+            )}
+            {can(user, 'newsletters:create') && (
+              <button
+                type="button"
+                className="add-tab-btn"
+                onClick={onAddCategory}
+                aria-label="Add category"
+                title="Add category"
+              >
+                <i className="bi bi-plus" aria-hidden="true"></i>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="notices-tabs-desktop" role="tablist" aria-orientation="horizontal">
+            <div className="category-tabs">
+              <div className="tabs-container">
+                {categoriesLoading ? (
+                  <>
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="tab-skeleton-group">
+                        <div className="category-tab-skeleton">
+                          <span style={{ opacity: 0 }}>Loading...</span>
+                        </div>
+                      </div>
+                    ))}
+                    {can(user, 'newsletters:create') && (
+                      <button
+                        className="add-category-btn"
+                        onClick={() => setIsCategoryModalOpen(true)}
+                      >
+                        <i className="bi bi-plus"></i>
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {categories.length > 0 ? (
+                      categories.map(category => (
+                        <div key={category.id} className="tab-group">
+                          <button
+                            className={`category-tab ${activeCategory === category.id ? 'active' : ''}`}
+                            onClick={() => setActiveCategory(category.id)}
+                          >
+                            <span>{category.name}</span>
+                          </button>
+                          {can(user, 'newsletters:update') && (
+                            <button
+                              className="category-tab__edit"
+                              onClick={(e) => { e.stopPropagation(); handleEditCategory(category.id); }}
+                              aria-label="Edit category"
+                            >
+                              <i className="bi bi-pencil-square"></i>
+                            </button>
+                          )}
+                          {can(user, 'newsletters:delete') && (
+                            <button
+                              className="category-tab__delete"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id); }}
+                              aria-label="Delete category"
+                            >
+                              <i className="bi bi-x-lg"></i>
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="no-categories-message">
+                        <p>No newsletter categories created yet...</p>
+                      </div>
+                    )}
+                    {can(user, 'newsletters:create') && (
+                      <button
+                        className="add-category-btn"
+                        onClick={() => setIsCategoryModalOpen(true)}
+                      >
+                        <i className="bi bi-plus"></i>
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {pickerOpen && (
+          <div
+            className="notices-dropdown-overlay"
+            onClick={() => setPickerOpen(false)}
+          />
+        )}
+
         <section className="newsletters-section">
           {/* Newsletter List */}
-          {!Array.isArray(newsletters) || newsletters.length === 0 ? (
+          {categories.length === 0 ? (
             <EmptyPage
               isAdmin={user?.role === 'admin'}
-              title={user?.role === 'admin' ? 'Oops nothing to see here yet!' : 'Oops! No data found.'}
-              description={
-                user?.role === 'admin'
-                  ? <>Looks like you haven't added anything. Go ahead and add<br /> your first item to get started!</>
-                  : <>Nothing's been added here yet, or there might be a hiccup.<br />Try again or check back later!</>
-              }
+              title={user?.role === 'admin' ? 'No categories yet!' : 'No categories available.'}
+              description={user?.role === 'admin' ? 'Create your first category to get started with newsletters.' : 'No newsletter categories have been created yet.'}
+            />
+          ) : visibleItems.length === 0 ? (
+            <EmptyPage
+              isAdmin={user?.role === 'admin'}
+              title={user?.role === 'admin' ? 'No newsletters in this category!' : 'No newsletters found.'}
+              description={user?.role === 'admin' ? 'This category is empty. Add your first newsletter to get started!' : "This category doesn't have any newsletters yet."}
             />
           ) : (
             <>
@@ -538,12 +800,6 @@ const Newsletters = () => {
               </div>
 
               <form onSubmit={handleSubmit}>
-                {errorMessage && (
-                  <div className="error-message">
-                    {errorMessage}
-                  </div>
-                )}
-
                 <div className="form-row">
                   <div className="form-group">
                     <label htmlFor="fileName">File Name<span className="req-star" aria-hidden="true">*</span></label>
@@ -567,6 +823,20 @@ const Newsletters = () => {
                       onChange={(e) => onChange('publishDate', e.target.value)}
                     />
                   </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="newsletterType">Newsletter Category<span className="req-star" aria-hidden="true">*</span></label>
+                  <CustomDropdown
+                    id="newsletterType"
+                    name="newsletterType"
+                    value={form.newsletterType || ''}
+                    onChange={(e) => onChange('newsletterType', e.target.value)}
+                    options={categories.map(category => ({ value: category.id, label: category.name }))}
+                    placeholder="Select category"
+                    actionLabel="New category..."
+                    onAction={() => setIsCategoryModalOpen(true)}
+                  />
                 </div>
 
                 <div className="form-group">
@@ -667,6 +937,116 @@ const Newsletters = () => {
         )}
 
       </div>
+
+      {isCategoryModalOpen && (
+        <div
+          className="notices-modal-overlay"
+          onPointerDown={addCategoryModalBackdropClose.onBackdropPointerDown}
+          onPointerUp={addCategoryModalBackdropClose.onBackdropPointerUp}
+          onPointerCancel={addCategoryModalBackdropClose.onBackdropPointerCancel}
+        >
+          <ModalLifecycleLock />
+          <div
+            className="notices-modal notices-addcat-modal"
+            onPointerDown={addCategoryModalBackdropClose.stopInsidePointer}
+            onClick={addCategoryModalBackdropClose.stopInsidePointer}
+          >
+            <div className="notices-modal-header">
+              <button
+                className="close-btn"
+                onClick={closeCategoryModalLocal}
+              >
+                <i className="bi bi-x"></i>
+              </button>
+            </div>
+
+            <div className="notices-addcat-modal__content">
+              <h2 className="notices-addcat-modal__title">
+                {editingCategory ? 'Update Category Title' : 'Add New Category'}
+              </h2>
+              <p className="notices-addcat-modal__subtitle">
+                {editingCategory ? 'Please update the category name' : 'Please add new category details'}
+              </p>
+
+              <div className="form-group">
+                <label htmlFor="categoryName" className="notices-addcat-modal__label">Enter Title</label>
+                <input
+                  type="text"
+                  id="categoryName"
+                  placeholder={editingCategory ? "Please enter the new title" : "Please mention the title of the new category which you want to create"}
+                  className="notices-addcat-modal__input"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCategorySubmit();
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
+
+              {categoryError && (
+                <div className="app-form__error-banner">
+                  Error: {categoryError}
+                </div>
+              )}
+
+              <div className="notices-addcat-modal__actions">
+                <button
+                  type="button"
+                  className="notices-addcat-modal__update-btn"
+                  onClick={handleAddCategorySubmit}
+                  disabled={isCategoryLoading}
+                >
+                  {isCategoryLoading ? 'Loading...' : (editingCategory ? 'Update' : 'Update')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmModalOpen && categoryToDelete && (
+        <div
+          className="notices-modal-overlay"
+          onPointerDown={confirmCategoryModalBackdropClose.onBackdropPointerDown}
+          onPointerUp={confirmCategoryModalBackdropClose.onBackdropPointerUp}
+          onPointerCancel={confirmCategoryModalBackdropClose.onBackdropPointerCancel}
+        >
+          <ModalLifecycleLock />
+          <div
+            className="notices-deleteCategory-modal"
+            onPointerDown={confirmCategoryModalBackdropClose.stopInsidePointer}
+            onClick={confirmCategoryModalBackdropClose.stopInsidePointer}
+          >
+            <button
+              className="close-btn"
+              onClick={() => setConfirmModalOpen(false)}
+            >
+              <i className="bi bi-x"></i>
+            </button>
+            <div className="confirm-delete-modal-header">
+              <i className="bi bi-exclamation-triangle"></i>
+              <h2>Delete category?</h2>
+            </div>
+
+            <div className="confirm-modal-content">
+              <p>This will permanently delete the category and all its newsletters.</p>
+
+              <div className="form-actions">
+                <button type="button" onClick={() => setConfirmModalOpen(false)} className="cancel-button">
+                  Cancel
+                </button>
+                <button type="button" onClick={handleConfirmDeleteCategory} className="delete-button">
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmDeleteModal
         isOpen={isConfirmDeleteOpen}

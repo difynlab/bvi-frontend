@@ -97,7 +97,6 @@ const ResetPassword = () => {
       }
 
       const response = await resetPassword(resetData)
-      console.log('Password reset successful:', response)
 
       setSuccess('Your password has been reset successfully!')
       setIsPasswordReset(true)

@@ -47,8 +47,6 @@ class EventsService {
           throw new Error(`${errorMessage}${validationErrors ? ': ' + validationErrors : ''}`)
         } else if (data.http_status === 500) {
           const errorMessage = data.message || data.error || 'Internal server error'
-          console.error('500 Server Error details:', data)
-          console.error('Full error response:', JSON.stringify(data, null, 2))
           throw new Error(`${errorMessage} (Error 500)`)
         } else if (data.http_status === 404) {
           return {
@@ -160,8 +158,6 @@ class EventsService {
         }
       }
       
-      // Only log other errors
-      originalConsoleError('Error fetching events:', error)
       throw error
     } finally {
       // Restore original console methods
@@ -180,7 +176,6 @@ class EventsService {
 
       return await this.handleResponse(response)
     } catch (error) {
-      console.error('Error fetching event:', error)
       throw error
     }
   }
@@ -200,25 +195,6 @@ class EventsService {
         }
       })
 
-      if (import.meta.env?.DEV) {
-        const entries = {}
-        for (const [key, value] of formData.entries()) {
-          if (value instanceof File) {
-            entries[key] = {
-              name: value.name,
-              size: value.size,
-              type: value.type
-            }
-          } else {
-            entries[key] = value
-          }
-        }
-        console.groupCollapsed('[EventsService] createEvent FormData')
-        console.log('Raw event data:', eventData)
-        console.log('FormData entries:', entries)
-        console.groupEnd()
-      }
-
       const response = await fetch(`${this.baseURL}/events`, {
         method: 'POST',
         headers: this.getHeaders(false), // false = no incluir Content-Type para FormData
@@ -237,7 +213,6 @@ class EventsService {
       
       return await this.handleResponse(responseClone)
     } catch (error) {
-      console.error('Error creating event:', error)
       throw error
     }
   }
@@ -253,25 +228,6 @@ class EventsService {
         }
       })
 
-      if (import.meta.env?.DEV) {
-        const entries = {}
-        for (const [key, value] of formData.entries()) {
-          if (value instanceof File) {
-            entries[key] = {
-              name: value.name,
-              size: value.size,
-              type: value.type
-            }
-          } else {
-            entries[key] = value
-          }
-        }
-        console.groupCollapsed('[EventsService] updateEvent FormData')
-        console.log('Raw event data:', eventData)
-        console.log('FormData entries:', entries)
-        console.groupEnd()
-      }
-
       const response = await fetch(`${this.baseURL}/events/${id}`, {
         method: 'POST',
         headers: this.getHeaders(false), // false = no incluir Content-Type para FormData
@@ -280,7 +236,6 @@ class EventsService {
 
       return await this.handleResponse(response)
     } catch (error) {
-      console.error('Error updating event:', error)
       throw error
     }
   }
@@ -294,7 +249,6 @@ class EventsService {
 
       return await this.handleResponse(response)
     } catch (error) {
-      console.error('Error deleting event:', error)
       throw error
     }
   }

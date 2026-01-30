@@ -110,9 +110,25 @@ const Dashboard = () => {
     return raw
   }
 
-  // Get event type label for display
-  const getEventTypeLabel = (eventType) => {
-    const option = EVENT_TYPE_OPTIONS.find(opt => opt.value === eventType?.toLowerCase())
+  const getEventTypeName = (event) => {
+    if (event.event_category?.name) {
+      return event.event_category.name.toLowerCase()
+    }
+    if (event.event_category?.title) {
+      return event.event_category.title.toLowerCase()
+    }
+    if (typeof event.eventType === 'string') {
+      return event.eventType.toLowerCase()
+    }
+    if (typeof event.category === 'string') {
+      return event.category.toLowerCase()
+    }
+    return 'webinar'
+  }
+
+  const getEventTypeLabel = (event) => {
+    const eventTypeName = getEventTypeName(event)
+    const option = EVENT_TYPE_OPTIONS.find(opt => opt.value === eventTypeName)
     return option ? option.label : 'Event'
   }
 
@@ -254,11 +270,11 @@ const Dashboard = () => {
             <ul className="list">
               {upcomingEvents.map((event) => (
                 <li key={event.id} className="list-item">
-                  <div className={`event-bullet ${event.eventType?.toLowerCase() || 'webinar'}`}></div>
+                  <div className={`event-bullet ${getEventTypeName(event)}`}></div>
                   <div className="item-content">
                     <div className="item-title">{event.title || 'Event'}</div>
                     <div className="item-meta">
-                      {getEventTypeLabel(event.eventType)}{event.date ? ` · ${event.date}` : ''}{event.startTime ? ` · ${event.startTime}` : ''}{event.timeZone ? ` ${event.timeZone}` : ''}
+                      {getEventTypeLabel(event)}{event.date ? ` · ${event.date}` : ''}{event.startTime ? ` · ${event.startTime}` : ''}{event.timeZone ? ` ${event.timeZone}` : ''}
                     </div>
                   </div>
                 </li>

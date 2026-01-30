@@ -105,6 +105,11 @@ const BottomNav = () => {
       label: 'Legislation'
     },
     {
+      path: '/gallery',
+      icon: 'bi bi-images',
+      label: 'Gallery'
+    },
+    {
       path: '/reports',
       icon: 'bi bi-file-earmark',
       label: 'Publications'

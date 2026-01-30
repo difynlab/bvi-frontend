@@ -88,14 +88,15 @@ const buildBlurredImageUrl = (blurredThumbnail) => {
   return `${apiBaseURL}/storage/newsletters/${blurredThumbnail}`
 }
 
-// Mapeo de campos entre frontend y backend
 const FIELD_MAPPINGS = {
   frontendToBackend: {
     id: 'id',
     fileName: 'name',
-    thumbnail: 'thumbnail',  // Use thumbnail field directly (file object)
+    thumbnail: 'thumbnail',
     file: 'file',
     linkUrl: 'link',
+    newsletterType: 'newsletter_category_id',
+    newsletter_category_id: 'newsletter_category_id',
     status: 'status',
     createdAt: 'created_at',
     updatedAt: 'updated_at'
@@ -106,6 +107,7 @@ const FIELD_MAPPINGS = {
     thumbnail: 'imageFileName',
     link: 'linkUrl',
     file: 'file',
+    newsletter_category_id: 'newsletter_category_id',
     status: 'status',
     created_at: 'createdAt',
     updated_at: 'updatedAt',
@@ -151,7 +153,6 @@ export const transformToBackend = (frontendNewsletter, isEdit = false) => {
     VALUE_MAPPINGS.frontendToBackend
   )
 
-  // Build description as JSON string (same pattern as events)
   if (frontendNewsletter.description && frontendNewsletter.description.descriptionHtml) {
     const descriptionContent = {
       descriptionHtml: frontendNewsletter.description.descriptionHtml,
@@ -159,6 +160,12 @@ export const transformToBackend = (frontendNewsletter, isEdit = false) => {
     }
     baseData.description = JSON.stringify(descriptionContent)
   }
+
+  if (frontendNewsletter.newsletter_category_id || frontendNewsletter.newsletterType) {
+    baseData.newsletter_category_id = Number(frontendNewsletter.newsletter_category_id || frontendNewsletter.newsletterType)
+  }
+
+  delete baseData.newsletterType
 
   return baseData
 }
@@ -238,9 +245,17 @@ export const transformFromBackend = (backendNewsletter) => {
       frontendNewsletter.fileUrl = `${apiBaseURL}/storage/newsletters/${backendNewsletter.file_name}`
   }
 
-  // Ensure publish_date is properly mapped if it wasn't transformed
   if (!frontendNewsletter.publishDate && backendNewsletter.publish_date) {
     frontendNewsletter.publishDate = backendNewsletter.publish_date
+  }
+
+  if (backendNewsletter.newsletter_category) {
+    frontendNewsletter.newsletter_category = backendNewsletter.newsletter_category
+    frontendNewsletter.newsletter_category_id = backendNewsletter.newsletter_category_id || backendNewsletter.newsletter_category?.id
+    frontendNewsletter.newsletterType = backendNewsletter.newsletter_category_id || backendNewsletter.newsletter_category?.id
+  } else if (backendNewsletter.newsletter_category_id) {
+    frontendNewsletter.newsletter_category_id = backendNewsletter.newsletter_category_id
+    frontendNewsletter.newsletterType = backendNewsletter.newsletter_category_id
   }
 
   return frontendNewsletter

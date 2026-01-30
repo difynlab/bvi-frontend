@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { readNewsletters, setNewsletters as persistNewsletters, getMockNewsletters, upsertNewsletter, deleteNewsletter } from '../helpers/newslettersStorage'
 import newslettersApi from '../api/newslettersApi'
 import { saveNewsletterImageToLocalStorage, transformFromBackend } from '../utils/newsletterTransformers'
+import newsletterCategoriesService from '../services/newsletterCategoriesService'
 
 const sortNewslettersByPublishDate = (newsletters) => {
   return [...newsletters].sort((a, b) => {
@@ -100,6 +101,15 @@ export const useNewslettersState = () => {
   const [newsletters, setNewsletters] = useState([])
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
+  const [categories, setCategories] = useState([])
+  const [activeCategory, setActiveCategory] = useState('')
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+  const [editingCategory, setEditingCategory] = useState(null)
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false)
+  const [categoryToDelete, setCategoryToDelete] = useState(null)
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false)
+  const [categoriesLoading, setCategoriesLoading] = useState(false)
+  const [shouldReloadCategories, setShouldReloadCategories] = useState(false)
   const [pagination, setPagination] = useState({
     current_page: 1,
     last_page: 1,
@@ -164,30 +174,47 @@ export const useNewslettersState = () => {
   }, [loadNewslettersFromAPI])
 
   useEffect(() => {
-    const totalPages = Math.ceil(newsletters.length / pagination.per_page) || 1
+    setPagination(prev => ({ ...prev, current_page: 1 }))
+  }, [activeCategory])
+
+  const filteredNewsletters = useMemo(() => {
+    if (!activeCategory) {
+      return []
+    }
+    if (!newsletters.length) {
+      return []
+    }
+    return newsletters.filter(newsletter => {
+      const newsletterCategoryId = newsletter.newsletter_category_id || newsletter.newsletterType
+      return newsletterCategoryId === activeCategory || newsletterCategoryId === Number(activeCategory)
+    })
+  }, [newsletters, activeCategory])
+
+  useEffect(() => {
+    const totalFiltered = filteredNewsletters.length
+    const totalPages = Math.ceil(totalFiltered / pagination.per_page) || 1
     const adjustedPage = pagination.current_page > totalPages ? 1 : pagination.current_page
     
     setPagination(prev => ({
       ...prev,
       current_page: adjustedPage,
       last_page: totalPages,
-      total: newsletters.length
+      total: totalFiltered
     }))
-  }, [newsletters.length, pagination.per_page])
+  }, [filteredNewsletters.length, pagination.per_page])
 
   const visibleItems = useMemo(() => {
-    if (!newsletters.length) {
+    if (!filteredNewsletters.length) {
       return []
     }
     
-    const sortedNewsletters = sortNewslettersByPublishDate(newsletters)
-    const totalPages = Math.ceil(sortedNewsletters.length / pagination.per_page) || 1
-    const currentPage = pagination.current_page > totalPages ? 1 : pagination.current_page
+    const sortedNewsletters = sortNewslettersByPublishDate(filteredNewsletters)
+    const currentPage = pagination.current_page > pagination.last_page ? 1 : pagination.current_page
     const startIndex = (currentPage - 1) * pagination.per_page
     const endIndex = startIndex + pagination.per_page
     
     return sortedNewsletters.slice(startIndex, endIndex)
-  }, [newsletters, pagination.current_page, pagination.per_page])
+  }, [filteredNewsletters, pagination.current_page, pagination.per_page, pagination.last_page])
 
   const changePage = useCallback((page) => {
     setPagination(prev => ({ ...prev, current_page: page }))
@@ -299,13 +326,248 @@ export const useNewslettersState = () => {
   // Función para limpiar seeds del localStorage pero mantener imágenes
   const clearNewsletterSeeds = useCallback(() => {
     try {
-      // Limpiar solo los datos de newsletters, no las imágenes
       localStorage.removeItem('newsletters.storage.v1')
       setNewsletters([])
-      console.log('✅ Cleared newsletter seeds from localStorage')
     } catch (error) {
       console.error('❌ Error clearing newsletter seeds:', error)
     }
+  }, [])
+
+  const loadCategoriesFromAPI = useCallback(async (forceRefresh = false) => {
+    if (categoriesLoading) return
+    
+    if (!forceRefresh) {
+      try {
+        const cachedCategories = localStorage.getItem('bvi.newsletters.categoriesCache')
+        const isLoaded = localStorage.getItem('bvi.newsletters.categoriesLoaded') === 'true'
+        
+        if (isLoaded && cachedCategories) {
+          const parsedCategories = JSON.parse(cachedCategories)
+          if (parsedCategories.length > 0) {
+            setCategories(parsedCategories)
+            setCategoriesLoaded(true)
+          }
+        }
+      } catch (error) {
+        console.error('Error reading cache:', error)
+      }
+    }
+    
+    setCategoriesLoading(true)
+    try {
+      const allCategories = []
+      let currentPage = 1
+      let hasMorePages = true
+      const perPage = 100
+
+      while (hasMorePages) {
+        const response = await newsletterCategoriesService.getNewsletterCategories(perPage, currentPage)
+        
+        if (response.http_status === 404) {
+          hasMorePages = false
+          if (allCategories.length === 0) {
+            setCategories([])
+          }
+        } else if (response.data) {
+          let dataArray = []
+          
+          if (Array.isArray(response.data)) {
+            dataArray = response.data
+          } else if (response.data.data && Array.isArray(response.data.data)) {
+            dataArray = response.data.data
+          }
+          
+          allCategories.push(...dataArray)
+          
+          const totalPages = response.data?.last_page || 1
+          
+          if (currentPage >= totalPages || dataArray.length === 0) {
+            hasMorePages = false
+          } else {
+            currentPage++
+          }
+        } else {
+          hasMorePages = false
+        }
+      }
+      
+      if (allCategories.length > 0) {
+        const apiCategories = allCategories.map(cat => ({
+          id: cat.id,
+          name: cat.title || cat.name,
+          slug: (cat.title || cat.name).toLowerCase().replace(/\s+/g, '-'),
+          status: cat.status
+        }))
+        
+        setCategories(apiCategories)
+        setCategoriesLoaded(true)
+        localStorage.setItem('bvi.newsletters.categoriesLoaded', 'true')
+        localStorage.setItem('bvi.newsletters.categoriesCache', JSON.stringify(apiCategories))
+      } else {
+        setCategories([])
+        setCategoriesLoaded(true)
+        localStorage.setItem('bvi.newsletters.categoriesLoaded', 'true')
+        localStorage.setItem('bvi.newsletters.categoriesCache', JSON.stringify([]))
+      }
+    } catch (error) {
+      console.error('Error loading categories from API:', error)
+      const cachedCategories = localStorage.getItem('bvi.newsletters.categoriesCache')
+      if (cachedCategories) {
+        try {
+          const parsedCategories = JSON.parse(cachedCategories)
+          setCategories(parsedCategories)
+        } catch (e) {
+          setCategories([])
+        }
+      } else {
+        setCategories([])
+      }
+      setCategoriesLoaded(true)
+    } finally {
+      setCategoriesLoading(false)
+    }
+  }, [categoriesLoading])
+
+  const refreshCategories = useCallback(async () => {
+    setCategoriesLoaded(false)
+    localStorage.removeItem('bvi.newsletters.categoriesLoaded')
+    localStorage.removeItem('bvi.newsletters.categoriesCache')
+    setShouldReloadCategories(true)
+  }, [])
+
+  useEffect(() => {
+    if (shouldReloadCategories) {
+      loadCategoriesFromAPI(true)
+      setShouldReloadCategories(false)
+    }
+  }, [shouldReloadCategories, loadCategoriesFromAPI])
+
+  const handleAddCategory = useCallback(async (name) => {
+    try {
+      await newsletterCategoriesService.createNewsletterCategory({
+        title: name.trim(),
+        status: '1'
+      })
+      
+      setCategoriesLoaded(false)
+      localStorage.removeItem('bvi.newsletters.categoriesLoaded')
+      localStorage.removeItem('bvi.newsletters.categoriesCache')
+      
+      try {
+        const allCategories = []
+        let currentPage = 1
+        let hasMorePages = true
+        const perPage = 100
+
+        while (hasMorePages) {
+          const response = await newsletterCategoriesService.getNewsletterCategories(perPage, currentPage)
+          
+          if (response.http_status === 404) {
+            hasMorePages = false
+          } else if (response.data) {
+            let dataArray = []
+            
+            if (Array.isArray(response.data)) {
+              dataArray = response.data
+            } else if (response.data.data && Array.isArray(response.data.data)) {
+              dataArray = response.data.data
+            }
+            
+            allCategories.push(...dataArray)
+            
+            const totalPages = response.data?.last_page || 1
+            
+            if (currentPage >= totalPages || dataArray.length === 0) {
+              hasMorePages = false
+            } else {
+              currentPage++
+            }
+          } else {
+            hasMorePages = false
+          }
+        }
+        
+        if (allCategories.length > 0) {
+          const apiCategories = allCategories.map(cat => ({
+            id: cat.id,
+            name: cat.title || cat.name,
+            slug: (cat.title || cat.name).toLowerCase().replace(/\s+/g, '-'),
+            status: cat.status
+          }))
+          
+          setCategories(apiCategories)
+          setCategoriesLoaded(true)
+          localStorage.setItem('bvi.newsletters.categoriesLoaded', 'true')
+          localStorage.setItem('bvi.newsletters.categoriesCache', JSON.stringify(apiCategories))
+        }
+      } catch (reloadError) {
+        console.error('Error reloading categories:', reloadError)
+      }
+      
+      setIsCategoryModalOpen(false)
+    } catch (error) {
+      console.error('Error creating category:', error)
+      throw error
+    }
+  }, [])
+
+  const handleDeleteCategory = useCallback((id) => {
+    setCategoryToDelete(id)
+    setConfirmModalOpen(true)
+  }, [])
+
+  const handleConfirmDeleteCategory = useCallback(async () => {
+    if (!categoryToDelete) return
+
+    try {
+      await newsletterCategoriesService.deleteNewsletterCategory(categoryToDelete)
+
+      const updatedCategories = categories.filter(cat => cat.id !== categoryToDelete)
+      setCategories(updatedCategories)
+
+      localStorage.setItem('bvi.newsletters.categoriesCache', JSON.stringify(updatedCategories))
+      localStorage.setItem('bvi.newsletters.categoriesLoaded', 'true')
+
+      setConfirmModalOpen(false)
+      setCategoryToDelete(null)
+
+      setCategoriesLoaded(false)
+      setShouldReloadCategories(true)
+    } catch (error) {
+      console.error('Error deleting category:', error)
+    }
+  }, [categoryToDelete, categories])
+
+  const handleEditCategory = useCallback((id) => {
+    const category = categories.find(cat => cat.id === id)
+    if (category) {
+      setEditingCategory(category)
+      setIsCategoryModalOpen(true)
+    }
+  }, [categories])
+
+  const handleUpdateCategory = useCallback(async (newName) => {
+    if (editingCategory && newName.trim().length >= 3) {
+      try {
+        await newsletterCategoriesService.updateNewsletterCategory(editingCategory.id, {
+          title: newName.trim(),
+          status: editingCategory.status.toString()
+        })
+        
+        await refreshCategories()
+        
+        setIsCategoryModalOpen(false)
+        setEditingCategory(null)
+      } catch (error) {
+        console.error('Error updating category:', error)
+        throw error
+      }
+    }
+  }, [editingCategory, refreshCategories])
+
+  const closeCategoryModal = useCallback(() => {
+    setIsCategoryModalOpen(false)
+    setEditingCategory(null)
   }, [])
 
   return {
@@ -322,6 +584,26 @@ export const useNewslettersState = () => {
     seedFromMocks,
     clearNewsletterSeeds,
     loadNewslettersFromAPI,
-    changePage
+    changePage,
+    categories,
+    activeCategory,
+    setActiveCategory,
+    isCategoryModalOpen,
+    editingCategory,
+    confirmModalOpen,
+    categoryToDelete,
+    categoriesLoaded,
+    categoriesLoading,
+    handleAddCategory,
+    handleDeleteCategory,
+    handleConfirmDeleteCategory,
+    handleEditCategory,
+    handleUpdateCategory,
+    closeCategoryModal,
+    setIsCategoryModalOpen,
+    setConfirmModalOpen,
+    setCategoryToDelete,
+    loadCategoriesFromAPI,
+    refreshCategories
   }
 }

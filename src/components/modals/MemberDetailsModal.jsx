@@ -692,7 +692,14 @@ export const MemberDetailsModal = ({
     return '—';
   };
 
-  // Prepare payment data from API response
+  const formatPaymentType = (paymentType) => {
+    if (!paymentType) return '—';
+    if (typeof paymentType === 'string') {
+      return paymentType.trim() || '—';
+    }
+    return '—';
+  };
+
   const getPaymentHistory = () => {
     if (!currentMember) return [];
 
@@ -715,11 +722,11 @@ export const MemberDetailsModal = ({
 
       return {
         id: payment?.id || null,
-        plan: getPaymentPlanName(payment),
-        duration: '12 months',
         date: formatPaymentDate(payment?.date || payment?.created_at || payment?.payment_date),
-        status: formattedStatus,
+        plan: getPaymentPlanName(payment),
         amount: formatPaymentAmount(payment?.amount || payment?.total),
+        paymentType: formatPaymentType(payment?.payment_type || payment?.paymentType || payment?.type),
+        status: formattedStatus,
         isPending: statusValue === 1 || formattedStatus === 'Pending'
       };
     });
@@ -1320,10 +1327,10 @@ export const MemberDetailsModal = ({
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th scope="col">Plan</th>
-                    <th scope="col">Duration</th>
-                    <th scope="col">Amount</th>
                     <th scope="col">Date</th>
+                    <th scope="col">Plan</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Payment Type</th>
                     <th scope="col">Status</th>
                     <th scope="col" style={{ width: '120px' }}></th>
                   </tr>
@@ -1343,10 +1350,10 @@ export const MemberDetailsModal = ({
                       
                       return (
                         <tr key={payment.id || `mock-payment-${index}`}>
-                          <td>{payment.plan || '—'}</td>
-                          <td>{payment.duration || '—'}</td>
-                          <td>{payment.amount || '—'}</td>
                           <td>{payment.date || '—'}</td>
+                          <td>{payment.plan || '—'}</td>
+                          <td>{payment.amount || '—'}</td>
+                          <td>{payment.paymentType || '—'}</td>
                           <td style={{ verticalAlign: 'middle' }}>
                             {isEditing ? (
                               <CustomDropdown

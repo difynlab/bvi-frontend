@@ -98,6 +98,10 @@ export const UserRenewMembershipModal = ({
     if (!pricing) return '';
     
     if (Array.isArray(pricing) && pricing.length > 0) {
+      const isArrayOfObjects = typeof pricing[0] === 'object' && pricing[0] !== null && 'price' in pricing[0];
+      if (isArrayOfObjects) {
+        return String(pricing[0].price || 0);
+      }
       return String(pricing[0]);
     }
     
@@ -109,6 +113,10 @@ export const UserRenewMembershipModal = ({
       try {
         const parsed = JSON.parse(pricing);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          const isArrayOfObjects = typeof parsed[0] === 'object' && parsed[0] !== null && 'price' in parsed[0];
+          if (isArrayOfObjects) {
+            return String(parsed[0].price || 0);
+          }
           return String(parsed[0]);
         }
         if (typeof parsed === 'number') {

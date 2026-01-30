@@ -102,9 +102,7 @@ const clearEventsCache = () => {
 }
 
 const clearAllEventsData = () => {
-  // Clear events cache
   localStorage.removeItem(CACHE_KEY)
-  console.log('🧹 Cleared all events data from localStorage')
 }
 
 const getStorageUsage = () => {
@@ -112,10 +110,8 @@ const getStorageUsage = () => {
     const used = JSON.stringify(localStorage).length
     const usedKB = (used / 1024).toFixed(2)
     const usedMB = (used / (1024 * 1024)).toFixed(2)
-    console.log(`📊 localStorage usage: ${usedKB} KB (${usedMB} MB)`)
     return { used, usedKB, usedMB }
   } catch (error) {
-    console.error('Error checking storage usage:', error)
     return null
   }
 }
@@ -196,7 +192,6 @@ export const useEvents = () => {
         setEvents([])
         setError(null)
       } else {
-        console.error('Error loading events:', err)
         setError(err.message)
       }
     } finally {
@@ -240,14 +235,6 @@ export const useEvents = () => {
 
     try {
       const backendData = transformToBackend(eventData, false)
-
-      if (import.meta.env?.DEV) {
-        console.groupCollapsed('[Events] createEvent payload')
-        console.log('Frontend event data:', eventData)
-        console.log('Backend payload:', backendData)
-        console.groupEnd()
-      }
-
       const response = await eventsService.createEvent(backendData)
       
       if (response.http_status === 200) {
@@ -274,7 +261,6 @@ export const useEvents = () => {
         return { success: false, error: errorMessage, response }
       }
     } catch (err) {
-      console.error('Error creating event:', err)
       const errorMessage = err.message || 'An error occurred while creating the event'
       setError(errorMessage)
       return { success: false, error: errorMessage }
@@ -292,14 +278,6 @@ export const useEvents = () => {
       const existingThumbnail = existingEvent?.imageFileName || existingEvent?.thumbnail || ''
       
       const backendData = transformToBackend(eventData, true, existingThumbnail)
-
-      if (import.meta.env?.DEV) {
-        console.groupCollapsed('[Events] updateEvent payload')
-        console.log('Frontend event data:', eventData)
-        console.log('Backend payload:', backendData)
-        console.groupEnd()
-      }
-
       const response = await eventsService.updateEvent(eventData.id, backendData)
       
       if (response.http_status === 200) {
@@ -315,7 +293,6 @@ export const useEvents = () => {
         return { success: false, error: errorMessage, response }
       }
     } catch (err) {
-      console.error('Error updating event:', err)
       const errorMessage = err.message || 'An error occurred while updating the event'
       setError(errorMessage)
       return { success: false, error: errorMessage }

@@ -190,13 +190,8 @@ export const useNoticeForm = () => {
   }, [])
 
   const setFileFromDrop = useCallback((file) => {
-    const allowedTypes = [
-      'application/pdf',
-      'image/png',
-      'image/jpeg',
-      'image/jpg'
-    ]
-    const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg']
+    const allowedTypes = ['application/pdf']
+    const allowedExtensions = ['.pdf']
     
     if (!file) return
     
@@ -206,7 +201,7 @@ export const useNoticeForm = () => {
     const isValidType = allowedTypes.includes(fileType) || hasValidExtension
     
     if (!isValidType) {
-      setErrorMessage('Please upload a PDF, PNG, JPG or JPEG file only.')
+      setErrorMessage('Please upload a PDF file only.')
       setForm(prev => ({ ...prev, file: null, imageFileName: '', imagePreviewUrl: '' }))
       return
     }
@@ -219,26 +214,7 @@ export const useNoticeForm = () => {
       return
     }
     
-    const isImage = fileType.startsWith('image/') || (['.png', '.jpg', '.jpeg'].some(ext => fileName.endsWith(ext)))
-    
-    if (isImage) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setForm(prev => ({
-          ...prev,
-          file,
-          imageFileName: file.name,
-          imagePreviewUrl: e.target.result
-        }))
-      }
-      reader.onerror = () => {
-        setErrorMessage('Error reading image file.')
-        setForm(prev => ({ ...prev, file: null, imageFileName: '', imagePreviewUrl: '' }))
-      }
-      reader.readAsDataURL(file)
-    } else {
-      setForm(prev => ({ ...prev, file, imageFileName: file.name, imagePreviewUrl: '' }))
-    }
+    setForm(prev => ({ ...prev, file, imageFileName: file.name, imagePreviewUrl: '' }))
     
     if (errorMessage) {
       setErrorMessage('')
@@ -248,7 +224,6 @@ export const useNoticeForm = () => {
   const validate = useCallback((categories) => {
     const errors = []
     
-    // Check all required fields are not empty
     if (!form.fileName?.trim()) {
       errors.push('Please complete all required fields.')
     } else if (!form.noticeType) {
@@ -257,45 +232,30 @@ export const useNoticeForm = () => {
       errors.push('Please complete all required fields.')
     }
     
-    // Check file is required
-    if (!form.file && !form.imageFileName) {
-      errors.push('A file is required (PDF, PNG, JPG or JPEG).')
-    }
-    
-    // Check file type
     if (form.file) {
-      const allowedTypes = [
-        'application/pdf',
-        'image/png',
-        'image/jpeg',
-        'image/jpg'
-      ]
+      const allowedTypes = ['application/pdf']
       const fileName = form.file.name.toLowerCase()
-      const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg']
+      const allowedExtensions = ['.pdf']
       const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext))
       const isValidType = allowedTypes.includes(form.file.type) || hasValidExtension
       
       if (!isValidType) {
-        errors.push('Please upload a PDF, PNG, JPG or JPEG file only.')
+        errors.push('Please upload a PDF file only.')
       }
     }
     
-    // Check file size if file is present (max 15MB)
     if (form.file && form.file.size > 15 * 1024 * 1024) {
       errors.push('File size must not exceed 15MB.')
     }
     
-    // Check category exists
     if (form.noticeType && !categories.find(cat => cat.id === form.noticeType)) {
       errors.push('Please select a valid category.')
     }
     
-    // Check URL is valid using helper (allow "#" as a placeholder)
     if (form.linkUrl && form.linkUrl.trim() !== '#' && !isValidUrl(form.linkUrl)) {
       errors.push('Please enter a valid URL or use "#" to indicate no link.')
     }
     
-    // Convert array to single error message
     const message = errors.length > 0 ? errors.join(' ') : ''
     setErrorMessage(message)
     return message === ''

@@ -23,9 +23,12 @@ export const CreateMembershipPlanModal = ({
     description: '',
     eligibility_criteria: '',
     perks: [''],
-    pricing: [0],
+    pricing: { 6: 0, 12: 0, 18: 0 },
     status: 1
   });
+  const [durations, setDurations] = useState([6, 12, 18]);
+  const [editingDurationIndex, setEditingDurationIndex] = useState(null);
+  const [selectedDuration, setSelectedDuration] = useState(6);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -34,17 +37,49 @@ export const CreateMembershipPlanModal = ({
 
   useEffect(() => {
     if (isOpen) {
+      let pricing = { 6: 0, 12: 0, 18: 0 };
+      if (initialData?.pricing) {
+        if (typeof initialData.pricing === 'object' && !Array.isArray(initialData.pricing)) {
+          pricing = {
+            6: typeof initialData.pricing[6] === 'number' ? initialData.pricing[6] : parseFloat(initialData.pricing[6]) || 0,
+            12: typeof initialData.pricing[12] === 'number' ? initialData.pricing[12] : parseFloat(initialData.pricing[12]) || 0,
+            18: typeof initialData.pricing[18] === 'number' ? initialData.pricing[18] : parseFloat(initialData.pricing[18]) || 0
+          };
+        } else if (Array.isArray(initialData.pricing) && initialData.pricing.length > 0) {
+          pricing = {
+            6: typeof initialData.pricing[0] === 'number' ? initialData.pricing[0] : parseFloat(initialData.pricing[0]) || 0,
+            12: typeof initialData.pricing[1] === 'number' ? initialData.pricing[1] : (typeof initialData.pricing[0] === 'number' ? initialData.pricing[0] : parseFloat(initialData.pricing[0]) || 0),
+            18: typeof initialData.pricing[2] === 'number' ? initialData.pricing[2] : (typeof initialData.pricing[0] === 'number' ? initialData.pricing[0] : parseFloat(initialData.pricing[0]) || 0)
+          };
+        }
+      }
       setFormState({
         title: initialData?.title || '',
         description: initialData?.description || '',
         eligibility_criteria: initialData?.eligibility_criteria || '',
         perks: initialData?.perks?.length ? [...initialData.perks] : [''],
-        pricing: Array.isArray(initialData?.pricing) && initialData.pricing.length > 0 
-          ? initialData.pricing.map(p => typeof p === 'number' ? p : parseFloat(p) || 0)
-          : [0],
+        pricing,
         status: 1
       });
+      
+      if (initialData?.pricingArray && Array.isArray(initialData.pricingArray) && initialData.pricingArray.length > 0) {
+        const extractedDurations = initialData.pricingArray.map(item => {
+          const durationStr = item.duration || '';
+          const match = durationStr.match(/(\d+)/);
+          return match ? parseInt(match[1], 10) : 6;
+        });
+        setDurations(extractedDurations.length >= 3 ? extractedDurations.slice(0, 3) : [6, 12, 18]);
+      } else {
+        setDurations([6, 12, 18]);
+      }
+      
+      setSelectedDuration(durations[0] || 6);
+      setEditingDurationIndex(null);
       setErrorMessage('');
+    } else {
+      setDurations([6, 12, 18]);
+      setSelectedDuration(6);
+      setEditingDurationIndex(null);
     }
   }, [isOpen, initialData]);
 
@@ -98,14 +133,14 @@ export const CreateMembershipPlanModal = ({
     });
   }, []);
 
-  const handlePricingChange = useCallback((index, value) => {
+  const handlePricingChange = useCallback((duration, value) => {
     setFormState((prev) => {
-      const pricing = [...prev.pricing];
+      const pricing = { ...prev.pricing };
       if (value === '' || value === null || value === undefined) {
-        pricing[index] = '';
+        pricing[duration] = '';
       } else {
         const numValue = parseFloat(value);
-        pricing[index] = isNaN(numValue) ? '' : numValue;
+        pricing[duration] = isNaN(numValue) ? '' : numValue;
       }
       return {
         ...prev,
@@ -115,11 +150,11 @@ export const CreateMembershipPlanModal = ({
     setErrorMessage('');
   }, []);
 
-  const handlePricingBlur = useCallback((index) => {
+  const handlePricingBlur = useCallback((duration) => {
     setFormState((prev) => {
-      const pricing = [...prev.pricing];
-      if (pricing[index] === '' || pricing[index] === null || pricing[index] === undefined) {
-        pricing[index] = 0;
+      const pricing = { ...prev.pricing };
+      if (pricing[duration] === '' || pricing[duration] === null || pricing[duration] === undefined) {
+        pricing[duration] = 0;
       }
       return {
         ...prev,
@@ -128,18 +163,79 @@ export const CreateMembershipPlanModal = ({
     });
   }, []);
 
+  const handleDurationEdit = useCallback((index) => {
+    setEditingDurationIndex(index);
+  }, []);
+
+  const handleDurationChange = useCallback((index, value) => {
+    if (value === '' || value === null || value === undefined) {
+      setDurations((prev) => {
+        const newDurations = [...prev];
+        newDurations[index] = '';
+        return newDurations;
+      });
+      return;
+    }
+    
+    const numValue = parseInt(value, 10);
+    if (!isNaN(numValue) && numValue > 0) {
+      const oldDuration = durations[index];
+      const newDuration = numValue;
+      
+      setDurations((prev) => {
+        const newDurations = [...prev];
+        newDurations[index] = numValue;
+        return newDurations;
+      });
+      
+      setFormState((prev) => {
+        const pricing = { ...prev.pricing };
+        if (oldDuration && pricing[oldDuration] !== undefined) {
+          pricing[newDuration] = pricing[oldDuration];
+          delete pricing[oldDuration];
+        }
+        return {
+          ...prev,
+          pricing
+        };
+      });
+      
+      if (selectedDuration === oldDuration) {
+        setSelectedDuration(newDuration);
+      }
+    }
+  }, [durations, selectedDuration]);
+
+  const handleDurationBlur = useCallback(() => {
+    setDurations((prev) => {
+      const newDurations = prev.map((d, idx) => {
+        if (idx === editingDurationIndex && (d === '' || d === null || d === undefined || d < 1)) {
+          return 6;
+        }
+        return d;
+      });
+      return newDurations;
+    });
+    setEditingDurationIndex(null);
+  }, [editingDurationIndex]);
+
 
 
   const isValid = useMemo(() => {
     const { title, description, eligibility_criteria, perks, pricing } = formState;
+    const pricingObj = typeof pricing === 'object' && !Array.isArray(pricing) ? pricing : {};
+    const hasValidPrices = durations.every(d => {
+      const price = pricingObj[d];
+      return typeof price === 'number' && price >= 0;
+    });
     return (
       title.trim().length >= MIN_FIELD_LENGTH &&
       description.trim().length >= MIN_FIELD_LENGTH &&
       eligibility_criteria.trim().length >= MIN_FIELD_LENGTH &&
       sanitizePerks(perks).length > 0 &&
-      Array.isArray(pricing) && pricing.length > 0 && pricing.every(p => typeof p === 'number' && p >= 0)
+      hasValidPrices
     );
-  }, [formState]);
+  }, [formState, durations]);
 
   const handleSubmit = async () => {
     if (!isValid || isSubmitting) {
@@ -149,15 +245,24 @@ export const CreateMembershipPlanModal = ({
       return;
     }
     
+    const pricingObj = typeof formState.pricing === 'object' && !Array.isArray(formState.pricing)
+      ? formState.pricing
+      : { 6: 0, 12: 0, 18: 0 };
+
+    const durationsArray = durations.map(d => `${d} months`);
+    const prices = durations.map(d => {
+      const price = pricingObj[d];
+      return typeof price === 'number' && price >= 0 ? price : 0;
+    });
+    
     const payload = {
       title: formState.title.trim(),
       description: formState.description.trim(),
       eligibility_criteria: formState.eligibility_criteria.trim(),
       perks: sanitizePerks(formState.perks),
-      pricing: formState.pricing.map(p => {
-        if (p === '' || p === null || p === undefined) return 0;
-        return typeof p === 'number' && p >= 0 ? p : 0;
-      }),
+      pricing: pricingObj,
+      durations: durationsArray,
+      prices,
       status: 1
     };
 
@@ -282,37 +387,67 @@ export const CreateMembershipPlanModal = ({
             <label className="form-label">
               Pricing
             </label>
-            <div style={{ position: 'relative' }}>
-              <i className="bi bi-currency-dollar" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666', zIndex: 1 }}></i>
+            <div className="plan-durations-container">
+              {durations.map((duration, index) => {
+                const isSelected = selectedDuration === duration;
+                const isEditing = editingDurationIndex === index;
+                return (
+                  <div key={`duration-${index}`} className="plan-duration-wrapper">
+                    {isEditing ? (
+                      <div className="plan-duration-edit-container">
+                        <input
+                          type="number"
+                          className="plan-duration-input"
+                          value={duration === '' ? '' : duration}
+                          onChange={(e) => handleDurationChange(index, e.target.value)}
+                          onBlur={handleDurationBlur}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleDurationBlur();
+                            }
+                          }}
+                          min="1"
+                          autoFocus
+                        />
+                        <span className="plan-duration-m-label">M</span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className={`plan-duration-button ${isSelected ? 'selected' : ''}`}
+                        onClick={() => setSelectedDuration(duration)}
+                      >
+                        {duration}M
+                        <button
+                          type="button"
+                          className="plan-duration-edit-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDurationEdit(index);
+                          }}
+                          aria-label="Edit duration"
+                        >
+                          <i className="bi bi-pencil-square"></i>
+                        </button>
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="plan-pricing-input-wrapper">
+              <i className="bi bi-currency-dollar plan-pricing-currency"></i>
               <input
                 type="number"
-                value={formState.pricing[0] === '' || formState.pricing[0] === null || formState.pricing[0] === undefined ? '' : formState.pricing[0]}
-                onChange={(e) => handlePricingChange(0, e.target.value)}
-                onBlur={() => handlePricingBlur(0)}
+                className="plan-pricing-input"
+                value={formState.pricing[selectedDuration] === '' || formState.pricing[selectedDuration] === null || formState.pricing[selectedDuration] === undefined ? '' : formState.pricing[selectedDuration]}
+                onChange={(e) => handlePricingChange(selectedDuration, e.target.value)}
+                onBlur={() => handlePricingBlur(selectedDuration)}
                 placeholder="0.00"
                 min="0"
                 step="0.01"
-                style={{ 
-                  width: '100%', 
-                  paddingLeft: '30px', 
-                  padding: '10px 10px 10px 30px', 
-                  border: '1px solid #ddd', 
-                  borderRadius: '4px',
-                  MozAppearance: 'textfield',
-                  WebkitAppearance: 'none'
-                }}
                 onWheel={(e) => e.target.blur()}
               />
-              <style>{`
-                input[type="number"]::-webkit-inner-spin-button,
-                input[type="number"]::-webkit-outer-spin-button {
-                  -webkit-appearance: none;
-                  margin: 0;
-                }
-                input[type="number"] {
-                  -moz-appearance: textfield;
-                }
-              `}</style>
             </div>
           </div>
 

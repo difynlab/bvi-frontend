@@ -470,24 +470,11 @@ export const useNoticesState = () => {
         }
         
         const backendData = transformToBackend(payload, true)
-        console.log('📤 [handleUpsertNotice UPDATE] Sending to backend:', {
-          payload: payload,
-          backendData: backendData,
-          editingNoticeId: editingNotice.id
-        });
-        
         const response = await noticesService.updateNotice(editingNotice.id, backendData)
-        
-        console.log('📥 [handleUpsertNotice UPDATE] Response from backend:', {
-          http_status: response.http_status,
-          responseData: response.data
-        });
         
         if (response.http_status === 200) {
           const backendNotice = response.data
-          console.log('📥 [handleUpsertNotice UPDATE] Backend notice before transform:', backendNotice);
           const noticeWithImages = transformFromBackend(backendNotice)
-          console.log('📥 [handleUpsertNotice UPDATE] Notice after transform:', noticeWithImages);
           
           setNotices(prev => prev.map(notice => 
             notice.id === editingNotice.id ? noticeWithImages : notice
@@ -510,21 +497,10 @@ export const useNoticesState = () => {
         }
         
         const backendData = transformToBackend(payload, false)
-        console.log('📤 [handleUpsertNotice CREATE] Sending to backend:', {
-          payload: payload,
-          backendData: backendData
-        });
-        
         const response = await noticesService.createNotice(backendData)
-        
-        console.log('📥 [handleUpsertNotice CREATE] Response from backend:', {
-          http_status: response.http_status,
-          responseData: response.data
-        });
         
         if (response.http_status === 200) {
           const backendNotice = response.data
-          console.log('📥 [handleUpsertNotice CREATE] Backend notice before transform:', backendNotice);
           
           // TODO PRODUCTION: CHANGE IMAGES - Move image from temp ID to real backend ID FIRST
           if (payload.file && backendNotice.id) {

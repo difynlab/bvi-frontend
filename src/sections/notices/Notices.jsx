@@ -133,6 +133,35 @@ export const Notices = () => {
     return !!(notice.fileUrl || notice.imageFileName || notice.original_thumbnail || notice.imagePreviewUrl);
   };
 
+  const handleViewNoticeContent = async (notice) => {
+    const hasLink = notice.linkUrl && notice.linkUrl.trim() !== '' && notice.linkUrl.trim() !== '#'
+    
+    if (hasLink) {
+      window.open(notice.linkUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+    
+    if (hasFile(notice)) {
+      const noticeId = notice.id
+      setPdfLoadingStates(prev => ({ ...prev, [noticeId]: true }))
+      
+      try {
+        if (notice.fileUrl) {
+          window.open(notice.fileUrl, '_blank', 'noopener,noreferrer')
+        } else {
+          const blob = await noticesService.downloadNoticePDF(noticeId)
+          const url = URL.createObjectURL(blob)
+          window.open(url, '_blank', 'noopener,noreferrer')
+        }
+      } catch (error) {
+        console.error('Error viewing file:', error)
+        alert(`Error al abrir el archivo: ${error.message}`)
+      } finally {
+        setPdfLoadingStates(prev => ({ ...prev, [noticeId]: false }))
+      }
+    }
+  }
+
   // Estado para controlar el loading de PDFs individuales
   const [pdfLoadingStates, setPdfLoadingStates] = useState({});
   const [isViewNoticeModalOpen, setIsViewNoticeModalOpen] = useState(false);
@@ -333,6 +362,7 @@ export const Notices = () => {
   const [pdfGenerationError, setPdfGenerationError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const bannerRef = useRef(null)
+  const [contentType, setContentType] = useState('link')
 
   // Required fields validation
   const REQUIRED = [
@@ -368,16 +398,18 @@ export const Notices = () => {
 
   useEffect(() => {
     if (isNoticeModalOpen && editingNotice) {
-      // Small delay to ensure modal is fully open before loading data
       setTimeout(() => {
         noticeForm.loadFrom(editingNotice)
-        setEditorKey(prev => prev + 1) // Force editor re-initialization
+        setEditorKey(prev => prev + 1)
+        const hasFile = editingNotice.fileUrl || editingNotice.imageFileName
+        const hasLink = editingNotice.linkUrl && editingNotice.linkUrl.trim() !== '' && editingNotice.linkUrl.trim() !== '#'
+        setContentType(hasFile ? 'pdf' : (hasLink ? 'link' : 'link'))
       }, 10)
     } else if (isNoticeModalOpen && !editingNotice) {
-      // Small delay to ensure modal is fully open before initializing
       setTimeout(() => {
         noticeForm.initializeCreate()
-        setEditorKey(prev => prev + 1) // Force editor re-initialization
+        setEditorKey(prev => prev + 1)
+        setContentType('link')
       }, 10)
     }
   }, [isNoticeModalOpen, editingNotice])
@@ -500,19 +532,14 @@ export const Notices = () => {
       const maxSize = 15 * 1024 * 1024 // 15MB in bytes
 
       if (uploadedFile) {
-        const allowedTypes = [
-          'application/pdf',
-          'image/png',
-          'image/jpeg',
-          'image/jpg'
-        ]
+        const allowedTypes = ['application/pdf']
         const fileName = uploadedFile.name.toLowerCase()
-        const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg']
+        const allowedExtensions = ['.pdf']
         const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext))
         const isValidType = allowedTypes.includes(uploadedFile.type) || hasValidExtension
         
         if (!isValidType) {
-          setPdfGenerationError('Please upload a PDF, PNG, JPG or JPEG file.')
+          setPdfGenerationError('Please upload a PDF file only.')
           bannerRef.current?.focus()
           setIsSubmitting(false)
           return
@@ -528,7 +555,6 @@ export const Notices = () => {
         payload.file = uploadedFile
         await handleUpsertNotice(payload)
       } else {
-        // File is optional, proceed without file
         await handleUpsertNotice(payload)
       }
 
@@ -882,23 +908,6 @@ export const Notices = () => {
                                   {formatDate(notice.publishDate || notice.publish_date || notice.createdAt || notice.createdAtISO)}
                                 </span>
                               </div>
-                              <div className="notice-preview-field">
-                                <span className="notice-preview-label">Link:</span>
-                                <span className="notice-preview-value">
-                                  {typeof notice.linkUrl === 'string' && notice.linkUrl.trim() ? (
-                                    <a
-                                      href={notice.linkUrl}
-                                      className="notice-preview-link"
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                    >
-                                      {notice.linkUrl}
-                                    </a>
-                                  ) : (
-                                    'No link provided'
-                                  )}
-                                </span>
-                              </div>
                             </div>
                           </div>
                         </div>
@@ -1046,86 +1055,89 @@ export const Notices = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="linkUrl">Upload Link</label>
-                  <input
-                    type="text"
-                    id="linkUrl"
-                    name="linkUrl"
-                    value={noticeForm.form.linkUrl}
-                    onChange={handleInputChange}
-                    placeholder="https://example.com or #"
+                  <label htmlFor="contentType">Content Type</label>
+                  <CustomDropdown
+                    id="contentType"
+                    name="contentType"
+                    value={contentType}
+                    onChange={(e) => {
+                      setContentType(e.target.value)
+                      if (e.target.value === 'link') {
+                        noticeForm.onChange('file', null)
+                        noticeForm.onChange('imageFileName', '')
+                        noticeForm.onChange('imagePreviewUrl', '')
+                      } else {
+                        noticeForm.onChange('linkUrl', '')
+                      }
+                    }}
+                    options={[
+                      { value: 'link', label: 'Link' },
+                      { value: 'pdf', label: 'PDF Document' }
+                    ]}
+                    placeholder="Select content type"
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="file">Upload File</label>
-                  <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>PDF, PNG, JPG and JPEG files are supported. Maximum file size: 15 MB.</p>
-                  <div
-                    className="file-upload-area dropzone-surface"
-                    data-has-file={Boolean(noticeForm.form.file || noticeForm.form.imageFileName)}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                  >
+                {contentType === 'link' ? (
+                  <div className="form-group">
+                    <label htmlFor="linkUrl">Link</label>
                     <input
-                      type="file"
-                      id="file"
-                      name="file"
-                      accept="application/pdf,image/png,image/jpeg,image/jpg,.pdf,.png,.jpg,.jpeg"
-                      onChange={handleFileInputChange}
-                      className="hidden-file-input"
+                      type="text"
+                      id="linkUrl"
+                      name="linkUrl"
+                      value={noticeForm.form.linkUrl}
+                      onChange={handleInputChange}
+                      placeholder="https://example.com or #"
                     />
-                    <label htmlFor="file" className="file-input-label">
-                      Choose file
-                    </label>
-                    <p className="file-status">
-                      {noticeForm.form.imageFileName || 'No file chosen'}
-                      {editingNotice && noticeForm.form.imageFileName && (
-                        <span className="existing-file-indicator"> (Existing file)</span>
-                      )}
-                    </p>
-                    {noticeForm.form.imagePreviewUrl && (
-                      <div className="image-preview">
-                        <img 
-                          src={noticeForm.form.imagePreviewUrl} 
-                          alt="Preview" 
-                          onLoad={() => {}}
-                          onError={(e) => {
-                            e.target.classList.add('image-preview-hidden');
-                          }}
-                        />
-                      </div>
-                    )}
-                    {noticeForm.form.imageFileName && noticeForm.form.imageFileName.toLowerCase().endsWith('.pdf') && !noticeForm.form.imagePreviewUrl && (
-                      <div className="file-preview">
-                        <i className="bi bi-file-pdf" style={{ fontSize: '3rem', color: '#dc3545' }}></i>
-                        <p>{noticeForm.form.imageFileName}</p>
-                      </div>
-                    )}
-                    {noticeForm.form.imageFileName && !noticeForm.form.imagePreviewUrl && 
-                     ['png', 'jpg', 'jpeg'].some(ext => noticeForm.form.imageFileName.toLowerCase().endsWith(`.${ext}`)) && (
-                      <div className="file-preview">
-                        <i className="bi bi-file-image" style={{ fontSize: '3rem', color: '#0ea5e9' }}></i>
-                        <p>{noticeForm.form.imageFileName}</p>
-                      </div>
-                    )}
-                    {editingNotice && noticeForm.form.imageFileName && (
-                      <div className="existing-file-info">
-                        <p className="file-info-text">
-                          {noticeForm.form.imageFileName.toLowerCase().endsWith('.pdf') ? (
-                            <i className="bi bi-file-earmark-pdf" style={{marginRight: '8px', color: '#dc2626'}}></i>
-                          ) : (
-                            <i className="bi bi-file-earmark-image" style={{marginRight: '8px', color: '#0ea5e9'}}></i>
-                          )}
-                          Current file: <strong>{noticeForm.form.imageFileName}</strong>
-                        </p>
-                        <p className="file-info-note">
-                          Select a new file to replace the existing one, or leave empty to keep the current file.
-                        </p>
-                      </div>
-                    )}
                   </div>
-                </div>
+                ) : (
+                  <div className="form-group">
+                    <label htmlFor="file">PDF Document</label>
+                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>PDF files are supported. Maximum file size: 15 MB.</p>
+                    <div
+                      className="file-upload-area dropzone-surface"
+                      data-has-file={Boolean(noticeForm.form.file || noticeForm.form.imageFileName)}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
+                      <input
+                        type="file"
+                        id="file"
+                        name="file"
+                        accept="application/pdf,.pdf"
+                        onChange={handleFileInputChange}
+                        className="hidden-file-input"
+                      />
+                      <label htmlFor="file" className="file-input-label">
+                        Choose file
+                      </label>
+                      <p className="file-status">
+                        {noticeForm.form.imageFileName || 'No file chosen'}
+                        {editingNotice && noticeForm.form.imageFileName && (
+                          <span className="existing-file-indicator"> (Existing file)</span>
+                        )}
+                      </p>
+                      {noticeForm.form.imageFileName && noticeForm.form.imageFileName.toLowerCase().endsWith('.pdf') && !noticeForm.form.imagePreviewUrl && (
+                        <div className="file-preview">
+                          <i className="bi bi-file-pdf" style={{ fontSize: '3rem', color: '#dc3545' }}></i>
+                          <p>{noticeForm.form.imageFileName}</p>
+                        </div>
+                      )}
+                      {editingNotice && noticeForm.form.imageFileName && (
+                        <div className="existing-file-info">
+                          <p className="file-info-text">
+                            <i className="bi bi-file-earmark-pdf" style={{marginRight: '8px', color: '#dc2626'}}></i>
+                            Current file: <strong>{noticeForm.form.imageFileName}</strong>
+                          </p>
+                          <p className="file-info-note">
+                            Select a new file to replace the existing one, or leave empty to keep the current file.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="form-actions">
                   {(missingRequired.length > 0 || noticeForm.errorMessage || pdfGenerationError) && (
@@ -1343,36 +1355,15 @@ export const Notices = () => {
                 )}
               </div>
               
-              {viewingNotice.linkUrl && viewingNotice.linkUrl.trim() !== '#' && (
-                <div className="view-notice-link">
-                  <a 
-                    href={viewingNotice.linkUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="view-notice-link-url"
-                  >
-                    {viewingNotice.linkUrl}
-                  </a>
-                </div>
-              )}
-              
               <hr className="view-notice-divider" />
               
               <div className="view-notice-download-section">
                 <button
                   className="download-notice-btn"
-                  disabled={!hasFile(viewingNotice)}
-                  onClick={() => {
-                    if (hasFile(viewingNotice)) {
-                      handleDownloadFile(viewingNotice);
-                    }
-                  }}
+                  onClick={() => handleViewNoticeContent(viewingNotice)}
                 >
-                  Download Notice
+                  View Notice
                 </button>
-                {!hasFile(viewingNotice) && (
-                  <p className="no-file-message">No uploaded file available for download</p>
-                )}
               </div>
             </div>
           </div>

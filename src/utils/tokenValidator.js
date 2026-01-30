@@ -19,14 +19,11 @@ export const isTokenValid = (token) => {
     
     // Verificar si el token ha expirado
     if (payload.exp && payload.exp < currentTime) {
-      console.log('Token expired:', new Date(payload.exp * 1000))
       return false
     }
     
-    console.log('Token is valid, expires:', new Date(payload.exp * 1000))
     return true
   } catch (error) {
-    console.error('Error validating token:', error)
     return false
   }
 }

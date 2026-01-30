@@ -40,8 +40,6 @@ class NoticesService {
         } else if (data.http_status === 400) {
           const errorMessage = data.message || 'Validation error'
           const validationErrors = data.errors ? Object.values(data.errors).flat().join(', ') : ''
-          console.log('400 Bad Request details:', data)
-          console.log('Validation errors:', data.errors)
           throw new Error(`${errorMessage}${validationErrors ? ': ' + validationErrors : ''}`)
         } else if (data.http_status === 422) {
           const errorMessage = data.message || 'Validation errors'
@@ -49,8 +47,6 @@ class NoticesService {
           throw new Error(`${errorMessage}${validationErrors ? ': ' + validationErrors : ''}`)
         } else if (data.http_status === 500) {
           const errorMessage = data.message || data.error || 'Internal server error'
-          console.error('500 Server Error details:', data)
-          console.error('Full error response:', JSON.stringify(data, null, 2))
           throw new Error(`${errorMessage} (Error 500)`)
         } else if (data.http_status === 404) {
           return {

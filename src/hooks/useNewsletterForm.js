@@ -35,7 +35,8 @@ export const useNewsletterForm = () => {
     imageUrl: '',
     file: null,
     linkUrl: '',
-    publishDate: ''
+    publishDate: '',
+    newsletterType: ''
   }
 
   const [form, setForm] = useState(emptyForm)
@@ -91,7 +92,8 @@ export const useNewsletterForm = () => {
       imageUrl: newsletter.imageUrl || '',
       file: null,
       linkUrl: linkUrl,
-      publishDate: publishDate
+      publishDate: publishDate,
+      newsletterType: newsletter.newsletterType || newsletter.data?.newsletter_category_id || ''
     })
     setEditorHtml(initialHtml)
     setEditorText(description)
@@ -229,7 +231,8 @@ export const useNewsletterForm = () => {
         imageUrl: item.imageUrl || item.original_thumbnail || '',
         file: null,
         linkUrl: linkUrl,
-        publishDate: publishDate
+        publishDate: publishDate,
+        newsletterType: item.newsletterType || item.data?.newsletter_category_id || ''
       }
       setForm(formData)
       
@@ -282,6 +285,7 @@ export const useNewsletterForm = () => {
         descriptionText: descriptionText
       }),
       publish_date: publishDate,
+      newsletter_category_id: Number(form.newsletterType),
       status: 1
     }
     

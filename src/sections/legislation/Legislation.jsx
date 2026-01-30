@@ -1,10 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '../../context/useAuth';
 import { can } from '../../auth/acl';
 import LegislationUploadFileModal from '../../components/modals/LegislationUploadFileModal';
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal';
 import { SuccessDeleteModal } from '../../components/modals/SuccessDeleteModal';
 import legislationFilesService from '../../services/legislationFilesService';
+import legislationCategoriesService from '../../services/legislationCategoriesService';
+import LegislationTabPicker from '../../components/modals/LegislationTabPicker';
+import { loadActiveTabId, saveActiveTabId } from '../../helpers/legislationStorage';
+import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock';
+import EmptyPage from '../../components/EmptyPage';
 import '../../styles/sections/Legislation.scss';
 
 const buildDownloadFileName = (title = 'legislation-document', fileUrl = '') => {
@@ -39,6 +46,23 @@ const Legislation = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [isSuccessDeleteOpen, setIsSuccessDeleteOpen] = useState(false);
+  
+  const MOBILE_Q = '(max-width: 768px)';
+  const [categories, setCategories] = useState([]);
+  const [activeCategory, setActiveCategory] = useState('');
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [shouldReloadCategories, setShouldReloadCategories] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [activeTabId, setActiveTabId] = useState(() => loadActiveTabId() || null);
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia(MOBILE_Q).matches);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [categoryError, setCategoryError] = useState('');
+  const [isCategoryLoading, setIsCategoryLoading] = useState(false);
 
   useEffect(() => {
     const loadLegislationFiles = async () => {
@@ -184,6 +208,362 @@ const Legislation = () => {
     }
   };
 
+  const loadCategoriesFromAPI = useCallback(async (forceRefresh = false) => {
+    if (categoriesLoading) return;
+    
+    if (!forceRefresh) {
+      try {
+        const cachedCategories = localStorage.getItem('bvi.legislation.categoriesCache');
+        const isLoaded = localStorage.getItem('bvi.legislation.categoriesLoaded') === 'true';
+        
+        if (isLoaded && cachedCategories) {
+          const parsedCategories = JSON.parse(cachedCategories);
+          if (parsedCategories.length > 0) {
+            setCategories(parsedCategories);
+            setCategoriesLoaded(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error reading cache:', error);
+      }
+    }
+    
+    setCategoriesLoading(true);
+    try {
+      const allCategories = [];
+      let currentPage = 1;
+      let hasMorePages = true;
+      const perPage = 100;
+
+      while (hasMorePages) {
+        const response = await legislationCategoriesService.getLegislationCategories(perPage, currentPage);
+        
+        if (response.http_status === 404) {
+          hasMorePages = false;
+          if (allCategories.length === 0) {
+            setCategories([]);
+          }
+        } else if (response.data) {
+          let dataArray = [];
+          
+          if (Array.isArray(response.data)) {
+            dataArray = response.data;
+          } else if (response.data.data && Array.isArray(response.data.data)) {
+            dataArray = response.data.data;
+          }
+          
+          allCategories.push(...dataArray);
+          
+          const totalPages = response.data?.last_page || 1;
+          
+          if (currentPage >= totalPages || dataArray.length === 0) {
+            hasMorePages = false;
+          } else {
+            currentPage++;
+          }
+        } else {
+          hasMorePages = false;
+        }
+      }
+      
+      if (allCategories.length > 0) {
+        const apiCategories = allCategories.map(cat => ({
+          id: cat.id,
+          name: cat.title || cat.name,
+          slug: (cat.title || cat.name).toLowerCase().replace(/\s+/g, '-'),
+          status: cat.status
+        }));
+        
+        setCategories(apiCategories);
+        setCategoriesLoaded(true);
+        localStorage.setItem('bvi.legislation.categoriesLoaded', 'true');
+        localStorage.setItem('bvi.legislation.categoriesCache', JSON.stringify(apiCategories));
+      } else {
+        setCategories([]);
+        setCategoriesLoaded(true);
+        localStorage.setItem('bvi.legislation.categoriesLoaded', 'true');
+        localStorage.setItem('bvi.legislation.categoriesCache', JSON.stringify([]));
+      }
+    } catch (error) {
+      console.error('Error loading categories from API:', error);
+      const cachedCategories = localStorage.getItem('bvi.legislation.categoriesCache');
+      if (cachedCategories) {
+        try {
+          const parsedCategories = JSON.parse(cachedCategories);
+          setCategories(parsedCategories);
+        } catch (e) {
+          setCategories([]);
+        }
+      } else {
+        setCategories([]);
+      }
+      setCategoriesLoaded(true);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, [categoriesLoading]);
+
+  const refreshCategories = useCallback(async () => {
+    setCategoriesLoaded(false);
+    localStorage.removeItem('bvi.legislation.categoriesLoaded');
+    localStorage.removeItem('bvi.legislation.categoriesCache');
+    setShouldReloadCategories(true);
+  }, []);
+
+  const handleAddCategory = useCallback(async (name) => {
+    try {
+      await legislationCategoriesService.createLegislationCategory({
+        title: name.trim(),
+        status: '1'
+      });
+      
+      setCategoriesLoaded(false);
+      localStorage.removeItem('bvi.legislation.categoriesLoaded');
+      localStorage.removeItem('bvi.legislation.categoriesCache');
+      
+      try {
+        const allCategories = [];
+        let currentPage = 1;
+        let hasMorePages = true;
+        const perPage = 100;
+
+        while (hasMorePages) {
+          const response = await legislationCategoriesService.getLegislationCategories(perPage, currentPage);
+          
+          if (response.http_status === 404) {
+            hasMorePages = false;
+          } else if (response.data) {
+            let dataArray = [];
+            
+            if (Array.isArray(response.data)) {
+              dataArray = response.data;
+            } else if (response.data.data && Array.isArray(response.data.data)) {
+              dataArray = response.data.data;
+            }
+            
+            allCategories.push(...dataArray);
+            
+            const totalPages = response.data?.last_page || 1;
+            
+            if (currentPage >= totalPages || dataArray.length === 0) {
+              hasMorePages = false;
+            } else {
+              currentPage++;
+            }
+          } else {
+            hasMorePages = false;
+          }
+        }
+        
+        if (allCategories.length > 0) {
+          const apiCategories = allCategories.map(cat => ({
+            id: cat.id,
+            name: cat.title || cat.name,
+            slug: (cat.title || cat.name).toLowerCase().replace(/\s+/g, '-'),
+            status: cat.status
+          }));
+          
+          setCategories(apiCategories);
+          setCategoriesLoaded(true);
+          localStorage.setItem('bvi.legislation.categoriesLoaded', 'true');
+          localStorage.setItem('bvi.legislation.categoriesCache', JSON.stringify(apiCategories));
+        }
+      } catch (reloadError) {
+        console.error('Error reloading categories:', reloadError);
+      }
+      
+      setIsCategoryModalOpen(false);
+    } catch (error) {
+      console.error('Error creating category:', error);
+      throw error;
+    }
+  }, []);
+
+  const handleDeleteCategory = useCallback((id) => {
+    setCategoryToDelete(id);
+    setConfirmModalOpen(true);
+  }, []);
+
+  const handleConfirmDeleteCategory = useCallback(async () => {
+    if (!categoryToDelete) return;
+
+    try {
+      await legislationCategoriesService.deleteLegislationCategory(categoryToDelete);
+
+      const updatedCategories = categories.filter(cat => cat.id !== categoryToDelete);
+      setCategories(updatedCategories);
+
+      localStorage.setItem('bvi.legislation.categoriesCache', JSON.stringify(updatedCategories));
+      localStorage.setItem('bvi.legislation.categoriesLoaded', 'true');
+
+      setConfirmModalOpen(false);
+      setCategoryToDelete(null);
+
+      setCategoriesLoaded(false);
+      setShouldReloadCategories(true);
+    } catch (error) {
+      console.error('Error deleting category:', error);
+    }
+  }, [categoryToDelete, categories]);
+
+  const handleEditCategory = useCallback((id) => {
+    const category = categories.find(cat => cat.id === id);
+    if (category) {
+      setEditingCategory(category);
+      setIsCategoryModalOpen(true);
+    }
+  }, [categories]);
+
+  const handleUpdateCategory = useCallback(async (newName) => {
+    if (editingCategory && newName.trim().length >= 3) {
+      try {
+        await legislationCategoriesService.updateLegislationCategory(editingCategory.id, {
+          title: newName.trim(),
+          status: editingCategory.status.toString()
+        });
+        
+        await refreshCategories();
+        
+        setIsCategoryModalOpen(false);
+        setEditingCategory(null);
+      } catch (error) {
+        console.error('Error updating category:', error);
+        throw error;
+      }
+    }
+  }, [editingCategory, refreshCategories]);
+
+  const closeCategoryModal = useCallback(() => {
+    setIsCategoryModalOpen(false);
+    setEditingCategory(null);
+  }, []);
+
+  const addCategoryModalBackdropClose = useModalBackdropClose(() => setIsCategoryModalOpen(false));
+  const confirmCategoryModalBackdropClose = useModalBackdropClose(() => setConfirmModalOpen(false));
+
+  useBodyScrollLock(isModalOpen || isDeleteConfirmOpen || isSuccessDeleteOpen || isCategoryModalOpen || confirmModalOpen);
+
+  useEffect(() => {
+    const mql = window.matchMedia(MOBILE_Q);
+    const onChange = () => setIsMobile(mql.matches);
+    mql.addEventListener?.('change', onChange);
+    return () => mql.removeEventListener?.('change', onChange);
+  }, []);
+
+  useEffect(() => {
+    loadCategoriesFromAPI(true);
+  }, []);
+
+  useEffect(() => {
+    if (shouldReloadCategories) {
+      loadCategoriesFromAPI(true);
+      setShouldReloadCategories(false);
+    }
+  }, [shouldReloadCategories, loadCategoriesFromAPI]);
+
+  useEffect(() => {
+    if (editingCategory) {
+      setNewCategoryName(editingCategory.name);
+    } else {
+      setNewCategoryName('');
+    }
+  }, [editingCategory]);
+
+  useEffect(() => {
+    if (!categories.length) {
+      setActiveTabId(null);
+      saveActiveTabId(null);
+      setActiveCategory('');
+      return;
+    }
+    if (!activeTabId || !categories.some(c => c.id === activeTabId)) {
+      const next = categories[0].id;
+      setActiveTabId(next);
+      saveActiveTabId(next);
+      setActiveCategory(next);
+    }
+  }, [categories]);
+
+  useEffect(() => {
+    if (activeCategory && activeCategory !== activeTabId) {
+      setActiveTabId(activeCategory);
+      saveActiveTabId(activeCategory);
+    }
+  }, [activeCategory, activeTabId]);
+
+  const onSelectCategory = (id) => {
+    setActiveTabId(id);
+    saveActiveTabId(id);
+    setActiveCategory(id);
+  };
+
+  const onAddCategory = () => {
+    setIsCategoryModalOpen(true);
+  };
+
+  const onDeleteCategory = (id) => {
+    handleDeleteCategory(id);
+    if (id === activeTabId) {
+      const remaining = categories.filter(c => c.id !== id);
+      const next = remaining[0]?.id || null;
+      setActiveTabId(next);
+      saveActiveTabId(next);
+    }
+  };
+
+  const activeCategoryData = useMemo(
+    () => categories.find(c => c.id === activeTabId) || null,
+    [categories, activeTabId]
+  );
+
+  const filteredAttachments = useMemo(() => {
+    if (!activeCategory) {
+      return [];
+    }
+    if (!attachments.length) {
+      return [];
+    }
+    return attachments.filter(attachment => attachment.legislationType === activeCategory);
+  }, [attachments, activeCategory]);
+
+  const handleAddCategorySubmit = async () => {
+    const trimmedName = newCategoryName.trim();
+    if (!trimmedName) {
+      setCategoryError('Category name is required');
+      return;
+    }
+    if (trimmedName.length < 3) {
+      setCategoryError('Category name must be at least 3 characters');
+      return;
+    }
+    
+    setIsCategoryLoading(true);
+    setCategoryError('');
+    
+    try {
+      if (editingCategory) {
+        await handleUpdateCategory(trimmedName);
+      } else {
+        await handleAddCategory(trimmedName);
+      }
+      
+      setNewCategoryName('');
+      setCategoryError('');
+      
+    } catch (error) {
+      console.error('Error creating/updating category:', error);
+      setCategoryError(`Something went wrong. Error: ${error.message}`);
+    } finally {
+      setIsCategoryLoading(false);
+    }
+  };
+
+  const closeCategoryModalLocal = () => {
+    setNewCategoryName('');
+    setCategoryError('');
+    closeCategoryModal();
+  };
+
   return (
     <div className="legislation-container">
       <div className="legislation-header">
@@ -204,14 +584,164 @@ const Legislation = () => {
         )}
       </div>
 
+      {isMobile ? (
+        <div className="notices-mobile-header" role="region" aria-label="Legislation categories">
+          {categoriesLoading ? (
+            <div className="category-title-skeleton">
+              <span style={{ opacity: 0 }}>Loading...</span>
+            </div>
+          ) : (
+            <div className="category-title">
+              {categories.length > 0 ? (
+                <>
+                  <button
+                    type="button"
+                    className="category-picker-btn"
+                    onClick={() => setPickerOpen(true)}
+                    aria-haspopup="dialog"
+                    aria-controls="legislationTabPicker">
+                    <h2>
+                      {activeCategoryData?.name || 'Categories'}
+                    </h2>
+                    <i className="bi bi-chevron-down" aria-hidden="true"></i>
+                  </button>
+
+                  <LegislationTabPicker
+                    open={pickerOpen}
+                    onClose={() => setPickerOpen(false)}
+                    categories={categories}
+                    activeTabId={activeTabId}
+                    onSelect={onSelectCategory}
+                    canManage={can(user, 'legislation:create')}
+                    onAddCategory={onAddCategory}
+                    onDeleteCategory={onDeleteCategory}
+                    onEditCategory={handleEditCategory}
+                  />
+                </>
+              ) : (
+                <div className="no-categories-message-mobile">
+                  <p>No legislation categories created yet...</p>
+                </div>
+              )}
+            </div>
+          )}
+          {can(user, 'legislation:create') && (
+            <button
+              type="button"
+              className="add-tab-btn"
+              onClick={onAddCategory}
+              aria-label="Add category"
+              title="Add category"
+            >
+              <i className="bi bi-plus" aria-hidden="true"></i>
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="notices-tabs-desktop" role="tablist" aria-orientation="horizontal">
+          <div className="category-tabs">
+            <div className="tabs-container">
+              {categoriesLoading ? (
+                <>
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="tab-skeleton-group">
+                      <div className="category-tab-skeleton">
+                        <span style={{ opacity: 0 }}>Loading...</span>
+                      </div>
+                    </div>
+                  ))}
+                  {can(user, 'legislation:create') && (
+                    <button
+                      className="add-category-btn"
+                      onClick={() => setIsCategoryModalOpen(true)}
+                    >
+                      <i className="bi bi-plus"></i>
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  {categories.length > 0 ? (
+                    categories.map(category => (
+                      <div key={category.id} className="tab-group">
+                        <button
+                          className={`category-tab ${activeCategory === category.id ? 'active' : ''}`}
+                          onClick={() => setActiveCategory(category.id)}
+                        >
+                          <span>{category.name}</span>
+                        </button>
+                        {can(user, 'legislation:update') && (
+                          <button
+                            className="category-tab__edit"
+                            onClick={(e) => { e.stopPropagation(); handleEditCategory(category.id); }}
+                            aria-label="Edit category"
+                          >
+                            <i className="bi bi-pencil-square"></i>
+                          </button>
+                        )}
+                        {can(user, 'legislation:delete') && (
+                          <button
+                            className="category-tab__delete"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id); }}
+                            aria-label="Delete category"
+                          >
+                            <i className="bi bi-x-lg"></i>
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="no-categories-message">
+                      <p>No legislation categories created yet...</p>
+                    </div>
+                  )}
+                  {can(user, 'legislation:create') && (
+                    <button
+                      className="add-category-btn"
+                      onClick={() => setIsCategoryModalOpen(true)}
+                    >
+                      <i className="bi bi-plus"></i>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pickerOpen && (
+        <div
+          className="notices-dropdown-overlay"
+          onClick={() => setPickerOpen(false)}
+        />
+      )}
+
       <div className="legislation-attachments">
-        <h3>Files</h3>
         {isLoadingAttachments ? (
           <p>Loading files...</p>
-        ) : attachments.length === 0 ? (
-          <p>No files available</p>
+        ) : categories.length === 0 ? (
+          <EmptyPage
+            isAdmin={user?.role === 'admin'}
+            title={user?.role === 'admin' ? 'No categories yet!' : 'No categories available.'}
+            description={
+              user?.role === 'admin'
+                ? <>Create your first category to get started with legislation files.</>
+                : <>No legislation categories have been created yet.</>
+            }
+          />
+        ) : filteredAttachments.length === 0 ? (
+          <EmptyPage
+            isAdmin={user?.role === 'admin'}
+            title={user?.role === 'admin' ? 'No files in this category!' : 'No files found.'}
+            description={
+              user?.role === 'admin'
+                ? <>This category is empty. Add your first file to get started!</>
+                : <>This category doesn't have any files yet.</>
+            }
+          />
         ) : (
-          attachments.map((attachment) => (
+          filteredAttachments.map((attachment) => (
             <div key={attachment.id} className="attachment-item">
               <div className="meta">
                 <i className="bi bi-file-earmark attachment-icon" aria-hidden="true"></i>
@@ -283,6 +813,116 @@ const Legislation = () => {
           >
             <i className="bi bi-plus" aria-hidden="true"></i>
           </button>
+        </div>
+      )}
+
+      {isCategoryModalOpen && (
+        <div
+          className="notices-modal-overlay"
+          onPointerDown={addCategoryModalBackdropClose.onBackdropPointerDown}
+          onPointerUp={addCategoryModalBackdropClose.onBackdropPointerUp}
+          onPointerCancel={addCategoryModalBackdropClose.onBackdropPointerCancel}
+        >
+          <ModalLifecycleLock />
+          <div
+            className="notices-modal notices-addcat-modal"
+            onPointerDown={addCategoryModalBackdropClose.stopInsidePointer}
+            onClick={addCategoryModalBackdropClose.stopInsidePointer}
+          >
+            <div className="notices-modal-header">
+              <button
+                className="close-btn"
+                onClick={closeCategoryModalLocal}
+              >
+                <i className="bi bi-x"></i>
+              </button>
+            </div>
+
+            <div className="notices-addcat-modal__content">
+              <h2 className="notices-addcat-modal__title">
+                {editingCategory ? 'Update Category Title' : 'Add New Category'}
+              </h2>
+              <p className="notices-addcat-modal__subtitle">
+                {editingCategory ? 'Please update the category name' : 'Please add new category details'}
+              </p>
+
+              <div className="form-group">
+                <label htmlFor="categoryName" className="notices-addcat-modal__label">Enter Title</label>
+                <input
+                  type="text"
+                  id="categoryName"
+                  placeholder={editingCategory ? "Please enter the new title" : "Please mention the title of the new category which you want to create"}
+                  className="notices-addcat-modal__input"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCategorySubmit();
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
+
+              {categoryError && (
+                <div className="app-form__error-banner">
+                  Error: {categoryError}
+                </div>
+              )}
+
+              <div className="notices-addcat-modal__actions">
+                <button
+                  type="button"
+                  className="notices-addcat-modal__update-btn"
+                  onClick={handleAddCategorySubmit}
+                  disabled={isCategoryLoading}
+                >
+                  {isCategoryLoading ? 'Loading...' : (editingCategory ? 'Update' : 'Update')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmModalOpen && categoryToDelete && (
+        <div
+          className="notices-modal-overlay"
+          onPointerDown={confirmCategoryModalBackdropClose.onBackdropPointerDown}
+          onPointerUp={confirmCategoryModalBackdropClose.onBackdropPointerUp}
+          onPointerCancel={confirmCategoryModalBackdropClose.onBackdropPointerCancel}
+        >
+          <ModalLifecycleLock />
+          <div
+            className="notices-deleteCategory-modal"
+            onPointerDown={confirmCategoryModalBackdropClose.stopInsidePointer}
+            onClick={confirmCategoryModalBackdropClose.stopInsidePointer}
+          >
+            <button
+              className="close-btn"
+              onClick={() => setConfirmModalOpen(false)}
+            >
+              <i className="bi bi-x"></i>
+            </button>
+            <div className="confirm-delete-modal-header">
+              <i className="bi bi-exclamation-triangle"></i>
+              <h2>Delete category?</h2>
+            </div>
+
+            <div className="confirm-modal-content">
+              <p>This will permanently delete the category and all its files.</p>
+
+              <div className="form-actions">
+                <button type="button" onClick={() => setConfirmModalOpen(false)} className="cancel-button">
+                  Cancel
+                </button>
+                <button type="button" onClick={handleConfirmDeleteCategory} className="delete-button">
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

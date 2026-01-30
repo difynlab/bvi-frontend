@@ -568,17 +568,29 @@
   .close-btn {
     background: none;
     border: none;
-    position: absolute;
-    right: 40px;
+    position: sticky;
     top: 40px;
+    float: right;
     font-size: 30px;
     color: #6b7280;
     cursor: pointer;
     padding: 4px;
     line-height: 1;
+    z-index: 10;
+    background-color: #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: -40px;
+    margin-left: calc(100% - 60px);
 
     &:hover {
       color: #374151;
+      background-color: #f9fafb;
     }
   }
 
@@ -951,8 +963,12 @@
 
     .close-btn {
       position: sticky;
-      left: calc(100% - 20px);
       top: 0;
+      float: right;
+      clear: both;
+      margin-bottom: -40px;
+      z-index: 10;
+      margin-left: auto;
     }
   }
 }
@@ -1278,6 +1294,12 @@
 .view-newsletter-header-section {
   padding: 30px 30px 0;
   margin-bottom: 20px;
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+  z-index: 10;
+  padding-bottom: 20px;
+  margin-bottom: 0;
 }
 
 .view-newsletter-header-top {
@@ -1285,6 +1307,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 20px;
+  position: relative;
 }
 
 .view-newsletter-logo {
@@ -1324,10 +1347,21 @@
   justify-content: center;
   margin: 0;
   flex-shrink: 0;
+  position: sticky;
+  top: 30px;
+  align-self: flex-start;
+  z-index: 10;
+  background-color: #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 
   i {
     font-size: 20px;
     line-height: 1;
+  }
+
+  &:hover {
+    background-color: #f9fafb;
   }
 }
 

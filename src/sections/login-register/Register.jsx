@@ -150,7 +150,7 @@ export const Register = () => {
       <div className="auth-container register-container">
         <div className="auth-left" aria-hidden>
           <img
-            src="/images/register.jpg"
+            src="/images/members-portal-image.jpg"
             alt="Register Background"
           />
         </div>

@@ -90,13 +90,17 @@ const fromItem = (item) => {
     repeat = item.repeat
   }
   
+  const eventCategoryId = item.event_category_id || item.eventType || null
+  
   return {
     title: item.title || '',
     date: item.date || '',
     startTime: item.startTime || '',
     endTime: item.endTime || '',
     timeZone: normalizeTimeZoneValue(item.timezone || item.timeZone),
-    eventType: item.eventType || 'conference',
+    event_category_id: eventCategoryId,
+    eventType: eventCategoryId,
+    category: item.category || '',
     repeat: repeat,
     shortDescription: item.shortDescription || item.short_description || '',
     description: item.description || '',
@@ -137,7 +141,9 @@ export const useEventForm = () => {
     startTime: '09:00',
     endTime: '17:00',
     timeZone: DEFAULT_TIME_ZONE_VALUE,
-    eventType: 'conference',
+    event_category_id: null,
+    eventType: null,
+    category: '',
     repeat: 'na',
     shortDescription: '',
     description: '',
@@ -310,11 +316,10 @@ export const useEventForm = () => {
       errors.push('Start time must be earlier than end time.')
     }
     
-    // 📂 Campos de Selección (Enum)
-    if (!form.eventType) {
-      errors.push('Event type is required.')
-    } else if (!['workshop', 'webinar', 'conference'].includes(form.eventType)) {
-      errors.push('Event type must be workshop, webinar, or conference.')
+    if (!form.event_category_id) {
+      errors.push('Event category is required.')
+    } else if (typeof form.event_category_id !== 'number' && typeof form.event_category_id !== 'string') {
+      errors.push('Event category must be a valid category ID.')
     }
     
     if (!form.repeat) {
@@ -355,7 +360,8 @@ export const useEventForm = () => {
       endTime: form.endTime,
       timeZone: getTimeZoneLabel(normalizeTimeZoneValue(form.timeZone)),
       timezone: normalizeTimeZoneValue(form.timeZone),
-      eventType: form.eventType,
+      event_category_id: form.event_category_id ? Number(form.event_category_id) : null,
+      category: form.category || '',
       repeat: form.repeat,
       shortDescription: form.shortDescription,
       description: editorText,
@@ -366,11 +372,9 @@ export const useEventForm = () => {
       imageFileName: form.imageFileName || 'no-image.jpg',
       imagePreviewUrl: form.imagePreviewUrl || '',
       recurrence: form.recurrence,
-      status: 1 // Default status: active (as number, not string)
-      // TODO BACKEND: send normalized recurrence to API
+      status: 1
     }
     
-    // Only include ID for edit mode (existing events)
     if (existingId) {
       eventObject.id = existingId
     }

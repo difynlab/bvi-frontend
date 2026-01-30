@@ -4,7 +4,9 @@ const FIELD_MAPPINGS = {
   frontendToBackend: {
     id: 'id',
     title: 'title',
+    event_category_id: 'event_category_id',
     eventType: 'category',
+    category: 'category',
     date: 'date',
     startTime: 'start_time',
     endTime: 'end_time',
@@ -19,6 +21,7 @@ const FIELD_MAPPINGS = {
   backendToFrontend: {
     id: 'id',
     title: 'title',
+    event_category_id: 'event_category_id',
     category: 'eventType',
     date: 'date',
     start_time: 'startTime',
@@ -144,7 +147,6 @@ const cleanImageUrl = (url) => {
   // Si la URL contiene el prefijo duplicado, extraer solo la parte final
   if (url.includes(`${storagePath}${storagePath}`)) {
     const cleanUrl = url.replace(`${storagePath}${storagePath}`, storagePath)
-    console.log('cleanImageUrl: cleaned duplicated URL:', cleanUrl)
     return cleanUrl
   }
   
@@ -317,9 +319,30 @@ export const transformToBackend = (frontendEvent, isUpdate = false, existingThum
     VALUE_MAPPINGS
   )
 
-  // short_description is now included in the mapping above
+  if (frontendEvent.event_category_id) {
+    baseData.event_category_id = Number(frontendEvent.event_category_id)
+  }
 
-  // Handle thumbnail
+  if (!baseData.category || baseData.category === '') {
+    const validCategories = ['workshop', 'webinar', 'conference']
+    if (frontendEvent.event_category) {
+      const categoryName = (frontendEvent.event_category.name || frontendEvent.event_category.title || '').toLowerCase()
+      if (categoryName.includes('workshop')) {
+        baseData.category = 'workshop'
+      } else if (categoryName.includes('webinar')) {
+        baseData.category = 'webinar'
+      } else if (categoryName.includes('conference')) {
+        baseData.category = 'conference'
+      } else {
+        baseData.category = 'workshop'
+      }
+    } else {
+      baseData.category = 'workshop'
+    }
+  } else if (baseData.category && !['workshop', 'webinar', 'conference'].includes(baseData.category)) {
+    baseData.category = 'workshop'
+  }
+
   if (isUpdate) {
     if (frontendEvent.file) {
       baseData.thumbnail = frontendEvent.file
@@ -328,12 +351,10 @@ export const transformToBackend = (frontendEvent, isUpdate = false, existingThum
     baseData.thumbnail = frontendEvent.file
   }
 
-  // Convert status to string as expected by backend
   if (baseData.status !== undefined) {
     baseData.status = baseData.status.toString()
   }
 
-  // Create JSON object with HTML and text content before removing editorHtml
   if (frontendEvent.editorHtml) {
     const descriptionObject = {
       descriptionHtml: frontendEvent.editorHtml,
@@ -342,14 +363,13 @@ export const transformToBackend = (frontendEvent, isUpdate = false, existingThum
     baseData.content = JSON.stringify(descriptionObject)
   }
 
-  // Remove fields that might cause issues
   delete baseData.timeZone
   delete baseData.editorHtml
   delete baseData.imageFileName
   delete baseData.imagePreviewUrl
   delete baseData.recurrence
+  delete baseData.eventType
 
-  // For new events (create mode), don't send ID - let backend generate it
   if (!isUpdate) {
     delete baseData.id
   }
@@ -421,17 +441,22 @@ export const transformFromBackend = (backendEvent) => {
     VALUE_MAPPINGS
   )
 
-  // Use server URLs for images (no localStorage)
-  // Handle new image structure with blurred and original thumbnails
+  if (backendEvent.event_category) {
+    frontendEvent.event_category = backendEvent.event_category
+    frontendEvent.event_category_id = backendEvent.event_category_id || backendEvent.event_category?.id
+    frontendEvent.eventType = backendEvent.event_category_id || backendEvent.event_category?.id
+  } else if (backendEvent.event_category_id) {
+    frontendEvent.event_category_id = backendEvent.event_category_id
+    frontendEvent.eventType = backendEvent.event_category_id
+  }
+
   const originalThumbnail = cleanImageUrl(buildImageUrl(backendEvent.original_thumbnail || backendEvent.thumbnail))
   frontendEvent.original_thumbnail = originalThumbnail
   frontendEvent.imagePreviewUrl = cleanImageUrl(buildImageUrl(backendEvent.thumbnail))
   
-  // Use blurred thumbnail if available, otherwise fallback to original (CSS will apply blur effect)
   const blurredThumbnail = cleanImageUrl(buildBlurredImageUrl(backendEvent.blurred_thumbnail))
   frontendEvent.blurred_thumbnail = blurredThumbnail || originalThumbnail
   
-  // Parse JSON content if it exists, otherwise use legacy fields
   if (backendEvent.content) {
     try {
       const parsedContent = JSON.parse(backendEvent.content)
@@ -439,17 +464,14 @@ export const transformFromBackend = (backendEvent) => {
         frontendEvent.editorHtml = parsedContent.descriptionHtml
         frontendEvent.description = parsedContent.descriptionText
       } else {
-        // Fallback to plain content
         frontendEvent.description = backendEvent.content
         frontendEvent.editorHtml = ''
       }
     } catch (error) {
-      // If JSON parsing fails, treat as plain text
       frontendEvent.description = backendEvent.content
       frontendEvent.editorHtml = ''
     }
   } else {
-    // Legacy fallback
     frontendEvent.editorHtml = backendEvent.editorHtml || ''
     frontendEvent.description = backendEvent.content || ''
   }
@@ -459,7 +481,6 @@ export const transformFromBackend = (backendEvent) => {
   frontendEvent.timeZone = getTimeZoneLabel(normalizedTimezone)
   frontendEvent.recurrence = backendEvent.recurrence || null
   
-  // Ensure shortDescription is set (it should be mapped from short_description, but add fallback)
   if (!frontendEvent.shortDescription && backendEvent.short_description) {
     frontendEvent.shortDescription = backendEvent.short_description
   }

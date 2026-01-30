@@ -283,7 +283,12 @@ const SideNav = () => {
           <span className="nav-label">Legislation</span>
         </NavLink>
 
-        <NavLink to="/reports" className={`nav-item ${isAnimated ? 'nav-item-animate--10' : 'nav-item-hidden'}`} {...navItemGuard}>
+        <NavLink to="/gallery" className={`nav-item ${isAnimated ? 'nav-item-animate--10' : 'nav-item-hidden'}`} {...navItemGuard}>
+          <i className="bi bi-images"></i>
+          <span className="nav-label">Gallery</span>
+        </NavLink>
+
+        <NavLink to="/reports" className={`nav-item ${isAnimated ? 'nav-item-animate--11' : 'nav-item-hidden'}`} {...navItemGuard}>
           <i className="bi bi-file-earmark"></i>
           <span className="nav-label">Publications</span>
         </NavLink>
@@ -292,14 +297,14 @@ const SideNav = () => {
       <div className="nav-footer" onClick={blockWhenCollapsed}>
         {/* Desktop order */}
         <div className="nav-footer-desktop">
-          <NavLink to="/profile" className={`nav-item ${isAnimated ? 'nav-item-animate--11' : 'nav-item-hidden'}`} {...navItemGuard}>
+          <NavLink to="/profile" className={`nav-item ${isAnimated ? 'nav-item-animate--12' : 'nav-item-hidden'}`} {...navItemGuard}>
             <i className="bi bi-gear"></i>
             <span className="nav-label">Profile</span>
           </NavLink>
       
           <button 
             type="button"
-            className={`nav-item nav-item--button ${isAnimated ? 'nav-item-animate--12' : 'nav-item-hidden'}`}
+            className={`nav-item nav-item--button ${isAnimated ? 'nav-item-animate--13' : 'nav-item-hidden'}`}
             onClick={(e) => {
               if (isMobile && !mobileExpanded) return blockWhenCollapsed(e);
               openLogoutModal();
@@ -309,7 +314,7 @@ const SideNav = () => {
             <span className="nav-label">Logout</span>
           </button>
 
-          <NavLink to="/profile" className={`user-profile ${isAnimated ? 'nav-item-animate--13' : 'nav-item-hidden'}`} {...navItemGuard}>
+          <NavLink to="/profile" className={`user-profile ${isAnimated ? 'nav-item-animate--14' : 'nav-item-hidden'}`} {...navItemGuard}>
             <div className="user-avatar" aria-hidden={false}>
               {(() => {
                 const avatarSrc = user?.original_image || user?.profilePictureUrl || user?.profile_picture_url || '';
@@ -337,7 +342,7 @@ const SideNav = () => {
 
         {/* Mobile order */}
         <div className="nav-footer-mobile">
-          <NavLink to="/profile" className={`user-profile ${isAnimated ? 'nav-item-animate--11' : 'nav-item-hidden'}`} {...navItemGuard}>
+          <NavLink to="/profile" className={`user-profile ${isAnimated ? 'nav-item-animate--12' : 'nav-item-hidden'}`} {...navItemGuard}>
             <div className="user-avatar" aria-hidden={false}>
               {(() => {
                 const avatarSrc = user?.original_image || user?.profilePictureUrl || user?.profile_picture_url || '';
@@ -362,14 +367,14 @@ const SideNav = () => {
             </div>
           </NavLink>
 
-          <NavLink to="/profile" className={`nav-item ${isAnimated ? 'nav-item-animate--12' : 'nav-item-hidden'}`} {...navItemGuard}>
+          <NavLink to="/profile" className={`nav-item ${isAnimated ? 'nav-item-animate--13' : 'nav-item-hidden'}`} {...navItemGuard}>
             <i className="bi bi-gear"></i>
             <span className="nav-label">Profile</span>
           </NavLink>
       
           <button 
             type="button"
-            className={`nav-item nav-item--button ${isAnimated ? 'nav-item-animate--13' : 'nav-item-hidden'}`}
+            className={`nav-item nav-item--button ${isAnimated ? 'nav-item-animate--14' : 'nav-item-hidden'}`}
             onClick={(e) => {
               if (isMobile && !mobileExpanded) return blockWhenCollapsed(e);
               openLogoutModal();

@@ -525,9 +525,10 @@
 
     .notice-preview-info {
       display: flex;
-      flex-direction: column;
-      gap: 12px;
+      flex-direction: row;
+      gap: 24px;
       align-items: center;
+      justify-content: center;
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
@@ -537,9 +538,7 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
-      width: 50%;
-      max-width: 100%;
-      text-align: left;
+      text-align: center;
       box-sizing: border-box;
     }
 
@@ -547,7 +546,7 @@
       font-weight: 500;
       font-size: 14px;
       color: #333;
-      text-align: left;
+      text-align: center;
     }
 
     .notice-preview-value {
@@ -555,7 +554,7 @@
       color: #666;
       word-break: break-word;
       overflow-wrap: break-word;
-      text-align: left;
+      text-align: center;
       max-width: 100%;
       box-sizing: border-box;
     }
@@ -1057,9 +1056,9 @@
 
   .close-btn {
     background: none;
-    position: absolute;
+    position: sticky;
     top: 20px;
-    right: 20px;
+    float: right;
     font-size: 30px;
     color: #6b7280;
     cursor: pointer;
@@ -1067,9 +1066,18 @@
     background-color: #fff;
     border-radius: 50%;
     z-index: 10;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: -40px;
+    margin-left: calc(100% - 60px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
     &:hover {
       color: #374151;
+      background-color: #f9fafb;
     }
   }
 
@@ -1393,12 +1401,18 @@
 
     &-header.close-btn,
     .close-btn {
-      position: sticky;
-      top: 0;
-      left: calc(100% - 20px);
+      position: absolute;
+      top: 20px;
+      right: 20px;
       margin-bottom: 0;
       background-color: #ffffff;
       border-radius: 50%;
+      z-index: 10;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
   }
@@ -2140,6 +2154,12 @@
   max-width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+  z-index: 10;
+  padding-bottom: 20px;
+  margin-bottom: 0;
 }
 
 .view-notice-header-top {
@@ -2186,10 +2206,20 @@
   justify-content: center;
   margin: 0;
   flex-shrink: 0;
+  position: sticky;
+  top: 30px;
+  align-self: flex-start;
+  z-index: 10;
+  background-color: #fff;
+  border-radius: 50%;
 
   i {
     font-size: 20px;
     line-height: 1;
+  }
+
+  &:hover {
+    background-color: #f9fafb;
   }
 }
 

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useModalBackdropClose } from '../../hooks/useModalBackdropClose';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import ModalLifecycleLock from './ModalLifecycleLock';
+import CustomDropdown from '../CustomDropdown';
 import legislationFilesService from '../../services/legislationFilesService';
 import '../../styles/components/LegislationUploadFileModal.scss';
 
@@ -10,6 +11,8 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
   const [selectedFile, setSelectedFile] = useState(null);
   const [existingFileUrl, setExistingFileUrl] = useState(null);
   const [existingFileName, setExistingFileName] = useState(null);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [contentType, setContentType] = useState('link');
   const [dragActive, setDragActive] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,16 +52,16 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
   };
 
   const handleFileSelect = (file) => {
-    const maxSize = 5 * 1024 * 1024;
-    const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+    const maxSize = 15 * 1024 * 1024;
+    const allowedTypes = ['application/pdf'];
 
     if (file.size > maxSize) {
-      setErrors({ file: 'File size must be less than 5MB' });
+      setErrors({ file: 'File size must be less than 15MB' });
       return;
     }
 
     if (!allowedTypes.includes(file.type)) {
-      setErrors({ file: 'Only PDF, PNG, JPG, and JPEG files are allowed' });
+      setErrors({ file: 'Only PDF files are allowed' });
       return;
     }
 
@@ -91,8 +94,12 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
       newErrors.title = 'File title is required';
     }
 
-    if (!editFile && !selectedFile) {
+    if (contentType === 'pdf' && !editFile && !selectedFile) {
       newErrors.file = 'Please select a file';
+    }
+
+    if (contentType === 'link' && !linkUrl.trim()) {
+      newErrors.link = 'Link URL is required';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -103,10 +110,18 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
     setIsSubmitting(true);
     
     try {
-      if (editFile) {
-        await legislationFilesService.update(editFile.apiId, fileTitle.trim(), 1, selectedFile || null);
+      if (contentType === 'pdf') {
+        if (editFile) {
+          await legislationFilesService.update(editFile.apiId, fileTitle.trim(), 1, selectedFile || null);
+        } else {
+          await legislationFilesService.create(fileTitle.trim(), selectedFile, 1);
+        }
       } else {
-        await legislationFilesService.create(fileTitle.trim(), selectedFile, 1);
+        if (editFile) {
+          await legislationFilesService.update(editFile.apiId, fileTitle.trim(), 1, null);
+        } else {
+          await legislationFilesService.create(fileTitle.trim(), null, 1);
+        }
       }
       
       if (onSave && typeof onSave === 'function') {
@@ -129,6 +144,10 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
       setFileTitle(editFile.title || '');
       setExistingFileUrl(editFile.fileUrl || editFile.file || null);
       setExistingFileName(editFile.fileName || (editFile.fileUrl ? editFile.fileUrl.split('/').pop() : null));
+      const hasFile = editFile.fileUrl || editFile.file;
+      const hasLink = editFile.linkUrl && editFile.linkUrl.trim() !== '' && editFile.linkUrl.trim() !== '#';
+      setContentType(hasFile ? 'pdf' : (hasLink ? 'link' : 'link'));
+      setLinkUrl(editFile.linkUrl || '');
       setSelectedFile(null);
       setHasChanges(false);
       setErrors({});
@@ -137,6 +156,8 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
       setSelectedFile(null);
       setExistingFileUrl(null);
       setExistingFileName(null);
+      setLinkUrl('');
+      setContentType('link');
       setHasChanges(false);
       setErrors({});
     }
@@ -146,17 +167,22 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
     if (!isOpen) return;
     
     const originalTitle = editFile?.title || '';
+    const originalLinkUrl = editFile?.linkUrl || '';
     const hasTitleChanged = fileTitle.trim() !== originalTitle.trim();
     const hasFileChanged = selectedFile !== null;
+    const hasLinkChanged = linkUrl.trim() !== originalLinkUrl.trim();
+    const hasContentTypeChanged = contentType !== (editFile?.fileUrl ? 'pdf' : (editFile?.linkUrl ? 'link' : 'link'));
     
-    setHasChanges(hasTitleChanged || hasFileChanged);
-  }, [fileTitle, selectedFile, editFile, isOpen]);
+    setHasChanges(hasTitleChanged || hasFileChanged || hasLinkChanged || hasContentTypeChanged);
+  }, [fileTitle, selectedFile, linkUrl, contentType, editFile, isOpen]);
 
   const handleClose = () => {
     setFileTitle('');
     setSelectedFile(null);
     setExistingFileUrl(null);
     setExistingFileName(null);
+    setLinkUrl('');
+    setContentType('link');
     setDragActive(false);
     setErrors({});
     setIsSubmitting(false);
@@ -222,88 +248,138 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
           </div>
 
           <div className="form-group">
-            <label htmlFor="pdf-file-dropzone">File</label>
-            <div
-              id="pdf-file-dropzone"
-              className={`legislation-upload-file-dropzone ${dragActive ? 'active' : ''}`}
-              data-has-file={Boolean(selectedFile || existingFileUrl)}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-              onClick={handleBrowseClick}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleBrowseClick();
+            <label htmlFor="contentType">Content Type</label>
+            <CustomDropdown
+              id="contentType"
+              name="contentType"
+              value={contentType}
+              onChange={(e) => {
+                setContentType(e.target.value);
+                if (e.target.value === 'link') {
+                  setSelectedFile(null);
+                  setExistingFileUrl(null);
+                  setExistingFileName(null);
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                  }
+                } else {
+                  setLinkUrl('');
                 }
+                setErrors({});
               }}
-              tabIndex={0}
-              role="button"
-            >
-              {selectedFile ? (
-                <div className="file-preview-card">
-                  <div className="file-preview-content">
-                    <i className={`bi ${selectedFile.type === 'application/pdf' ? 'bi-file-earmark-pdf' : 'bi-file-earmark-image'}`} aria-hidden="true"></i>
-                    <div className="file-preview-info">
-                      <span className="file-preview-name">{selectedFile.name}</span>
-                      <span className="file-preview-size">
-                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      className="file-preview-remove"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveFile();
-                      }}
-                      aria-label="Remove file"
-                    >
-                      <i className="bi bi-x-lg" aria-hidden="true"></i>
-                    </button>
-                  </div>
-                </div>
-              ) : existingFileUrl ? (
-                <div className="file-preview-card">
-                  <div className="file-preview-content">
-                    <i className={`bi ${existingFileUrl.toLowerCase().endsWith('.pdf') ? 'bi-file-earmark-pdf' : 'bi-file-earmark-image'}`} aria-hidden="true"></i>
-                    <div className="file-preview-info">
-                      <span className="file-preview-name">{existingFileName || 'Current file'}</span>
-                      <span className="file-preview-size">Existing file</span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="dropzone-content">
-                  <i className="bi bi-cloud-upload dropzone-icon" aria-hidden="true"></i>
-                  <p className="dropzone-label">Drag and drop file here</p>
-                  <p className="dropzone-separator">or</p>
-                  <button
-                    type="button"
-                    className="dropzone-browse"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleBrowseClick();
-                    }}
-                  >
-                    Browse File
-                  </button>
-                  <p className="dropzone-hint">PDF, PNG, JPG, JPEG (max 5MB)</p>
-                </div>
+              options={[
+                { value: 'link', label: 'Link' },
+                { value: 'pdf', label: 'PDF Document' }
+              ]}
+              placeholder="Select content type"
+            />
+          </div>
+
+          {contentType === 'link' ? (
+            <div className="form-group">
+              <label htmlFor="linkUrl">Link</label>
+              <input
+                type="text"
+                id="linkUrl"
+                name="linkUrl"
+                className="form-input"
+                value={linkUrl}
+                onChange={(e) => {
+                  setLinkUrl(e.target.value);
+                  setHasChanges(true);
+                }}
+                placeholder="https://example.com or #"
+              />
+              {errors.link && (
+                <div className="error-message">{errors.link}</div>
               )}
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/pdf,image/png,image/jpeg,image/jpg"
-              className="hidden-file-input"
-              onChange={handleFileInput}
-            />
-            {errors.file && (
-              <div className="error-message">{errors.file}</div>
-            )}
-          </div>
+          ) : (
+            <div className="form-group">
+              <label htmlFor="pdf-file-dropzone">PDF Document</label>
+              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>PDF files are supported. Maximum file size: 15 MB.</p>
+              <div
+                id="pdf-file-dropzone"
+                className={`legislation-upload-file-dropzone ${dragActive ? 'active' : ''}`}
+                data-has-file={Boolean(selectedFile || existingFileUrl)}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onClick={handleBrowseClick}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleBrowseClick();
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+              >
+                {selectedFile ? (
+                  <div className="file-preview-card">
+                    <div className="file-preview-content">
+                      <i className="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+                      <div className="file-preview-info">
+                        <span className="file-preview-name">{selectedFile.name}</span>
+                        <span className="file-preview-size">
+                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className="file-preview-remove"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveFile();
+                        }}
+                        aria-label="Remove file"
+                      >
+                        <i className="bi bi-x-lg" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                  </div>
+                ) : existingFileUrl ? (
+                  <div className="file-preview-card">
+                    <div className="file-preview-content">
+                      <i className="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+                      <div className="file-preview-info">
+                        <span className="file-preview-name">{existingFileName || 'Current file'}</span>
+                        <span className="file-preview-size">Existing file</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="dropzone-content">
+                    <i className="bi bi-cloud-upload dropzone-icon" aria-hidden="true"></i>
+                    <p className="dropzone-label">Drag and drop file here</p>
+                    <p className="dropzone-separator">or</p>
+                    <button
+                      type="button"
+                      className="dropzone-browse"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBrowseClick();
+                      }}
+                    >
+                      Browse File
+                    </button>
+                    <p className="dropzone-hint">PDF (max 15MB)</p>
+                  </div>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf"
+                className="hidden-file-input"
+                onChange={handleFileInput}
+              />
+              {errors.file && (
+                <div className="error-message">{errors.file}</div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="legislation-upload-file-modal__footer">
