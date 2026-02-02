@@ -406,7 +406,22 @@
 
 @media (max-width: 768px) {
   .gallery-container {
-    padding: 1rem;
+    padding: 40px 1rem 1rem 1rem;
+  }
+
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gallery-grid--videos {
+    grid-template-columns: 1fr;
+  }
+
+  .gallery-item--image.gallery-item--square,
+  .gallery-item--image.gallery-item--horizontal,
+  .gallery-item--image.gallery-item--vertical {
+    grid-column: span 1;
+    grid-row: span 1;
   }
 
   .gallery-header {
