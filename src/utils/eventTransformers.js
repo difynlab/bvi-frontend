@@ -5,8 +5,6 @@ const FIELD_MAPPINGS = {
     id: 'id',
     title: 'title',
     event_category_id: 'event_category_id',
-    eventType: 'category',
-    category: 'category',
     date: 'date',
     startTime: 'start_time',
     endTime: 'end_time',
@@ -22,7 +20,6 @@ const FIELD_MAPPINGS = {
     id: 'id',
     title: 'title',
     event_category_id: 'event_category_id',
-    category: 'eventType',
     date: 'date',
     start_time: 'startTime',
     end_time: 'endTime',
@@ -321,26 +318,6 @@ export const transformToBackend = (frontendEvent, isUpdate = false, existingThum
 
   if (frontendEvent.event_category_id) {
     baseData.event_category_id = Number(frontendEvent.event_category_id)
-  }
-
-  if (!baseData.category || baseData.category === '') {
-    const validCategories = ['workshop', 'webinar', 'conference']
-    if (frontendEvent.event_category) {
-      const categoryName = (frontendEvent.event_category.name || frontendEvent.event_category.title || '').toLowerCase()
-      if (categoryName.includes('workshop')) {
-        baseData.category = 'workshop'
-      } else if (categoryName.includes('webinar')) {
-        baseData.category = 'webinar'
-      } else if (categoryName.includes('conference')) {
-        baseData.category = 'conference'
-      } else {
-        baseData.category = 'workshop'
-      }
-    } else {
-      baseData.category = 'workshop'
-    }
-  } else if (baseData.category && !['workshop', 'webinar', 'conference'].includes(baseData.category)) {
-    baseData.category = 'workshop'
   }
 
   if (isUpdate) {

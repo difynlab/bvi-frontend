@@ -230,7 +230,6 @@ export const Notices = () => {
     categoriesLoaded,
     categoriesLoading,
     noticesLoading,
-    pagination,
     setActiveCategory,
     handleAddCategory,
     handleDeleteCategory,
@@ -246,9 +245,12 @@ export const Notices = () => {
     setIsCategoryModalOpen,
     setConfirmModalOpen,
     setCategoryToDelete,
-    loadCategoriesFromAPI,
-    changePage
+    loadCategoriesFromAPI
   } = useNoticesState()
+
+  const ITEMS_PER_PAGE = 6
+  const [currentPage, setCurrentPage] = useState(1)
+  const [paginationStart, setPaginationStart] = useState(1)
 
   // Mobile responsive effect
   useEffect(() => {
@@ -311,11 +313,67 @@ export const Notices = () => {
     }
   }
 
-  // Get active category for mobile display
   const activeCategoryData = useMemo(
     () => categories.find(c => c.id === activeTabId) || null,
     [categories, activeTabId]
   )
+
+  const totalItems = visibleItems.length
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    const endIndex = startIndex + ITEMS_PER_PAGE
+    return visibleItems.slice(startIndex, endIndex)
+  }, [visibleItems, currentPage])
+
+  const visiblePages = useMemo(() => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1)
+    }
+    const endPage = Math.min(paginationStart + 4, totalPages)
+    return Array.from({ length: endPage - paginationStart + 1 }, (_, i) => paginationStart + i)
+  }, [totalPages, paginationStart])
+
+  useEffect(() => {
+    setCurrentPage(1)
+    setPaginationStart(1)
+  }, [activeCategory])
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1)
+      setPaginationStart(1)
+    }
+  }, [totalPages, currentPage])
+
+  useEffect(() => {
+    if (totalPages <= 5) {
+      setPaginationStart(1)
+    } else {
+      if (currentPage < paginationStart) {
+        setPaginationStart(currentPage)
+      } else if (currentPage > paginationStart + 4) {
+        setPaginationStart(currentPage - 4)
+      }
+    }
+  }, [currentPage, totalPages])
+
+  const showLeftArrow = totalPages > 5 && paginationStart > 1
+  const showRightArrow = totalPages > 5
+  const isRightArrowDisabled = totalPages > 5 && paginationStart + 4 >= totalPages
+
+  const handlePreviousPages = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1)
+    }
+  }
+
+  const handleNextPages = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
 
   const noticeForm = useNoticeForm()
 
@@ -847,7 +905,7 @@ export const Notices = () => {
           ) : (
             <div className="notices-list-container">
               <div className="notices-list">
-                {visibleItems.map(notice => (
+                {paginatedData.map(notice => (
                   <div key={notice.id} className="notice-card">
                     <div className="notice-content">
                       <div className="notice-header">
@@ -945,25 +1003,41 @@ export const Notices = () => {
                   </div>
                 ))}
               </div>
-              {pagination.last_page > 1 && (
+              {totalPages > 1 && (
                 <div className="notices-pagination">
-                  <button 
-                    className="prev-btn"
-                    onClick={() => changePage(pagination.current_page - 1)}
-                    disabled={pagination.current_page <= 1}
-                  >
-                    <i className="bi bi-chevron-left"></i>
-                  </button>
-                  <div className="page-counter">
-                    <span>{pagination.current_page} / {pagination.last_page}</span>
+                  <div className="pagination__buttons">
+                    {showLeftArrow && (
+                      <button
+                        className="pagination__arrow"
+                        type="button"
+                        onClick={handlePreviousPages}
+                        aria-label="Previous pages"
+                      >
+                        <i className="bi bi-chevron-left" aria-hidden="true"></i>
+                      </button>
+                    )}
+                    {visiblePages.map((page) => (
+                      <button
+                        key={page}
+                        className={`pagination__button ${currentPage === page ? 'pagination__button--active' : ''}`}
+                        type="button"
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    {showRightArrow && (
+                      <button
+                        className="pagination__arrow"
+                        type="button"
+                        onClick={handleNextPages}
+                        disabled={isRightArrowDisabled}
+                        aria-label="Next pages"
+                      >
+                        <i className="bi bi-chevron-right" aria-hidden="true"></i>
+                      </button>
+                    )}
                   </div>
-                  <button 
-                    className="next-btn"
-                    onClick={() => changePage(pagination.current_page + 1)}
-                    disabled={pagination.current_page >= pagination.last_page}
-                  >
-                    <i className="bi bi-chevron-right"></i>
-                  </button>
                 </div>
               )}
             </div>

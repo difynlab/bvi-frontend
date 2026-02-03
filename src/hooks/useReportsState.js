@@ -143,12 +143,6 @@ export function useReportsState() {
   const [shouldReloadCategories, setShouldReloadCategories] = useState(false);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [shouldReloadReports, setShouldReloadReports] = useState(false);
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    last_page: 1,
-    per_page: 6,
-    total: 0
-  });
 
   // Function to refresh categories (called after create/update/delete)
   const refreshCategories = useCallback(async () => {
@@ -356,38 +350,7 @@ export function useReportsState() {
     });
   }, [data.items, activeCategoryId]);
 
-  useEffect(() => {
-    const totalPages = Math.ceil(filteredReports.length / pagination.per_page) || 1;
-    const adjustedPage = pagination.current_page > totalPages ? 1 : pagination.current_page;
-    
-    setPagination(prev => ({
-      ...prev,
-      current_page: adjustedPage,
-      last_page: totalPages,
-      total: filteredReports.length
-    }));
-  }, [filteredReports.length, pagination.per_page]);
-
-  const visibleItems = useMemo(() => {
-    if (!filteredReports.length) {
-      return [];
-    }
-    
-    const totalPages = Math.ceil(filteredReports.length / pagination.per_page) || 1;
-    const currentPage = pagination.current_page > totalPages ? 1 : pagination.current_page;
-    const startIndex = (currentPage - 1) * pagination.per_page;
-    const endIndex = startIndex + pagination.per_page;
-    
-    return filteredReports.slice(startIndex, endIndex);
-  }, [filteredReports, pagination.current_page, pagination.per_page]);
-
-  useEffect(() => {
-    setPagination(prev => ({ ...prev, current_page: 1 }));
-  }, [activeCategoryId]);
-
-  const changePage = useCallback((page) => {
-    setPagination(prev => ({ ...prev, current_page: page }));
-  }, []);
+  const visibleItems = useMemo(() => filteredReports, [filteredReports]);
 
   const handleAddCategory = useCallback(async (name) => {
     const trimmedName = name.trim();
@@ -678,7 +641,6 @@ export function useReportsState() {
     items: data.items,
     activeCategory: activeCategoryId,
     visibleItems,
-    pagination,
     isCategoryModalOpen,
     isReportModalOpen,
     editingReport,
@@ -709,7 +671,6 @@ export function useReportsState() {
     setCategoryToDelete,
     reportsLoading,
     refreshReports,
-    loadReportsFromAPI,
-    changePage
+    loadReportsFromAPI
   };
 }

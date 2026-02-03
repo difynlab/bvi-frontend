@@ -25,7 +25,11 @@ import '../../styles/sections/shimmerLoader.scss'
 export const Events = () => {
   const { user, isInitialized } = useAuth()
 
-  const { events, visibleEvents, createEvent, updateEvent, deleteEvent, loading, error, pagination, refreshEvents, changePage } = useEvents()
+  const { events, visibleEvents, createEvent, updateEvent, deleteEvent, loading, error, refreshEvents } = useEvents()
+
+  const ITEMS_PER_PAGE = 6
+  const [currentPage, setCurrentPage] = useState(1)
+  const [paginationStart, setPaginationStart] = useState(1)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState('create')
@@ -500,6 +504,63 @@ export const Events = () => {
     })
   }, [visibleEvents, activeCategory])
 
+  const totalItems = filteredEvents.length
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    const endIndex = startIndex + ITEMS_PER_PAGE
+    return filteredEvents.slice(startIndex, endIndex)
+  }, [filteredEvents, currentPage])
+
+  const visiblePages = useMemo(() => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1)
+    }
+    const endPage = Math.min(paginationStart + 4, totalPages)
+    return Array.from({ length: endPage - paginationStart + 1 }, (_, i) => paginationStart + i)
+  }, [totalPages, paginationStart])
+
+  useEffect(() => {
+    setCurrentPage(1)
+    setPaginationStart(1)
+  }, [activeCategory])
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1)
+      setPaginationStart(1)
+    }
+  }, [totalPages, currentPage])
+
+  useEffect(() => {
+    if (totalPages <= 5) {
+      setPaginationStart(1)
+    } else {
+      if (currentPage < paginationStart) {
+        setPaginationStart(currentPage)
+      } else if (currentPage > paginationStart + 4) {
+        setPaginationStart(currentPage - 4)
+      }
+    }
+  }, [currentPage, totalPages])
+
+  const showLeftArrow = totalPages > 5 && paginationStart > 1
+  const showRightArrow = totalPages > 5
+  const isRightArrowDisabled = totalPages > 5 && paginationStart + 4 >= totalPages
+
+  const handlePreviousPages = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1)
+    }
+  }
+
+  const handleNextPages = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
+
   const getEventDescriptionText = (description) => {
     if (typeof description === 'string') {
       return description.replace(/<[^>]+>/g, '').trim();
@@ -777,7 +838,7 @@ export const Events = () => {
         ) : (
           <>
             <div className="events-list">
-              {filteredEvents.map((event, index) => (
+              {paginatedData.map((event, index) => (
                 <div key={event.id || `event-${index}`} className="event-card">
                   <div className="event-image">
                     {/* Imagen borrosa para carga rápida */}
@@ -868,25 +929,43 @@ export const Events = () => {
                 </div>
               ))}
             </div>
-            <div className="events-pagination">
-              <button 
-                className="prev-btn"
-                onClick={() => changePage(pagination.current_page - 1)}
-                disabled={pagination.current_page <= 1}
-              >
-                <i className="bi bi-chevron-left"></i>
-              </button>
-              <div className="page-counter">
-                <span>{pagination.current_page} / {pagination.last_page}</span>
+            {totalPages > 1 && (
+              <div className="events-pagination">
+                <div className="pagination__buttons">
+                  {showLeftArrow && (
+                    <button
+                      className="pagination__arrow"
+                      type="button"
+                      onClick={handlePreviousPages}
+                      aria-label="Previous pages"
+                    >
+                      <i className="bi bi-chevron-left" aria-hidden="true"></i>
+                    </button>
+                  )}
+                  {visiblePages.map((page) => (
+                    <button
+                      key={page}
+                      className={`pagination__button ${currentPage === page ? 'pagination__button--active' : ''}`}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  {showRightArrow && (
+                    <button
+                      className="pagination__arrow"
+                      type="button"
+                      onClick={handleNextPages}
+                      disabled={isRightArrowDisabled}
+                      aria-label="Next pages"
+                    >
+                      <i className="bi bi-chevron-right" aria-hidden="true"></i>
+                    </button>
+                  )}
+                </div>
               </div>
-              <button 
-                className="next-btn"
-                onClick={() => changePage(pagination.current_page + 1)}
-                disabled={pagination.current_page >= pagination.last_page}
-              >
-                <i className="bi bi-chevron-right"></i>
-              </button>
-            </div>
+            )}
           </>
         )}
       </>
@@ -1084,41 +1163,9 @@ export const Events = () => {
       let result
       if (modalMode === 'create') {
         const newEvent = eventForm.buildEventObject()
-        const selectedCategory = categories.find(cat => cat.id === newEvent.event_category_id)
-        if (selectedCategory) {
-          const categoryName = (selectedCategory.name || '').toLowerCase()
-          if (categoryName.includes('workshop')) {
-            newEvent.category = 'workshop'
-          } else if (categoryName.includes('webinar')) {
-            newEvent.category = 'webinar'
-          } else if (categoryName.includes('conference')) {
-            newEvent.category = 'conference'
-          } else {
-            newEvent.category = 'workshop'
-          }
-          newEvent.event_category = selectedCategory
-        } else {
-          newEvent.category = 'workshop'
-        }
         result = await createEvent(newEvent)
       } else if (modalMode === 'edit' && editingEventId) {
         const updatedEvent = eventForm.buildEventObject(editingEventId)
-        const selectedCategory = categories.find(cat => cat.id === updatedEvent.event_category_id)
-        if (selectedCategory) {
-          const categoryName = (selectedCategory.name || '').toLowerCase()
-          if (categoryName.includes('workshop')) {
-            updatedEvent.category = 'workshop'
-          } else if (categoryName.includes('webinar')) {
-            updatedEvent.category = 'webinar'
-          } else if (categoryName.includes('conference')) {
-            updatedEvent.category = 'conference'
-          } else {
-            updatedEvent.category = 'workshop'
-          }
-          updatedEvent.event_category = selectedCategory
-        } else {
-          updatedEvent.category = 'workshop'
-        }
         result = await updateEvent(updatedEvent)
       }
 

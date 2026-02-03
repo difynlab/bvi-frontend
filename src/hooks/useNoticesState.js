@@ -39,16 +39,6 @@ export const useNoticesState = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(false)
   const [noticesLoading, setNoticesLoading] = useState(false)
   const [shouldReloadCategories, setShouldReloadCategories] = useState(false)
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    last_page: 1,
-    per_page: 6,
-    total: 0
-  })
-
-  useEffect(() => {
-    setPagination(prev => ({ ...prev, current_page: 1 }))
-  }, [activeCategory])
 
   useEffect(() => {
     loadNoticesFromAPI()
@@ -268,30 +258,7 @@ export const useNoticesState = () => {
     return notices.filter(notice => notice.noticeType === activeCategory)
   }, [notices, activeCategory])
 
-  useEffect(() => {
-    const totalFiltered = filteredNotices.length
-    const totalPages = Math.ceil(totalFiltered / pagination.per_page) || 1
-    const adjustedPage = pagination.current_page > totalPages ? 1 : pagination.current_page
-    
-    setPagination(prev => ({
-      ...prev,
-      current_page: adjustedPage,
-      last_page: totalPages,
-      total: totalFiltered
-    }))
-  }, [filteredNotices.length, pagination.per_page])
-
-  const visibleItems = useMemo(() => {
-    if (!filteredNotices.length) {
-      return []
-    }
-    
-    const currentPage = pagination.current_page > pagination.last_page ? 1 : pagination.current_page
-    const startIndex = (currentPage - 1) * pagination.per_page
-    const endIndex = startIndex + pagination.per_page
-    
-    return filteredNotices.slice(startIndex, endIndex)
-  }, [filteredNotices, pagination.current_page, pagination.per_page, pagination.last_page])
+  const visibleItems = useMemo(() => filteredNotices, [filteredNotices])
 
   const getGroup = useCallback((categoryId) => {
     return notices.find(group => group.categoryId === categoryId)
@@ -597,10 +564,6 @@ export const useNoticesState = () => {
     return mockCategories[0]?.id || ''
   }, [])
 
-  const changePage = useCallback((page) => {
-    setPagination(prev => ({ ...prev, current_page: page }))
-  }, [])
-
   return {
     categories,
     notices,
@@ -615,7 +578,6 @@ export const useNoticesState = () => {
     categoriesLoaded,
     categoriesLoading,
     noticesLoading,
-    pagination,
     setActiveCategory,
     handleAddCategory,
     handleDeleteCategory,
@@ -635,7 +597,6 @@ export const useNoticesState = () => {
     loadCategoriesFromAPI,
     loadNoticesFromAPI,
     refreshCategories,
-    changePage,
     getGroup
   }
 }

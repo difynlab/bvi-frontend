@@ -120,12 +120,6 @@ export const useEvents = () => {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    last_page: 1,
-    per_page: 6,
-    total: 0
-  })
   const { addNotification } = useNotifications()
 
   const loadEvents = useCallback(async (forceRefresh = false) => {
@@ -204,30 +198,7 @@ export const useEvents = () => {
     loadEvents()
   }, [loadEvents])
 
-  useEffect(() => {
-    const totalEvents = events.length
-    const totalPages = Math.ceil(totalEvents / pagination.per_page) || 1
-    const adjustedPage = pagination.current_page > totalPages ? 1 : pagination.current_page
-
-    setPagination(prev => ({
-      ...prev,
-      current_page: adjustedPage,
-      last_page: totalPages,
-      total: totalEvents
-    }))
-  }, [events.length, pagination.per_page])
-
-  const visibleEvents = useMemo(() => {
-    if (!events.length) {
-      return []
-    }
-
-    const currentPage = pagination.current_page > pagination.last_page ? 1 : pagination.current_page
-    const startIndex = (currentPage - 1) * pagination.per_page
-    const endIndex = startIndex + pagination.per_page
-
-    return events.slice(startIndex, endIndex)
-  }, [events, pagination.current_page, pagination.per_page, pagination.last_page])
+  const visibleEvents = useMemo(() => events, [events])
 
   const createEvent = useCallback(async (eventData) => {
     setLoading(true)
@@ -276,7 +247,6 @@ export const useEvents = () => {
     try {
       const existingEvent = events.find(e => e.id === eventData.id)
       const existingThumbnail = existingEvent?.imageFileName || existingEvent?.thumbnail || ''
-      
       const backendData = transformToBackend(eventData, true, existingThumbnail)
       const response = await eventsService.updateEvent(eventData.id, backendData)
       
@@ -299,7 +269,7 @@ export const useEvents = () => {
     } finally {
       setLoading(false)
     }
-  }, [events, pagination, loadEvents])
+  }, [events, loadEvents])
 
   const deleteEvent = useCallback(async (id) => {
     setLoading(true)
@@ -326,24 +296,15 @@ export const useEvents = () => {
     loadEvents(true)
   }, [loadEvents])
 
-  const changePage = useCallback((page) => {
-    setPagination(prev => ({
-      ...prev,
-      current_page: page
-    }))
-  }, [])
-
   return {
     events,
     visibleEvents,
     loading,
     error,
-    pagination,
     createEvent,
     updateEvent,
     deleteEvent,
     refreshEvents,
-    changePage,
     clearCache: clearEventsCache,
     clearAllEventsData,
     getStorageUsage

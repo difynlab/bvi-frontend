@@ -1,4 +1,5 @@
 @use '../vars' as *;
+@use 'sass:color';
 
 // Global modal form styles - needed for modals across all pages
 .newsletters-form .form-group {
@@ -790,10 +791,10 @@
 
   .newsletters-list {
     display: grid;
-    /* adapt like Events */
     grid-template-columns: 1fr;
     gap: 20px;
     overflow-x: hidden;
+    padding-bottom: 85px;
   }
 
   .newsletter-card {
@@ -841,36 +842,39 @@
 
     .newsletter-actions {
       width: 100%;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
       overflow-x: hidden;
+      align-self: stretch;
     }
 
     .newsletter-actions-mobile {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
       width: 100%;
-      justify-content: space-between;
+      flex-shrink: 0;
+
       .newsletter-card__delete-btn {
-        width: 30%;
+        flex: 0 0 auto;
+        min-width: 44px;
+        padding: 10px 14px;
         background-color: $light_grey;
       }
+
       .edit-btn {
-        width: 60%;
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 10px 14px;
       }
     }
 
     .download-btn {
-      &-mobileAdmin {
-        width: fit-content;
-        border: none;
-        padding: 10px 20px;
-        background-color: #262626;
-        color: white;
-        font-size: 14px;
-        border-radius: 6px;
-      }
       width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      
+      padding: 10px 24px;
+      box-sizing: border-box;
+
       i {
         font-size: 16px;
       }
@@ -1216,51 +1220,100 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 16px;
   padding: 0;
+}
 
-  .prev-btn,
-  .next-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 1px solid #d1d5db;
-    background-color: white;
-    color: #374151;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 16px;
+.newsletters-pagination .pagination__buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
 
-    &:hover {
-      background-color: #f3f4f6;
-      border-color: #9ca3af;
-    }
+.newsletters-pagination .pagination__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 0.125rem solid #d7e0f3;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  color: #000000;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
 
-    &:active {
-      background-color: #e5e7eb;
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      background-color: #f9fafb;
-      color: #9ca3af;
-    }
+  &:hover {
+    background-color: #ffe6e6;
+    border-color: $vivid_red;
+    color: $vivid_red;
   }
 
-  .page-counter {
-    font-size: 16px;
-    font-weight: 500;
-    color: #374151;
-    padding: 8px 16px;
-    background-color: #f9fafb;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-    min-width: 80px;
-    text-align: center;
+  &--active {
+    background-color: $vivid_red;
+    border-color: $vivid_red;
+    color: #ffffff;
+
+    &:hover {
+      background-color: $vivid_red;
+      border-color: $vivid_red;
+      color: #ffffff;
+    }
+  }
+}
+
+.newsletters-pagination .pagination__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: $vivid_red;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+
+  &:hover:not(:disabled) {
+    background-color: color.adjust($vivid_red, $lightness: 5%);
+  }
+
+  &:active:not(:disabled) {
+    background-color: color.adjust($vivid_red, $lightness: -10%);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@media (max-width: 768px) {
+  .newsletters-pagination {
+    left: 0;
+    right: 0;
+    justify-content: center;
+  }
+
+  .newsletters-pagination .pagination__button,
+  .newsletters-pagination .pagination__arrow {
+    width: 2.75rem;
+    min-width: 2.75rem;
+    height: 2.75rem;
+    font-size: 0.9375rem;
+  }
+
+  .newsletters-pagination .pagination__arrow {
+    width: 2.75rem;
+    height: 2.75rem;
   }
 }
 

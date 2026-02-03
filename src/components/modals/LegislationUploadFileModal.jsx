@@ -6,13 +6,23 @@ import CustomDropdown from '../CustomDropdown';
 import legislationFilesService from '../../services/legislationFilesService';
 import '../../styles/components/LegislationUploadFileModal.scss';
 
-const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }) => {
+const LegislationUploadFileModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  editFile = null,
+  categories = [],
+  onOpenAddCategoryModal,
+  preselectedCategoryId,
+  onClearPreselectedCategory
+}) => {
   const [fileTitle, setFileTitle] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [existingFileUrl, setExistingFileUrl] = useState(null);
   const [existingFileName, setExistingFileName] = useState(null);
   const [linkUrl, setLinkUrl] = useState('');
   const [contentType, setContentType] = useState('link');
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,16 +62,16 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
   };
 
   const handleFileSelect = (file) => {
-    const maxSize = 15 * 1024 * 1024;
-    const allowedTypes = ['application/pdf'];
+    const maxSize = 5 * 1024 * 1024;
+    const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
 
     if (file.size > maxSize) {
-      setErrors({ file: 'File size must be less than 15MB' });
+      setErrors({ file: 'File size must be less than 5MB' });
       return;
     }
 
     if (!allowedTypes.includes(file.type)) {
-      setErrors({ file: 'Only PDF files are allowed' });
+      setErrors({ file: 'Only PDF, PNG, JPG and JPEG files are allowed' });
       return;
     }
 
@@ -92,6 +102,12 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
 
     if (!fileTitle.trim()) {
       newErrors.title = 'File title is required';
+    } else if (fileTitle.trim().length < 3) {
+      newErrors.title = 'Title must be at least 3 characters';
+    }
+
+    if (!selectedCategoryId || selectedCategoryId === '') {
+      newErrors.category = 'Please select or create a category';
     }
 
     if (contentType === 'pdf' && !editFile && !selectedFile) {
@@ -109,18 +125,20 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
 
     setIsSubmitting(true);
     
+    const categoryId = selectedCategoryId === '' ? null : selectedCategoryId;
+    const linkUrlValue = contentType === 'link' ? (linkUrl || '').trim() || null : null;
     try {
       if (contentType === 'pdf') {
         if (editFile) {
-          await legislationFilesService.update(editFile.apiId, fileTitle.trim(), 1, selectedFile || null);
+          await legislationFilesService.update(editFile.apiId, fileTitle.trim(), 1, selectedFile || null, categoryId, null);
         } else {
-          await legislationFilesService.create(fileTitle.trim(), selectedFile, 1);
+          await legislationFilesService.create(fileTitle.trim(), selectedFile, 1, categoryId, null);
         }
       } else {
         if (editFile) {
-          await legislationFilesService.update(editFile.apiId, fileTitle.trim(), 1, null);
+          await legislationFilesService.update(editFile.apiId, fileTitle.trim(), 1, null, categoryId, linkUrlValue);
         } else {
-          await legislationFilesService.create(fileTitle.trim(), null, 1);
+          await legislationFilesService.create(fileTitle.trim(), null, 1, categoryId, linkUrlValue);
         }
       }
       
@@ -140,6 +158,15 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
   };
 
   useEffect(() => {
+    if (preselectedCategoryId != null && preselectedCategoryId !== '' && isOpen) {
+      setSelectedCategoryId(String(preselectedCategoryId));
+      if (typeof onClearPreselectedCategory === 'function') {
+        onClearPreselectedCategory();
+      }
+    }
+  }, [preselectedCategoryId, isOpen, onClearPreselectedCategory]);
+
+  useEffect(() => {
     if (isOpen && editFile) {
       setFileTitle(editFile.title || '');
       setExistingFileUrl(editFile.fileUrl || editFile.file || null);
@@ -148,6 +175,8 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
       const hasLink = editFile.linkUrl && editFile.linkUrl.trim() !== '' && editFile.linkUrl.trim() !== '#';
       setContentType(hasFile ? 'pdf' : (hasLink ? 'link' : 'link'));
       setLinkUrl(editFile.linkUrl || '');
+      const catId = editFile.legislation_category_id ?? '';
+      setSelectedCategoryId(catId !== '' && catId != null ? String(catId) : '');
       setSelectedFile(null);
       setHasChanges(false);
       setErrors({});
@@ -158,6 +187,7 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
       setExistingFileName(null);
       setLinkUrl('');
       setContentType('link');
+      setSelectedCategoryId('');
       setHasChanges(false);
       setErrors({});
     }
@@ -165,16 +195,17 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
 
   useEffect(() => {
     if (!isOpen) return;
-    
     const originalTitle = editFile?.title || '';
     const originalLinkUrl = editFile?.linkUrl || '';
+    const originalCatId = editFile?.legislation_category_id ?? '';
+    const originalCatStr = originalCatId !== '' && originalCatId != null ? String(originalCatId) : '';
     const hasTitleChanged = fileTitle.trim() !== originalTitle.trim();
     const hasFileChanged = selectedFile !== null;
     const hasLinkChanged = linkUrl.trim() !== originalLinkUrl.trim();
     const hasContentTypeChanged = contentType !== (editFile?.fileUrl ? 'pdf' : (editFile?.linkUrl ? 'link' : 'link'));
-    
-    setHasChanges(hasTitleChanged || hasFileChanged || hasLinkChanged || hasContentTypeChanged);
-  }, [fileTitle, selectedFile, linkUrl, contentType, editFile, isOpen]);
+    const hasCategoryChanged = selectedCategoryId !== originalCatStr;
+    setHasChanges(hasTitleChanged || hasFileChanged || hasLinkChanged || hasContentTypeChanged || hasCategoryChanged);
+  }, [fileTitle, selectedFile, linkUrl, contentType, selectedCategoryId, editFile, isOpen]);
 
   const handleClose = () => {
     setFileTitle('');
@@ -183,6 +214,7 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
     setExistingFileName(null);
     setLinkUrl('');
     setContentType('link');
+    setSelectedCategoryId('');
     setDragActive(false);
     setErrors({});
     setIsSubmitting(false);
@@ -192,6 +224,11 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
     }
     onClose();
   };
+
+  const categoryOptions = (categories || []).map((c) => ({
+    value: String(c.id),
+    label: c.name || c.title || String(c.id)
+  }));
 
   if (!isOpen) return null;
 
@@ -232,6 +269,11 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
         </header>
 
         <div className="legislation-upload-file-modal__body">
+          {(errors.submit || errors.title || errors.category || errors.link || errors.file) && (
+            <div className="app-form__error-banner" role="alert">
+              {errors.submit || errors.title || errors.category || errors.link || errors.file}
+            </div>
+          )}
           <div className="form-group">
             <label htmlFor="file-title-input">File Title</label>
             <input
@@ -242,9 +284,23 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
               onChange={(e) => setFileTitle(e.target.value)}
               placeholder="Enter file title..."
             />
-            {errors.title && (
-              <div className="error-message">{errors.title}</div>
-            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="legislation-category">Category</label>
+            <CustomDropdown
+              id="legislation-category"
+              name="legislation_category_id"
+              value={selectedCategoryId}
+              onChange={(e) => {
+                setSelectedCategoryId(e.target.value);
+                setErrors((prev) => ({ ...prev, category: undefined }));
+              }}
+              options={categoryOptions}
+              placeholder="Select category"
+              actionLabel="Add New Category"
+              onAction={typeof onOpenAddCategoryModal === 'function' ? onOpenAddCategoryModal : undefined}
+            />
           </div>
 
           <div className="form-group">
@@ -269,9 +325,10 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
               }}
               options={[
                 { value: 'link', label: 'Link' },
-                { value: 'pdf', label: 'PDF Document' }
+                { value: 'pdf', label: 'File (PDF, PNG, JPG)' }
               ]}
               placeholder="Select content type"
+              disabled={!!editFile}
             />
           </div>
 
@@ -290,14 +347,11 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
                 }}
                 placeholder="https://example.com or #"
               />
-              {errors.link && (
-                <div className="error-message">{errors.link}</div>
-              )}
             </div>
           ) : (
             <div className="form-group">
-              <label htmlFor="pdf-file-dropzone">PDF Document</label>
-              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>PDF files are supported. Maximum file size: 15 MB.</p>
+              <label htmlFor="pdf-file-dropzone">File</label>
+              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>PDF, PNG, JPG, JPEG. Maximum file size: 5 MB.</p>
               <div
                 id="pdf-file-dropzone"
                 className={`legislation-upload-file-dropzone ${dragActive ? 'active' : ''}`}
@@ -364,30 +418,22 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
                     >
                       Browse File
                     </button>
-                    <p className="dropzone-hint">PDF (max 15MB)</p>
+                    <p className="dropzone-hint">PDF, PNG, JPG (max 5MB)</p>
                   </div>
                 )}
               </div>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="application/pdf"
+                accept="application/pdf,image/png,image/jpeg,image/jpg"
                 className="hidden-file-input"
                 onChange={handleFileInput}
               />
-              {errors.file && (
-                <div className="error-message">{errors.file}</div>
-              )}
             </div>
           )}
         </div>
 
         <div className="legislation-upload-file-modal__footer">
-          {errors.submit && (
-            <div className="error-message" style={{ width: '100%', marginBottom: '10px' }}>
-              {errors.submit}
-            </div>
-          )}
           <button
             type="button"
             className="btn btn-secondary"
@@ -400,7 +446,12 @@ const LegislationUploadFileModal = ({ isOpen, onClose, onSave, editFile = null }
             type="button"
             className="btn btn-primary"
             onClick={handleSubmit}
-            disabled={isSubmitting || (editFile && !hasChanges)}
+            disabled={
+              isSubmitting ||
+              (editFile && !hasChanges) ||
+              (contentType === 'link' && !(linkUrl && linkUrl.trim() !== '' && linkUrl.trim() !== '#')) ||
+              (contentType === 'pdf' && !selectedFile && !existingFileUrl)
+            }
           >
             {isSubmitting ? (editFile ? 'Updating...' : 'Uploading...') : 'Submit'}
           </button>

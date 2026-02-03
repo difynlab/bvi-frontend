@@ -182,16 +182,11 @@ class EventsService {
 
   async createEvent(eventData) {
     try {
-      
       const formData = new FormData()
-      
-      // Agregar todos los campos del evento al FormData
       Object.keys(eventData).forEach(key => {
         const value = eventData[key]
-        
         if (value !== null && value !== undefined && value !== '') {
           formData.append(key, value)
-        } else {
         }
       })
 
@@ -220,11 +215,10 @@ class EventsService {
   async updateEvent(id, eventData) {
     try {
       const formData = new FormData()
-      
-      // Agregar todos los campos del evento al FormData
       Object.keys(eventData).forEach(key => {
-        if (eventData[key] !== null && eventData[key] !== undefined && eventData[key] !== '') {
-          formData.append(key, eventData[key])
+        const value = eventData[key]
+        if (value !== null && value !== undefined && value !== '') {
+          formData.append(key, value)
         }
       })
 

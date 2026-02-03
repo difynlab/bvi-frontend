@@ -122,12 +122,10 @@ const Newsletters = () => {
   const {
     newsletters,
     visibleItems,
-    pagination,
     addNewsletter,
     updateNewsletter,
     deleteNewsletter,
     initialLoading,
-    changePage,
     loadNewslettersFromAPI,
     categories,
     activeCategory,
@@ -150,6 +148,10 @@ const Newsletters = () => {
     loadCategoriesFromAPI,
     refreshCategories
   } = useNewslettersState()
+
+  const ITEMS_PER_PAGE = 6
+  const [currentPage, setCurrentPage] = useState(1)
+  const [paginationStart, setPaginationStart] = useState(1)
 
   const MOBILE_Q = '(max-width: 768px)'
   
@@ -296,6 +298,63 @@ const Newsletters = () => {
     () => categories.find(c => c.id === activeTabId) || null,
     [categories, activeTabId]
   )
+
+  const totalItems = visibleItems.length
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    const endIndex = startIndex + ITEMS_PER_PAGE
+    return visibleItems.slice(startIndex, endIndex)
+  }, [visibleItems, currentPage])
+
+  const visiblePages = useMemo(() => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1)
+    }
+    const endPage = Math.min(paginationStart + 4, totalPages)
+    return Array.from({ length: endPage - paginationStart + 1 }, (_, i) => paginationStart + i)
+  }, [totalPages, paginationStart])
+
+  useEffect(() => {
+    setCurrentPage(1)
+    setPaginationStart(1)
+  }, [activeCategory])
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1)
+      setPaginationStart(1)
+    }
+  }, [totalPages, currentPage])
+
+  useEffect(() => {
+    if (totalPages <= 5) {
+      setPaginationStart(1)
+    } else {
+      if (currentPage < paginationStart) {
+        setPaginationStart(currentPage)
+      } else if (currentPage > paginationStart + 4) {
+        setPaginationStart(currentPage - 4)
+      }
+    }
+  }, [currentPage, totalPages])
+
+  const showLeftArrow = totalPages > 5 && paginationStart > 1
+  const showRightArrow = totalPages > 5
+  const isRightArrowDisabled = totalPages > 5 && paginationStart + 4 >= totalPages
+
+  const handlePreviousPages = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1)
+    }
+  }
+
+  const handleNextPages = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
 
   if (!user) {
     return (
@@ -671,7 +730,7 @@ const Newsletters = () => {
           ) : (
             <>
               <div className="newsletters-list">
-                {Array.isArray(visibleItems) && visibleItems.map((newsletter) => {
+                {Array.isArray(paginatedData) && paginatedData.map((newsletter) => {
                 return (
                 <div key={newsletter.id || newsletter.data?.id || Math.random()} className="newsletter-card">
                   <div className="newsletter-header">
@@ -719,24 +778,26 @@ const Newsletters = () => {
                     </div>
 
                     <div className="newsletter-actions">
-                      <div className="newsletter-actions-mobile">
-                        {user?.role === 'admin' && (
-                          <button
-                            className="newsletter-card__delete-btn"
-                            onClick={() => handleDelete(newsletter)}
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
-                        )}
-                        {user?.role === 'admin' && (
-                          <button
-                            className="edit-btn"
-                            onClick={() => openModal(newsletter)}
-                          >
-                            Edit Newsletter
-                          </button>
-                        )}
-                      </div>
+                      {(can(user, 'newsletters:delete') || can(user, 'newsletters:update')) && (
+                        <div className="newsletter-actions-mobile">
+                          {can(user, 'newsletters:delete') && (
+                            <button
+                              className="newsletter-card__delete-btn"
+                              onClick={() => handleDelete(newsletter)}
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          )}
+                          {can(user, 'newsletters:update') && (
+                            <button
+                              className="edit-btn"
+                              onClick={() => openModal(newsletter)}
+                            >
+                              Edit Newsletter
+                            </button>
+                          )}
+                        </div>
+                      )}
                       <button
                         className="download-btn"
                         onClick={() => handleViewNewsletter(newsletter)}
@@ -749,25 +810,41 @@ const Newsletters = () => {
                 )
               })}
               </div>
-              {pagination.last_page > 1 && (
+              {totalPages > 1 && (
                 <div className="newsletters-pagination">
-                  <button 
-                    className="prev-btn"
-                    onClick={() => changePage(pagination.current_page - 1)}
-                    disabled={pagination.current_page <= 1}
-                  >
-                    <i className="bi bi-chevron-left"></i>
-                  </button>
-                  <div className="page-counter">
-                    <span>{pagination.current_page} / {pagination.last_page}</span>
+                  <div className="pagination__buttons">
+                    {showLeftArrow && (
+                      <button
+                        className="pagination__arrow"
+                        type="button"
+                        onClick={handlePreviousPages}
+                        aria-label="Previous pages"
+                      >
+                        <i className="bi bi-chevron-left" aria-hidden="true"></i>
+                      </button>
+                    )}
+                    {visiblePages.map((page) => (
+                      <button
+                        key={page}
+                        className={`pagination__button ${currentPage === page ? 'pagination__button--active' : ''}`}
+                        type="button"
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    {showRightArrow && (
+                      <button
+                        className="pagination__arrow"
+                        type="button"
+                        onClick={handleNextPages}
+                        disabled={isRightArrowDisabled}
+                        aria-label="Next pages"
+                      >
+                        <i className="bi bi-chevron-right" aria-hidden="true"></i>
+                      </button>
+                    )}
                   </div>
-                  <button 
-                    className="next-btn"
-                    onClick={() => changePage(pagination.current_page + 1)}
-                    disabled={pagination.current_page >= pagination.last_page}
-                  >
-                    <i className="bi bi-chevron-right"></i>
-                  </button>
                 </div>
               )}
             </>

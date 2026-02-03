@@ -142,11 +142,19 @@ class LegislationFilesService {
     return await this.handleResponse(response)
   }
 
-  async create(title, file, status) {
+  async create(title, file, status, legislation_category_id, link = null) {
     const formData = new FormData()
     formData.append('title', title)
-    formData.append('file', file)
+    if (file) {
+      formData.append('file', file)
+    }
     formData.append('status', String(status))
+    if (legislation_category_id != null && legislation_category_id !== '') {
+      formData.append('legislation_category_id', String(legislation_category_id))
+    }
+    if (link != null && String(link).trim() !== '') {
+      formData.append('link', String(link).trim())
+    }
 
     const url = `${this.baseURL}/legislations`
     const response = await fetch(url, {
@@ -157,13 +165,18 @@ class LegislationFilesService {
     return await this.handleResponse(response)
   }
 
-  async update(id, title, status, file = null) {
+  async update(id, title, status, file = null, legislation_category_id = null, link = null) {
     const formData = new FormData()
     formData.append('title', title)
     formData.append('status', String(status))
-    
+    if (legislation_category_id != null && legislation_category_id !== '') {
+      formData.append('legislation_category_id', String(legislation_category_id))
+    }
     if (file) {
       formData.append('file', file)
+    }
+    if (link != null && String(link).trim() !== '') {
+      formData.append('link', String(link).trim())
     }
 
     const url = `${this.baseURL}/legislations/${id}`

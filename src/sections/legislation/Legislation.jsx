@@ -63,6 +63,8 @@ const Legislation = () => {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [categoryError, setCategoryError] = useState('');
   const [isCategoryLoading, setIsCategoryLoading] = useState(false);
+  const [pendingCategoryForUploadModal, setPendingCategoryForUploadModal] = useState(false);
+  const [newCategoryIdForUploadModal, setNewCategoryIdForUploadModal] = useState(null);
 
   useEffect(() => {
     const loadLegislationFiles = async () => {
@@ -77,9 +79,11 @@ const Legislation = () => {
           displayTitle: fileItem.title || '',
           fileUrl: fileItem.file || '',
           fileName: fileItem.file ? fileItem.file.split('/').pop() : '',
+          linkUrl: fileItem.link ?? '',
           apiId: fileItem.id,
           status: fileItem.status,
-          createdAt: fileItem.created_at || new Date().toISOString()
+          createdAt: fileItem.created_at || new Date().toISOString(),
+          legislation_category_id: fileItem.legislation_category_id ?? null
         }));
 
         const sortedFiles = normalizedFiles.sort((a, b) => {
@@ -127,9 +131,11 @@ const Legislation = () => {
         displayTitle: fileItem.title || '',
         fileUrl: fileItem.file || '',
         fileName: fileItem.file ? fileItem.file.split('/').pop() : '',
+        linkUrl: fileItem.link ?? '',
         apiId: fileItem.id,
         status: fileItem.status,
-        createdAt: fileItem.created_at || new Date().toISOString()
+        createdAt: fileItem.created_at || new Date().toISOString(),
+        legislation_category_id: fileItem.legislation_category_id ?? null
       }));
 
       const sortedFiles = normalizedFiles.sort((a, b) => {
@@ -311,73 +317,66 @@ const Legislation = () => {
   }, []);
 
   const handleAddCategory = useCallback(async (name) => {
+    const result = await legislationCategoriesService.createLegislationCategory({
+      title: name.trim(),
+      status: '1'
+    });
+    setCategoriesLoaded(false);
+    localStorage.removeItem('bvi.legislation.categoriesLoaded');
+    localStorage.removeItem('bvi.legislation.categoriesCache');
     try {
-      await legislationCategoriesService.createLegislationCategory({
-        title: name.trim(),
-        status: '1'
-      });
-      
-      setCategoriesLoaded(false);
-      localStorage.removeItem('bvi.legislation.categoriesLoaded');
-      localStorage.removeItem('bvi.legislation.categoriesCache');
-      
-      try {
-        const allCategories = [];
-        let currentPage = 1;
-        let hasMorePages = true;
-        const perPage = 100;
+      const allCategories = [];
+      let currentPage = 1;
+      let hasMorePages = true;
+      const perPage = 100;
 
-        while (hasMorePages) {
-          const response = await legislationCategoriesService.getLegislationCategories(perPage, currentPage);
-          
-          if (response.http_status === 404) {
-            hasMorePages = false;
-          } else if (response.data) {
-            let dataArray = [];
-            
-            if (Array.isArray(response.data)) {
-              dataArray = response.data;
-            } else if (response.data.data && Array.isArray(response.data.data)) {
-              dataArray = response.data.data;
-            }
-            
-            allCategories.push(...dataArray);
-            
-            const totalPages = response.data?.last_page || 1;
-            
-            if (currentPage >= totalPages || dataArray.length === 0) {
-              hasMorePages = false;
-            } else {
-              currentPage++;
-            }
-          } else {
-            hasMorePages = false;
+      while (hasMorePages) {
+        const response = await legislationCategoriesService.getLegislationCategories(perPage, currentPage);
+        if (response.http_status === 404) {
+          hasMorePages = false;
+        } else if (response.data) {
+          let dataArray = [];
+          if (Array.isArray(response.data)) {
+            dataArray = response.data;
+          } else if (response.data.data && Array.isArray(response.data.data)) {
+            dataArray = response.data.data;
           }
+          allCategories.push(...dataArray);
+          const totalPages = response.data?.last_page || 1;
+          if (currentPage >= totalPages || dataArray.length === 0) {
+            hasMorePages = false;
+          } else {
+            currentPage++;
+          }
+        } else {
+          hasMorePages = false;
         }
-        
-        if (allCategories.length > 0) {
-          const apiCategories = allCategories.map(cat => ({
-            id: cat.id,
-            name: cat.title || cat.name,
-            slug: (cat.title || cat.name).toLowerCase().replace(/\s+/g, '-'),
-            status: cat.status
-          }));
-          
-          setCategories(apiCategories);
-          setCategoriesLoaded(true);
-          localStorage.setItem('bvi.legislation.categoriesLoaded', 'true');
-          localStorage.setItem('bvi.legislation.categoriesCache', JSON.stringify(apiCategories));
-        }
-      } catch (reloadError) {
-        console.error('Error reloading categories:', reloadError);
       }
-      
-      setIsCategoryModalOpen(false);
-    } catch (error) {
-      console.error('Error creating category:', error);
-      throw error;
+      if (allCategories.length > 0) {
+        const apiCategories = allCategories.map(cat => ({
+          id: cat.id,
+          name: cat.title || cat.name,
+          slug: (cat.title || cat.name).toLowerCase().replace(/\s+/g, '-'),
+          status: cat.status
+        }));
+        setCategories(apiCategories);
+        setCategoriesLoaded(true);
+        localStorage.setItem('bvi.legislation.categoriesLoaded', 'true');
+        localStorage.setItem('bvi.legislation.categoriesCache', JSON.stringify(apiCategories));
+      }
+    } catch (reloadError) {
+      console.error('Error reloading categories:', reloadError);
     }
-  }, []);
+    setIsCategoryModalOpen(false);
+    if (pendingCategoryForUploadModal) {
+      const newId = result?.data?.id ?? result?.id ?? result?.data?.data?.id;
+      if (newId != null) {
+        setNewCategoryIdForUploadModal(newId);
+      }
+      setPendingCategoryForUploadModal(false);
+    }
+    return result;
+  }, [pendingCategoryForUploadModal]);
 
   const handleDeleteCategory = useCallback((id) => {
     setCategoryToDelete(id);
@@ -517,14 +516,27 @@ const Legislation = () => {
   );
 
   const filteredAttachments = useMemo(() => {
-    if (!activeCategory) {
-      return [];
-    }
-    if (!attachments.length) {
-      return [];
-    }
-    return attachments.filter(attachment => attachment.legislationType === activeCategory);
+    if (!activeCategory) return [];
+    if (!attachments.length) return [];
+    return attachments.filter(
+      (a) => String(a.legislation_category_id ?? '') === String(activeCategory)
+    );
   }, [attachments, activeCategory]);
+
+  const filteredDocuments = useMemo(() => {
+    return filteredAttachments.filter(
+      (a) => (a.fileUrl && a.fileUrl.trim() !== '') || (a.file && String(a.file).trim() !== '')
+    );
+  }, [filteredAttachments]);
+
+  const filteredLinks = useMemo(() => {
+    const hasFile = (a) => (a.fileUrl && a.fileUrl.trim() !== '') || (a.file && String(a.file).trim() !== '');
+    return filteredAttachments.filter((a) => {
+      if (hasFile(a)) return false;
+      const url = a.linkUrl ?? '';
+      return url && url.trim() !== '' && url.trim() !== '#';
+    });
+  }, [filteredAttachments]);
 
   const handleAddCategorySubmit = async () => {
     const trimmedName = newCategoryName.trim();
@@ -730,52 +742,97 @@ const Legislation = () => {
                 : <>No legislation categories have been created yet.</>
             }
           />
-        ) : filteredAttachments.length === 0 ? (
+        ) : filteredDocuments.length === 0 && filteredLinks.length === 0 ? (
           <EmptyPage
             isAdmin={user?.role === 'admin'}
             title={user?.role === 'admin' ? 'No files in this category!' : 'No files found.'}
             description={
               user?.role === 'admin'
-                ? <>This category is empty. Add your first file to get started!</>
-                : <>This category doesn't have any files yet.</>
+                ? <>This category is empty. Add your first file or link to get started!</>
+                : <>This category doesn't have any files or links yet.</>
             }
           />
         ) : (
-          filteredAttachments.map((attachment) => (
-            <div key={attachment.id} className="attachment-item">
-              <div className="meta">
-                <i className="bi bi-file-earmark attachment-icon" aria-hidden="true"></i>
-                <span className="attachment-title">{attachment.displayTitle || attachment.title}</span>
-              </div>
-              <div className="actions">
-                {can(user, 'legislation:update') && (
-                  <>
-                    <button
-                      className="attachment-edit-btn"
-                      onClick={() => handleEditFile(attachment)}
-                      aria-label={`Edit ${attachment.title}`}
-                    >
-                      <i className="bi bi-pencil-square"></i>
-                    </button>
-                    <button
-                      className="attachment-delete-btn"
-                      onClick={() => handleDeleteFile(attachment)}
-                      aria-label={`Delete ${attachment.title}`}
-                    >
-                      <i className="bi bi-trash"></i>
-                    </button>
-                  </>
-                )}
-                <button
-                  className="attachment-download-btn"
-                  onClick={() => handleDownloadAttachment(attachment)}
-                  aria-label={`Download ${attachment.title}`}
-                >
-                  <i className="bi bi-download"></i>
-                </button>
-              </div>
-            </div>
-          ))
+          <>
+            {filteredDocuments.length > 0 && (
+              <section className="legislation-documents-section">
+                <h3 className="legislation-section-title">Documents</h3>
+                {filteredDocuments.map((attachment) => (
+                  <div key={attachment.id} className="attachment-item">
+                    <div className="meta">
+                      <i className="bi bi-file-earmark attachment-icon" aria-hidden="true"></i>
+                      <span className="attachment-title">{attachment.displayTitle || attachment.title}</span>
+                    </div>
+                    <div className="actions">
+                      {can(user, 'legislation:update') && (
+                        <>
+                          <button
+                            className="attachment-edit-btn"
+                            onClick={() => handleEditFile(attachment)}
+                            aria-label={`Edit ${attachment.title}`}
+                          >
+                            <i className="bi bi-pencil-square"></i>
+                          </button>
+                          <button
+                            className="attachment-delete-btn"
+                            onClick={() => handleDeleteFile(attachment)}
+                            aria-label={`Delete ${attachment.title}`}
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        </>
+                      )}
+                      <button
+                        className="attachment-download-btn"
+                        onClick={() => handleDownloadAttachment(attachment)}
+                        aria-label={`Download ${attachment.title}`}
+                      >
+                        <i className="bi bi-download"></i>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </section>
+            )}
+            {filteredLinks.length > 0 && (
+              <section className="legislation-links-section">
+                <h3 className="legislation-section-title">Links</h3>
+                <ul className="legislation-links-list">
+                  {filteredLinks.map((linkItem) => {
+                    const href = (linkItem.linkUrl ?? '').trim() || '#';
+                    return (
+                      <li key={linkItem.id}>
+                        <a href={href} target="_blank" rel="noopener noreferrer">
+                          <i className="bi bi-link-45deg" aria-hidden="true"></i>
+                          <span>{linkItem.displayTitle || linkItem.title}</span>
+                        </a>
+                        {can(user, 'legislation:update') && (
+                          <span className="legislation-link-actions">
+                            <button
+                              type="button"
+                              className="attachment-edit-btn"
+                              onClick={() => handleEditFile(linkItem)}
+                              aria-label={`Edit ${linkItem.title}`}
+                            >
+                              <i className="bi bi-pencil-square"></i>
+                            </button>
+                            <button
+                              type="button"
+                              className="attachment-delete-btn"
+                              onClick={() => handleDeleteFile(linkItem)}
+                              aria-label={`Delete ${linkItem.title}`}
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+          </>
         )}
       </div>
 
@@ -784,6 +841,13 @@ const Legislation = () => {
         onClose={handleModalClose}
         onSave={handleSave}
         editFile={editingFile}
+        categories={categories}
+        onOpenAddCategoryModal={() => {
+          setPendingCategoryForUploadModal(true);
+          setIsCategoryModalOpen(true);
+        }}
+        preselectedCategoryId={newCategoryIdForUploadModal}
+        onClearPreselectedCategory={() => setNewCategoryIdForUploadModal(null)}
       />
 
       <ConfirmDeleteModal

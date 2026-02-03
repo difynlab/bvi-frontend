@@ -110,12 +110,6 @@ export const useNewslettersState = () => {
   const [categoriesLoaded, setCategoriesLoaded] = useState(false)
   const [categoriesLoading, setCategoriesLoading] = useState(false)
   const [shouldReloadCategories, setShouldReloadCategories] = useState(false)
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    last_page: 1,
-    per_page: 6,
-    total: 0
-  })
 
   const loadNewslettersFromAPI = useCallback(async () => {
     try {
@@ -173,10 +167,6 @@ export const useNewslettersState = () => {
     loadNewslettersFromAPI()
   }, [loadNewslettersFromAPI])
 
-  useEffect(() => {
-    setPagination(prev => ({ ...prev, current_page: 1 }))
-  }, [activeCategory])
-
   const filteredNewsletters = useMemo(() => {
     if (!activeCategory) {
       return []
@@ -190,35 +180,10 @@ export const useNewslettersState = () => {
     })
   }, [newsletters, activeCategory])
 
-  useEffect(() => {
-    const totalFiltered = filteredNewsletters.length
-    const totalPages = Math.ceil(totalFiltered / pagination.per_page) || 1
-    const adjustedPage = pagination.current_page > totalPages ? 1 : pagination.current_page
-    
-    setPagination(prev => ({
-      ...prev,
-      current_page: adjustedPage,
-      last_page: totalPages,
-      total: totalFiltered
-    }))
-  }, [filteredNewsletters.length, pagination.per_page])
-
   const visibleItems = useMemo(() => {
-    if (!filteredNewsletters.length) {
-      return []
-    }
-    
-    const sortedNewsletters = sortNewslettersByPublishDate(filteredNewsletters)
-    const currentPage = pagination.current_page > pagination.last_page ? 1 : pagination.current_page
-    const startIndex = (currentPage - 1) * pagination.per_page
-    const endIndex = startIndex + pagination.per_page
-    
-    return sortedNewsletters.slice(startIndex, endIndex)
-  }, [filteredNewsletters, pagination.current_page, pagination.per_page, pagination.last_page])
-
-  const changePage = useCallback((page) => {
-    setPagination(prev => ({ ...prev, current_page: page }))
-  }, [])
+    if (!filteredNewsletters.length) return []
+    return sortNewslettersByPublishDate([...filteredNewsletters])
+  }, [filteredNewsletters])
 
   const addNewsletter = useCallback(async (newsletterObj) => {
     try {
@@ -576,7 +541,6 @@ export const useNewslettersState = () => {
     loading,
     setLoading,
     initialLoading,
-    pagination,
     visibleItems,
     addNewsletter,
     updateNewsletter,
@@ -584,7 +548,6 @@ export const useNewslettersState = () => {
     seedFromMocks,
     clearNewsletterSeeds,
     loadNewslettersFromAPI,
-    changePage,
     categories,
     activeCategory,
     setActiveCategory,
