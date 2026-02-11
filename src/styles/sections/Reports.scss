@@ -707,6 +707,9 @@
 }
 
 .btn-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   background: #262626;
   color: #fff;
   padding: 10px 14px;
@@ -720,6 +723,15 @@
 
 .btn-download:hover {
   background: #1a1a1a;
+}
+
+.btn-download--view {
+  background: $vivid_blue;
+  color: #fff;
+}
+
+.btn-download--view:hover {
+  background: color.adjust($vivid_blue, $lightness: -8%);
 }
 
 .btn-delete {
@@ -1177,6 +1189,9 @@
       }
 
       .btn-download-mobile {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
         background: #262626;
         color: #fff;
         border: 0;
@@ -1188,8 +1203,14 @@
         padding: 10px 14px;
         width: 100%;
 
+        &.btn-download-mobile--view {
+          background: $vivid_blue;
+          color: #fff;
+          &:hover {
+            background: color.adjust($vivid_blue, $lightness: -8%);
+          }
+        }
 
-        // Full width for user view (non-admin)
         &.btn-download-mobile--user {
           width: 100%;
         }

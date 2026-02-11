@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '../../context/useAuth'
 import { can } from '../../auth/acl'
 import EmptyPage from '../../components/EmptyPage'
@@ -8,6 +8,96 @@ import galleryService from '../../services/galleryService'
 import '../../styles/sections/Gallery.scss'
 
 const MAX_FILE_SIZE = 5120 * 1024
+const GALLERY_COLS = 5
+const PLACEHOLDER_LOGO = '/images/bvi-logo-downloads.png'
+
+const key = (r, c) => `${r},${c}`
+
+const findFirstFit = (occupied, orientation) => {
+  for (let r = 0; r < 500; r++) {
+    for (let c = 0; c < GALLERY_COLS; c++) {
+      if (orientation === 'square') {
+        if (!occupied.has(key(r, c))) return [r, c]
+      } else if (orientation === 'horizontal') {
+        if (c <= GALLERY_COLS - 2 && !occupied.has(key(r, c)) && !occupied.has(key(r, c + 1))) return [r, c]
+      } else if (orientation === 'vertical') {
+        if (!occupied.has(key(r, c)) && !occupied.has(key(r + 1, c))) return [r, c]
+      }
+    }
+  }
+  return [0, 0]
+}
+
+const buildPlacements = (imageItems, imageAspectRatios) => {
+  const occupied = new Set()
+  const placedImages = []
+
+  for (const item of imageItems) {
+    const orientation = imageAspectRatios[item.id] || 'square'
+    const [row, col] = findFirstFit(occupied, orientation)
+    if (orientation === 'square') {
+      occupied.add(key(row, col))
+    } else if (orientation === 'horizontal') {
+      occupied.add(key(row, col))
+      occupied.add(key(row, col + 1))
+    } else if (orientation === 'vertical') {
+      occupied.add(key(row, col))
+      occupied.add(key(row + 1, col))
+    }
+    placedImages.push({ item, row, col, orientation })
+  }
+
+  let maxRow = 0
+  for (const p of placedImages) {
+    const endRow = p.orientation === 'vertical' ? p.row + 1 : p.row
+    if (endRow > maxRow) maxRow = endRow
+  }
+
+  const emptyRuns = []
+  for (let r = 0; r <= maxRow; r++) {
+    let runStart = null
+    for (let c = 0; c <= GALLERY_COLS; c++) {
+      const isEmpty = c < GALLERY_COLS && !occupied.has(key(r, c))
+      if (isEmpty && runStart === null) runStart = c
+      if (!isEmpty || c === GALLERY_COLS) {
+        if (runStart !== null) {
+          const runLen = c - runStart
+          if (runLen === 1 || runLen === 2) {
+            for (let j = runStart; j < c; j++) emptyRuns.push({ row: r, col: j })
+          }
+          runStart = null
+        }
+      }
+    }
+  }
+
+  const byRow = {}
+  for (const cell of emptyRuns) {
+    if (!byRow[cell.row]) byRow[cell.row] = []
+    byRow[cell.row].push(cell)
+  }
+  const maxTwoPerRow = []
+  for (let r = 0; r <= maxRow; r++) {
+    const rowCells = (byRow[r] || []).sort((a, b) => a.col - b.col)
+    maxTwoPerRow.push(...rowCells.slice(0, 2))
+  }
+
+  const placeholderSet = new Set(maxTwoPerRow.map(({ row, col }) => key(row, col)))
+  const sorted = [...maxTwoPerRow].sort((a, b) => a.row !== b.row ? a.row - b.row : a.col - b.col)
+  const colors = {}
+  const getNeighborKeys = (r, c) => [key(r, c - 1), key(r, c + 1), key(r - 1, c), key(r + 1, c)].filter(k => placeholderSet.has(k))
+  for (const { row, col } of sorted) {
+    const k = key(row, col)
+    let color = 0
+    for (const nk of getNeighborKeys(row, col)) {
+      if (colors[nk] === 0) { color = 1; break }
+    }
+    colors[k] = color
+  }
+
+  const placeholders = sorted.map(({ row, col }) => ({ row, col, color: colors[key(row, col)] === 0 ? 'blue' : 'red' }))
+  return { placedImages, placeholders }
+}
 
 const getYouTubeEmbedUrl = (url) => {
   if (!url || typeof url !== 'string') return null
@@ -25,7 +115,8 @@ const Gallery = () => {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [pagination, setPagination] = useState({ page: 1, perPage: 12, total: 0, lastPage: 1 })
+  const [pagination, setPagination] = useState({ page: 1, perPage: 20, total: 0, lastPage: 1 })
+  const [paginationStart, setPaginationStart] = useState(1)
   const [previewImage, setPreviewImage] = useState(null)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -34,6 +125,55 @@ const Gallery = () => {
 
   const imageItems = items.filter(i => i.type === 'image')
   const videoItems = items.filter(i => i.type === 'video')
+
+  const totalPages = Math.max(1, pagination.lastPage)
+  const visiblePages = useMemo(() => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1)
+    }
+    const endPage = Math.min(paginationStart + 4, totalPages)
+    return Array.from({ length: endPage - paginationStart + 1 }, (_, i) => paginationStart + i)
+  }, [totalPages, paginationStart])
+
+  useEffect(() => {
+    if (pagination.page > totalPages && totalPages > 0) {
+      setPagination(prev => ({ ...prev, page: 1 }))
+      setPaginationStart(1)
+    }
+  }, [totalPages, pagination.page])
+
+  useEffect(() => {
+    if (totalPages <= 5) {
+      setPaginationStart(1)
+    } else {
+      if (pagination.page < paginationStart) {
+        setPaginationStart(pagination.page)
+      } else if (pagination.page > paginationStart + 4) {
+        setPaginationStart(pagination.page - 4)
+      }
+    }
+  }, [pagination.page, totalPages])
+
+  const showLeftArrow = totalPages > 5 && paginationStart > 1
+  const showRightArrow = totalPages > 5
+  const isRightArrowDisabled = totalPages > 5 && paginationStart + 4 >= totalPages
+
+  const handlePreviousPage = () => {
+    if (pagination.page > 1) {
+      setPagination(prev => ({ ...prev, page: prev.page - 1 }))
+    }
+  }
+
+  const handleNextPage = () => {
+    if (pagination.page < totalPages) {
+      setPagination(prev => ({ ...prev, page: prev.page + 1 }))
+    }
+  }
+
+  const { placedImages, placeholders } = useMemo(
+    () => buildPlacements(imageItems, imageAspectRatios),
+    [imageItems, imageAspectRatios]
+  )
 
   const loadGallery = useCallback(async () => {
     setLoading(true)
@@ -134,23 +274,37 @@ const Gallery = () => {
     }))
   }, [])
 
-  const renderImageItem = (item) => {
+  const getGridStyle = (row, col, orientation) => {
+    if (orientation === 'horizontal') {
+      return { gridColumn: `${col + 1} / ${col + 3}`, gridRow: row + 1 }
+    }
+    if (orientation === 'vertical') {
+      return { gridColumn: col + 1, gridRow: `${row + 1} / ${row + 3}` }
+    }
+    return { gridColumn: col + 1, gridRow: row + 1 }
+  }
+
+  const renderImageItem = (item, placement) => {
     const src = item.original_image ?? item.blurred_image ?? item.original_file ?? item.blurred_file ?? item.image
     if (!src) return null
-    const orientation = imageAspectRatios[item.id] || 'square'
+    const blurredSrc = item.blurred_image ?? item.blurred_file ?? src
+    const originalSrc = item.original_image ?? item.original_file ?? src
+    const orientation = placement?.orientation ?? imageAspectRatios[item.id] ?? 'square'
+    const style = placement ? getGridStyle(placement.row, placement.col, orientation) : undefined
     return (
       <div
         key={item.id}
         className={`gallery-item gallery-item--image gallery-item--${orientation}`}
+        style={style}
         onClick={(e) => {
           if (!e.target.closest('.gallery-item__delete-btn') && !e.target.closest('.gallery-item__download-btn')) {
-            setPreviewImage(src)
+            setPreviewImage(originalSrc)
           }
         }}
       >
         <img
-          src={item.blurred_image ?? item.blurred_file ?? src}
-          data-src={item.original_image ?? item.original_file ?? src}
+          src={blurredSrc}
+          data-src={originalSrc}
           alt=""
           className="gallery-item__img"
           loading="lazy"
@@ -161,9 +315,9 @@ const Gallery = () => {
           }}
         />
         <a
-          href={src}
+          href={originalSrc}
           className="gallery-item__download-btn"
-          onClick={(e) => handleDownloadImage(e, src, item.id)}
+          onClick={(e) => handleDownloadImage(e, originalSrc, item.id)}
           aria-label="Download image"
         >
           <i className="bi bi-download"></i>
@@ -302,9 +456,58 @@ const Gallery = () => {
           imageItems.length === 0 ? (
             <EmptyPage title="No images uploaded yet..." />
           ) : (
-            <div className="gallery-grid">
-              {imageItems.map(renderImageItem)}
-            </div>
+            <>
+              <div className="gallery-grid gallery-grid--fixed">
+                {placedImages.map((p) => renderImageItem(p.item, p))}
+                {placeholders.map(({ row, col, color }, i) => (
+                  <div
+                    key={`ph-${row}-${col}`}
+                    className={`gallery-placeholder gallery-placeholder--${color}`}
+                    style={getGridStyle(row, col, 'square')}
+                    aria-hidden
+                  >
+                    <img src={PLACEHOLDER_LOGO} alt="" className="gallery-placeholder__img" />
+                  </div>
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className="gallery-pagination">
+                  <div className="pagination__buttons">
+                    {showLeftArrow && (
+                      <button
+                        className="pagination__arrow"
+                        type="button"
+                        onClick={handlePreviousPage}
+                        aria-label="Previous pages"
+                      >
+                        <i className="bi bi-chevron-left" aria-hidden="true"></i>
+                      </button>
+                    )}
+                    {visiblePages.map((page) => (
+                      <button
+                        key={page}
+                        className={`pagination__button ${pagination.page === page ? 'pagination__button--active' : ''}`}
+                        type="button"
+                        onClick={() => setPagination(prev => ({ ...prev, page }))}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    {showRightArrow && (
+                      <button
+                        className="pagination__arrow"
+                        type="button"
+                        onClick={handleNextPage}
+                        disabled={isRightArrowDisabled}
+                        aria-label="Next pages"
+                      >
+                        <i className="bi bi-chevron-right" aria-hidden="true"></i>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )
         ) : renderableVideoItems.length === 0 ? (
           <EmptyPage title="No videos yet..." />

@@ -94,30 +94,23 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
   const validate = useCallback(() => {
     const newErrors = {};
 
-    // Validate title
     if (!form.title.trim()) {
       newErrors.title = 'Report title is required';
     } else if (form.title.trim().length < 3) {
       newErrors.title = 'Report title must be at least 3 characters long';
     }
 
-    // Validate typeId
     if (!form.typeId) {
       newErrors.typeId = 'Report type is required';
     }
 
-    // Validate linkUrl
-    if (!form.linkUrl.trim()) {
-      newErrors.linkUrl = 'Link is required';
-    } else if (form.linkUrl.trim().length < 3) {
-      newErrors.linkUrl = 'Link must be at least 3 characters long';
-    } else if (!isValidUrl(form.linkUrl.trim())) {
-      newErrors.linkUrl = 'Please enter a valid URL';
-    }
-
-    // Validate file
-    if (!form.file && !form.fileName) {
-      newErrors.file = 'File is required';
+    const trimmedLink = form.linkUrl.trim();
+    if (trimmedLink) {
+      if (trimmedLink.length < 3) {
+        newErrors.linkUrl = 'Link must be at least 3 characters long';
+      } else if (!isValidUrl(trimmedLink)) {
+        newErrors.linkUrl = 'Please enter a valid URL';
+      }
     }
 
     setErrors(newErrors);

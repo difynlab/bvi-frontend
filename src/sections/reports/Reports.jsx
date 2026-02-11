@@ -54,7 +54,6 @@ export default function Reports() {
     createOrUpdateReport,
     onDeleteReport,
     downloadReport,
-    formatDate,
     setIsCategoryModalOpen,
     setConfirmModalOpen,
     setCategoryToDelete,
@@ -292,9 +291,19 @@ export default function Reports() {
     
     if (reportForm.validate()) {
       setIsSubmittingReport(true);
-      setReportError(''); // Clear any previous errors
+      setReportError('');
       
       try {
+        if (
+          !reportForm.form.linkUrl.trim() &&
+          !reportForm.form.file &&
+          !reportForm.form.fileName
+        ) {
+          setReportError('You must provide at least a link or a PDF file before submitting this publication.');
+          setIsSubmittingReport(false);
+          return;
+        }
+
         // Enforce valid existing category
         const activeCategories = categories
           .filter(cat => cat.status === 1)
@@ -576,10 +585,13 @@ export default function Reports() {
           <>
             <div className="reports-list">
               {paginatedData.map(r => {
+                const hasLink = !!(r.link || r.link_url);
+                const hasFile = !!(r.fileUrl || r.file || r.file_url);
+                const viewUrl = r.link || r.link_url || '';
+                const handleView = () => { if (viewUrl) window.open(viewUrl, '_blank', 'noopener,noreferrer'); };
                 return (
                 <article key={r.id} className="report-item">
                   <div className="report-info">
-                    <div className="report-meta">Published: {formatDate(r.publish_date)}</div>
                     <div className="report-title">{r.name}</div>
                   </div>
                   <div className="report-actions">
@@ -593,10 +605,21 @@ export default function Reports() {
                         Edit Publication
                       </button>
                     )}
-                    <button type="button" className="btn-download" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
-                      Download PDF
-                    </button>
-                    
+                    {hasLink && (
+                      <button type="button" className={`btn-download${hasFile ? ' btn-download--view' : ''}`} onClick={handleView} aria-label={`View ${r.name}`}>
+                        <i className="bi bi-link-45deg" aria-hidden="true"></i> View
+                      </button>
+                    )}
+                    {hasFile && (
+                      <button type="button" className="btn-download" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
+                        <i className="bi bi-download" aria-hidden="true"></i> Download
+                      </button>
+                    )}
+                    {!hasLink && !hasFile && (
+                      <button type="button" className="btn-download" disabled aria-label={`No file or link`}>
+                        Download
+                      </button>
+                    )}
                     <div className="report-actions-mobile">
                       {can(user, 'reports:delete') && (
                         <button type="button" className="btn-delete-mobile" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.name}`}>
@@ -608,9 +631,21 @@ export default function Reports() {
                           Edit
                         </button>
                       )}
-                      <button type="button" className="btn-download-mobile" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
-                        Download
-                      </button>
+                      {hasLink && (
+                        <button type="button" className={`btn-download-mobile${hasFile ? ' btn-download-mobile--view' : ''}`} onClick={handleView} aria-label={`View ${r.name}`}>
+                          <i className="bi bi-link-45deg" aria-hidden="true"></i> View
+                        </button>
+                      )}
+                      {hasFile && (
+                        <button type="button" className="btn-download-mobile" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
+                          <i className="bi bi-download" aria-hidden="true"></i> Download
+                        </button>
+                      )}
+                      {!hasLink && !hasFile && (
+                        <button type="button" className="btn-download-mobile" disabled aria-label={`No file or link`}>
+                          Download
+                        </button>
+                      )}
                     </div>
                   </div>
                 </article>
@@ -838,7 +873,7 @@ export default function Reports() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="linkUrl">Link<span className="req-star" aria-hidden="true">*</span></label>
+                <label htmlFor="linkUrl">Link</label>
                 <input
                   type="url"
                   id="linkUrl"
@@ -849,7 +884,6 @@ export default function Reports() {
                     if (reportError) setReportError('');
                   }}
                   placeholder="https://example.com/report.pdf"
-                  required
                 />
                 {reportForm.errors.linkUrl && (
                   <div
