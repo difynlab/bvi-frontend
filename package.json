@@ -26,6 +26,7 @@
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "classnames": "^2.5.1",
+    "pdfjs-dist": "^5.5.207",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-loading-skeleton": "^3.5.0",

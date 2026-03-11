@@ -1347,6 +1347,19 @@
     gap: 0;
   }
 
+  .notices-modal .form-row .form-group:first-child,
+  .notices-modal .form-row .form-group:last-child {
+    flex: 0 0 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .notices-modal .form-row .form-group input#fileName,
+  .notices-modal .form-row .form-group input#publishDate {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
   .notices-page {
     padding: 40px 20px 20px 20px;
     margin-bottom: 80px;
@@ -1395,10 +1408,11 @@
 
   .notices-modal {
     margin: 10px;
-    max-height: calc(100vh - 20px);
+    max-height: calc(95dvh);
     min-width: 95%;
     padding: 20px;
     position: relative;
+    overflow-y: auto;
 
     &-header.close-btn,
     .close-btn {

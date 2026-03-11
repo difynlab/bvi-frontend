@@ -98,6 +98,17 @@
     transition: border-color 0.2s;
     width: 100%;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dropzone .file-input-label,
+  .dropzone .file-status {
+    display: block;
+    width: 100%;
+    text-align: center;
   }
 
   .dropzone.drag-over {
@@ -250,6 +261,17 @@
   transition: border-color 0.2s;
   width: 100%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropzone .file-input-label,
+.dropzone .file-status {
+  display: block;
+  width: 100%;
+  text-align: center;
 }
 
 .dropzone.drag-over {
@@ -443,7 +465,8 @@
 .settings-header-title,
 .subscription-header-title,
 .legislation-header-title,
-.dashboard-header-title {
+.dashboard-header-title,
+.communications-playbook-header-title {
   height: 55px;
   display: flex;
   flex-direction: column;
@@ -988,6 +1011,17 @@
     transition: border-color 0.2s;
     width: 100%;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dropzone .file-input-label,
+  .dropzone .file-status {
+    display: block;
+    width: 100%;
+    text-align: center;
   }
 
   .dropzone.drag-over {
@@ -1559,15 +1593,24 @@
     
     .events-form .form-time {
       width: 100%;
+      flex: 1 1 0;
+      min-width: 0;
       flex-direction: row;
       justify-content: flex-start;
+      box-sizing: border-box;
       
       .form-group {
-        flex: 0 0 auto;
+        flex: 0 0 calc(50% - 4px);
+        width: calc(50% - 4px);
+        min-width: 0;
+        max-width: calc(50% - 4px);
+        box-sizing: border-box;
       }
       
       input {
-        width: 110px !important;
+        width: 100% !important;
+        min-width: 0;
+        box-sizing: border-box;
       }
     }
 
@@ -1588,21 +1631,27 @@
       align-items: flex-end;
       gap: 8px;
       height: auto;
-      flex: 0 0 auto;
+      flex: 1 1 0;
+      min-width: 0;
       margin-bottom: 20px;
+      box-sizing: border-box;
 
       .form-group {
-        width: auto !important;
-        flex: 0 0 auto;
+        flex: 0 0 calc(50% - 4px);
+        width: calc(50% - 4px);
+        min-width: 0;
+        max-width: calc(50% - 4px);
         margin-bottom: 0 !important;
         display: flex;
         flex-direction: column;
         gap: 0;
-        align-items: flex-start;
+        align-items: stretch;
+        box-sizing: border-box;
       }
 
       input {
-        width: 110px !important;
+        width: 100% !important;
+        min-width: 0;
         min-height: 45px;
         box-sizing: border-box;
         padding: 12px;
@@ -1614,7 +1663,8 @@
     }
 
     .events-form .form-row > .form-group:nth-child(3),
-    .events-form .form-row > .form-group:nth-child(4) {
+    .events-form .form-row > .form-group:nth-child(4),
+    .events-form .form-row > .form-group:nth-child(5) {
       flex: 0 0 auto;
       min-width: auto;
       max-width: 100%;
@@ -1623,7 +1673,21 @@
       .custom-dropdown {
         width: 100%;
         max-width: 100%;
+        min-width: 0;
         box-sizing: border-box;
+
+        .custom-dropdown__trigger {
+          width: 100%;
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+        }
+
+        .custom-dropdown__menu {
+          width: 100%;
+          min-width: 100%;
+          box-sizing: border-box;
+        }
       }
     }
 
@@ -1754,8 +1818,8 @@
     }
   }
     .event-content {
-      border: 2px solid rgba(0, 0, 0, 0.3);
-      border-top: none
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-top: none;
     }
 
     .events-pagination {

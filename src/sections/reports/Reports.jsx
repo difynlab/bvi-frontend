@@ -621,31 +621,35 @@ export default function Reports() {
                       </button>
                     )}
                     <div className="report-actions-mobile">
-                      {can(user, 'reports:delete') && (
-                        <button type="button" className="btn-delete-mobile" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.name}`}>
-                          Delete
-                        </button>
-                      )}
-                      {can(user, 'reports:create') && (
-                        <button type="button" className="btn-edit-mobile" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.name}`}>
-                          Edit
-                        </button>
-                      )}
-                      {hasLink && (
-                        <button type="button" className={`btn-download-mobile${hasFile ? ' btn-download-mobile--view' : ''}`} onClick={handleView} aria-label={`View ${r.name}`}>
-                          <i className="bi bi-link-45deg" aria-hidden="true"></i> View
-                        </button>
-                      )}
-                      {hasFile && (
-                        <button type="button" className="btn-download-mobile" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
-                          <i className="bi bi-download" aria-hidden="true"></i> Download
-                        </button>
-                      )}
-                      {!hasLink && !hasFile && (
-                        <button type="button" className="btn-download-mobile" disabled aria-label={`No file or link`}>
-                          Download
-                        </button>
-                      )}
+                      <div className="report-actions-mobile__row report-actions-mobile__row--primary">
+                        {can(user, 'reports:delete') && (
+                          <button type="button" className="btn-delete-mobile" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.name}`}>
+                            Delete
+                          </button>
+                        )}
+                        {can(user, 'reports:create') && (
+                          <button type="button" className="btn-edit-mobile" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.name}`}>
+                            Edit
+                          </button>
+                        )}
+                      </div>
+                      <div className="report-actions-mobile__row report-actions-mobile__row--secondary">
+                        {hasLink && (
+                          <button type="button" className={`btn-download-mobile${hasFile ? ' btn-download-mobile--view' : ''}`} onClick={handleView} aria-label={`View ${r.name}`}>
+                            <i className="bi bi-link-45deg" aria-hidden="true"></i> View
+                          </button>
+                        )}
+                        {hasFile && (
+                          <button type="button" className="btn-download-mobile" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
+                            <i className="bi bi-download" aria-hidden="true"></i> Download
+                          </button>
+                        )}
+                        {!hasLink && !hasFile && (
+                          <button type="button" className="btn-download-mobile" disabled aria-label={`No file or link`}>
+                            Download
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </article>

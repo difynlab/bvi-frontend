@@ -11,6 +11,7 @@ import Settings from './sections/settings/Settings'
 import Reports from './sections/reports/Reports'
 import Subscription from './sections/subscription/Subscription'
 import { Legislation } from './sections/legislation/Legislation'
+import { CommunicationsPlaybook } from './sections/communications-playbook/CommunicationsPlaybook'
 import { Gallery } from './sections/gallery/Gallery'
 import FindExpert from './sections/find-expert/FindExpert'
 import Dashboard from './sections/dashboard/Dashboard'
@@ -74,6 +75,14 @@ function App() {
             <RouteGuard requireAuth>
               <MainLayout>
                 <Notices />
+              </MainLayout>
+            </RouteGuard>
+          }></Route>
+
+          <Route path='/communications-playbook' element={
+            <RouteGuard requireAuth>
+              <MainLayout>
+                <CommunicationsPlaybook />
               </MainLayout>
             </RouteGuard>
           }></Route>

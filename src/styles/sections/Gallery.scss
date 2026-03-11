@@ -553,6 +553,10 @@
     grid-row: span 1 !important;
   }
 
+  .gallery-placeholder {
+    display: none;
+  }
+
   .gallery-grid--videos {
     grid-template-columns: 1fr;
   }

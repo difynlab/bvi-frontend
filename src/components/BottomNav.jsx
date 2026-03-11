@@ -90,6 +90,11 @@ const BottomNav = () => {
       label: 'Newsletters'
     },
     {
+      path: '/communications-playbook',
+      icon: 'bi bi-journal-text',
+      label: 'Playbook'
+    },
+    {
       path: '/membership',
       icon: 'bi bi-people',
       label: isAdmin ? 'Members' : 'Membership'

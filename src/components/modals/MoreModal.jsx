@@ -7,12 +7,32 @@ import ModalLifecycleLock from './ModalLifecycleLock'
 import ConfirmLogoutModal from './ConfirmLogoutModal'
 import '../../styles/components/MoreModal.scss'
 
+const MOBILE_Q = '(max-width: 768px)'
+
 const MoreModal = ({ isOpen, onClose, onClosingChange }) => {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuth()
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => {
+    try {
+      return window.matchMedia(MOBILE_Q).matches
+    } catch {
+      return false
+    }
+  })
+
+  useEffect(() => {
+    try {
+      const mql = window.matchMedia(MOBILE_Q)
+      const onChange = () => setIsMobile(mql.matches)
+      mql.addEventListener('change', onChange)
+      return () => mql.removeEventListener('change', onChange)
+    } catch {
+      return undefined
+    }
+  }, [])
 
   useBodyScrollLock(isOpen)
 
@@ -93,6 +113,11 @@ const MoreModal = ({ isOpen, onClose, onClosingChange }) => {
       path: '/newsletters',
       icon: 'bi bi-file-earmark-text',
       label: 'Newsletters'
+    },
+    {
+      path: '/communications-playbook',
+      icon: 'bi bi-journal-text',
+      label: isMobile ? 'Playbook' : 'Communications Playbook'
     },
     {
       path: '/membership',
