@@ -149,9 +149,22 @@
   align-items: center;
   justify-content: center;
 
+  &:hover {
+    border-color: $vivid_red;
+    background-color: #fef2f2;
+
+    .dropzone-icon {
+      color: $vivid_red;
+    }
+  }
+
   &.drag-over {
     border-color: $vivid_red;
     background-color: #fef2f2;
+
+    .dropzone-icon {
+      color: $vivid_red;
+    }
   }
 }
 
@@ -165,6 +178,7 @@
 .dropzone-icon {
   font-size: 48px;
   color: #9ca3af;
+  transition: color 0.2s ease;
 }
 
 .dropzone-label {
@@ -304,6 +318,24 @@
   gap: 12px;
   margin-top: auto;
   padding-top: 24px;
+}
+
+.gallery-upload-submit-container .upload-now-btn {
+  background: #262626;
+  color: #fff;
+  padding: 10px 30px;
+  height: 55px;
+  width: fit-content;
+  font-size: 16px;
+  font-weight: 300;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
 .gallery-upload-cancel-btn {

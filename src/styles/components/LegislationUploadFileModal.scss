@@ -89,6 +89,10 @@
   &:hover {
     border-color: $vivid_red;
     background: #fef2f2;
+
+    .dropzone-icon {
+      color: $vivid_red;
+    }
   }
 
   &.active {
@@ -114,6 +118,7 @@
 .dropzone-icon {
   font-size: 48px;
   color: #9ca3af;
+  transition: color 0.2s ease;
 }
 
 .dropzone-label {
@@ -213,11 +218,29 @@
 
 .legislation-upload-file-modal__footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 12px;
   margin-top: $spacing-lg;
   padding-top: $spacing-lg;
   border-top: 1px solid #e5e7eb;
+}
+
+.legislation-upload-file-modal__footer .upload-now-btn {
+  background: #262626;
+  color: #fff;
+  padding: 10px 30px;
+  height: 55px;
+  width: fit-content;
+  font-size: 16px;
+  font-weight: 300;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
 .btn {

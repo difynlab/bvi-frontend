@@ -67,6 +67,19 @@
   }
 }
 
+.communications-playbook-pdf-viewer--loading {
+  width: 100%;
+  min-height: 480px;
+  background: #e5e5e5;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #666;
+  font-size: 15px;
+}
+
 .communications-playbook-header-actions {
   display: flex;
   flex-direction: row;

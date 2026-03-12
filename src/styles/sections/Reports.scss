@@ -653,8 +653,9 @@
 
 .report-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   padding: 16px 20px;
   background: #fff;
   border: 1px solid #eee;
@@ -688,6 +689,9 @@
   display: flex;
   gap: 10px;
   flex-shrink: 0;
+  width: 100%;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .btn-edit {

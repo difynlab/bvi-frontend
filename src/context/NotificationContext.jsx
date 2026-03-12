@@ -182,7 +182,7 @@ export const NotificationProvider = ({ children }) => {
 
       pollingIntervalRef.current = setInterval(() => {
         loadNotifications()
-      }, 10000)
+      }, 60000)
 
       return () => {
         if (pollingIntervalRef.current) {

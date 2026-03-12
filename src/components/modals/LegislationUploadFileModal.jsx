@@ -62,11 +62,11 @@ const LegislationUploadFileModal = ({
   };
 
   const handleFileSelect = (file) => {
-    const maxSize = 5 * 1024 * 1024;
+    const maxSize = 20 * 1024 * 1024;
     const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
 
     if (file.size > maxSize) {
-      setErrors({ file: 'File size must be less than 5MB' });
+      setErrors({ file: 'File size must be less than 20MB' });
       return;
     }
 
@@ -351,7 +351,7 @@ const LegislationUploadFileModal = ({
           ) : (
             <div className="form-group">
               <label htmlFor="pdf-file-dropzone">File</label>
-              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>PDF, PNG, JPG, JPEG. Maximum file size: 5 MB.</p>
+              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>PDF, PNG, JPG, JPEG. Maximum file size: 20 MB.</p>
               <div
                 id="pdf-file-dropzone"
                 className={`legislation-upload-file-dropzone ${dragActive ? 'active' : ''}`}
@@ -418,7 +418,6 @@ const LegislationUploadFileModal = ({
                     >
                       Browse File
                     </button>
-                    <p className="dropzone-hint">PDF, PNG, JPG (max 5MB)</p>
                   </div>
                 )}
               </div>
@@ -436,15 +435,7 @@ const LegislationUploadFileModal = ({
         <div className="legislation-upload-file-modal__footer">
           <button
             type="button"
-            className="btn btn-secondary"
-            onClick={handleClose}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
+            className="upload-now-btn"
             onClick={handleSubmit}
             disabled={
               isSubmitting ||

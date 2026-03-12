@@ -247,7 +247,6 @@ const UploadMediaModal = ({ isOpen, onClose, onUploadSuccess, maxFileSize = 5120
                   >
                     Browse Files
                   </button>
-                  <p className="dropzone-hint">You can select multiple images</p>
                 </div>
               </div>
 
@@ -282,15 +281,7 @@ const UploadMediaModal = ({ isOpen, onClose, onUploadSuccess, maxFileSize = 5120
               <div className="gallery-upload-submit-container">
                 <button
                   type="button"
-                  className="gallery-upload-cancel-btn"
-                  onClick={handleClose}
-                  disabled={uploading}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="gallery-upload-submit-btn"
+                  className="upload-now-btn"
                   onClick={handleSubmit}
                   disabled={!canSubmitImages}
                 >
@@ -310,9 +301,6 @@ const UploadMediaModal = ({ isOpen, onClose, onUploadSuccess, maxFileSize = 5120
                   placeholder="https://www.youtube.com/watch?v=..."
                   className="gallery-upload-video-input"
                 />
-                <p className="gallery-upload-video-hint">
-                  Enter a YouTube video URL (e.g., https://www.youtube.com/watch?v=... or https://youtu.be/...)
-                </p>
               </div>
 
               {uploading && (
@@ -325,15 +313,7 @@ const UploadMediaModal = ({ isOpen, onClose, onUploadSuccess, maxFileSize = 5120
               <div className="gallery-upload-submit-container">
                 <button
                   type="button"
-                  className="gallery-upload-cancel-btn"
-                  onClick={handleClose}
-                  disabled={uploading}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="gallery-upload-submit-btn"
+                  className="upload-now-btn"
                   onClick={handleSubmit}
                   disabled={!canSubmitVideo}
                 >

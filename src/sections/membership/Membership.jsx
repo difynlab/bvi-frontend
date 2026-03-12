@@ -170,6 +170,7 @@ const Membership = () => {
     per_page: 10,
     total: 0
   });
+  const [paginationStart, setPaginationStart] = useState(1);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -765,7 +766,7 @@ const Membership = () => {
     setPagination(prev => {
       // Only update if last_page or total changed, or if current page is beyond last page
       if (prev.last_page === lastPage && prev.total === totalFiltered && prev.current_page <= lastPage) {
-        return prev; // No change needed
+        return prev;
       }
       
       // Reset to page 1 if current page is beyond last page
@@ -780,6 +781,39 @@ const Membership = () => {
       };
     });
   }, [filteredMembers.length]);
+  
+  const totalPages = pagination.last_page || 1;
+  const visiblePages = useMemo(() => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const endPage = Math.min(paginationStart + 4, totalPages);
+    return Array.from({ length: endPage - paginationStart + 1 }, (_, i) => paginationStart + i);
+  }, [totalPages, paginationStart]);
+  useEffect(() => {
+    if (totalPages <= 5) {
+      setPaginationStart(1);
+    } else {
+      if (pagination.current_page < paginationStart) {
+        setPaginationStart(pagination.current_page);
+      } else if (pagination.current_page > paginationStart + 4) {
+        setPaginationStart(pagination.current_page - 4);
+      }
+    }
+  }, [pagination.current_page, totalPages, paginationStart]);
+  const showLeftArrow = totalPages > 5 && paginationStart > 1;
+  const showRightArrow = totalPages > 5;
+  const isRightArrowDisabled = totalPages > 5 && paginationStart + 4 >= totalPages;
+  const handlePreviousPages = () => {
+    if (pagination.current_page > 1) {
+      changePage(pagination.current_page - 1);
+    }
+  };
+  const handleNextPages = () => {
+    if (pagination.current_page < totalPages) {
+      changePage(pagination.current_page + 1);
+    }
+  };
   
   // Check if search has no results
   const hasSearchNoResults = searchTerm.trim() && filteredMembers.length === 0;
@@ -908,8 +942,8 @@ const Membership = () => {
       <div className="membership-container">
         <div className="membership-header">
           <div className="membership-header-title">
-            <h1>Membership</h1>
-            <p>Manage membership details</p>
+            <h1>{isAdmin(user) ? 'Memberships' : 'Membership'}</h1>
+            <p>{isAdmin(user) ? 'Manage memberships details' : 'Manage membership details'}</p>
           </div>
         </div>
 
@@ -1310,23 +1344,39 @@ const Membership = () => {
                 {/* Pagination - identical to Events, positioned bottom right */}
                 {!adminLoading && filteredMembers.length > 0 && pagination.last_page > 1 && (
                   <div className="events-pagination">
-                    <button 
-                      className="prev-btn"
-                      onClick={() => changePage(pagination.current_page - 1)}
-                      disabled={pagination.current_page <= 1}
-                    >
-                      <i className="bi bi-chevron-left"></i>
-                    </button>
-                    <div className="page-counter">
-                      <span>{pagination.current_page} / {pagination.last_page}</span>
+                    <div className="pagination__buttons">
+                      {showLeftArrow && (
+                        <button
+                          className="pagination__arrow"
+                          type="button"
+                          onClick={handlePreviousPages}
+                          aria-label="Previous pages"
+                        >
+                          <i className="bi bi-chevron-left" aria-hidden="true"></i>
+                        </button>
+                      )}
+                      {visiblePages.map((page) => (
+                        <button
+                          key={page}
+                          className={`pagination__button ${pagination.current_page === page ? 'pagination__button--active' : ''}`}
+                          type="button"
+                          onClick={() => changePage(page)}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                      {showRightArrow && (
+                        <button
+                          className="pagination__arrow"
+                          type="button"
+                          onClick={handleNextPages}
+                          disabled={isRightArrowDisabled}
+                          aria-label="Next pages"
+                        >
+                          <i className="bi bi-chevron-right" aria-hidden="true"></i>
+                        </button>
+                      )}
                     </div>
-                    <button 
-                      className="next-btn"
-                      onClick={() => changePage(pagination.current_page + 1)}
-                      disabled={pagination.current_page >= pagination.last_page}
-                    >
-                      <i className="bi bi-chevron-right"></i>
-                    </button>
                   </div>
                 )}
                   </Card>
