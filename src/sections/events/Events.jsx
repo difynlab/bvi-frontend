@@ -107,6 +107,7 @@ export const Events = () => {
 
   const [missingRequired, setMissingRequired] = useState([]);
   const bannerRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   function validateRequired() {
     const missing = REQUIRED.filter(r => !r.test()).map(r => r.label);
@@ -1080,8 +1081,12 @@ export const Events = () => {
 
   const handleRegister = () => {
     try {
-      // TODO BACKEND: Implement registration
-      closeRegisterModal()
+      const link = (registeringEvent?.register_link || '').trim()
+      if (link) {
+        window.open(link, '_blank', 'noopener,noreferrer')
+      } else {
+        closeRegisterModal()
+      }
     } catch (error) {
       console.error('Error in handleRegister:', error)
       alert('An error occurred while registering')
@@ -1109,6 +1114,12 @@ export const Events = () => {
     const file = e.dataTransfer.files[0]
     if (file) {
       eventForm.setFileFromDrop(file)
+    }
+  }
+
+  const handleBrowseClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click()
     }
   }
 
@@ -1454,23 +1465,35 @@ export const Events = () => {
                     onDrop={handleDrop}
                   >
                     <input
+                      ref={fileInputRef}
                       type="file"
                       id="file"
                       accept="image/*"
                       onChange={handleFileInputChange}
                       className="hidden-file-input"
                     />
-                    <label htmlFor="file" className="file-input-label">
-                      Choose file
-                    </label>
-                    <p className="file-status">
-                      {eventForm.form.imageFileName || 'No file chosen'}
-                    </p>
                     {eventForm.form.imagePreviewUrl && (
                       <div className="image-preview">
                         <img src={eventForm.form.imagePreviewUrl} alt="Preview" />
                       </div>
                     )}
+                    {!eventForm.form.imagePreviewUrl && (
+                      <div className="dropzone-content">
+                        <i className="bi bi-cloud-upload dropzone-icon" aria-hidden="true"></i>
+                        <p className="dropzone-label">Drag and drop file here</p>
+                        <p className="dropzone-separator">or</p>
+                        <button
+                          type="button"
+                          className="dropzone-browse"
+                          onClick={handleBrowseClick}
+                        >
+                          Browse File
+                        </button>
+                      </div>
+                    )}
+                    <p className="file-status">
+                      {eventForm.form.imageFileName || 'No file chosen'}
+                    </p>
                   </div>
                 </div>
 

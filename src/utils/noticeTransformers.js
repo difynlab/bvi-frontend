@@ -1,6 +1,5 @@
 import { compressImage } from './imageCompression'
 
-// TODO PRODUCTION: CHANGE IMAGES - Remove localStorage strategy and use server URLs
 const NOTICES_IMAGES_KEY = 'bvi.notices.images'
 
 // Función para obtener imágenes de notices desde localStorage
@@ -39,7 +38,6 @@ const saveNoticesImagesToStorage = (imagesData) => {
   }
 }
 
-// TODO PRODUCTION: CHANGE IMAGES - Uncomment this function and use server URLs
 const buildImageUrl = (thumbnail) => {
   if (!thumbnail) return ''
   
@@ -70,7 +68,6 @@ const cleanImageUrl = (url) => {
   return url
 }
 
-// TODO PRODUCTION: CHANGE IMAGES - Uncomment this function and use server URLs
 const buildBlurredImageUrl = (blurredThumbnail) => {
   if (!blurredThumbnail) return ''
   
@@ -84,7 +81,6 @@ const buildBlurredImageUrl = (blurredThumbnail) => {
   return `${apiBaseURL}/storage/notices/${blurredThumbnail}`
 }
 
-// Mapeo de campos entre frontend y backend
 const FIELD_MAPPINGS = {
   frontendToBackend: {
     id: 'id',
@@ -113,7 +109,6 @@ const FIELD_MAPPINGS = {
   }
 }
 
-// Mapeo de valores específicos
 const VALUE_MAPPINGS = {
   frontendToBackend: {
     status: (value) => value === 1 ? 1 : 0
@@ -123,7 +118,6 @@ const VALUE_MAPPINGS = {
   }
 }
 
-// Función para transformar objeto usando mapeos
 const transformObject = (obj, fieldMapping, valueMapping) => {
   const result = {}
   
@@ -143,7 +137,22 @@ const transformObject = (obj, fieldMapping, valueMapping) => {
   return result
 }
 
-// Transformar datos del frontend al backend
+const extractFirstParagraph = (html) => {
+  if (!html || typeof html !== 'string') return ''
+  try {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
+    const firstParagraph = doc.querySelector('p')
+    if (firstParagraph) {
+      return firstParagraph.textContent ? firstParagraph.textContent.trim() : ''
+    }
+    const plainText = html.replace(/<[^>]+>/g, '').trim()
+    return plainText
+  } catch (error) {
+    return html.replace(/<[^>]+>/g, '').trim()
+  }
+}
+
 export const transformToBackend = (frontendNotice, isEdit = false) => {
   const baseData = transformObject(
     frontendNotice,
@@ -151,11 +160,17 @@ export const transformToBackend = (frontendNotice, isEdit = false) => {
     VALUE_MAPPINGS.frontendToBackend
   )
 
-  // Build description as JSON string (same pattern as events)
-  if (frontendNotice.description && frontendNotice.editorHtml) {
+  if (frontendNotice.editorHtml) {
     const descriptionContent = {
       descriptionHtml: frontendNotice.editorHtml,
-      descriptionText: frontendNotice.description
+      descriptionText: extractFirstParagraph(frontendNotice.editorHtml)
+    }
+    baseData.description = JSON.stringify(descriptionContent)
+  } else if (frontendNotice.description) {
+    const descriptionString = String(frontendNotice.description)
+    const descriptionContent = {
+      descriptionHtml: descriptionString,
+      descriptionText: descriptionString.replace(/<[^>]+>/g, '').trim()
     }
     baseData.description = JSON.stringify(descriptionContent)
   }
@@ -163,7 +178,6 @@ export const transformToBackend = (frontendNotice, isEdit = false) => {
   return baseData
 }
 
-// Transformar datos del backend al frontend
 export const transformFromBackend = (backendNotice) => {
   const frontendNotice = transformObject(
     backendNotice,
@@ -171,21 +185,15 @@ export const transformFromBackend = (backendNotice) => {
     VALUE_MAPPINGS.backendToFrontend
   )
 
-  // TODO PRODUCTION: CHANGE IMAGES - Use server URLs instead of localStorage
-  // Handle new image structure with blurred and original thumbnails
-  // PRIORITY: localStorage first, then server URLs
   const noticeId = backendNotice.id
 
-  // Try to get images from localStorage first (PRIORITY)
   const localStorageOriginal = getNoticeImageFromLocalStorage(noticeId, 'original')
   const localStorageBlurred = getNoticeImageFromLocalStorage(noticeId, 'blurred')
 
-  // Always prioritize localStorage over server URLs
   if (localStorageOriginal) {
     frontendNotice.original_thumbnail = localStorageOriginal
     frontendNotice.imagePreviewUrl = localStorageOriginal
   } else {
-    // Fallback to server URLs only if localStorage doesn't have the image
     frontendNotice.original_thumbnail = cleanImageUrl(buildImageUrl(backendNotice.original_thumbnail || backendNotice.thumbnail))
     frontendNotice.imagePreviewUrl = cleanImageUrl(buildImageUrl(backendNotice.thumbnail))
   }
@@ -193,29 +201,26 @@ export const transformFromBackend = (backendNotice) => {
   if (localStorageBlurred) {
     frontendNotice.blurred_thumbnail = localStorageBlurred
   } else {
-    // Fallback to server URLs
     frontendNotice.blurred_thumbnail = cleanImageUrl(buildBlurredImageUrl(backendNotice.blurred_thumbnail))
   }
 
-  // Parse JSON description if it exists, otherwise use legacy fields
   if (backendNotice.description) {
     try {
       const parsedDescription = JSON.parse(backendNotice.description)
       if (parsedDescription.descriptionHtml && parsedDescription.descriptionText) {
         frontendNotice.editorHtml = parsedDescription.descriptionHtml
         frontendNotice.description = parsedDescription.descriptionText
+        frontendNotice.descriptionText = parsedDescription.descriptionText
+        frontendNotice.descriptionHTML = parsedDescription.descriptionHtml
       } else {
-        // Fallback to plain description
         frontendNotice.description = backendNotice.description
         frontendNotice.editorHtml = ''
       }
     } catch (error) {
-      // If JSON parsing fails, treat as plain text
       frontendNotice.description = backendNotice.description
       frontendNotice.editorHtml = ''
     }
   } else {
-    // Legacy fallback
     frontendNotice.editorHtml = backendNotice.editorHtml || ''
     frontendNotice.description = backendNotice.description || ''
   }

@@ -793,7 +793,7 @@ const Newsletters = () => {
                               className="edit-btn"
                               onClick={() => openModal(newsletter)}
                             >
-                              Edit Newsletter
+                              Edit details
                             </button>
                           )}
                         </div>
@@ -958,9 +958,20 @@ const Newsletters = () => {
                       onChange={setFileFromInput}
                       className="hidden-file-input"
                     />
-                    <label htmlFor="file" className="file-input-label">
-                      Choose file
-                    </label>
+                    {!form.imagePreviewUrl && !form.imageFileName && (
+                      <div className="dropzone-content">
+                        <i className="bi bi-cloud-upload dropzone-icon" aria-hidden="true"></i>
+                        <p className="dropzone-label">Drag and drop file here</p>
+                        <p className="dropzone-separator">or</p>
+                        <button
+                          type="button"
+                          className="dropzone-browse"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          Browse File
+                        </button>
+                      </div>
+                    )}
                     <p className="file-status">
                       {form.imageFileName || 'No file chosen'}
                       {editingNewsletter && form.imageFileName && (

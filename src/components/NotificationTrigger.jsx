@@ -1,7 +1,10 @@
 import React from 'react'
 import '../styles/components/NotificationDropdown.scss'
 
+const MAX_BADGE = 99
+
 const NotificationTrigger = ({ isOpen, unreadCount, onToggle }) => {
+  const displayCount = unreadCount > MAX_BADGE ? `${MAX_BADGE}+` : unreadCount
   return (
     <button 
       className={`notification-trigger ${isOpen ? 'active' : ''}`}
@@ -10,7 +13,7 @@ const NotificationTrigger = ({ isOpen, unreadCount, onToggle }) => {
     >
       <i className="bi bi-bell"></i>
       {unreadCount > 0 && (
-        <span className="notification-badge">{unreadCount}</span>
+        <span className="notification-badge">{displayCount}</span>
       )}
     </button>
   )

@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useNotifications } from '../context/NotificationContext'
 import '../styles/components/NotificationDropdown.scss'
 
+const MAX_BADGE = 99
+
 const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -12,6 +14,7 @@ const NotificationDropdown = () => {
     markAllAsRead, 
     removeNotification 
   } = useNotifications()
+  const displayCount = unreadCount > MAX_BADGE ? `${MAX_BADGE}+` : unreadCount
 
   // Detectar si es mobile
   const [isMobile, setIsMobile] = useState(() => {
@@ -181,7 +184,7 @@ const NotificationDropdown = () => {
       >
         <i className="bi bi-bell"></i>
         {unreadCount > 0 && (
-          <span className="notification-badge">{unreadCount}</span>
+          <span className="notification-badge">{displayCount}</span>
         )}
       </button>
 

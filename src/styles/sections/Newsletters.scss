@@ -325,16 +325,6 @@
   }
 }
 
-// Dropzone empty-state background (scoped)
-.newsletters-container,
-.newsletters-modal {
-  .dropzone-surface[data-has-file="false"] {
-    background-image: url('/dropzone.png');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: cover;
-  }
-}
 
 .newsletters-header {
   display: flex;
@@ -658,17 +648,77 @@
     cursor: pointer;
   }
 
-  .file-upload-area {
-    border: 2px dashed #ced4da;
+  .file-upload-area,
+  .file-upload-area.dropzone-surface {
+    border: 2px dashed #d1d5db;
     border-radius: 8px;
-    padding: 24px;
+    padding: 40px 20px;
     text-align: center;
-    transition: border-color 0.2s;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #f9fafb;
+    background-image: none;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     width: 100%;
+
+    &:hover {
+      border-color: $vivid_red;
+      background: #fef2f2;
+      background-image: none;
+
+      .dropzone-icon {
+        color: $vivid_red;
+      }
+    }
+
+    &[data-has-file='true'] {
+      border-color: #10b981;
+      background: #f0fdf4;
+      padding: 20px;
+      min-height: auto;
+    }
   }
 
-  .file-upload-area:hover {
-    border-color: $vivid_blue;
+  .dropzone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dropzone-icon {
+    font-size: 48px;
+    color: #9ca3af;
+    transition: color 0.2s ease;
+  }
+
+  .dropzone-label {
+    font-size: 1rem;
+    color: #374151;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  .dropzone-separator {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  .dropzone-browse {
+    background: $vivid_red;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
   }
 
   .hidden-file-input {
@@ -687,8 +737,9 @@
     display: inline-block;
   }
 
-  .file-status {
-    margin: 8px 0;
+  .file-upload-area .file-status {
+    margin-top: 10px;
+    margin-bottom: 0;
     font-size: 14px;
     color: #6c757d;
   }

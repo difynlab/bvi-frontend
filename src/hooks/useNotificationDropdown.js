@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useNotifications } from '../context/NotificationContext'
 
 export const useNotificationDropdown = () => {
+  const location = useLocation()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
   const { 
@@ -9,8 +11,21 @@ export const useNotificationDropdown = () => {
     unreadCount, 
     markAsRead, 
     markAllAsRead, 
-    removeNotification 
+    removeNotification,
+    refreshNotifications
   } = useNotifications()
+
+  const prevPathRef = useRef(location.pathname)
+  useEffect(() => {
+    if (prevPathRef.current !== location.pathname) {
+      prevPathRef.current = location.pathname
+      refreshNotifications()
+    }
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (isOpen) refreshNotifications()
+  }, [isOpen])
 
   // Detectar si es mobile
   const [isMobile, setIsMobile] = useState(() => {
@@ -137,6 +152,7 @@ export const useNotificationDropdown = () => {
   }, [isMobile, isOpen])
 
   const handleToggle = () => {
+    if (!isOpen) refreshNotifications()
     setIsOpen(!isOpen)
   }
 

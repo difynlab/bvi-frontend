@@ -421,6 +421,7 @@ export const Notices = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const bannerRef = useRef(null)
   const [contentType, setContentType] = useState('link')
+  const fileInputRef = useRef(null)
 
   // Required fields validation
   const REQUIRED = [
@@ -528,6 +529,12 @@ export const Notices = () => {
     const file = e.dataTransfer.files[0]
     if (file) {
       noticeForm.setFileFromDrop(file)
+    }
+  }
+
+  const handleBrowseClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click()
     }
   }
 
@@ -934,7 +941,7 @@ export const Notices = () => {
                               className="edit-btn"
                               onClick={() => openEditNotice(notice)}
                             >
-                              Edit Notice
+                              Edit details
                             </button>
                           )}
                           <button
@@ -1176,6 +1183,7 @@ export const Notices = () => {
                       onDrop={handleDrop}
                     >
                       <input
+                        ref={fileInputRef}
                         type="file"
                         id="file"
                         name="file"
@@ -1183,9 +1191,20 @@ export const Notices = () => {
                         onChange={handleFileInputChange}
                         className="hidden-file-input"
                       />
-                      <label htmlFor="file" className="file-input-label">
-                        Choose file
-                      </label>
+                      {!noticeForm.form.imageFileName && (
+                        <div className="dropzone-content">
+                          <i className="bi bi-cloud-upload dropzone-icon" aria-hidden="true"></i>
+                          <p className="dropzone-label">Drag and drop file here</p>
+                          <p className="dropzone-separator">or</p>
+                          <button
+                            type="button"
+                            className="dropzone-browse"
+                            onClick={handleBrowseClick}
+                          >
+                            Browse File
+                          </button>
+                        </div>
+                      )}
                       <p className="file-status">
                         {noticeForm.form.imageFileName || 'No file chosen'}
                         {editingNotice && noticeForm.form.imageFileName && (

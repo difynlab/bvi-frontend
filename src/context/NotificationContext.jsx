@@ -3,6 +3,29 @@ import { useAuth } from './useAuth'
 import notificationsService from '../services/notificationsService'
 
 const NotificationContext = createContext()
+const NOTIFICATIONS_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
+const SESSION_STORAGE_REMOVED_KEY = 'bvi_notification_removed'
+
+const getStableId = (n) => `${n.type}-${n.data?.id ?? n.id}`
+
+const getRemovedIds = () => {
+  try {
+    const raw = sessionStorage.getItem(SESSION_STORAGE_REMOVED_KEY)
+    if (!raw) return new Set()
+    const arr = JSON.parse(raw)
+    return new Set(Array.isArray(arr) ? arr : [])
+  } catch {
+    return new Set()
+  }
+}
+
+const addToRemovedIds = (stableId) => {
+  try {
+    const set = getRemovedIds()
+    set.add(stableId)
+    sessionStorage.setItem(SESSION_STORAGE_REMOVED_KEY, JSON.stringify([...set]))
+  } catch {}
+}
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext)
@@ -122,11 +145,16 @@ const normalizeApiResponse = (data, isAdmin) => {
     }
   }
 
-  const unreadCount = data.data?.counts?.total || 0
+  const cutoff = Date.now() - NOTIFICATIONS_MAX_AGE_MS
+  const withinWeek = normalizedNotifications.filter(n => {
+    const ts = n.timestamp ? new Date(n.timestamp).getTime() : 0
+    return ts >= cutoff
+  })
+  const unreadCount = withinWeek.filter(n => !n.read).length
 
   return {
-    notifications: normalizedNotifications,
-    unreadCount: unreadCount
+    notifications: withinWeek,
+    unreadCount
   }
 }
 
@@ -137,7 +165,6 @@ export const NotificationProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
-  const pollingIntervalRef = useRef(null)
   const isAdmin = user?.role === 'admin'
 
   const loadNotifications = async () => {
@@ -160,8 +187,11 @@ export const NotificationProvider = ({ children }) => {
       
       if (response && response.data) {
         const normalized = normalizeApiResponse(response, currentIsAdmin)
-        setNotifications(normalized.notifications)
-        setUnreadCount(normalized.unreadCount)
+        const removed = getRemovedIds()
+        const filtered = normalized.notifications.filter(n => !removed.has(getStableId(n)))
+        const count = filtered.filter(n => !n.read).length
+        setNotifications(filtered)
+        setUnreadCount(count)
       } else {
         setNotifications([])
         setUnreadCount(0)
@@ -177,26 +207,22 @@ export const NotificationProvider = ({ children }) => {
   }
 
   useEffect(() => {
-    if (user) {
-      loadNotifications()
-
-      pollingIntervalRef.current = setInterval(() => {
-        loadNotifications()
-      }, 60000)
-
-      return () => {
-        if (pollingIntervalRef.current) {
-          clearInterval(pollingIntervalRef.current)
-        }
-      }
-    } else {
+    if (!user) {
       setNotifications([])
       setUnreadCount(0)
       setIsLoading(false)
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current)
-      }
+      return
     }
+    loadNotifications()
+  }, [user?.id, user?.role])
+
+  useEffect(() => {
+    if (!user) return
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') loadNotifications()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [user?.id, user?.role])
 
   const addNotification = (notification) => {
@@ -211,11 +237,14 @@ export const NotificationProvider = ({ children }) => {
   }
 
   const markAsRead = (notificationId) => {
-    setNotifications(prev => 
-      prev.map(n => 
+    setNotifications(prev => {
+      const found = prev.find(n => n.id === notificationId)
+      const wasUnread = found && !found.read
+      if (wasUnread) setUnreadCount(c => Math.max(0, c - 1))
+      return prev.map(n => 
         n.id === notificationId ? { ...n, read: true } : n
       )
-    )
+    })
   }
 
   const markAllAsRead = async () => {
@@ -236,7 +265,14 @@ export const NotificationProvider = ({ children }) => {
   }
 
   const removeNotification = (notificationId) => {
-    setNotifications(prev => prev.filter(n => n.id !== notificationId))
+    setNotifications(prev => {
+      const removed = prev.find(n => n.id === notificationId)
+      if (removed) {
+        addToRemovedIds(getStableId(removed))
+        if (!removed.read) setUnreadCount(c => Math.max(0, c - 1))
+      }
+      return prev.filter(n => n.id !== notificationId)
+    })
   }
 
   const value = {

@@ -67,40 +67,24 @@ export const ForgetPassword = () => {
         <div className="forget-password-container">
           <div className="success-message">
             <h1 className="success-title">Reset Your Password</h1>
-            {resetUrl ? (
-              <>
-                <p className="success-text-primary">
-                  Click the button below to reset your password
-                </p>
-                <div className="reset-link-container">
-                  <NavLink to={resetUrl} className="reset-link-button">
-                    Reset Password Now
-                  </NavLink>
-                </div>
-                <p className="success-text-secondary">
-                  We've also sent a reset link to <strong>{email}</strong>
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="success-text">
-                  We've sent a password reset link to <strong>{email}</strong>
-                </p>
-                <p className="success-instructions">
-                  Please check your email and click the link to reset your password.
-                </p>
-              </>
-            )}
+            <p className="success-text-primary">
+              Please check the inbox of your email address <strong>{email}</strong>
+              <br />
+              and follow the password reset instructions.
+            </p>
             <div className="success-actions">
-              <button 
-                onClick={() => {
-                  setIsEmailSent(false)
-                  setResetUrl('')
-                }}
-                className="resend-button"
-              >
-                Send Another Email
-              </button>
+              <p className="success-text-secondary">
+                Didn't receive the email?{' '}
+                <span
+                  className="success-resend-text"
+                  onClick={() => {
+                    setIsEmailSent(false)
+                    setResetUrl('')
+                  }}
+                >
+                  <strong>Send new mail</strong>
+                </span>
+              </p>
               <NavLink to="/login" className="back-to-login">
                 Back to Login
               </NavLink>
@@ -120,9 +104,9 @@ export const ForgetPassword = () => {
           <div className="auth-logo">
             <img src="/BVI-logo.png" alt="BVI Finance Logo" />
           </div>
-          <h1 className="forget-password-title">Forgot your password?</h1>
+          <h1 className="forget-password-title">Reset Your Password</h1>
           <p className="forget-password-subtitle">
-            Don't worry! Resetting your password is easy. Just type in the email<span>you registered to Warehouse Exchange.</span>
+            Please enter your registered email address to receive password reset instructions.
           </p>
           
           <form onSubmit={handleSubmit} className="forget-password-form">
@@ -137,7 +121,6 @@ export const ForgetPassword = () => {
                 disabled={isLoading}
                 className="auth-input"
               />
-              {error && <span className="error-message">{error}</span>}
             </div>
             
             <button 
@@ -152,6 +135,7 @@ export const ForgetPassword = () => {
           <p className="remember-password">
             Did you remember your password? <NavLink to="/login" className="login-link">Try logging in</NavLink>
           </p>
+          {error && <div className="forget-password-error-banner">{error}</div>}
         </div>
       </div>
     </div>

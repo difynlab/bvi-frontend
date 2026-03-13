@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../context/useAuth';
 import { can } from '../../auth/acl';
 import { useReportsState } from '../../hooks/useReportsState';
@@ -81,6 +81,19 @@ export default function Reports() {
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const [reportError, setReportError] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleFileDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleFileDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer?.files?.[0];
+    if (file) reportForm.setFile(file);
+  };
 
   // Effect to preload category name when editing
   useEffect(() => {
@@ -596,13 +609,23 @@ export default function Reports() {
                   </div>
                   <div className="report-actions">
                     {can(user, 'reports:delete') && (
-                      <button type="button" className="btn-delete" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.name}`}>
-                        Delete
+                      <button
+                        type="button"
+                        className="btn-delete"
+                        onClick={() => handleDeleteReport(r.id)}
+                        aria-label={`Delete ${r.name}`}
+                      >
+                        <i className="bi bi-trash"></i>
                       </button>
                     )}
                     {can(user, 'reports:create') && (
-                      <button type="button" className="btn-edit" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.name}`}>
-                        Edit Publication
+                      <button
+                        type="button"
+                        className="btn-edit"
+                        onClick={() => openEditReportModal(r)}
+                        aria-label={`Edit ${r.name}`}
+                      >
+                        Edit details
                       </button>
                     )}
                     {hasLink && (
@@ -623,8 +646,13 @@ export default function Reports() {
                     <div className="report-actions-mobile">
                       <div className="report-actions-mobile__row report-actions-mobile__row--primary">
                         {can(user, 'reports:delete') && (
-                          <button type="button" className="btn-delete-mobile" onClick={() => handleDeleteReport(r.id)} aria-label={`Delete ${r.name}`}>
-                            Delete
+                          <button
+                            type="button"
+                            className="btn-delete-mobile"
+                            onClick={() => handleDeleteReport(r.id)}
+                            aria-label={`Delete ${r.name}`}
+                          >
+                            <i className="bi bi-trash"></i>
                           </button>
                         )}
                         {can(user, 'reports:create') && (
@@ -806,15 +834,15 @@ export default function Reports() {
             onPointerDown={reportModalBackdropClose.stopInsidePointer}
             onClick={reportModalBackdropClose.stopInsidePointer}
           >
+            <button
+              className="close-btn"
+              onClick={closeReportModalWithReset}
+            >
+              <i className="bi bi-x-lg"></i>
+            </button>
             <div className="reports-modal-header">
               <h2>Upload Publications</h2>
               <p>Please upload the publications you'd like to store or manage in your account</p>
-              <button
-                className="close-btn"
-                onClick={closeReportModalWithReset}
-              >
-                <i className="bi bi-x-lg"></i>
-              </button>
             </div>
 
             <form onSubmit={handleReportSubmit}>
@@ -904,8 +932,15 @@ export default function Reports() {
               <div className="form-group">
                 <label htmlFor="file">File Upload</label>
                 <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666', opacity: 0.7 }}>Only PDF files are supported. Maximum file size: 15 MB.</p>
-                <div className="file-upload-area">
+                <div
+                  className="file-upload-area dropzone-surface"
+                  data-has-file={Boolean(reportForm.form.imagePreviewUrl || reportForm.form.fileName)}
+                  onDragOver={handleFileDragOver}
+                  onDragLeave={(e) => e.preventDefault()}
+                  onDrop={handleFileDrop}
+                >
                   <input
+                    ref={fileInputRef}
                     type="file"
                     id="file"
                     name="file"
@@ -913,9 +948,20 @@ export default function Reports() {
                     onChange={(e) => reportForm.setFile(e.target.files?.[0])}
                     className="hidden-file-input"
                   />
-                  <label htmlFor="file" className="file-input-label">
-                    Choose file
-                  </label>
+                  {!reportForm.form.imagePreviewUrl && !reportForm.form.fileName && (
+                    <div className="dropzone-content">
+                      <i className="bi bi-cloud-upload dropzone-icon" aria-hidden="true"></i>
+                      <p className="dropzone-label">Drag and drop file here</p>
+                      <p className="dropzone-separator">or</p>
+                      <button
+                        type="button"
+                        className="dropzone-browse"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Browse File
+                      </button>
+                    </div>
+                  )}
                   <p className="file-status">
                     {reportForm.form.fileName || 'No file chosen'}
                     {editingReport && reportForm.form.fileName && (

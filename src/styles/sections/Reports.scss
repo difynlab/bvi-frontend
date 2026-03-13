@@ -787,20 +787,32 @@
   }
 
   .close-btn {
-    position: absolute;
-    top: 40px;
-    right: 40px;
+    position: sticky;
+    top: 20px;
+    float: right;
     background: none;
     border: 0;
     cursor: pointer;
     color: #999;
     font-size: 18px;
     padding: 4px;
-    border-radius: 4px;
+    line-height: 1;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: -40px;
+    margin-left: calc(100% - 60px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: color 0.2s ease;
 
     &:hover {
       color: #333;
+      background-color: #f9fafb;
     }
   }
 
@@ -842,22 +854,83 @@
     margin-top: 4px;
   }
   
-  .file-upload-area {
-    border: 2px dashed #ddd;
+  .file-upload-area,
+  .file-upload-area.dropzone-surface {
+    border: 2px dashed #d1d5db;
     border-radius: 8px;
-    padding: 20px;
+    padding: 40px 20px;
     text-align: center;
-    transition: border-color 0.2s ease;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #f9fafb;
+    background-image: none;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+
+    &:hover {
+      border-color: $vivid_red;
+      background: #fef2f2;
+      background-image: none;
+
+      .dropzone-icon {
+        color: $vivid_red;
+      }
+    }
+
+    &[data-has-file='true'] {
+      border-color: #10b981;
+      background: #f0fdf4;
+      padding: 20px;
+      min-height: auto;
+    }
   }
-  
-  .file-upload-area:hover {
-    border-color: #262626;
+
+  .dropzone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
   }
-  
+
+  .dropzone-icon {
+    font-size: 48px;
+    color: #9ca3af;
+    transition: color 0.2s ease;
+  }
+
+  .dropzone-label {
+    font-size: 1rem;
+    color: #374151;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  .dropzone-separator {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  .dropzone-browse {
+    background: $vivid_red;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
   .hidden-file-input {
     display: none;
   }
-  
+
   .file-input-label {
     display: inline-block;
     background: #262626;
@@ -869,15 +942,16 @@
     font-weight: 500;
     transition: background-color 0.2s ease;
   }
-  
+
   .file-input-label:hover {
     background: #1a1a1a;
   }
-  
-  .file-status {
-    margin: 8px 0 0 0;
+
+  .file-upload-area .file-status {
+    margin-top: 10px;
+    margin-bottom: 0;
     font-size: 12px;
-    
+
     .existing-file-indicator {
       color: #059669;
       font-weight: 500;
@@ -922,6 +996,7 @@
   color: #1a1a1a;
   width: 100%;
   box-sizing: border-box;
+  text-align: center;
 }
 
 .reports-modal-header p {
@@ -1276,6 +1351,23 @@
   .reports-modal {
     width: 95%;
     margin: 20px;
+
+    .close-btn {
+      position: absolute !important;
+      top: 20px;
+      right: 20px;
+      float: none !important;
+      margin-bottom: 0;
+      margin-left: 0 !important;
+      background-color: #ffffff;
+      border-radius: 50%;
+      z-index: 10;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   }
 
   /* Hide desktop button on mobile */

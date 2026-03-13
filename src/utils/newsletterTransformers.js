@@ -178,21 +178,15 @@ export const transformFromBackend = (backendNewsletter) => {
     VALUE_MAPPINGS.backendToFrontend
   )
 
-  // TODO PRODUCTION: CHANGE IMAGES - Use server URLs instead of localStorage
-  // Handle new image structure with blurred and original thumbnails
-  // PRIORITY: localStorage first, then server URLs
   const newsletterId = backendNewsletter.id
 
-  // Try to get images from localStorage first (PRIORITY)
   const localStorageOriginal = getNewsletterImageFromLocalStorage(newsletterId, 'original')
   const localStorageBlurred = getNewsletterImageFromLocalStorage(newsletterId, 'blurred')
 
-  // Always prioritize localStorage over server URLs
   if (localStorageOriginal) {
     frontendNewsletter.original_thumbnail = localStorageOriginal
     frontendNewsletter.imagePreviewUrl = localStorageOriginal
   } else {
-    // Fallback to server URLs only if localStorage doesn't have the image
     frontendNewsletter.original_thumbnail = cleanImageUrl(buildImageUrl(backendNewsletter.original_thumbnail || backendNewsletter.thumbnail))
     frontendNewsletter.imagePreviewUrl = cleanImageUrl(buildImageUrl(backendNewsletter.thumbnail))
   }
@@ -200,29 +194,26 @@ export const transformFromBackend = (backendNewsletter) => {
   if (localStorageBlurred) {
     frontendNewsletter.blurred_thumbnail = localStorageBlurred
   } else {
-    // Fallback to server URLs
     frontendNewsletter.blurred_thumbnail = cleanImageUrl(buildBlurredImageUrl(backendNewsletter.blurred_thumbnail))
   }
 
-  // Parse JSON description if it exists, otherwise use legacy fields
   if (backendNewsletter.description) {
     try {
       const parsedDescription = JSON.parse(backendNewsletter.description)
       if (parsedDescription.descriptionHtml && parsedDescription.descriptionText) {
         frontendNewsletter.editorHtml = parsedDescription.descriptionHtml
-        frontendNewsletter.description = parsedDescription.descriptionText
+        frontendNewsletter.description = backendNewsletter.description
+        frontendNewsletter.descriptionText = parsedDescription.descriptionText
+        frontendNewsletter.descriptionHTML = parsedDescription.descriptionHtml
       } else {
-        // Fallback to plain description
         frontendNewsletter.description = backendNewsletter.description
         frontendNewsletter.editorHtml = ''
       }
     } catch (error) {
-      // If JSON parsing fails, treat as plain text
       frontendNewsletter.description = backendNewsletter.description
       frontendNewsletter.editorHtml = ''
     }
   } else {
-    // Legacy fallback
     frontendNewsletter.editorHtml = backendNewsletter.editorHtml || ''
     frontendNewsletter.description = backendNewsletter.description || ''
   }

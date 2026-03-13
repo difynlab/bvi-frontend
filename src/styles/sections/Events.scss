@@ -442,11 +442,44 @@
 // Dropzone empty-state background (scoped)
 .events-container,
 .events-modal {
-  .dropzone-surface[data-has-file="false"] {
-    background-image: url('/dropzone.png');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: cover;
+  .dropzone-surface {
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #f9fafb;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+
+    &:hover {
+      border-color: $vivid_red;
+      background: #fef2f2;
+
+      .dropzone-icon {
+        color: $vivid_red;
+      }
+    }
+
+    &.drag-over {
+      border-color: $vivid_red;
+      background: #fef2f2;
+
+      .dropzone-icon {
+        color: $vivid_red;
+      }
+    }
+
+    &[data-has-file='true'] {
+      border-color: #10b981;
+      background: #f0fdf4;
+      padding: 20px;
+      min-height: auto;
+    }
   }
 }
 
@@ -786,17 +819,28 @@
   .close-btn {
     background: none;
     border: none;
-    position: absolute;
-    right: 40px;
-    top: 40px;
+    position: sticky;
+    top: 20px;
+    float: right;
     font-size: 30px;
     color: #6b7280;
     cursor: pointer;
-    padding: 4px;
     line-height: 1;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: -40px;
+    margin-left: calc(100% - 60px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
     &:hover {
       color: #374151;
+      background-color: #f9fafb;
     }
   }
 
@@ -1553,13 +1597,18 @@
     padding: 20px;
 
     .close-btn {
-      position: sticky;
-      top: 0;
-      left: 100%;
+      position: absolute;
+      top: 20px;
       right: 20px;
-      z-index: 1000;
-      background-color: #fff;
+      margin-bottom: 0;
+      background-color: #ffffff;
       border-radius: 50%;
+      z-index: 10;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .events-form .form-row {
