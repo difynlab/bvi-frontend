@@ -29,6 +29,16 @@
   box-sizing: border-box;
 }
 
+.communications-playbook-pdf-viewer__iframe {
+  width: 100%;
+  min-height: 480px;
+  height: 80vh;
+  border: none;
+  border-radius: 8px;
+  background: #e5e5e5;
+  display: block;
+}
+
 .communications-playbook-pdf-viewer {
   width: 100%;
   min-height: 480px;
@@ -68,6 +78,19 @@
 }
 
 .communications-playbook-pdf-viewer--loading {
+  width: 100%;
+  min-height: 480px;
+  background: #e5e5e5;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #666;
+  font-size: 15px;
+}
+
+.communications-playbook-pdf-viewer--error {
   width: 100%;
   min-height: 480px;
   background: #e5e5e5;

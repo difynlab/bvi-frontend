@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { PdfViewer } from '../../components/PdfViewer'
 import PlaybookUploadModal from '../../components/modals/PlaybookUploadModal'
 import communicationPlaybookService from '../../services/communicationPlaybookService'
 import '../../styles/sections/CommunicationsPlaybook.scss'
 
-const DEFAULT_PLAYBOOK_PDF = '/storage/legislations/9098be04-bbbd-41c5-9666-ee57628f871f.pdf'
-
 export const CommunicationsPlaybook = () => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
-  const [playbookSrc, setPlaybookSrc] = useState(DEFAULT_PLAYBOOK_PDF)
+  const [playbookSrc, setPlaybookSrc] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -79,8 +76,12 @@ export const CommunicationsPlaybook = () => {
           </div>
         </div>
         <div className="communications-playbook-pdf-wrap">
-          {!isLoading && !error && (
-            <PdfViewer src={playbookSrc} className="communications-playbook-pdf-viewer" />
+          {!isLoading && !error && playbookSrc && (
+            <iframe
+              src={playbookSrc}
+              title="Communications Playbook PDF"
+              className="communications-playbook-pdf-viewer__iframe"
+            />
           )}
           {isLoading && !error && (
             <div className="communications-playbook-pdf-viewer communications-playbook-pdf-viewer--loading">
