@@ -18,12 +18,8 @@ export function PdfViewer({ src, className = '' }) {
 
     const load = async () => {
       try {
-        const [pdfjs, workerModule] = await Promise.all([
-          import('pdfjs-dist'),
-          import('pdfjs-dist/build/pdf.worker.mjs?url').catch(() => ({ default: '' }))
-        ])
-        if (workerModule?.default) pdfjs.GlobalWorkerOptions.workerSrc = workerModule.default
-        else pdfjs.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@5.5.207/build/pdf.worker.mjs'
+        const pdfjs = await import('pdfjs-dist')
+        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.js'
 
         let loadingTask
         if (src.startsWith('/') || src.startsWith('./')) {
