@@ -255,7 +255,13 @@ export const useNoticesState = () => {
     if (!activeCategory || !notices.length) {
       return []
     }
-    return notices.filter(notice => notice.noticeType === activeCategory)
+    const filtered = notices.filter(notice => notice.noticeType === activeCategory)
+    const getDate = (n) => n.publishDate || n.publish_date || n.createdAt || n.createdAtISO
+    return filtered.slice().sort((a, b) => {
+      const dateA = new Date(getDate(a) || 0).getTime()
+      const dateB = new Date(getDate(b) || 0).getTime()
+      return dateB - dateA
+    })
   }, [notices, activeCategory])
 
   const visibleItems = useMemo(() => filteredNotices, [filteredNotices])
