@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react'
+import { useAuth } from '../../context/useAuth'
+import { can } from '../../auth/acl'
 import PlaybookUploadModal from '../../components/modals/PlaybookUploadModal'
 import communicationPlaybookService from '../../services/communicationPlaybookService'
 import '../../styles/sections/CommunicationsPlaybook.scss'
 
 export const CommunicationsPlaybook = () => {
+  const { user } = useAuth()
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
   const [playbookSrc, setPlaybookSrc] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -64,16 +67,18 @@ export const CommunicationsPlaybook = () => {
             <h1>Communications Playbook</h1>
             <p>Guidelines and templates for internal and external communications.</p>
           </div>
-          <div className="communications-playbook-header-actions">
-            <button
-              type="button"
-              className="communications-playbook-update-btn communications-playbook-update-btn--desktop"
-              aria-label="Update Playbook"
-              onClick={openUploadModal}
-            >
-              Update Playbook
-            </button>
-          </div>
+          {can(user, 'communications-playbook:update') && (
+            <div className="communications-playbook-header-actions">
+              <button
+                type="button"
+                className="communications-playbook-update-btn communications-playbook-update-btn--desktop"
+                aria-label="Update Playbook"
+                onClick={openUploadModal}
+              >
+                Update Playbook
+              </button>
+            </div>
+          )}
         </div>
         <div className="communications-playbook-pdf-wrap">
           {!isLoading && !error && playbookSrc && (
@@ -95,16 +100,18 @@ export const CommunicationsPlaybook = () => {
           )}
         </div>
       </div>
-      <div className="communications-playbook-mobile-fab">
-        <button
-          type="button"
-          className="communications-playbook-mobile-fab__btn"
-          aria-label="Update Playbook"
-          onClick={openUploadModal}
-        >
-          <i className="bi bi-plus" aria-hidden="true"></i>
-        </button>
-      </div>
+      {can(user, 'communications-playbook:update') && (
+        <div className="communications-playbook-mobile-fab">
+          <button
+            type="button"
+            className="communications-playbook-mobile-fab__btn"
+            aria-label="Update Playbook"
+            onClick={openUploadModal}
+          >
+            <i className="bi bi-plus" aria-hidden="true"></i>
+          </button>
+        </div>
+      )}
 
       <PlaybookUploadModal
         isOpen={isUploadModalOpen}
