@@ -256,12 +256,12 @@ export const useNoticesState = () => {
       return []
     }
     const filtered = notices.filter(notice => notice.noticeType === activeCategory)
-    const getDate = (n) => n.publishDate || n.publish_date || n.createdAt || n.createdAtISO
-    return filtered.slice().sort((a, b) => {
-      const dateA = new Date(getDate(a) || 0).getTime()
-      const dateB = new Date(getDate(b) || 0).getTime()
-      return dateB - dateA
-    })
+    const getDate = (n) => n.publishDate ?? n.publish_date ?? n.createdAt ?? n.createdAtISO ?? n.created_at
+    const toTime = (n) => {
+      const t = new Date(getDate(n) || 0).getTime()
+      return Number.isNaN(t) ? 0 : t
+    }
+    return filtered.slice().sort((a, b) => toTime(b) - toTime(a))
   }, [notices, activeCategory])
 
   const visibleItems = useMemo(() => filteredNotices, [filteredNotices])

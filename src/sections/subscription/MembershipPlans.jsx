@@ -258,36 +258,18 @@ const extractPlanFromResponse = (payload) => {
 const sanitizePerksForSave = (perks) =>
   ensurePerksArray(perks).map((perk) => perk.trim()).filter(Boolean);
 
-const getPlanOrder = (plan) => {
-  if (!plan) return 99;
-
-  const title = (plan.title || '').toLowerCase();
-  const theme = (plan.theme || '').toLowerCase();
-
-  if (title.includes('standard') || title.includes('basic') || theme === 'basic') {
-    return 0;
-  }
-
-  if (title.includes('silver') || theme === 'silver') {
-    return 1;
-  }
-
-  if (title.includes('gold') || theme === 'gold') {
-    return 2;
-  }
-
-  return 50;
+const sortPlans = (planA, planB) => {
+  const idA = planA?.id != null ? Number(planA.id) : Infinity;
+  const idB = planB?.id != null ? Number(planB.id) : Infinity;
+  if (idA !== idB) return idA - idB;
+  return 0;
 };
 
-const sortPlans = (planA, planB) => {
-  const orderA = getPlanOrder(planA);
-  const orderB = getPlanOrder(planB);
-
-  if (orderA === orderB) {
-    return (planA.title || '').localeCompare(planB.title || '');
-  }
-
-  return orderA - orderB;
+const getHeaderThemeByIndex = (index) => {
+  if (index === 0) return 'basic';
+  if (index === 1) return 'silver';
+  if (index === 2) return 'gold';
+  return 'custom';
 };
 
 const MembershipPlans = ({ isAdmin = false }) => {
@@ -864,7 +846,7 @@ const MembershipPlans = ({ isAdmin = false }) => {
 
     return (
       <div className="plan-card" key={key}>
-        <div className={`plan-header ${displayPlan.theme || 'custom'}`}>
+        <div className={`plan-header ${getHeaderThemeByIndex(index)}`}>
           {isEditing ? (
             <input
               type="text"

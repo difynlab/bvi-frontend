@@ -14,6 +14,7 @@ export const UserRenewMembershipModal = ({
   onRenewed
 }) => {
   const [membershipPlanId, setMembershipPlanId] = useState('');
+  const [selectedDurationKey, setSelectedDurationKey] = useState('');
   const [amount, setAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -37,6 +38,7 @@ export const UserRenewMembershipModal = ({
   useEffect(() => {
     if (isOpen) {
       setMembershipPlanId('');
+      setSelectedDurationKey('');
       setAmount('');
       setErrorMessage('');
       setSuccessMessage('');
@@ -91,50 +93,73 @@ export const UserRenewMembershipModal = ({
     return membershipPlans.find(plan => plan.id !== undefined && plan.id !== null && String(plan.id) === membershipPlanId);
   }, [membershipPlanId, membershipPlans]);
 
-  const planPrice = useMemo(() => {
-    if (!selectedPlan) return '';
-    
+  const pricingOptions = useMemo(() => {
+    if (!selectedPlan) return [];
     const pricing = selectedPlan.pricing;
-    if (!pricing) return '';
-    
-    if (Array.isArray(pricing) && pricing.length > 0) {
-      const isArrayOfObjects = typeof pricing[0] === 'object' && pricing[0] !== null && 'price' in pricing[0];
-      if (isArrayOfObjects) {
-        return String(pricing[0].price || 0);
-      }
-      return String(pricing[0]);
-    }
-    
-    if (typeof pricing === 'number') {
-      return String(pricing);
-    }
-    
-    if (typeof pricing === 'string') {
+    if (!pricing) return [];
+    let arr = [];
+    if (Array.isArray(pricing)) {
+      arr = pricing;
+    } else if (typeof pricing === 'string') {
       try {
         const parsed = JSON.parse(pricing);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const isArrayOfObjects = typeof parsed[0] === 'object' && parsed[0] !== null && 'price' in parsed[0];
-          if (isArrayOfObjects) {
-            return String(parsed[0].price || 0);
-          }
-          return String(parsed[0]);
-        }
-        if (typeof parsed === 'number') {
-          return String(parsed);
-        }
-      } catch (e) {
-        const num = parseFloat(pricing);
-        if (!isNaN(num)) {
-          return String(num);
-        }
+        arr = Array.isArray(parsed) ? parsed : [];
+      } catch (_) {
+        return [];
       }
+    } else {
+      return [];
     }
-    
-    return '';
+    return arr
+      .map((item, index) => {
+        if (item && typeof item === 'object' && 'price' in item) {
+          const duration = item.duration || item.duration_months || `Option ${index + 1}`;
+          const key = String(index);
+          return { key, label: duration, price: item.price };
+        }
+        if (typeof item === 'number' || (typeof item === 'string' && !isNaN(parseFloat(item)))) {
+          const price = typeof item === 'number' ? item : parseFloat(item);
+          return { key: String(index), label: `Option ${index + 1}`, price };
+        }
+        return null;
+      })
+      .filter(Boolean);
   }, [selectedPlan]);
 
   useEffect(() => {
-    if (planPrice) {
+    if (pricingOptions.length > 0 && !selectedDurationKey) {
+      setSelectedDurationKey(pricingOptions[0].key);
+    }
+    if (pricingOptions.length === 0) {
+      setSelectedDurationKey('');
+    }
+  }, [pricingOptions, selectedDurationKey]);
+
+  const planPrice = useMemo(() => {
+    if (pricingOptions.length > 0) {
+      const option = selectedDurationKey
+        ? pricingOptions.find(opt => opt.key === selectedDurationKey)
+        : pricingOptions[0];
+      return option ? String(option.price ?? '') : '';
+    }
+    if (!selectedPlan) return '';
+    const pricing = selectedPlan.pricing;
+    if (!pricing) return '';
+    if (Array.isArray(pricing) && pricing.length > 0) {
+      const first = pricing[0];
+      if (typeof first === 'object' && first !== null && 'price' in first) return String(first.price ?? '');
+      return String(first);
+    }
+    if (typeof pricing === 'number') return String(pricing);
+    if (typeof pricing === 'string') {
+      const num = parseFloat(pricing);
+      if (!isNaN(num)) return String(num);
+    }
+    return '';
+  }, [selectedPlan, pricingOptions, selectedDurationKey]);
+
+  useEffect(() => {
+    if (planPrice !== '') {
       setAmount(planPrice);
     } else {
       setAmount('');
@@ -143,6 +168,13 @@ export const UserRenewMembershipModal = ({
 
   const handleMembershipPlanChange = (e) => {
     setMembershipPlanId(e.target.value);
+    setSelectedDurationKey('');
+    setErrorMessage('');
+    setSuccessMessage('');
+  };
+
+  const handleDurationChange = (e) => {
+    setSelectedDurationKey(e.target.value);
     setErrorMessage('');
     setSuccessMessage('');
   };
@@ -255,6 +287,21 @@ export const UserRenewMembershipModal = ({
               disabled={isLoadingPlans}
             />
           </div>
+
+          {pricingOptions.length > 0 && (
+            <div className="form-field">
+              <label className="form-label">
+                Duration<span className="required">*</span>
+              </label>
+              <CustomDropdown
+                name="duration"
+                value={selectedDurationKey}
+                onChange={handleDurationChange}
+                options={pricingOptions.map(opt => ({ value: opt.key, label: opt.label }))}
+                placeholder="Select duration"
+              />
+            </div>
+          )}
 
           <div className="form-field">
             <label className="form-label">
