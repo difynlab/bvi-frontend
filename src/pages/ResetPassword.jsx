@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { resetPassword } from '../api/authApi'
 import '../styles/pages/ResetPassword.scss'
 
 const ResetPassword = () => {
-  const [searchParams] = useSearchParams()
+  const { email, token: urlToken } = useParams()
   const navigate = useNavigate()
   const [token, setToken] = useState('')
   const [formData, setFormData] = useState({
@@ -20,20 +20,17 @@ const ResetPassword = () => {
   const [isPasswordReset, setIsPasswordReset] = useState(false)
 
   useEffect(() => {
-    const emailParam = searchParams.get('email')
-    const tokenParam = searchParams.get('token')
-    
-    if (!emailParam || !tokenParam) {
+    if (!email || !urlToken) {
       setErrors({ general: 'Invalid or missing reset link. Please request a new password reset.' })
       return
     }
     
-    setToken(tokenParam)
+    setToken(urlToken)
     setFormData(prev => ({
       ...prev,
-      email: emailParam
+      email
     }))
-  }, [searchParams])
+  }, [email, urlToken])
 
   useEffect(() => {
     if (isPasswordReset) {
