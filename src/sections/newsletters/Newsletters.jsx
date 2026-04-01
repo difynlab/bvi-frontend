@@ -945,6 +945,7 @@ const Newsletters = () => {
                   <div
                     className="file-upload-area dropzone-surface"
                     data-has-file={Boolean(form.imagePreviewUrl)}
+                    onClick={() => fileInputRef.current?.click()}
                     onDragOver={handleFileDragOver}
                     onDragLeave={(e) => e.preventDefault()}
                     onDrop={handleFileDrop}

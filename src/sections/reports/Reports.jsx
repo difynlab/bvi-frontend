@@ -82,6 +82,7 @@ export default function Reports() {
   const [reportError, setReportError] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const fileInputRef = useRef(null);
+  const previewImageInputRef = useRef(null);
 
   const handleFileDragOver = (e) => {
     e.preventDefault();
@@ -93,6 +94,13 @@ export default function Reports() {
     e.stopPropagation();
     const file = e.dataTransfer?.files?.[0];
     if (file) reportForm.setFile(file);
+  };
+
+  const handlePreviewImageDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer?.files?.[0];
+    if (file) reportForm.setPreviewImage(file);
   };
 
   // Effect to preload category name when editing
@@ -602,8 +610,21 @@ export default function Reports() {
                 const hasFile = !!(r.fileUrl || r.file || r.file_url);
                 const viewUrl = r.link || r.link_url || '';
                 const handleView = () => { if (viewUrl) window.open(viewUrl, '_blank', 'noopener,noreferrer'); };
+                const previewImageUrl =
+                  r.preview_image_url ||
+                  r.preview_image ||
+                  r.previewImageUrl ||
+                  r.previewImage ||
+                  '';
                 return (
                 <article key={r.id} className="report-item">
+                  {previewImageUrl ? (
+                    <div className="report-media">
+                      <img className="report-media__img" src={previewImageUrl} alt="" loading="lazy" />
+                    </div>
+                  ) : (
+                    <div className="report-media report-media--empty" />
+                  )}
                   <div className="report-info">
                     <div className="report-title">{r.name}</div>
                   </div>
@@ -628,56 +649,22 @@ export default function Reports() {
                         Edit details
                       </button>
                     )}
-                    {hasLink && (
-                      <button type="button" className={`btn-download${hasFile ? ' btn-download--view' : ''}`} onClick={handleView} aria-label={`View ${r.name}`}>
-                        <i className="bi bi-link-45deg" aria-hidden="true"></i> View
-                      </button>
-                    )}
-                    {hasFile && (
-                      <button type="button" className="btn-download" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
-                        <i className="bi bi-download" aria-hidden="true"></i> Download
-                      </button>
-                    )}
-                    {!hasLink && !hasFile && (
-                      <button type="button" className="btn-download" disabled aria-label={`No file or link`}>
-                        Download
-                      </button>
-                    )}
-                    <div className="report-actions-mobile">
-                      <div className="report-actions-mobile__row report-actions-mobile__row--primary">
-                        {can(user, 'reports:delete') && (
-                          <button
-                            type="button"
-                            className="btn-delete-mobile"
-                            onClick={() => handleDeleteReport(r.id)}
-                            aria-label={`Delete ${r.name}`}
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
-                        )}
-                        {can(user, 'reports:create') && (
-                          <button type="button" className="btn-edit-mobile" onClick={() => openEditReportModal(r)} aria-label={`Edit ${r.name}`}>
-                            Edit
-                          </button>
-                        )}
-                      </div>
-                      <div className="report-actions-mobile__row report-actions-mobile__row--secondary">
-                        {hasLink && (
-                          <button type="button" className={`btn-download-mobile${hasFile ? ' btn-download-mobile--view' : ''}`} onClick={handleView} aria-label={`View ${r.name}`}>
-                            <i className="bi bi-link-45deg" aria-hidden="true"></i> View
-                          </button>
-                        )}
-                        {hasFile && (
-                          <button type="button" className="btn-download-mobile" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
-                            <i className="bi bi-download" aria-hidden="true"></i> Download
-                          </button>
-                        )}
-                        {!hasLink && !hasFile && (
-                          <button type="button" className="btn-download-mobile" disabled aria-label={`No file or link`}>
-                            Download
-                          </button>
-                        )}
-                      </div>
+                    <div className="report-cta-row" data-cta-count={(hasLink ? 1 : 0) + (hasFile ? 1 : 0) || 1}>
+                      {hasLink && (
+                        <button type="button" className={`report-cta report-cta--view`} onClick={handleView} aria-label={`View ${r.name}`}>
+                          View
+                        </button>
+                      )}
+                      {hasFile && (
+                        <button type="button" className="report-cta report-cta--download" onClick={() => downloadReport(r)} aria-label={`Download ${r.name}`}>
+                          Download
+                        </button>
+                      )}
+                      {!hasLink && !hasFile && (
+                        <button type="button" className="report-cta report-cta--download" disabled aria-label={`No file or link`}>
+                          Download
+                        </button>
+                      )}
                     </div>
                   </div>
                 </article>
@@ -935,6 +922,7 @@ export default function Reports() {
                 <div
                   className="file-upload-area dropzone-surface"
                   data-has-file={Boolean(reportForm.form.imagePreviewUrl || reportForm.form.fileName)}
+                  onClick={() => fileInputRef.current?.click()}
                   onDragOver={handleFileDragOver}
                   onDragLeave={(e) => e.preventDefault()}
                   onDrop={handleFileDrop}
@@ -944,7 +932,7 @@ export default function Reports() {
                     type="file"
                     id="file"
                     name="file"
-                    accept=".pdf,.png,.jpg,.jpeg"
+                    accept=".pdf"
                     onChange={(e) => reportForm.setFile(e.target.files?.[0])}
                     className="hidden-file-input"
                   />
@@ -956,7 +944,7 @@ export default function Reports() {
                       <button
                         type="button"
                         className="dropzone-browse"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
                       >
                         Browse File
                       </button>
@@ -999,6 +987,57 @@ export default function Reports() {
                       tabIndex={-1}
                     >
                       <strong>Error:</strong> {reportForm.errors.file}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="previewImage">Preview Image</label>
+                <div
+                  className="file-upload-area dropzone-surface"
+                  data-has-file={Boolean(reportForm.form.previewImageUrl || reportForm.form.previewImageName)}
+                  onClick={() => previewImageInputRef.current?.click()}
+                  onDragOver={handleFileDragOver}
+                  onDragLeave={(e) => e.preventDefault()}
+                  onDrop={handlePreviewImageDrop}
+                >
+                  <input
+                    ref={previewImageInputRef}
+                    type="file"
+                    id="previewImage"
+                    name="previewImage"
+                    accept=".png,.jpg,.jpeg,.webp"
+                    onChange={(e) => reportForm.setPreviewImage(e.target.files?.[0])}
+                    className="hidden-file-input"
+                  />
+                  {!reportForm.form.previewImageUrl && !reportForm.form.previewImageName && (
+                    <div className="dropzone-content">
+                      <i className="bi bi-image dropzone-icon" aria-hidden="true"></i>
+                      <p className="dropzone-label">Drag and drop image here</p>
+                      <p className="dropzone-separator">or</p>
+                      <button
+                        type="button"
+                        className="dropzone-browse"
+                        onClick={(e) => { e.stopPropagation(); previewImageInputRef.current?.click(); }}
+                      >
+                        Browse Image
+                      </button>
+                    </div>
+                  )}
+                  <p className="file-status">
+                    {reportForm.form.previewImageName || 'No image chosen'}
+                  </p>
+                  {reportForm.form.previewImageUrl && (
+                    <div className="image-preview">
+                      <img
+                        src={reportForm.form.previewImageUrl}
+                        alt=""
+                        onLoad={() => {}}
+                        onError={(e) => {
+                          e.target.classList.add('image-preview-hidden');
+                        }}
+                      />
                     </div>
                   )}
                 </div>

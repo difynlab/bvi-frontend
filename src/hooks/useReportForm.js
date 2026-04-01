@@ -7,7 +7,10 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
     linkUrl: '',
     fileName: '',
     imagePreviewUrl: '',
-    file: null
+    file: null,
+    previewImageName: '',
+    previewImageUrl: '',
+    previewImageFile: null
   });
 
   const [errors, setErrors] = useState({});
@@ -24,6 +27,18 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
         // Extract filename from URL if file_name is not available
         let fileName = initialReport.file_name || '';
         let imagePreviewUrl = initialReport.file_url || '';
+
+        const existingPreviewImageUrl =
+          initialReport.preview_image_url ||
+          initialReport.preview_image ||
+          initialReport.previewImageUrl ||
+          '';
+
+        let previewImageName = initialReport.preview_image_name || '';
+        if (!previewImageName && existingPreviewImageUrl) {
+          const urlParts = String(existingPreviewImageUrl).split('/');
+          previewImageName = urlParts[urlParts.length - 1] || '';
+        }
         
         if (!fileName && initialReport.file) {
           // Extract filename from URL: http://localhost:8000/storage/reports/filename.pdf -> filename.pdf
@@ -41,7 +56,10 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
           linkUrl: initialReport.link || '',                 // API field: link
           fileName: fileName,                                // Extracted filename
           imagePreviewUrl: imagePreviewUrl,                  // File URL for preview
-          file: null // For edit mode, we don't need a File object, just fileName and imagePreviewUrl
+          file: null,
+          previewImageName: previewImageName,
+          previewImageUrl: existingPreviewImageUrl,
+          previewImageFile: null
         });
       } else {
         // Reset form for new report
@@ -51,7 +69,10 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
           linkUrl: '',
           fileName: '',
           imagePreviewUrl: '',
-          file: null
+          file: null,
+          previewImageName: '',
+          previewImageUrl: '',
+          previewImageFile: null
         });
       }
       setErrors({});
@@ -87,6 +108,24 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
         file: null,
         fileName: '',
         imagePreviewUrl: ''
+      }));
+    }
+  }, []);
+
+  const setPreviewImage = useCallback((file) => {
+    if (file) {
+      setForm(prev => ({
+        ...prev,
+        previewImageFile: file,
+        previewImageName: file.name,
+        previewImageUrl: URL.createObjectURL(file)
+      }));
+    } else {
+      setForm(prev => ({
+        ...prev,
+        previewImageFile: null,
+        previewImageName: '',
+        previewImageUrl: ''
       }));
     }
   }, []);
@@ -134,6 +173,7 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
       report_category_id: form.typeId,            // typeId → report_category_id
       publish_date: new Date().toISOString().split('T')[0], // Auto-generate current date
       file: form.file,                            // File object
+      preview_image: form.previewImageFile,
       status: 1
     };
   }, [form]);
@@ -145,7 +185,10 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
       linkUrl: '',
       fileName: '',
       imagePreviewUrl: '',
-      file: null
+      file: null,
+      previewImageName: '',
+      previewImageUrl: '',
+      previewImageFile: null
     });
     setErrors({});
   }, []);
@@ -155,6 +198,7 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
     errors,
     setField,
     setFile,
+    setPreviewImage,
     validate,
     toPayload,
     resetForm

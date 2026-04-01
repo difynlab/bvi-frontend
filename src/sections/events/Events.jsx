@@ -1460,6 +1460,7 @@ export const Events = () => {
                   <div
                     className={`dropzone dropzone-surface ${isDragOver ? 'drag-over' : ''}`}
                     data-has-file={Boolean(eventForm.form.imagePreviewUrl)}
+                    onClick={handleBrowseClick}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}

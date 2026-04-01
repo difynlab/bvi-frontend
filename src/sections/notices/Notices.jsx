@@ -1178,6 +1178,7 @@ export const Notices = () => {
                     <div
                       className="file-upload-area dropzone-surface"
                       data-has-file={Boolean(noticeForm.form.file || noticeForm.form.imageFileName)}
+                      onClick={handleBrowseClick}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
