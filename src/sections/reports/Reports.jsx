@@ -12,6 +12,7 @@ import ModalLifecycleLock from '../../components/modals/ModalLifecycleLock';
 import CustomDropdown from '../../components/CustomDropdown';
 import ReportsListShimmer from '../../components/reports/ReportsListShimmer';
 import ReportsListShimmerMobile from '../../components/reports/ReportsListShimmerMobile';
+import { resolveReportPreviewImageUrl } from '../../utils/reportMedia';
 import '../../styles/sections/Reports.scss';
 
 export default function Reports() {
@@ -359,8 +360,8 @@ export default function Reports() {
         }
 
         const payload = {
-          ...reportForm.toPayload(editingReport?.id),
-          report_category_id: categoryId  // Send the numeric ID, not the title
+          ...reportForm.toPayload(),
+          report_category_id: categoryId
         };
         
         
@@ -610,17 +611,28 @@ export default function Reports() {
                 const hasFile = !!(r.fileUrl || r.file || r.file_url);
                 const viewUrl = r.link || r.link_url || '';
                 const handleView = () => { if (viewUrl) window.open(viewUrl, '_blank', 'noopener,noreferrer'); };
-                const previewImageUrl =
+                const previewImageRaw =
+                  (typeof r.preview_img === 'object' && r.preview_img?.url
+                    ? r.preview_img.url
+                    : null) ||
+                  (typeof r.preview_image === 'object' && r.preview_image?.url
+                    ? r.preview_image.url
+                    : null) ||
+                  r.preview_img_url ||
+                  r.preview_img_path ||
+                  (typeof r.preview_img === 'string' ? r.preview_img : '') ||
                   r.preview_image_url ||
-                  r.preview_image ||
+                  r.preview_image_path ||
+                  (typeof r.preview_image === 'string' ? r.preview_image : '') ||
                   r.previewImageUrl ||
                   r.previewImage ||
                   '';
+                const previewImageResolved = resolveReportPreviewImageUrl(previewImageRaw);
                 return (
                 <article key={r.id} className="report-item">
-                  {previewImageUrl ? (
+                  {previewImageResolved ? (
                     <div className="report-media">
-                      <img className="report-media__img" src={previewImageUrl} alt="" loading="lazy" />
+                      <img className="report-media__img" src={previewImageResolved} alt="" loading="lazy" />
                     </div>
                   ) : (
                     <div className="report-media report-media--empty" />
@@ -993,7 +1005,7 @@ export default function Reports() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="previewImage">Preview Image</label>
+                <label htmlFor="preview_img">Preview Image</label>
                 <div
                   className="file-upload-area dropzone-surface"
                   data-has-file={Boolean(reportForm.form.previewImageUrl || reportForm.form.previewImageName)}
@@ -1005,8 +1017,8 @@ export default function Reports() {
                   <input
                     ref={previewImageInputRef}
                     type="file"
-                    id="previewImage"
-                    name="previewImage"
+                    id="preview_img"
+                    name="preview_img"
                     accept=".png,.jpg,.jpeg,.webp"
                     onChange={(e) => reportForm.setPreviewImage(e.target.files?.[0])}
                     className="hidden-file-input"
@@ -1031,7 +1043,7 @@ export default function Reports() {
                   {reportForm.form.previewImageUrl && (
                     <div className="image-preview">
                       <img
-                        src={reportForm.form.previewImageUrl}
+                        src={resolveReportPreviewImageUrl(reportForm.form.previewImageUrl)}
                         alt=""
                         onLoad={() => {}}
                         onError={(e) => {

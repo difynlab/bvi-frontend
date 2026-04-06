@@ -29,12 +29,22 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
         let imagePreviewUrl = initialReport.file_url || '';
 
         const existingPreviewImageUrl =
+          (typeof initialReport.preview_img === 'object' && initialReport.preview_img?.url
+            ? initialReport.preview_img.url
+            : null) ||
+          (typeof initialReport.preview_image === 'object' && initialReport.preview_image?.url
+            ? initialReport.preview_image.url
+            : null) ||
+          initialReport.preview_img_url ||
+          initialReport.preview_img_path ||
+          (typeof initialReport.preview_img === 'string' ? initialReport.preview_img : '') ||
           initialReport.preview_image_url ||
-          initialReport.preview_image ||
+          initialReport.preview_image_path ||
+          (typeof initialReport.preview_image === 'string' ? initialReport.preview_image : '') ||
           initialReport.previewImageUrl ||
           '';
 
-        let previewImageName = initialReport.preview_image_name || '';
+        let previewImageName = initialReport.preview_img_name || initialReport.preview_image_name || '';
         if (!previewImageName && existingPreviewImageUrl) {
           const urlParts = String(existingPreviewImageUrl).split('/');
           previewImageName = urlParts[urlParts.length - 1] || '';
@@ -165,15 +175,13 @@ export function useReportForm(initialReport = null, isOpen = false, mode = 'add'
     }
   };
 
-  const toPayload = useCallback((existingId = null) => {
+  const toPayload = useCallback(() => {
     return {
-      id: existingId || Date.now(),
-      name: form.title.trim(),                    // title → name
-      link: form.linkUrl.trim(),                  // linkUrl → link
-      report_category_id: form.typeId,            // typeId → report_category_id
-      publish_date: new Date().toISOString().split('T')[0], // Auto-generate current date
-      file: form.file,                            // File object
-      preview_image: form.previewImageFile,
+      name: form.title.trim(),
+      link: form.linkUrl.trim(),
+      publish_date: new Date().toISOString().split('T')[0],
+      file: form.file,
+      preview_img: form.previewImageFile,
       status: 1
     };
   }, [form]);
