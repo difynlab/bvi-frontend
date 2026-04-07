@@ -141,9 +141,12 @@ class ReportsService {
         const value = reportData[key]
         
         if (value !== null && value !== undefined && value !== '') {
-          // Convertir report_category_id y status a string si son números
-          const finalValue = (key === 'report_category_id' || key === 'status') ? String(value) : value
-          formData.append(key, finalValue)
+          if (value instanceof File) {
+            formData.append(key, value, value.name)
+          } else {
+            const finalValue = (key === 'report_category_id' || key === 'status') ? String(value) : value
+            formData.append(key, finalValue)
+          }
         } else {
         }
       })
@@ -170,9 +173,12 @@ class ReportsService {
         const value = reportData[key]
         
         if (value !== null && value !== undefined && value !== '') {
-          // Convertir report_category_id y status a string si son números
-          const finalValue = (key === 'report_category_id' || key === 'status') ? String(value) : value
-          formData.append(key, finalValue)
+          if (value instanceof File) {
+            formData.append(key, value, value.name)
+          } else {
+            const finalValue = (key === 'report_category_id' || key === 'status') ? String(value) : value
+            formData.append(key, finalValue)
+          }
         }
       })
 
