@@ -12,8 +12,6 @@ dist
 dist-ssr
 *.local
 
-vite.config.js
-
 # Environment variables
 .env
 .env.local
